@@ -35,14 +35,10 @@ import {
     UIManager,
     View,
 } from 'react-native';
-import Animated, { 
-    FadeIn, 
-    FadeInDown, 
+import Animated, {
+    FadeIn,
+    FadeInDown,
     FadeOut,
-    LinearTransition,
-    useAnimatedStyle, 
-    useSharedValue, 
-    withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -54,7 +50,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 // ============ TYPES ============
 
 type SortOption = 'newest' | 'oldest' | 'cost_high' | 'cost_low' | 'lot';
-type ViewMode = 'list' | 'compact';
+type ViewMode = 'list' | 'compact' | 'grid';
 
 interface StockStats {
     totalItems: number;
@@ -98,38 +94,77 @@ const ItemCard = React.memo(function ItemCard({
 }: ItemCardProps) {
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Theme[colorScheme];
-    const scale = useSharedValue(1);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-    }));
-
-    const handlePressIn = useCallback(() => {
-        scale.value = withSpring(0.97, { damping: 15 });
-    }, []);
-
-    const handlePressOut = useCallback(() => {
-        scale.value = withSpring(1, { damping: 15 });
-    }, []);
-
     const unitCost = parseFloat(String(item.unitCost));
+
+    // Grid view for 2-column card layout
+    if (viewMode === 'grid') {
+        return (
+            <Animated.View 
+                entering={shouldAnimate ? FadeIn.delay(index * ANIMATION_STAGGER).duration(200) : undefined}
+                style={styles.gridCardWrapper}
+            >
+                <Pressable
+                    onPress={onPress}
+                    style={({ pressed }) => [
+                        styles.gridCard,
+                        { 
+                            backgroundColor: theme.surface,
+                            borderColor: theme.borderCard,
+                            opacity: pressed ? 0.9 : 1,
+                            transform: [{ scale: pressed ? 0.98 : 1 }],
+                        }
+                    ]}
+                >
+                    {/* Image placeholder */}
+                    <View style={[styles.gridImageContainer, { backgroundColor: theme.surfaceSecondary }]}>
+                        <MaterialIcons name="checkroom" size={32} color={theme.textMuted} />
+                        {/* Lot badge */}
+                        <View style={[styles.gridLotBadge, { backgroundColor: theme.primary }]}>
+                            <Text style={styles.gridLotText}>#{item.lotId}</Text>
+                        </View>
+                    </View>
+                    
+                    {/* Info */}
+                    <View style={styles.gridContent}>
+                        <Text style={[Typography.body.sm, { color: theme.text, fontWeight: '600' }]} numberOfLines={1}>
+                            {item.brand || 'Unknown'}
+                        </Text>
+                        <Text style={[Typography.body.xs, { color: theme.textMuted }]} numberOfLines={1}>
+                            {item.type || 'Item'} • {item.size || 'OS'}
+                        </Text>
+                        
+                        <View style={styles.gridFooter}>
+                            <Text style={[Typography.number.sm, { color: theme.primary, fontWeight: '700' }]}>
+                                €{unitCost.toFixed(2)}
+                            </Text>
+                            <Pressable 
+                                onPress={onSell}
+                                hitSlop={8}
+                                style={[styles.gridSellBtn, { backgroundColor: theme.primary }]}
+                            >
+                                <MaterialIcons name="sell" size={14} color="#FFF" />
+                            </Pressable>
+                        </View>
+                    </View>
+                </Pressable>
+            </Animated.View>
+        );
+    }
 
     // Compact view for dense lists
     if (viewMode === 'compact') {
         return (
             <Animated.View 
                 entering={shouldAnimate ? FadeIn.delay(index * ANIMATION_STAGGER).duration(200) : undefined}
-                layout={LinearTransition.springify().damping(15)}
             >
                 <Pressable
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
                     onPress={onPress}
-                    style={[
+                    style={({ pressed }) => [
                         styles.compactCard,
                         { 
                             backgroundColor: theme.surface,
                             borderColor: theme.borderCard,
+                            opacity: pressed ? 0.9 : 1,
                         }
                     ]}
                 >
@@ -166,13 +201,10 @@ const ItemCard = React.memo(function ItemCard({
     return (
         <Animated.View 
             entering={shouldAnimate ? FadeInDown.delay(index * ANIMATION_STAGGER).duration(300) : undefined}
-            layout={LinearTransition.springify().damping(15)}
-            style={animatedStyle}
         >
             <Pressable
-                onPressIn={handlePressIn}
-                onPressOut={handlePressOut}
                 onPress={onPress}
+                style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
             >
                 <PremiumCard variant="default" style={styles.itemCard}>
                     <View style={[styles.imageContainer, { backgroundColor: theme.surfaceSecondary }]}>
@@ -472,8 +504,21 @@ export default function StockScreen() {
 
     const toggleViewMode = useCallback(() => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        setViewMode(v => v === 'list' ? 'compact' : 'list');
+        setViewMode(v => {
+            if (v === 'list') return 'compact';
+            if (v === 'compact') return 'grid';
+            return 'list';
+        });
     }, []);
+
+    const getViewModeIcon = useCallback((): string => {
+        switch (viewMode) {
+            case 'list': return 'view-stream';
+            case 'compact': return 'view-agenda';
+            case 'grid': return 'grid-view';
+            default: return 'view-stream';
+        }
+    }, [viewMode]);
 
     // ============ RENDER ============
 
@@ -575,7 +620,7 @@ export default function StockScreen() {
                             onPress={toggleViewMode}
                         >
                             <MaterialIcons 
-                                name={viewMode === 'list' ? 'view-stream' : 'view-agenda'} 
+                                name={getViewModeIcon() as any} 
                                 size={20} 
                                 color={theme.textSecondary} 
                             />
@@ -721,10 +766,13 @@ export default function StockScreen() {
                     </View>
                 ) : (
                     <FlatList
+                        key={viewMode === 'grid' ? 'grid' : 'list'}
                         ref={flatListRef}
                         data={paginatedItems}
                         keyExtractor={keyExtractor}
                         renderItem={renderItem}
+                        numColumns={viewMode === 'grid' ? 2 : 1}
+                        columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
                         refreshControl={
                             <RefreshControl 
                                 refreshing={refreshing} 
@@ -982,6 +1030,58 @@ const styles = StyleSheet.create({
     compactSellBtn: {
         width: 32,
         height: 32,
+        borderRadius: Radius.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    // Grid Card Styles
+    gridRow: {
+        justifyContent: 'space-between',
+        gap: Spacing.md,
+    },
+    gridCardWrapper: {
+        flex: 1,
+        maxWidth: '48%',
+    },
+    gridCard: {
+        borderRadius: Radius.lg,
+        borderWidth: 1,
+        overflow: 'hidden',
+        marginBottom: Spacing.md,
+    },
+    gridImageContainer: {
+        aspectRatio: 1,
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+    },
+    gridLotBadge: {
+        position: 'absolute',
+        top: Spacing.sm,
+        right: Spacing.sm,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: Radius.full,
+    },
+    gridLotText: {
+        fontSize: 10,
+        fontFamily: 'Manrope_700Bold',
+        color: '#FFF',
+    },
+    gridContent: {
+        padding: Spacing.md,
+    },
+    gridFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: Spacing.sm,
+    },
+    gridSellBtn: {
+        width: 28,
+        height: 28,
         borderRadius: Radius.md,
         alignItems: 'center',
         justifyContent: 'center',
