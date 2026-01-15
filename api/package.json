@@ -1,0 +1,31 @@
+{
+  "name": "optimus-vintage-api",
+  "version": "1.0.0",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.45.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.0",
+    "pg": "^8.17.0",
+    "zod": "^3.25.49"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.2",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.17.1",
+    "@types/pg": "^8.16.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.9.2"
+  }
+}

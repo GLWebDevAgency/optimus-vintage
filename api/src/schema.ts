@@ -1,0 +1,69 @@
+import {
+    date,
+    decimal,
+    integer,
+    pgTable,
+    serial,
+    text,
+    timestamp,
+} from "drizzle-orm/pg-core";
+
+// LOTS
+export const lots = pgTable("lots", {
+  id: serial("id").primaryKey(),
+  name: text("name"),
+  provider: text("provider").notNull(),
+  buyDate: date("buy_date").notNull(),
+  type: text("type").notNull().default("BULK"),
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }).notNull(),
+  additionalFees: decimal("additional_fees", { precision: 10, scale: 2 }).default("0"),
+  initialQuantity: integer("initial_quantity").notNull(),
+  currency: text("currency").default("EUR"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ITEMS
+export const items = pgTable("items", {
+  id: serial("id").primaryKey(),
+  lotId: integer("lot_id")
+    .references(() => lots.id, { onDelete: "cascade" })
+    .notNull(),
+  brand: text("brand"),
+  type: text("type"),
+  color: text("color"),
+  size: text("size"),
+  condition: text("condition"),
+  unitCost: decimal("unit_cost", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("STOCK"),
+  photos: text("photos"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// SALES
+export const sales = pgTable("sales", {
+  id: serial("id").primaryKey(),
+  itemId: integer("item_id").references(() => items.id, { onDelete: "set null" }),
+  lotId: integer("lot_id")
+    .references(() => lots.id, { onDelete: "cascade" })
+    .notNull(),
+  platform: text("platform").default("VINTED"),
+  priceGross: decimal("price_gross", { precision: 10, scale: 2 }).notNull(),
+  platformFees: decimal("platform_fees", { precision: 10, scale: 2 }).default("0"),
+  shippingFees: decimal("shipping_fees", { precision: 10, scale: 2 }).default("0"),
+  miscFees: decimal("misc_fees", { precision: 10, scale: 2 }).default("0"),
+  priceNet: decimal("price_net", { precision: 10, scale: 2 }).notNull(),
+  saleDate: date("sale_date").notNull(),
+  status: text("status").notNull().default("COMPLETED"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Types
+export type Lot = typeof lots.$inferSelect;
+export type NewLot = typeof lots.$inferInsert;
+export type Item = typeof items.$inferSelect;
+export type NewItem = typeof items.$inferInsert;
+export type Sale = typeof sales.$inferSelect;
+export type NewSale = typeof sales.$inferInsert;

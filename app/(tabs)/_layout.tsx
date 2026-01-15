@@ -1,59 +1,132 @@
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
+/**
+ * 📱 TAB LAYOUT - Premium Navigation
+ */
 
-import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import { Layout, Palette, Theme } from '@/constants/Theme';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { BlurView } from 'expo-blur';
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
+  name: React.ComponentProps<typeof MaterialIcons>['name'];
   color: string;
+  focused: boolean;
 }) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Theme[colorScheme];
+  
+  return (
+    <View style={[
+      styles.iconContainer,
+      props.focused && { 
+        backgroundColor: theme.primaryMuted,
+      }
+    ]}>
+      <MaterialIcons 
+        size={22} 
+        name={props.name} 
+        color={props.color} 
+      />
+    </View>
+  );
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Theme[colorScheme];
+  const isDark = colorScheme === 'dark';
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textMuted,
+        headerShown: false,
+        tabBarStyle: {
+          position: 'absolute',
+          backgroundColor: isDark ? 'rgba(26, 23, 20, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+          borderTopWidth: 0,
+          height: Layout.tabBar.height,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+          paddingTop: 12,
+          // Premium shadow
+          shadowColor: Palette.neutral[900],
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: isDark ? 0.3 : 0.08,
+          shadowRadius: 20,
+          elevation: 0,
+        },
+        tabBarLabelStyle: {
+          fontFamily: 'Manrope_600SemiBold',
+          fontSize: 10,
+          marginTop: 4,
+        },
+        tabBarBackground: () => (
+          <BlurView 
+            intensity={isDark ? 40 : 80} 
+            tint={isDark ? 'dark' : 'light'} 
+            style={StyleSheet.absoluteFill} 
+          />
+        ),
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="home" color={color} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="lots"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'Lots',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="inventory-2" color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="stock"
+        options={{
+          title: 'Stock',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="checkroom" color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="sales"
+        options={{
+          title: 'Sales',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="point-of-sale" color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="settings" color={color} focused={focused} />
+          ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    width: 40,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
