@@ -302,7 +302,9 @@ export default function LotsScreen() {
                 throw new Error('Failed to fetch lots');
             }
             
-            const data = await response.json();
+            const json = await response.json();
+            // Handle both { data: [...] } format and direct array format
+            const data = Array.isArray(json) ? json : (json.data || []);
             setLots(data);
         } catch (e) {
             console.error('Failed to load lots:', e);

@@ -52,6 +52,9 @@ const app = express();
 
 // ============ GLOBAL MIDDLEWARE ============
 
+// Trust proxy for Railway/cloud deployments (required for rate limiting behind proxies)
+app.set('trust proxy', 1);
+
 // Security
 app.use(helmet());
 app.use(securityHeaders);
@@ -98,6 +101,47 @@ app.get("/api/health", asyncHandler(async (req, res) => {
 }));
 
 // ============ LOTS ROUTES ============
+
+// GET all lots with pre-computed summaries (optimized single query)
+app.get("/api/lots/summary", asyncHandler(async (req, res) => {
+  const result = await db.execute(sql`
+    SELECT 
+      l.id,
+      l.name,
+      l.provider,
+      l.buy_date as "buyDate",
+      l.initial_quantity as "initialQuantity",
+      l.total_cost as "totalCost",
+      l.additional_fees as "additionalFees",
+      l.created_at as "createdAt",
+      l.updated_at as "updatedAt",
+      COALESCE(l.total_cost, 0) + COALESCE(l.additional_fees, 0) as "totalInvestment",
+      COALESCE(sales_agg.total_revenue, 0) as "totalRevenue",
+      COALESCE(sales_agg.sold_count, 0) as "soldCount",
+      COALESCE(items_agg.stock_count, 0) as "stockCount",
+      GREATEST(0, (COALESCE(l.total_cost, 0) + COALESCE(l.additional_fees, 0)) - COALESCE(sales_agg.total_revenue, 0)) as "delta"
+    FROM lots l
+    LEFT JOIN (
+      SELECT 
+        lot_id,
+        SUM(price_net) as total_revenue,
+        COUNT(*) as sold_count
+      FROM sales 
+      WHERE status NOT IN ('CANCELLED', 'REFUNDED')
+      GROUP BY lot_id
+    ) sales_agg ON sales_agg.lot_id = l.id
+    LEFT JOIN (
+      SELECT 
+        lot_id,
+        COUNT(*) as stock_count
+      FROM items 
+      WHERE status = 'STOCK'
+      GROUP BY lot_id
+    ) items_agg ON items_agg.lot_id = l.id
+    ORDER BY l.buy_date DESC, l.id DESC
+  `);
+  res.json({ data: result.rows, count: result.rows.length });
+}));
 
 app.get("/api/lots", asyncHandler(async (req, res) => {
   const result = await db.select().from(lots).orderBy(desc(lots.buyDate));
