@@ -78,7 +78,11 @@ export default function NewSaleScreen() {
             await ItemsRepository.updateStatus(item.id, 'SOLD');
 
             Alert.alert("Congrats! 💸", `Sale recorded. Net profit: €${pNet.toFixed(2)}`, [
-                { text: "Awesome", onPress: () => router.navigate('/(tabs)/sales') }
+                { text: "Awesome", onPress: () => {
+                    // Dismiss modal stack first, then navigate to sales tab
+                    router.dismissAll();
+                    router.replace('/(tabs)/sales');
+                }}
             ]);
         } catch (e) {
             console.error(e);
@@ -102,7 +106,11 @@ export default function NewSaleScreen() {
                     title="Go to Stock"
                     variant="primary"
                     size="md"
-                    onPress={() => router.navigate('/(tabs)/stock')}
+                    onPress={() => {
+                        // Dismiss modal stack first, then navigate to stock tab
+                        router.dismissAll();
+                        router.replace('/(tabs)/stock');
+                    }}
                     style={{ marginTop: Spacing.xl }}
                 />
             </View>

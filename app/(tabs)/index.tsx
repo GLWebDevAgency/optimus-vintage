@@ -158,7 +158,7 @@ export default function DashboardScreen() {
                 rightContent={
                     <TouchableOpacity 
                         style={[styles.headerButton, { backgroundColor: theme.surfaceHighlight }]}
-                        onPress={() => router.push('/settings')}
+                        onPress={() => router.push('/(tabs)/settings')}
                     >
                         <MaterialIcons name="settings" size={20} color={theme.textSecondary} />
                     </TouchableOpacity>
