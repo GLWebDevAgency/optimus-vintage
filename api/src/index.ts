@@ -7,6 +7,9 @@ import { items, lots, sales } from "./schema";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy for Railway/cloud deployments (required for rate limiting)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
