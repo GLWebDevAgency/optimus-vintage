@@ -106,6 +106,28 @@ docs: update README
 refactor: improve repository pattern
 ```
 
+# Créer une feature
+
+```
+git checkout develop
+git checkout -b feature/ma-feature
+```
+
+# Développer
+
+```
+git add . && git commit -m "feat: ma feature"
+git push origin feature/ma-feature
+```
+
+# Créer une PR vers develop
+
+```
+gh pr create --base develop
+```
+
+# Après validation, merger vers main pour déploiement
+
 ### Code Quality
 
 ```bash
