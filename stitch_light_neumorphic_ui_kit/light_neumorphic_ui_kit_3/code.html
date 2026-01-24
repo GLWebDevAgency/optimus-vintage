@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Neumorphic Design System Dark</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    primary: "#00E5FF", // Neon Teal accent
+                    "bg-base": "#292D32", // Deep Charcoal background
+                    "text-main": "#E0E5EC",
+                    "text-muted": "#9BA0A8",
+                    // Palette colors for display
+                    "pal-light": "#353A40",
+                    "pal-dark": "#1E2024",
+                },
+                fontFamily: {
+                    display: ["Nunito", "sans-serif"],
+                },
+                boxShadow: {
+                    'neu-flat': '6px 6px 12px #1E2024, -6px -6px 12px #353A40',
+                    'neu-pressed': 'inset 6px 6px 12px #1E2024, inset -6px -6px 12px #353A40',
+                    'neu-icon': '3px 3px 6px #1E2024, -3px -3px 6px #353A40',
+                    'neu-glow': '0 0 10px rgba(0, 229, 255, 0.5)',
+                }
+            },
+        },
+    };
+</script>
+<style>
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    body {
+        min-height: max(884px, 100dvh);
+    }
+</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-900 font-display flex items-center justify-center min-h-screen p-4">
+<div class="w-full max-w-sm bg-bg-base rounded-[2.5rem] shadow-2xl overflow-hidden relative border-8 border-gray-800 h-[800px] flex flex-col text-text-main">
+<div class="px-6 pt-5 pb-2 flex justify-between items-center opacity-60 text-xs font-semibold select-none">
+<span>9:41</span>
+<div class="flex items-center space-x-1">
+<span class="material-icons-round text-sm">signal_cellular_alt</span>
+<span class="material-icons-round text-sm">wifi</span>
+<span class="material-icons-round text-sm">battery_full</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto no-scrollbar px-6 pb-8 pt-4 space-y-8">
+<div>
+<h1 class="text-2xl font-bold tracking-tight text-text-main">Design System</h1>
+<p class="text-primary text-sm font-semibold tracking-wide uppercase opacity-90">Dark Mode Neumorphism</p>
+</div>
+<section>
+<div class="flex items-center justify-between mb-3">
+<h2 class="text-xs uppercase tracking-widest text-text-muted font-bold">Atoms: Buttons</h2>
+</div>
+<div class="p-5 rounded-2xl bg-bg-base shadow-neu-pressed flex flex-col gap-6">
+<div class="flex justify-around items-center">
+<div class="flex flex-col items-center gap-2">
+<button class="w-14 h-14 rounded-full bg-bg-base shadow-neu-flat flex items-center justify-center text-text-main hover:text-primary transition-colors active:shadow-neu-pressed">
+<span class="material-icons-round text-2xl">power_settings_new</span>
+</button>
+<span class="text-[10px] text-text-muted font-medium">Extruded</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<button class="w-14 h-14 rounded-full bg-bg-base shadow-neu-pressed flex items-center justify-center text-primary">
+<span class="material-icons-round text-2xl">fingerprint</span>
+</button>
+<span class="text-[10px] text-text-muted font-medium">Inset</span>
+</div>
+</div>
+<div class="flex justify-around items-center w-full">
+<button class="flex-1 mr-2 h-12 rounded-xl bg-bg-base shadow-neu-flat flex items-center justify-center text-sm font-bold tracking-wider text-text-main active:shadow-neu-pressed transition-all">
+                            BUTTON
+                        </button>
+<button class="flex-1 ml-2 h-12 rounded-xl bg-bg-base shadow-neu-pressed flex items-center justify-center text-sm font-bold tracking-wider text-primary transition-all">
+                            ACTIVE
+                        </button>
+</div>
+</div>
+</section>
+<section>
+<h2 class="text-xs uppercase tracking-widest text-text-muted font-bold mb-4">Toggles &amp; Switches</h2>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 rounded-2xl bg-bg-base shadow-neu-flat flex flex-col items-center justify-center gap-3">
+<div class="w-14 h-7 rounded-full bg-bg-base shadow-neu-pressed relative px-1 flex items-center cursor-pointer transition-colors">
+<div class="absolute right-1 w-5 h-5 rounded-full bg-primary shadow-neu-glow"></div>
+</div>
+<span class="text-[10px] text-text-muted">Active State</span>
+</div>
+<div class="p-4 rounded-2xl bg-bg-base shadow-neu-flat flex flex-col items-center justify-center gap-3">
+<div class="w-14 h-7 rounded-full bg-bg-base shadow-neu-pressed relative px-1 flex items-center cursor-pointer">
+<div class="absolute left-1 w-5 h-5 rounded-full bg-bg-base shadow-neu-flat"></div>
+</div>
+<span class="text-[10px] text-text-muted">Inactive State</span>
+</div>
+</div>
+</section>
+<section>
+<h2 class="text-xs uppercase tracking-widest text-text-muted font-bold mb-4">Sliders</h2>
+<div class="p-5 rounded-2xl bg-bg-base shadow-neu-flat space-y-6">
+<div class="flex items-center gap-3">
+<span class="material-icons-round text-text-muted text-sm">brightness_5</span>
+<div class="flex-1 h-3 rounded-full bg-bg-base shadow-neu-pressed relative flex items-center px-1">
+<div class="w-[70%] h-1.5 rounded-full bg-primary shadow-neu-glow"></div>
+<div class="w-5 h-5 rounded-full bg-bg-base shadow-neu-flat absolute left-[70%] -ml-2.5 border border-gray-700"></div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-icons-round text-text-muted text-sm">volume_up</span>
+<div class="flex-1 h-3 rounded-full bg-bg-base shadow-neu-pressed relative flex items-center px-1">
+<div class="w-[40%] h-1.5 rounded-full bg-text-muted opacity-30"></div>
+<div class="w-5 h-5 rounded-full bg-bg-base shadow-neu-flat absolute left-[40%] -ml-2.5 border border-gray-700"></div>
+</div>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 rounded-2xl bg-bg-base shadow-neu-flat flex flex-col items-center justify-center aspect-square">
+<div class="relative w-24 h-24 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle cx="50%" cy="50%" fill="transparent" r="40%" stroke="#1E2024" stroke-width="8"></circle>
+<circle class="drop-shadow-[0_0_4px_rgba(0,229,255,0.6)]" cx="50%" cy="50%" fill="transparent" r="40%" stroke="#00E5FF" stroke-dasharray="251" stroke-dashoffset="62" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute text-center">
+<span class="text-sm font-bold block text-text-main">75%</span>
+</div>
+</div>
+<span class="text-[10px] text-text-muted mt-2 font-bold uppercase">System Load</span>
+</div>
+<div class="p-4 rounded-2xl bg-bg-base shadow-neu-flat flex flex-col justify-between">
+<div class="grid grid-cols-2 gap-3">
+<div class="aspect-square rounded-xl bg-bg-base shadow-neu-flat flex items-center justify-center text-primary active:shadow-neu-pressed transition-all">
+<span class="material-icons-round text-lg">home</span>
+</div>
+<div class="aspect-square rounded-xl bg-bg-base shadow-neu-flat flex items-center justify-center text-text-muted hover:text-text-main transition-all">
+<span class="material-icons-round text-lg">person</span>
+</div>
+<div class="aspect-square rounded-xl bg-bg-base shadow-neu-flat flex items-center justify-center text-text-muted hover:text-text-main transition-all">
+<span class="material-icons-round text-lg">settings</span>
+</div>
+<div class="aspect-square rounded-xl bg-bg-base shadow-neu-flat flex items-center justify-center text-text-muted hover:text-text-main transition-all">
+<span class="material-icons-round text-lg">search</span>
+</div>
+</div>
+</div>
+</div>
+<section>
+<h2 class="text-xs uppercase tracking-widest text-text-muted font-bold mb-4">Shadow &amp; Highlight System</h2>
+<div class="flex space-x-3">
+<div class="flex-1 p-3 rounded-xl bg-bg-base shadow-neu-pressed flex flex-col items-center justify-center">
+<div class="w-10 h-10 rounded-full bg-pal-light shadow-md mb-2 border border-white/5"></div>
+<span class="text-[10px] text-text-main font-bold">Light</span>
+<span class="text-[9px] text-text-muted uppercase">#353A40</span>
+</div>
+<div class="flex-1 p-3 rounded-xl bg-bg-base shadow-neu-flat flex flex-col items-center justify-center relative border border-primary/20">
+<div class="w-10 h-10 rounded-full bg-bg-base shadow-neu-flat mb-2"></div>
+<span class="text-[10px] text-primary font-bold">Base</span>
+<span class="text-[9px] text-text-muted uppercase">#292D32</span>
+</div>
+<div class="flex-1 p-3 rounded-xl bg-bg-base shadow-neu-pressed flex flex-col items-center justify-center">
+<div class="w-10 h-10 rounded-full bg-pal-dark shadow-inner mb-2 border border-black/20"></div>
+<span class="text-[10px] text-text-main font-bold">Shadow</span>
+<span class="text-[9px] text-text-muted uppercase">#1E2024</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+
+</body></html>

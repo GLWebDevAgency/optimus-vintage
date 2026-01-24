@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Neumorphic UI Kit - Mobile Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FF7D05", // Orange accent from the image
+                        "background-light": "#E0E5EC", // Classic neumorphic base
+                        "background-dark": "#2D2D35", // Dark mode base
+                        "surface-light": "#E0E5EC",
+                        "surface-dark": "#2D2D35",
+                        "text-light": "#4A5568",
+                        "text-dark": "#E2E8F0",
+                    },
+                    fontFamily: {
+                        display: ["Nunito", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "1rem",
+                        'xl': "1.5rem",
+                        '2xl': "2rem",
+                    },
+                    boxShadow: {
+                        // Light Mode Neumorphism
+                        'neu-flat': '9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5)',
+                        'neu-pressed': 'inset 6px 6px 10px 0 rgba(163,177,198, 0.7), inset -6px -6px 10px 0 rgba(255,255,255, 0.8)',
+                        'neu-convex': '6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8)',
+                        'neu-icon': '3px 3px 6px 0 rgba(163,177,198, 0.7), -3px -3px 6px 0 rgba(255,255,255, 0.8)',
+                        // Dark Mode Neumorphism
+                        'neu-flat-dark': '6px 6px 12px #202025, -6px -6px 12px #3a3a45',
+                        'neu-pressed-dark': 'inset 4px 4px 8px #202025, inset -4px -4px 8px #3a3a45',
+                        'neu-convex-dark': '5px 5px 10px #1e1e23, -5px -5px 10px #3c3c47',
+                    }
+                },
+            },
+        };
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-100 dark:bg-gray-900 font-display flex items-center justify-center min-h-screen p-4">
+<div class="w-full max-w-sm bg-background-light dark:bg-background-dark rounded-[2.5rem] shadow-2xl overflow-hidden relative border-8 border-gray-100 dark:border-gray-800 h-[800px] flex flex-col">
+<div class="px-6 pt-5 pb-2 flex justify-between items-center text-text-light dark:text-text-dark opacity-60 text-xs font-semibold">
+<span>9:41</span>
+<div class="flex items-center space-x-1">
+<span class="material-icons-round text-sm">signal_cellular_alt</span>
+<span class="material-icons-round text-sm">wifi</span>
+<span class="material-icons-round text-sm">battery_full</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto no-scrollbar px-6 pb-24 space-y-8 pt-4">
+<div class="flex justify-between items-center">
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-background-light dark:bg-background-dark shadow-neu-icon dark:shadow-neu-flat-dark text-text-light dark:text-text-dark transition-all active:shadow-neu-pressed dark:active:shadow-neu-pressed-dark">
+<span class="material-icons-round text-lg">menu</span>
+</button>
+<div class="text-center">
+<h2 class="text-xs tracking-widest uppercase text-text-light dark:text-text-dark opacity-60 font-bold">Dashboard</h2>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-background-light dark:bg-background-dark shadow-neu-icon dark:shadow-neu-flat-dark text-text-light dark:text-text-dark transition-all active:shadow-neu-pressed dark:active:shadow-neu-pressed-dark">
+<span class="material-icons-round text-lg">person</span>
+</button>
+</div>
+<div class="p-6 rounded-2xl bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-sm font-semibold text-text-light dark:text-text-dark opacity-80">Peak Demand</h3>
+<p class="text-xs text-text-light dark:text-text-dark opacity-50">Weekly Analysis</p>
+</div>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-background-light dark:bg-background-dark shadow-neu-pressed dark:shadow-neu-pressed-dark text-primary font-bold text-sm">
+                        88
+                    </div>
+</div>
+<div class="flex justify-between items-end h-32 px-2 space-x-2">
+<div class="w-2 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark h-[40%] relative"></div>
+<div class="w-2 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark h-[60%]"></div>
+<div class="w-2 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark h-[30%]"></div>
+<div class="w-2 rounded-full bg-primary shadow-lg shadow-orange-500/30 h-[85%]"></div>
+<div class="w-2 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark h-[50%]"></div>
+<div class="w-2 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark h-[70%]"></div>
+<div class="w-2 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark h-[45%]"></div>
+</div>
+<div class="flex justify-between mt-3 px-1">
+<span class="text-[10px] text-text-light dark:text-text-dark opacity-40 font-bold">M</span>
+<span class="text-[10px] text-text-light dark:text-text-dark opacity-40 font-bold">T</span>
+<span class="text-[10px] text-text-light dark:text-text-dark opacity-40 font-bold">W</span>
+<span class="text-[10px] text-primary font-bold">T</span>
+<span class="text-[10px] text-text-light dark:text-text-dark opacity-40 font-bold">F</span>
+<span class="text-[10px] text-text-light dark:text-text-dark opacity-40 font-bold">S</span>
+<span class="text-[10px] text-text-light dark:text-text-dark opacity-40 font-bold">S</span>
+</div>
+</div>
+<div class="p-6 rounded-2xl bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-sm font-semibold text-text-light dark:text-text-dark opacity-80">Efficiency</h3>
+<span class="text-xs text-primary font-bold">60%</span>
+</div>
+<div class="h-6 rounded-full bg-background-light dark:bg-background-dark shadow-neu-pressed dark:shadow-neu-pressed-dark relative flex items-center px-1">
+<div class="w-[60%] h-4 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="p-5 rounded-2xl bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark flex flex-col justify-between h-32">
+<span class="text-xs font-semibold text-text-light dark:text-text-dark opacity-70">Reports</span>
+<div class="relative w-14 h-7 rounded-full bg-background-light dark:bg-background-dark shadow-neu-pressed dark:shadow-neu-pressed-dark p-1 cursor-pointer">
+<div class="w-5 h-5 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark transform translate-x-0 transition-transform duration-300"></div>
+</div>
+</div>
+<div class="p-5 rounded-2xl bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark flex flex-col justify-between items-center h-32">
+<span class="text-xs font-semibold text-text-light dark:text-text-dark opacity-70 w-full text-left">Rating</span>
+<div class="flex-1 flex items-center justify-center">
+<span class="text-4xl font-light text-text-light dark:text-text-dark opacity-60">B</span>
+</div>
+</div>
+</div>
+<div class="space-y-6 pt-2">
+<div class="relative h-2 rounded-full bg-background-light dark:bg-background-dark shadow-neu-pressed dark:shadow-neu-pressed-dark flex items-center">
+<div class="absolute h-2 rounded-full bg-primary w-[40%]"></div>
+<div class="absolute w-6 h-6 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark left-[40%] -ml-3 border-2 border-background-light dark:border-background-dark"></div>
+</div>
+<div class="relative h-2 rounded-full bg-background-light dark:bg-background-dark shadow-neu-pressed dark:shadow-neu-pressed-dark flex items-center">
+<div class="absolute h-2 rounded-full bg-primary w-[75%]"></div>
+<div class="absolute w-6 h-6 rounded-full bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark left-[75%] -ml-3 border-2 border-background-light dark:border-background-dark"></div>
+</div>
+</div>
+<div class="pt-4 flex justify-center">
+<button class="w-full py-4 rounded-xl bg-background-light dark:bg-background-dark shadow-neu-flat dark:shadow-neu-flat-dark text-primary font-bold tracking-wider text-sm active:shadow-neu-pressed dark:active:shadow-neu-pressed-dark transition-all">
+                    GENERATE REPORT
+                </button>
+</div>
+</div>
+<div class="absolute bottom-0 w-full p-6 bg-background-light dark:bg-background-dark z-10 flex justify-between items-center pb-8 border-t border-white/20 dark:border-black/10">
+<button class="w-12 h-12 rounded-xl flex items-center justify-center bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark text-text-light dark:text-text-dark active:shadow-neu-pressed dark:active:shadow-neu-pressed-dark active:text-primary transition-all group">
+<span class="material-icons-round text-xl group-active:scale-90 transition-transform">person_outline</span>
+</button>
+<button class="w-12 h-12 rounded-xl flex items-center justify-center bg-background-light dark:bg-background-dark shadow-neu-pressed dark:shadow-neu-pressed-dark text-primary transition-all">
+<span class="material-icons-round text-xl">home</span>
+</button>
+<button class="w-12 h-12 rounded-xl flex items-center justify-center bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark text-text-light dark:text-text-dark active:shadow-neu-pressed dark:active:shadow-neu-pressed-dark active:text-primary transition-all group">
+<span class="material-icons-round text-xl group-active:scale-90 transition-transform">add_circle_outline</span>
+</button>
+<button class="w-12 h-12 rounded-xl flex items-center justify-center bg-background-light dark:bg-background-dark shadow-neu-convex dark:shadow-neu-convex-dark text-text-light dark:text-text-dark active:shadow-neu-pressed dark:active:shadow-neu-pressed-dark active:text-primary transition-all group">
+<span class="material-icons-round text-xl group-active:scale-90 transition-transform">insert_chart_outlined</span>
+</button>
+</div>
+</div>
+
+</body></html>

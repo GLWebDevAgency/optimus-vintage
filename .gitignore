@@ -35,6 +35,9 @@ yarn-error.*
 .env
 api/.env
 
+# AI agents skills (installed locally)
+.agents/
+
 # typescript
 *.tsbuildinfo
 

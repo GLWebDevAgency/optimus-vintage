@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import "expo-sqlite/localStorage/install";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -27,7 +27,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "optimus-vintage-settings",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

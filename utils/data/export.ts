@@ -1,9 +1,5 @@
 import { LotsRepository, SalesRepository } from "@/db/repositories";
-import {
-    documentDirectory,
-    EncodingType,
-    writeAsStringAsync,
-} from "expo-file-system";
+import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
 export async function exportDataToCSV() {
@@ -25,17 +21,17 @@ export async function exportDataToCSV() {
       csv += `${s.id},${s.saleDate},${s.lotId},${s.itemId},${s.priceNet},${s.status}\n`;
     });
 
-    // Write to file
+    // Write to file using new expo-file-system API
     const fileName = `optimus-vintage-backup-${
       new Date().toISOString().split("T")[0]
     }.csv`;
-    const filePath = (documentDirectory || "") + fileName;
-
-    await writeAsStringAsync(filePath, csv, { encoding: EncodingType.UTF8 });
+    const file = new File(Paths.document, fileName);
+    
+    await file.write(csv);
 
     // Share
     if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(filePath);
+      await Sharing.shareAsync(file.uri);
     } else {
       return "Sharing not available on this device";
     }

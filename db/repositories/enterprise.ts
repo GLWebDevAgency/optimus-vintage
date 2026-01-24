@@ -1,6 +1,6 @@
 /**
  * 📦 Enterprise Repositories
- * 
+ *
  * Production-ready data access layer with:
  * - Strong typing
  * - Comprehensive error handling
@@ -23,6 +23,23 @@ export interface Lot {
   currency: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
+}
+
+export interface LotSummary {
+  id: number;
+  name: string | null;
+  provider: string | null;
+  buyDate: string;
+  initialQuantity: number;
+  totalCost: string;
+  additionalFees: string;
+  totalInvestment: number;
+  totalRevenue: number;
+  soldCount: number;
+  stockCount: number;
+  delta: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface NewLot {
@@ -104,6 +121,10 @@ export const LotsRepository = {
 
   async getAll(): Promise<Lot[]> {
     return api.get<Lot[]>("/lots");
+  },
+
+  async getSummary(): Promise<LotSummary[]> {
+    return api.get<LotSummary[]>("/lots/summary");
   },
 
   async getById(id: number): Promise<Lot | undefined> {
@@ -215,13 +236,23 @@ export const SalesRepository = {
     }
   },
 
+  async update(id: number, saleData: Partial<NewSale>): Promise<Sale> {
+    return api.put<Sale>(`/sales/${id}`, saleData);
+  },
+
+  async cancel(id: number): Promise<Sale> {
+    return api.post<Sale>(`/sales/${id}/cancel`, {});
+  },
+
   async getTotalRevenue(): Promise<number> {
     const result = await api.get<{ total: number }>("/sales/revenue");
     return result.total;
   },
 
   async getTotalRevenueByLotId(lotId: number): Promise<number> {
-    const result = await api.get<{ total: number }>(`/sales/revenue?lotId=${lotId}`);
+    const result = await api.get<{ total: number }>(
+      `/sales/revenue?lotId=${lotId}`,
+    );
     return result.total;
   },
 

@@ -11,6 +11,7 @@ export {
     Item,
     ItemsRepository,
     Lot,
+    LotSummary,
     LotsRepository,
     NewItem,
     NewLot,
@@ -18,5 +19,4 @@ export {
     Sale,
     SalesRepository
 } from "./enterprise";
-
 

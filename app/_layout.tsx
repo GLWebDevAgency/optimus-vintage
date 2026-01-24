@@ -1,43 +1,51 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
-import 'react-native-reanimated';
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  Manrope_200ExtraLight,
+  Manrope_300Light,
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+} from "@expo-google-fonts/manrope";
+import { useFonts } from "expo-font";
+import { router } from "expo-router";
+import { Stack } from "expo-router/stack";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useState } from "react";
+import "react-native-reanimated";
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { useColorScheme } from "@/components/useColorScheme";
+import { ensureTables } from "@/db/migrate";
+import { useSettingsStore } from "@/store/settings";
 
 export {
-    // Catch any errors thrown by the Layout component.
-    ErrorBoundary
-} from 'expo-router';
+  // Catch any errors thrown by the Layout component.
+  ErrorBoundary,
+} from "expo-router";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
+      retry: 2,
+    },
+  },
+});
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: "(tabs)",
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-import { ensureTables } from '@/db/migrate';
-import { useSettingsStore } from '@/store/settings';
-import {
-    Manrope_200ExtraLight,
-    Manrope_300Light,
-    Manrope_400Regular,
-    Manrope_500Medium,
-    Manrope_600SemiBold,
-    Manrope_700Bold,
-    Manrope_800ExtraBold
-} from '@expo-google-fonts/manrope';
-import { router } from 'expo-router';
-
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     Manrope_200ExtraLight,
     Manrope_300Light,
     Manrope_400Regular,
@@ -57,12 +65,6 @@ export default function RootLayout() {
       if (loaded) {
         try {
           await ensureTables();
-          
-          // Check onboarding (small delay to ensure store is hydrated? persist is usually fast with async storage)
-          // Ideally we check `useSettingsStore.persist.hasHydrated()`
-           const hasHydrated = useSettingsStore.persist.hasHydrated();
-           // Manually wait/check? 
-           // Actually, let's just create a quick layout effect.
         } catch (e) {
           console.error("DB Init error", e);
         } finally {
@@ -77,7 +79,11 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RootLayoutNav />
+    </QueryClientProvider>
+  );
 }
 
 // Separate component to use router hook safely
@@ -88,18 +94,19 @@ function RootLayoutNav() {
 
   // Check hydration / initial redirect
   useEffect(() => {
-      // Small timeout to allow layout to mount
-      // Better: use segments? 
-      // For MVP: if !isOnboardingDone, replace.
-      // We need to wait for store rehydration. 
-      // Zustand persist middleware is async.
-      
-      const checkParams = async () => {
-         // Force wait for hydration?
-         await useSettingsStore.persist.rehydrate();
-         setIsReady(true);
-      };
-      checkParams();
+    let isMounted = true;
+
+    const hydrate = async () => {
+      await useSettingsStore.persist.rehydrate();
+      if (isMounted) {
+        setIsReady(true);
+      }
+    };
+
+    hydrate();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {

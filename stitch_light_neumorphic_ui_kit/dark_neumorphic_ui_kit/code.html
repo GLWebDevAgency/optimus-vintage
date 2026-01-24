@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dark Neumorphic UI Kit</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#14b8a6", // Teal-500 equivalent for the neon mint/teal accent
+                        "background-light": "#e0e5ec", // Light mode greyish white
+                        "background-dark": "#212529", // Dark mode charcoal grey
+                        "surface-dark": "#212529",
+                        "surface-light": "#e0e5ec",
+                    },
+                    fontFamily: {
+                        display: ["Nunito", "sans-serif"],
+                    },
+                    boxShadow: {
+                        // Light Mode Neumorphism
+                        'neu-flat-light': '9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5)',
+                        'neu-pressed-light': 'inset 6px 6px 10px 0 rgba(163,177,198, 0.7), inset -6px -6px 10px 0 rgba(255,255,255, 0.8)',
+                        'neu-icon-light': '5px 5px 10px #babecc, -5px -5px 10px #ffffff',
+                        // Dark Mode Neumorphism
+                        'neu-flat-dark': '8px 8px 16px #16191c, -8px -8px 16px #2c3136',
+                        'neu-pressed-dark': 'inset 5px 5px 10px #16191c, inset -5px -5px 10px #2c3136',
+                        'neu-icon-dark': '5px 5px 10px #16191c, -5px -5px 10px #2c3136',
+                        'neu-accent-glow': '0 0 15px rgba(20, 184, 166, 0.5)',
+                    },
+                    borderRadius: {
+                        DEFAULT: "1.5rem", // Consistent rounded corners
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                        '3xl': '2rem',
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            transition: background-color 0.3s ease;
+        }::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex justify-center items-center py-10 transition-colors duration-300">
+<div class="w-[375px] h-[812px] bg-background-light dark:bg-background-dark rounded-[2.5rem] relative overflow-hidden shadow-2xl border-4 border-white/20 dark:border-black/20 flex flex-col">
+<div class="w-full h-12 flex justify-between items-center px-6 pt-4 text-gray-500 dark:text-gray-400 text-xs font-bold z-20">
+<span>9:41</span>
+<div class="flex space-x-2 items-center">
+<span class="material-icons-round text-sm">signal_cellular_alt</span>
+<span class="material-icons-round text-sm">wifi</span>
+<span class="material-icons-round text-sm">battery_full</span>
+</div>
+</div>
+<main class="flex-1 overflow-y-auto px-6 pt-4 pb-24 space-y-8">
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-2xl font-bold text-gray-600 dark:text-gray-300 tracking-wide">Dashboard</h1>
+<button class="w-12 h-12 rounded-xl flex items-center justify-center text-gray-500 dark:text-primary shadow-neu-flat-light dark:shadow-neu-flat-dark hover:text-primary transition-all active:shadow-neu-pressed-light dark:active:shadow-neu-pressed-dark" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-icons-round">light_mode</span>
+</button>
+</div>
+<div class="w-full p-6 rounded-3xl bg-background-light dark:bg-background-dark shadow-neu-flat-light dark:shadow-neu-flat-dark relative">
+<div class="flex flex-col items-center mb-6">
+<h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-4">Peak Demand</h2>
+<div class="w-12 h-12 rounded-full flex items-center justify-center shadow-neu-pressed-light dark:shadow-neu-pressed-dark text-gray-600 dark:text-gray-200 font-bold text-sm mb-6">
+                        88
+                    </div>
+<div class="flex items-end justify-between w-full h-24 px-2 space-x-3">
+<div class="w-2 h-10 rounded-full shadow-neu-pressed-light dark:shadow-neu-pressed-dark"></div>
+<div class="w-2 h-14 rounded-full shadow-neu-pressed-light dark:shadow-neu-pressed-dark"></div>
+<div class="w-2 h-12 rounded-full shadow-neu-pressed-light dark:shadow-neu-pressed-dark"></div>
+<div class="w-2.5 h-20 rounded-full bg-primary shadow-neu-accent-glow"></div>
+<div class="w-2 h-16 rounded-full shadow-neu-pressed-light dark:shadow-neu-pressed-dark"></div>
+<div class="w-2 h-8 rounded-full shadow-neu-pressed-light dark:shadow-neu-pressed-dark"></div>
+<div class="w-2 h-10 rounded-full shadow-neu-pressed-light dark:shadow-neu-pressed-dark"></div>
+</div>
+<div class="flex justify-between w-full px-1 mt-3 text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">
+<span>M</span><span>T</span><span>W</span><span class="text-primary">T</span><span>F</span><span>S</span><span>S</span>
+</div>
+</div>
+</div>
+<div class="w-full p-6 rounded-3xl bg-background-light dark:bg-background-dark shadow-neu-flat-light dark:shadow-neu-flat-dark">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400">Efficiency</h3>
+</div>
+<div class="w-full h-8 rounded-xl shadow-neu-pressed-light dark:shadow-neu-pressed-dark relative flex items-center px-1">
+<div class="h-6 rounded-lg bg-transparent w-[60%] flex items-center justify-center relative">
+<span class="text-xs font-bold text-gray-500 dark:text-gray-400 ml-4 absolute left-0">60%</span>
+<div class="absolute left-0 top-1 bottom-1 w-full rounded-lg bg-gray-300 dark:bg-gray-700 opacity-20"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="p-5 rounded-3xl bg-background-light dark:bg-background-dark shadow-neu-flat-light dark:shadow-neu-flat-dark flex flex-col justify-between h-32">
+<span class="text-sm font-semibold text-gray-500 dark:text-gray-400">Reports</span>
+<div class="w-14 h-8 rounded-full shadow-neu-pressed-light dark:shadow-neu-pressed-dark p-1 relative cursor-pointer">
+<div class="w-6 h-6 rounded-full bg-background-light dark:bg-background-dark shadow-neu-flat-light dark:shadow-neu-flat-dark absolute left-1 top-1 transition-all"></div>
+</div>
+</div>
+<div class="p-5 rounded-3xl bg-background-light dark:bg-background-dark shadow-neu-flat-light dark:shadow-neu-flat-dark flex flex-col justify-between h-32 items-center text-center">
+<span class="text-sm font-semibold text-gray-500 dark:text-gray-400 w-full text-left">Rating</span>
+<span class="text-4xl font-light text-gray-600 dark:text-gray-300 mb-2">B</span>
+</div>
+</div>
+<div class="space-y-6">
+<div class="relative group">
+<input class="w-full h-14 pl-6 pr-4 rounded-2xl bg-transparent shadow-neu-pressed-light dark:shadow-neu-pressed-dark text-gray-600 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:ring-1 focus:ring-primary/50 transition-all text-sm font-semibold" placeholder="John Rupple" type="text"/>
+</div>
+<div class="relative flex items-center justify-between w-full h-14 px-6 rounded-2xl bg-background-light dark:bg-background-dark shadow-neu-flat-light dark:shadow-neu-flat-dark text-gray-600 dark:text-gray-300 cursor-pointer">
+<span class="text-sm font-semibold">Account Settings</span>
+<span class="material-icons-round text-gray-400 text-lg">expand_more</span>
+</div>
+<button class="w-full h-14 rounded-2xl bg-primary text-white font-bold tracking-wider shadow-lg shadow-primary/30 active:scale-[0.98] transition-transform flex items-center justify-center uppercase text-sm">
+                    Sign Up
+                </button>
+</div>
+</main>
+<div class="absolute bottom-0 w-full px-6 pb-8 pt-4 bg-background-light dark:bg-background-dark z-30 flex justify-between items-center">
+<button class="w-12 h-12 rounded-xl flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary shadow-neu-flat-light dark:shadow-neu-flat-dark active:shadow-neu-pressed-light dark:active:shadow-neu-pressed-dark transition-all">
+<span class="material-icons-round text-xl">person</span>
+</button>
+<button class="w-12 h-12 rounded-xl flex items-center justify-center text-primary shadow-neu-pressed-light dark:shadow-neu-pressed-dark transition-all">
+<span class="material-icons-round text-xl">home</span>
+</button>
+<button class="w-12 h-12 rounded-xl flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary shadow-neu-flat-light dark:shadow-neu-flat-dark active:shadow-neu-pressed-light dark:active:shadow-neu-pressed-dark transition-all">
+<span class="material-icons-round text-xl">add</span>
+</button>
+<button class="w-12 h-12 rounded-xl flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary shadow-neu-flat-light dark:shadow-neu-flat-dark active:shadow-neu-pressed-light dark:active:shadow-neu-pressed-dark transition-all">
+<span class="material-icons-round text-xl">bar_chart</span>
+</button>
+</div>
+<div class="absolute bottom-24 w-full h-8 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent pointer-events-none z-20"></div>
+</div>
+<script>
+        // Check for saved theme preference or system preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark') // Defaulting to light for demo unless specifically dark
+             // Force dark mode for the demo purpose as per prompt "Dark Neumorphic"
+            document.documentElement.classList.add('dark')
+        }
+    </script>
+
+</body></html>

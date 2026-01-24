@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Neumorphic UI Kit - Advanced Components</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FF7D05", // Orange accent
+                        "background-light": "#E0E5EC", // Neumorphic base
+                        "text-light": "#4A5568",
+                        "text-dim": "#A0AEC0",
+                    },
+                    fontFamily: {
+                        display: ["Nunito", "sans-serif"],
+                        mono: ["Courier New", "Courier", "monospace"], // For credit card
+                    },
+                    borderRadius: {
+                        DEFAULT: "1rem",
+                        'xl': "1.5rem",
+                        '2xl': "2rem",
+                        '3xl': "3rem",
+                    },
+                    boxShadow: {
+                        'neu-flat': '9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5)',
+                        'neu-pressed': 'inset 6px 6px 10px 0 rgba(163,177,198, 0.7), inset -6px -6px 10px 0 rgba(255,255,255, 0.8)',
+                        'neu-convex': '6px 6px 10px 0 rgba(163,177,198, 0.7), -6px -6px 10px 0 rgba(255,255,255, 0.8)',
+                        'neu-convex-sm': '3px 3px 6px 0 rgba(163,177,198, 0.7), -3px -3px 6px 0 rgba(255,255,255, 0.8)',
+                        'neu-pressed-sm': 'inset 3px 3px 6px 0 rgba(163,177,198, 0.7), inset -3px -3px 6px 0 rgba(255,255,255, 0.8)',
+                    }
+                },
+            },
+        };
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }.text-emboss {
+            text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.6), -1px -1px 1px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-200 font-display flex items-center justify-center min-h-screen p-4">
+<div class="w-full max-w-sm bg-background-light rounded-[2.5rem] shadow-2xl overflow-hidden relative border-8 border-gray-100 h-[800px] flex flex-col">
+<div class="px-6 pt-5 pb-2 flex justify-between items-center text-text-light opacity-60 text-xs font-semibold select-none">
+<span>9:41</span>
+<div class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-sm font-bold">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-sm font-bold">wifi</span>
+<span class="material-symbols-outlined text-sm font-bold">battery_full</span>
+</div>
+</div>
+<div class="px-6 pt-2 pb-6 flex justify-between items-center z-10 relative select-none">
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-background-light shadow-neu-convex text-text-light active:shadow-neu-pressed transition-all duration-200">
+<span class="material-symbols-outlined text-xl">menu</span>
+</button>
+<h2 class="text-sm font-bold tracking-widest uppercase text-text-light opacity-70">Components</h2>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-background-light shadow-neu-convex text-text-light active:shadow-neu-pressed transition-all duration-200">
+<span class="material-symbols-outlined text-xl">person</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto no-scrollbar px-6 pb-32 space-y-8 pt-2">
+<div class="w-full aspect-[1.586] rounded-2xl bg-background-light shadow-neu-flat p-6 flex flex-col justify-between relative overflow-hidden group select-none">
+<div class="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white opacity-20 blur-xl pointer-events-none"></div>
+<div class="flex justify-between items-start">
+<div class="w-12 h-9 rounded-md bg-background-light shadow-neu-pressed flex items-center justify-center relative overflow-hidden">
+<div class="w-full h-[1px] bg-gray-400/20 absolute top-1/2 -translate-y-1/2"></div>
+<div class="h-full w-[1px] bg-gray-400/20 absolute left-1/3"></div>
+<div class="h-full w-[1px] bg-gray-400/20 absolute right-1/3"></div>
+<div class="w-8 h-6 rounded border border-yellow-600/30 bg-yellow-500/10 z-10"></div>
+</div>
+<div class="text-xl font-bold text-text-light opacity-30 italic font-serif">VISA</div>
+</div>
+<div class="space-y-1 mt-2">
+<div class="text-lg sm:text-xl font-bold text-text-light tracking-widest flex justify-between font-mono opacity-80 text-emboss">
+<span>4821</span> <span>••••</span> <span>••••</span> <span>3920</span>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<div class="text-[9px] uppercase font-bold text-text-light opacity-40 mb-1">Card Holder</div>
+<div class="text-xs sm:text-sm font-bold text-text-light tracking-wide uppercase opacity-80">James Anderson</div>
+</div>
+<div>
+<div class="text-[9px] uppercase font-bold text-text-light opacity-40 mb-1 text-right">Expires</div>
+<div class="text-xs sm:text-sm font-bold text-text-light tracking-wide font-mono opacity-80">09/26</div>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<h3 class="text-xs font-bold uppercase tracking-wider text-text-light opacity-50 ml-2">Input Elements</h3>
+<div class="relative w-full h-14 rounded-2xl bg-background-light shadow-neu-pressed flex items-center px-4 transition-all focus-within:ring-2 focus-within:ring-primary/10">
+<span class="material-symbols-outlined text-gray-400 mr-3">search</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-text-light placeholder-gray-400/70 font-semibold h-full outline-none" placeholder="Search..." type="text"/>
+</div>
+<div class="flex items-center justify-between p-1">
+<button class="w-14 h-14 rounded-2xl bg-background-light shadow-neu-convex flex items-center justify-center text-text-light active:shadow-neu-pressed active:text-primary transition-all">
+<span class="material-symbols-outlined font-bold">remove</span>
+</button>
+<div class="flex-1 mx-4 h-14 rounded-2xl bg-background-light shadow-neu-pressed flex items-center justify-center relative">
+<span class="text-2xl font-bold text-text-light">3</span>
+<span class="absolute right-4 text-[10px] font-bold text-text-light opacity-40 uppercase">Qty</span>
+</div>
+<button class="w-14 h-14 rounded-2xl bg-background-light shadow-neu-convex flex items-center justify-center text-text-light active:shadow-neu-pressed active:text-primary transition-all">
+<span class="material-symbols-outlined font-bold">add</span>
+</button>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-4 px-2">
+<h3 class="text-xs font-bold uppercase tracking-wider text-text-light opacity-50">Schedule</h3>
+<span class="text-xs font-bold text-primary">Edit</span>
+</div>
+<div class="w-full bg-background-light rounded-3xl shadow-neu-flat p-5">
+<div class="flex justify-between items-center mb-6 px-1">
+<button class="w-8 h-8 rounded-full bg-background-light shadow-neu-convex-sm flex items-center justify-center text-text-light active:shadow-neu-pressed-sm">
+<span class="material-symbols-outlined text-sm font-bold">chevron_left</span>
+</button>
+<span class="font-bold text-text-light text-sm">October 2023</span>
+<button class="w-8 h-8 rounded-full bg-background-light shadow-neu-convex-sm flex items-center justify-center text-text-light active:shadow-neu-pressed-sm">
+<span class="material-symbols-outlined text-sm font-bold">chevron_right</span>
+</button>
+</div>
+<div class="grid grid-cols-7 gap-2 text-center text-[10px] font-bold text-text-dim mb-3 uppercase tracking-wider">
+<span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+</div>
+<div class="grid grid-cols-7 gap-y-3 gap-x-1 text-center">
+<span class="h-8 flex items-center justify-center text-text-dim/40 text-xs font-semibold">28</span>
+<span class="h-8 flex items-center justify-center text-text-dim/40 text-xs font-semibold">29</span>
+<span class="h-8 flex items-center justify-center text-text-dim/40 text-xs font-semibold">30</span>
+<button class="h-8 w-8 mx-auto flex items-center justify-center rounded-full text-text-light text-xs font-bold hover:shadow-neu-convex-sm transition-all">1</button>
+<button class="h-8 w-8 mx-auto flex items-center justify-center rounded-full text-text-light text-xs font-bold hover:shadow-neu-convex-sm transition-all">2</button>
+<button class="h-8 w-8 mx-auto flex items-center justify-center rounded-full text-text-light text-xs font-bold hover:shadow-neu-convex-sm transition-all">3</button>
+<button class="h-8 w-8 mx-auto flex items-center justify-center rounded-full text-text-light text-xs font-bold hover:shadow-neu-convex-sm transition-all">4</button>
+<button class="h-8 w-8 mx-auto flex items-center justify-center rounded-full bg-background-light shadow-neu-pressed-sm text-primary text-xs font-bold ring-2 ring-background-light ring-offset-1 ring-offset-gray-300/50">5</button>
+<button class="h-8 w-8 mx-auto flex items-center justify-center rounded-full text-text-light text-xs font-bold hover:shadow-neu-convex-sm transition-all">6</button>
+<button class="h-8 w-8 mx-auto flex items-center justify-center rounded-full text-text-light text-xs font-bold hover:shadow-neu-convex-sm transition-all">7</button>
+</div>
+</div>
+</div>
+<div>
+<h3 class="text-xs font-bold uppercase tracking-wider text-text-light opacity-50 ml-2 mb-4">Quick Sign in</h3>
+<div class="flex justify-between gap-5 px-1">
+<button class="flex-1 h-16 rounded-2xl bg-background-light shadow-neu-convex flex items-center justify-center text-text-light active:shadow-neu-pressed active:text-blue-600 transition-all group">
+<span class="font-bold text-2xl group-active:scale-90 transition-transform font-serif">f</span>
+</button>
+<button class="flex-1 h-16 rounded-2xl bg-background-light shadow-neu-convex flex items-center justify-center text-text-light active:shadow-neu-pressed active:text-sky-500 transition-all group">
+<span class="font-bold text-xl group-active:scale-90 transition-transform">t</span>
+</button>
+<button class="flex-1 h-16 rounded-2xl bg-background-light shadow-neu-convex flex items-center justify-center text-text-light active:shadow-neu-pressed active:text-red-500 transition-all group">
+<span class="font-bold text-xl group-active:scale-90 transition-transform">G</span>
+</button>
+</div>
+</div>
+</div>
+<div class="absolute bottom-0 w-full p-6 bg-background-light z-20 flex justify-between items-center pb-8 border-t border-white/50 shadow-[0_-10px_40px_rgba(255,255,255,0.8)]">
+<button class="w-12 h-12 rounded-2xl flex items-center justify-center bg-background-light shadow-neu-pressed text-primary transition-all">
+<span class="material-symbols-outlined text-xl">widgets</span>
+</button>
+<button class="w-12 h-12 rounded-2xl flex items-center justify-center bg-background-light shadow-neu-convex text-text-light active:shadow-neu-pressed active:text-primary transition-all group">
+<span class="material-symbols-outlined text-xl group-active:scale-90 transition-transform">credit_card</span>
+</button>
+<button class="w-12 h-12 rounded-2xl flex items-center justify-center bg-background-light shadow-neu-convex text-text-light active:shadow-neu-pressed active:text-primary transition-all group">
+<span class="material-symbols-outlined text-xl group-active:scale-90 transition-transform">calendar_month</span>
+</button>
+<button class="w-12 h-12 rounded-2xl flex items-center justify-center bg-background-light shadow-neu-convex text-text-light active:shadow-neu-pressed active:text-primary transition-all group">
+<span class="material-symbols-outlined text-xl group-active:scale-90 transition-transform">settings</span>
+</button>
+</div>
+</div>
+
+</body></html>
