@@ -5,8 +5,7 @@
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import { AnimatedPremiumBackground, Button } from "@/components/ui/Components";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { useNeuTheme } from "@/constants/ThemeContext";
 import { LotsRepository, NewLot } from "@/db/repositories";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -42,8 +41,8 @@ const LOT_TYPES = [
 export default function EditLotScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
+  const { palette, shadows, spacing, radius, typography, isDark } =
+    useNeuTheme();
   const queryClient = useQueryClient();
 
   // Form state
@@ -203,13 +202,16 @@ export default function EditLotScreen() {
   if (lotQuery.isLoading) {
     return (
       <View
-        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: palette.background.main },
+        ]}
       >
-        <ActivityIndicator size="large" color={theme.primary} />
+        <ActivityIndicator size="large" color={palette.primary.main} />
         <Text
           style={[
-            Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.md },
+            typography.body.sm,
+            { color: palette.text.primaryMuted, marginTop: spacing.md },
           ]}
         >
           Loading lot...
@@ -222,21 +224,27 @@ export default function EditLotScreen() {
   if (!lotQuery.data) {
     return (
       <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
+        style={[
+          styles.errorContainer,
+          { backgroundColor: palette.background.main },
+        ]}
       >
         <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          style={[
+            styles.errorIcon,
+            { backgroundColor: palette.accent.redSubtle },
+          ]}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
+          <AppIcon name="error-outline" size={40} color={palette.accent.red} />
         </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
+        <Text style={[typography.heading.md, { color: palette.text.primary }]}>
           Lot Not Found
         </Text>
         <Button
           variant="ghost"
           size="md"
           onPress={() => router.back()}
-          style={{ marginTop: Spacing.xl }}
+          style={{ marginTop: spacing.xl }}
         >
           Go Back
         </Button>
@@ -247,7 +255,7 @@ export default function EditLotScreen() {
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={[styles.container, { backgroundColor: palette.background.main }]}
     >
       {/* ═══ Animated Premium Background ═══ */}
       <AnimatedPremiumBackground variant="light" />
@@ -255,12 +263,12 @@ export default function EditLotScreen() {
       <Stack.Screen
         options={{
           title: "Edit Lot",
-          headerStyle: { backgroundColor: theme.background },
-          headerTintColor: theme.text,
+          headerStyle: { backgroundColor: palette.background.main },
+          headerTintColor: palette.text.primary,
           headerShadowVisible: false,
           headerLeft: () => (
             <Pressable onPress={() => router.back()} hitSlop={8}>
-              <AppIcon name="close" size={24} color={theme.text} />
+              <AppIcon name="close" size={24} color={palette.text.primary} />
             </Pressable>
           ),
           headerRight: () => (
@@ -268,7 +276,9 @@ export default function EditLotScreen() {
               <AppIcon
                 name="cancel"
                 size={24}
-                color={isDeleting ? theme.textMuted : theme.danger}
+                color={
+                  isDeleting ? palette.text.primaryMuted : palette.accent.red
+                }
               />
             </Pressable>
           ),
@@ -289,22 +299,22 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(50).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
+          <Text style={[styles.label, { color: palette.text.primaryMuted }]}>
             Lot Name (optional)
           </Text>
           <TextInput
             style={[
               styles.textInput,
               {
-                backgroundColor: theme.surface,
-                color: theme.text,
-                borderColor: theme.border,
+                backgroundColor: palette.background.elevated,
+                color: palette.text.primary,
+                borderColor: palette.background.dark,
               },
             ]}
             value={name}
             onChangeText={setName}
             placeholder="e.g., Summer Collection"
-            placeholderTextColor={theme.textMuted}
+            placeholderTextColor={palette.text.primaryMuted}
           />
         </Animated.View>
 
@@ -313,7 +323,7 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(100).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
+          <Text style={[styles.label, { color: palette.text.primaryMuted }]}>
             Provider
           </Text>
           <View style={styles.typeSelector}>
@@ -324,9 +334,13 @@ export default function EditLotScreen() {
                   styles.typeButton,
                   {
                     backgroundColor:
-                      provider === p.id ? theme.primary : theme.surface,
+                      provider === p.id
+                        ? palette.primary.main
+                        : palette.background.elevated,
                     borderColor:
-                      provider === p.id ? theme.primary : theme.border,
+                      provider === p.id
+                        ? palette.primary.main
+                        : palette.background.dark,
                   },
                 ]}
                 onPress={() => setProvider(p.id)}
@@ -334,13 +348,14 @@ export default function EditLotScreen() {
                 <AppIcon
                   name={p.icon as any}
                   size={18}
-                  color={provider === p.id ? "#FFF" : theme.textMuted}
+                  color={provider === p.id ? "#FFF" : palette.text.primaryMuted}
                 />
                 <Text
                   style={[
                     styles.typeLabel,
                     {
-                      color: provider === p.id ? "#FFF" : theme.textMuted,
+                      color:
+                        provider === p.id ? "#FFF" : palette.text.primaryMuted,
                     },
                   ]}
                 >
@@ -356,17 +371,20 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(150).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
+          <Text style={[styles.label, { color: palette.text.primaryMuted }]}>
             Purchase Date
           </Text>
           <Pressable
             style={[
               styles.dateButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
+              {
+                backgroundColor: palette.background.elevated,
+                borderColor: palette.background.dark,
+              },
             ]}
             onPress={() => setShowDateSelector(!showDateSelector)}
           >
-            <Text style={[styles.dateText, { color: theme.text }]}>
+            <Text style={[styles.dateText, { color: palette.text.primary }]}>
               {formatDate(buyDate)}
             </Text>
             <AppIcon
@@ -374,7 +392,7 @@ export default function EditLotScreen() {
                 showDateSelector ? "keyboard-arrow-up" : "keyboard-arrow-down"
               }
               size={24}
-              color={theme.primary}
+              color={palette.primary.main}
             />
           </Pressable>
 
@@ -397,13 +415,13 @@ export default function EditLotScreen() {
                       styles.dateChip,
                       {
                         backgroundColor: isSelected
-                          ? theme.primary
-                          : theme.surface,
+                          ? palette.primary.main
+                          : palette.background.elevated,
                         borderColor: isSelected
-                          ? theme.primary
+                          ? palette.primary.main
                           : isToday
-                            ? theme.success
-                            : theme.border,
+                            ? palette.primary.main
+                            : palette.background.dark,
                       },
                     ]}
                     onPress={() => {
@@ -415,7 +433,9 @@ export default function EditLotScreen() {
                       style={[
                         styles.dateChipDay,
                         {
-                          color: isSelected ? "#FFF" : theme.textMuted,
+                          color: isSelected
+                            ? "#FFF"
+                            : palette.text.primaryMuted,
                         },
                       ]}
                     >
@@ -424,7 +444,7 @@ export default function EditLotScreen() {
                     <Text
                       style={[
                         styles.dateChipDate,
-                        { color: isSelected ? "#FFF" : theme.text },
+                        { color: isSelected ? "#FFF" : palette.text.primary },
                       ]}
                     >
                       {date.getDate()}
@@ -433,7 +453,9 @@ export default function EditLotScreen() {
                       style={[
                         styles.dateChipMonth,
                         {
-                          color: isSelected ? "#FFF" : theme.textMuted,
+                          color: isSelected
+                            ? "#FFF"
+                            : palette.text.primaryMuted,
                         },
                       ]}
                     >
@@ -451,7 +473,7 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(200).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
+          <Text style={[styles.label, { color: palette.text.primaryMuted }]}>
             Lot Type
           </Text>
           <View style={styles.typeSelector}>
@@ -463,9 +485,13 @@ export default function EditLotScreen() {
                   styles.typeButtonWide,
                   {
                     backgroundColor:
-                      lotType === t.id ? theme.primary : theme.surface,
+                      lotType === t.id
+                        ? palette.primary.main
+                        : palette.background.elevated,
                     borderColor:
-                      lotType === t.id ? theme.primary : theme.border,
+                      lotType === t.id
+                        ? palette.primary.main
+                        : palette.background.dark,
                   },
                 ]}
                 onPress={() => setLotType(t.id)}
@@ -474,7 +500,8 @@ export default function EditLotScreen() {
                   style={[
                     styles.typeLabel,
                     {
-                      color: lotType === t.id ? "#FFF" : theme.textMuted,
+                      color:
+                        lotType === t.id ? "#FFF" : palette.text.primaryMuted,
                     },
                   ]}
                 >
@@ -490,55 +517,85 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(250).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
+          <Text style={[styles.label, { color: palette.text.primaryMuted }]}>
             Financials
           </Text>
           <View style={styles.financialGrid}>
             <View style={styles.financialInput}>
-              <Text style={[styles.inputLabel, { color: theme.textMuted }]}>
+              <Text
+                style={[
+                  styles.inputLabel,
+                  { color: palette.text.primaryMuted },
+                ]}
+              >
                 Total Cost
               </Text>
               <View
                 style={[
                   styles.currencyInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
+                  {
+                    backgroundColor: palette.background.elevated,
+                    borderColor: palette.background.dark,
+                  },
                 ]}
               >
-                <Text style={[styles.currencySymbol, { color: theme.primary }]}>
+                <Text
+                  style={[
+                    styles.currencySymbol,
+                    { color: palette.primary.main },
+                  ]}
+                >
                   €
                 </Text>
                 <TextInput
-                  style={[styles.currencyValue, { color: theme.text }]}
+                  style={[
+                    styles.currencyValue,
+                    { color: palette.text.primary },
+                  ]}
                   value={totalCost}
                   onChangeText={setTotalCost}
                   keyboardType="decimal-pad"
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={palette.text.primaryMuted}
                 />
               </View>
             </View>
             <View style={styles.financialInput}>
-              <Text style={[styles.inputLabel, { color: theme.textMuted }]}>
+              <Text
+                style={[
+                  styles.inputLabel,
+                  { color: palette.text.primaryMuted },
+                ]}
+              >
                 Shipping
               </Text>
               <View
                 style={[
                   styles.currencyInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
+                  {
+                    backgroundColor: palette.background.elevated,
+                    borderColor: palette.background.dark,
+                  },
                 ]}
               >
                 <Text
-                  style={[styles.currencySymbol, { color: theme.textMuted }]}
+                  style={[
+                    styles.currencySymbol,
+                    { color: palette.text.primaryMuted },
+                  ]}
                 >
                   €
                 </Text>
                 <TextInput
-                  style={[styles.currencyValue, { color: theme.text }]}
+                  style={[
+                    styles.currencyValue,
+                    { color: palette.text.primary },
+                  ]}
                   value={shippingCost}
                   onChangeText={setShippingCost}
                   keyboardType="decimal-pad"
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={palette.text.primaryMuted}
                 />
               </View>
             </View>
@@ -550,26 +607,26 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(300).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
+          <Text style={[styles.label, { color: palette.text.primaryMuted }]}>
             Quantity
           </Text>
           <View style={styles.quantityRow}>
             <Pressable
               style={[
                 styles.quantityButton,
-                { backgroundColor: theme.primaryMuted },
+                { backgroundColor: palette.primary.mainMuted },
               ]}
               onPress={() => setQuantity(Math.max(0, quantity - 1))}
             >
-              <AppIcon name="remove" size={24} color={theme.primary} />
+              <AppIcon name="remove" size={24} color={palette.primary.main} />
             </Pressable>
             <TextInput
               style={[
                 styles.quantityInput,
                 {
-                  backgroundColor: theme.surface,
-                  color: theme.text,
-                  borderColor: theme.border,
+                  backgroundColor: palette.background.elevated,
+                  color: palette.text.primary,
+                  borderColor: palette.background.dark,
                 },
               ]}
               value={quantity.toString()}
@@ -579,21 +636,23 @@ export default function EditLotScreen() {
             <Pressable
               style={[
                 styles.quantityButton,
-                { backgroundColor: theme.primaryMuted },
+                { backgroundColor: palette.primary.mainMuted },
               ]}
               onPress={() => setQuantity(quantity + 1)}
             >
-              <AppIcon name="add" size={24} color={theme.primary} />
+              <AppIcon name="add" size={24} color={palette.primary.main} />
             </Pressable>
           </View>
           {quantity > 0 && totalAmount > 0 && (
             <View
               style={[
                 styles.unitCostBadge,
-                { backgroundColor: theme.successSubtle },
+                { backgroundColor: palette.primary.mainSubtle },
               ]}
             >
-              <Text style={[styles.unitCostText, { color: theme.success }]}>
+              <Text
+                style={[styles.unitCostText, { color: palette.primary.main }]}
+              >
                 Unit cost: €{unitCost}
               </Text>
             </View>
@@ -605,7 +664,7 @@ export default function EditLotScreen() {
       <View
         style={[
           styles.ctaContainer,
-          { paddingBottom: insets.bottom + Spacing.lg },
+          { paddingBottom: insets.bottom + spacing.lg },
         ]}
       >
         <Button
@@ -623,6 +682,7 @@ export default function EditLotScreen() {
   );
 }
 
+// Fixed values for StyleSheet (hooks cannot be used at module level)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -631,13 +691,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: Spacing.xl,
+    padding: 20, // spacing.xl
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: Spacing.xl,
+    padding: 20, // spacing.xl
   },
   errorIcon: {
     width: 80,
@@ -645,40 +705,40 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.lg,
+    marginBottom: 16, // spacing.lg
   },
   content: {
-    padding: Spacing.xl,
+    padding: 20, // spacing.xl
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: 20, // spacing.xl
   },
   label: {
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: Spacing.sm,
+    marginBottom: 8, // spacing.sm
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   textInput: {
     borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
+    borderRadius: 10, // radius.md
+    padding: 12, // spacing.md
     fontSize: 16,
   },
   typeSelector: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: 8, // spacing.sm
   },
   typeButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.xs,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.md,
+    gap: 4, // spacing.xs
+    paddingVertical: 12, // spacing.md
+    paddingHorizontal: 8, // spacing.sm
+    borderRadius: 10, // radius.md
     borderWidth: 1,
   },
   typeButtonWide: {
@@ -692,8 +752,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: Spacing.md,
-    borderRadius: Radius.md,
+    padding: 12, // spacing.md
+    borderRadius: 10, // radius.md
     borderWidth: 1,
   },
   dateText: {
@@ -701,16 +761,16 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   dateScroller: {
-    marginTop: Spacing.md,
+    marginTop: 12, // spacing.md
   },
   dateScrollerContent: {
-    gap: Spacing.sm,
+    gap: 8, // spacing.sm
   },
   dateChip: {
     alignItems: "center",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
+    paddingVertical: 8, // spacing.sm
+    paddingHorizontal: 12, // spacing.md
+    borderRadius: 10, // radius.md
     borderWidth: 1,
     minWidth: 60,
   },
@@ -730,42 +790,42 @@ const styles = StyleSheet.create({
   },
   financialGrid: {
     flexDirection: "row",
-    gap: Spacing.md,
+    gap: 12, // spacing.md
   },
   financialInput: {
     flex: 1,
   },
   inputLabel: {
     fontSize: 12,
-    marginBottom: Spacing.xs,
+    marginBottom: 4, // spacing.xs
   },
   currencyInput: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
+    borderRadius: 10, // radius.md
+    paddingHorizontal: 12, // spacing.md
   },
   currencySymbol: {
     fontSize: 18,
     fontWeight: "700",
-    marginRight: Spacing.xs,
+    marginRight: 4, // spacing.xs
   },
   currencyValue: {
     flex: 1,
     fontSize: 18,
     fontWeight: "600",
-    paddingVertical: Spacing.md,
+    paddingVertical: 12, // spacing.md
   },
   quantityRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
+    gap: 12, // spacing.md
   },
   quantityButton: {
     width: 48,
     height: 48,
-    borderRadius: Radius.md,
+    borderRadius: 10, // radius.md
     justifyContent: "center",
     alignItems: "center",
   },
@@ -774,15 +834,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 24,
     fontWeight: "700",
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+    paddingVertical: 12, // spacing.md
+    borderRadius: 10, // radius.md
     borderWidth: 1,
   },
   unitCostBadge: {
-    marginTop: Spacing.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
+    marginTop: 12, // spacing.md
+    paddingVertical: 8, // spacing.sm
+    paddingHorizontal: 12, // spacing.md
+    borderRadius: 10, // radius.md
     alignSelf: "flex-start",
   },
   unitCostText: {
@@ -794,7 +854,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: Spacing.lg,
+    padding: 16, // spacing.lg
   },
   ctaButton: {
     width: "100%",

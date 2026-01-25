@@ -1,38 +1,41 @@
 /**
- * 📱 WORLD-CLASS TAB BAR - Inspired by Linear, Arc, Figma
+ * 📱 NEUMORPHIC TAB BAR - Dark Soft UI Edition
  *
  * ✨ Premium Features:
- * - Fluid morphing indicator with elastic spring physics
- * - Parallax depth layers with subtle 3D effects
- * - Luminescent glow trails following active tab
- * - Haptic micro-feedback on iOS
- * - Glassmorphic aurora background
- * - Particle shimmer effects on focus
- * - Responsive pressure-sensitive animations
+ * - États fidèles au design système:
+ *   🔹 FLAT (non-sélectionné) - Ombre externe, relief sortant
+ *   🔻 PRESSED (sélectionné) - Ombre interne (inset), enfoncé
+ *   ⚡ ACTIVE - Animation scale + shadow transition au toucher
+ * - Mint green (#00D084) primary accent with glow
+ * - Fluid morphing indicator with spring physics
+ * - Haptic feedback on iOS
  */
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
-import { Palette } from "@/constants/Theme";
-import { BlurView } from "expo-blur";
+import { NeuRadius } from "@/components/ui/Neumorphic";
+import { useNeuTheme } from "@/constants/ThemeContext";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import React, { useCallback, useEffect, useMemo } from "react";
-import { Dimensions, Pressable, StyleSheet, View } from "react-native";
+import {
+    Dimensions,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
 import Animated, {
-  Easing,
-  FadeIn,
-  FadeInDown,
-  interpolate,
-  runOnJS,
-  SharedValue,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
+    Easing,
+    FadeInDown,
+    interpolate,
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -40,7 +43,7 @@ const isIOS = process.env.EXPO_OS === "ios";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🎯 CONFIGURATION - Physics & Timing
+// 🎯 CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SPRING_CONFIG = {
@@ -56,196 +59,92 @@ const SPRING_SNAPPY = {
   mass: 0.6,
 };
 
+const TIMING_SMOOTH = {
+  duration: 200,
+  easing: Easing.inOut(Easing.ease),
+};
+
 const TAB_COUNT = 5;
-const TAB_BAR_MARGIN = 20;
-const TAB_BAR_HEIGHT = 68;
-const TAB_BAR_RADIUS = 32;
+const TAB_BAR_HEIGHT = 80;
+const TAB_BAR_RADIUS = 24;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🌊 AURORA BACKGROUND - Animated gradient mesh
+// 💎 NEUMORPHIC TAB ICON - Flat ↔ Pressed avec animation fidèle au design
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function AuroraBackground() {
-  const phase = useSharedValue(0);
+/**
+ * Tab Icon avec états neumorphiques:
+ * ─────────────────────────────────────────────────────────────
+ * 🔹 Non-focused: Flat/Convex (ombre externe, relief bombé)
+ * 🔻 Focused: Pressed/Inset (ombre interne, enfoncé)
+ * ⚡ Active touch: scale(0.88) + spring animation + haptic
+ *
+ * Transition fluide: shadow morph + color + glow pulse
+ */
 
-  useEffect(() => {
-    phase.value = withRepeat(
-      withTiming(1, { duration: 8000, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
-    );
-  }, []);
-
-  const gradientStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(phase.value, [0, 0.5, 1], [0.3, 0.5, 0.3]),
-  }));
-
-  return (
-    <Animated.View style={[StyleSheet.absoluteFill, gradientStyle]}>
-      <LinearGradient
-        colors={[
-          `${Palette.emerald[100]}20`,
-          `${Palette.neutral[100]}40`,
-          `${Palette.gold[100]}15`,
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-    </Animated.View>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ✨ MORPHING INDICATOR - Fluid pill that morphs between tabs
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface MorphingIndicatorProps {
-  activeIndex: SharedValue<number>;
-  tabWidth: number;
-  containerPadding: number;
-}
-
-function MorphingIndicator({
-  activeIndex,
-  tabWidth,
-  containerPadding,
-}: MorphingIndicatorProps) {
-  // Glow pulse animation
-  const glowPulse = useSharedValue(0);
-
-  useEffect(() => {
-    glowPulse.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
-  }, []);
-
-  // Calculate indicator position with elastic overshoot
-  const indicatorStyle = useAnimatedStyle(() => {
-    const translateX =
-      activeIndex.value * tabWidth + containerPadding + (tabWidth - 52) / 2;
-    const glowIntensity = interpolate(glowPulse.value, [0, 1], [0.6, 1]);
-
-    return {
-      transform: [{ translateX }],
-      opacity: glowIntensity,
-    };
-  });
-
-  return (
-    <Animated.View style={[styles.morphIndicator, indicatorStyle]}>
-      {/* Outer glow */}
-      <View style={styles.indicatorGlowOuter}>
-        <LinearGradient
-          colors={[
-            `${Palette.emerald[400]}00`,
-            `${Palette.emerald[500]}40`,
-            `${Palette.emerald[400]}00`,
-          ]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-
-      {/* Main pill */}
-      <View style={styles.indicatorPillMain}>
-        <LinearGradient
-          colors={[
-            Palette.emerald[400],
-            Palette.emerald[500],
-            Palette.emerald[600],
-          ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-
-      {/* Highlight reflection */}
-      <View style={styles.indicatorHighlight} />
-    </Animated.View>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 💎 PREMIUM TAB ICON - Multi-layer animated icon
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface PremiumTabIconProps {
+interface NeuTabIconProps {
   name: AppIconName;
   label: string;
   focused: boolean;
   index: number;
   onPress: () => void;
+  palette: ReturnType<typeof useNeuTheme>["palette"];
+  shadows: ReturnType<typeof useNeuTheme>["shadows"];
 }
 
-function PremiumTabIcon({
+function NeuTabIcon({
   name,
   label,
   focused,
   index,
   onPress,
-}: PremiumTabIconProps) {
+  palette,
+  shadows,
+}: NeuTabIconProps) {
   // Animation values
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
-  const iconRotate = useSharedValue(0);
-  const labelOpacity = useSharedValue(0.6);
-  const labelScale = useSharedValue(0.95);
-  const pressScale = useSharedValue(1);
-  const glowRadius = useSharedValue(0);
-  const shimmerPhase = useSharedValue(0);
+  const pressProgress = useSharedValue(focused ? 1 : 0);
+  const glowPulse = useSharedValue(0);
+  const activeTouch = useSharedValue(0); // Track active press state
 
-  // Focus state animations
+  // Sync focus state with pressed animation
   useEffect(() => {
     if (focused) {
-      // Icon lifts up and scales
-      scale.value = withSpring(1.12, SPRING_CONFIG);
+      pressProgress.value = withTiming(1, TIMING_SMOOTH);
       translateY.value = withSpring(-3, SPRING_CONFIG);
-
-      // Subtle rotation bounce
-      iconRotate.value = withSequence(
-        withSpring(-3, { damping: 8, stiffness: 400 }),
-        withSpring(0, { damping: 12, stiffness: 300 }),
+      // Subtle breathing glow animation when focused
+      glowPulse.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.5, {
+            duration: 1500,
+            easing: Easing.inOut(Easing.ease),
+          }),
+        ),
+        -1,
+        true,
       );
-
-      // Label appears
-      labelOpacity.value = withDelay(50, withTiming(1, { duration: 200 }));
-      labelScale.value = withDelay(50, withSpring(1, SPRING_SNAPPY));
-
-      // Glow expands
-      glowRadius.value = withSpring(1, { damping: 15, stiffness: 150 });
-
-      // Shimmer effect
-      shimmerPhase.value = withDelay(100, withTiming(1, { duration: 600 }));
     } else {
-      scale.value = withSpring(1, SPRING_SNAPPY);
+      pressProgress.value = withTiming(0, TIMING_SMOOTH);
       translateY.value = withSpring(0, SPRING_SNAPPY);
-      iconRotate.value = withSpring(0, SPRING_SNAPPY);
-      labelOpacity.value = withTiming(0.55, { duration: 150 });
-      labelScale.value = withTiming(0.95, { duration: 150 });
-      glowRadius.value = withTiming(0, { duration: 200 });
-      shimmerPhase.value = 0;
+      glowPulse.value = 0;
     }
-  }, [focused]);
+  }, [focused, pressProgress, translateY, glowPulse]);
 
-  // Press handlers with haptic
+  // Press handlers with haptic feedback
   const handlePressIn = useCallback(() => {
-    pressScale.value = withSpring(0.92, SPRING_SNAPPY);
+    activeTouch.value = 1;
+    scale.value = withSpring(0.88, SPRING_SNAPPY);
     if (isIOS) {
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
     }
-  }, []);
+  }, [scale, activeTouch]);
 
   const handlePressOut = useCallback(() => {
-    pressScale.value = withSpring(1, SPRING_CONFIG);
-  }, []);
+    activeTouch.value = 0;
+    scale.value = withSpring(1, SPRING_CONFIG);
+  }, [scale, activeTouch]);
 
   const handlePress = useCallback(() => {
     if (isIOS && !focused) {
@@ -254,37 +153,35 @@ function PremiumTabIcon({
     onPress();
   }, [focused, onPress]);
 
-  // Animated styles
+  // Container animation (scale + position + subtle rotation)
   const containerStyle = useAnimatedStyle(() => ({
     transform: [
-      { scale: pressScale.value * scale.value },
+      { scale: scale.value },
       { translateY: translateY.value },
+      { rotate: `${interpolate(activeTouch.value, [0, 1], [0, -1])}deg` },
     ],
   }));
 
-  const iconWrapperStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${iconRotate.value}deg` }],
+  // Flat shadow layer (visible when NOT focused) - Extruded/Convex look
+  const flatShadowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(pressProgress.value, [0, 0.4, 1], [1, 0.3, 0]),
+    transform: [{ scale: interpolate(pressProgress.value, [0, 1], [1, 0.96]) }],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowRadius.value * 0.8,
-    transform: [{ scale: interpolate(glowRadius.value, [0, 1], [0.5, 1.3]) }],
+  // Pressed shadow layer (visible when focused - inset/depressed effect)
+  const pressedShadowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(pressProgress.value, [0, 0.6, 1], [0, 0.3, 1]),
+    transform: [{ scale: interpolate(pressProgress.value, [0, 1], [0.96, 1]) }],
   }));
 
-  const labelStyle = useAnimatedStyle(() => ({
-    opacity: labelOpacity.value,
-    transform: [
-      { scale: labelScale.value },
-      { translateY: interpolate(labelOpacity.value, [0.55, 1], [2, 0]) },
-    ],
+  // Glow dot animation with breathing effect
+  const glowDotStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(glowPulse.value, [0, 1], [0.7, 1]),
+    transform: [{ scale: interpolate(glowPulse.value, [0, 1], [0.7, 1.3]) }],
   }));
 
-  const shimmerStyle = useAnimatedStyle(() => ({
-    opacity: shimmerPhase.value,
-    transform: [
-      { translateX: interpolate(shimmerPhase.value, [0, 1], [-20, 20]) },
-    ],
-  }));
+  // Icon color transition
+  const iconColor = focused ? palette.primary.main : palette.text.muted;
 
   return (
     <Pressable
@@ -294,100 +191,96 @@ function PremiumTabIcon({
       style={styles.tabItem}
     >
       <Animated.View style={[styles.tabContent, containerStyle]}>
-        {/* Ambient glow */}
-        <Animated.View style={[styles.ambientGlow, glowStyle]}>
-          <LinearGradient
-            colors={[
-              `${Palette.emerald[400]}00`,
-              `${Palette.emerald[500]}50`,
-              `${Palette.emerald[400]}00`,
+        {/* Icon container with layered shadows for morph effect */}
+        <View style={styles.iconContainer}>
+          {/* Flat/Convex shadow layer (non-focused) - Extruded look */}
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              styles.iconBgFlat,
+              { backgroundColor: palette.background.main },
+              flatShadowStyle,
+              Platform.OS === "web" &&
+                ({ boxShadow: shadows.convex.cssSm } as any),
+              Platform.OS === "ios" && shadows.convex.iosSm,
+              Platform.OS === "android" && {
+                elevation: shadows.convex.androidSm,
+              },
             ]}
-            style={StyleSheet.absoluteFill}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
           />
-        </Animated.View>
 
-        {/* Icon container with background */}
-        <Animated.View style={[styles.iconWrapper, iconWrapperStyle]}>
-          {/* Focus background pill */}
+          {/* Pressed/Inset shadow layer (focused) - Depressed look */}
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              styles.iconBgPressed,
+              { backgroundColor: palette.background.main },
+              pressedShadowStyle,
+              Platform.OS === "web" &&
+                ({ boxShadow: shadows.pressed.cssSm } as any),
+            ]}
+          />
+
+          {/* Icon with animated color */}
+          <AppIcon name={name} size={24} color={iconColor} />
+
+          {/* Active glow dot with pulse animation */}
           {focused && (
             <Animated.View
-              entering={FadeIn.duration(150)}
-              style={styles.iconBgPill}
-            >
-              <LinearGradient
-                colors={[`${Palette.emerald[100]}`, `${Palette.emerald[50]}`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-
-              {/* Shimmer overlay */}
-              <Animated.View style={[styles.shimmerOverlay, shimmerStyle]}>
-                <LinearGradient
-                  colors={[
-                    "transparent",
-                    `${Palette.neutral.white}60`,
-                    "transparent",
-                  ]}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={StyleSheet.absoluteFill}
-                />
-              </Animated.View>
-            </Animated.View>
+              style={[
+                styles.activeDot,
+                { backgroundColor: palette.primary.main },
+                glowDotStyle,
+                Platform.OS === "web" &&
+                  ({
+                    boxShadow: `0 0 8px ${palette.primary.main}`,
+                  } as any),
+                Platform.OS === "ios" && {
+                  shadowColor: palette.primary.main,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.9,
+                  shadowRadius: 6,
+                },
+              ]}
+            />
           )}
+        </View>
 
-          {/* Icon */}
-          <AppIcon
-            name={name}
-            size={22}
-            color={focused ? Palette.emerald[600] : Palette.neutral[400]}
-          />
-        </Animated.View>
-
-        {/* Label with micro-animation */}
-        <Animated.Text style={[styles.tabLabel, labelStyle]}>
+        {/* Label with animated color */}
+        <Text
+          style={[
+            styles.tabLabel,
+            {
+              color: focused ? palette.text.primary : palette.text.muted,
+            },
+            focused && styles.tabLabelActive,
+          ]}
+        >
           {label}
-        </Animated.Text>
+        </Text>
       </Animated.View>
     </Pressable>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🏛️ WORLD-CLASS TAB BAR
+// 🏛️ NEUMORPHIC TAB BAR
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface WorldClassTabBarProps {
+interface NeuTabBarProps {
   state: any;
   descriptors: any;
   navigation: any;
 }
 
-function WorldClassTabBar({
-  state,
-  descriptors,
-  navigation,
-}: WorldClassTabBarProps) {
+function NeuTabBar({ state, descriptors, navigation }: NeuTabBarProps) {
   const insets = useSafeAreaInsets();
-  const activeIndex = useSharedValue(state.index);
+  const { palette, shadows } = useNeuTheme();
 
-  // Calculate dimensions
-  const containerWidth = SCREEN_WIDTH - TAB_BAR_MARGIN * 2;
-  const containerPadding = 12;
-  const tabWidth = (containerWidth - containerPadding * 2) / TAB_COUNT;
-
-  // Update active index with spring animation
-  useEffect(() => {
-    activeIndex.value = withSpring(state.index, SPRING_CONFIG);
-  }, [state.index]);
-
-  // Route configuration
+  // Route configuration (matching design)
   const routeConfigMap: Record<string, { name: AppIconName; label: string }> = {
     index: { name: "home", label: "Accueil" },
-    lots: { name: "inventory-2", label: "Lots" },
+    lots: { name: "grid-view", label: "Lots" },
     stock: { name: "checkroom", label: "Stock" },
     sales: { name: "point-of-sale", label: "Ventes" },
     settings: { name: "settings", label: "Réglages" },
@@ -404,65 +297,20 @@ function WorldClassTabBar({
       entering={FadeInDown.duration(500).springify()}
       style={[
         styles.tabBarWrapper,
-        { paddingBottom: Math.max(insets.bottom, 8) },
+        { paddingBottom: Math.max(insets.bottom, 24) },
       ]}
     >
-      {/* Main container */}
-      <View style={styles.tabBarContainer}>
-        {/* Multi-layer glassmorphic background */}
-        <View style={styles.glassContainer}>
-          {/* Base blur */}
-          <BlurView
-            intensity={isIOS ? 60 : 100}
-            tint="light"
-            style={StyleSheet.absoluteFill}
-          />
-
-          {/* Aurora gradient mesh */}
-          <AuroraBackground />
-
-          {/* Glass overlay */}
-          <View style={styles.glassOverlay} />
-
-          {/* Top edge highlight */}
-          <View style={styles.topHighlight}>
-            <LinearGradient
-              colors={[
-                `${Palette.neutral.white}80`,
-                `${Palette.neutral.white}20`,
-                "transparent",
-              ]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-        </View>
-
-        {/* Luminous border */}
-        <View style={styles.luminousBorder}>
-          <LinearGradient
-            colors={[
-              `${Palette.emerald[300]}30`,
-              `${Palette.neutral[200]}15`,
-              `${Palette.gold[300]}25`,
-              `${Palette.neutral[200]}10`,
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-
-        {/* Morphing active indicator */}
-        <MorphingIndicator
-          activeIndex={activeIndex}
-          tabWidth={tabWidth}
-          containerPadding={containerPadding}
-        />
-
+      {/* Main neumorphic container */}
+      <View
+        style={[
+          styles.tabBarContainer,
+          { backgroundColor: palette.background.main },
+          Platform.OS === "web" && ({ boxShadow: shadows.tabBar.css } as any),
+          Platform.OS === "ios" && shadows.tabBar.ios,
+        ]}
+      >
         {/* Tab items */}
-        <View style={[styles.tabsRow, { paddingHorizontal: containerPadding }]}>
+        <View style={styles.tabsRow}>
           {validRoutes.map((route: any, index: number) => {
             const isFocused = state.index === index;
             const config = routeConfigMap[route.name];
@@ -481,13 +329,15 @@ function WorldClassTabBar({
             };
 
             return (
-              <PremiumTabIcon
+              <NeuTabIcon
                 key={route.key}
                 name={config.name}
                 label={config.label}
                 focused={isFocused}
                 index={index}
                 onPress={onPress}
+                palette={palette}
+                shadows={shadows}
               />
             );
           })}
@@ -504,7 +354,7 @@ function WorldClassTabBar({
 export default function TabLayout() {
   return (
     <Tabs
-      tabBar={(props) => <WorldClassTabBar {...props} />}
+      tabBar={(props) => <NeuTabBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
@@ -519,7 +369,7 @@ export default function TabLayout() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🎨 PREMIUM STYLES
+// 🎨 NEUMORPHIC STYLES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const styles = StyleSheet.create({
@@ -529,152 +379,77 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: TAB_BAR_MARGIN,
-    paddingTop: 8,
+    paddingTop: 16,
   },
 
   tabBarContainer: {
     height: TAB_BAR_HEIGHT,
-    borderRadius: TAB_BAR_RADIUS,
-    overflow: "hidden",
+    borderTopLeftRadius: TAB_BAR_RADIUS,
+    borderTopRightRadius: TAB_BAR_RADIUS,
     borderCurve: "continuous",
-    // Premium multi-layer shadow
-    boxShadow: `
-      0 2px 4px rgba(0, 0, 0, 0.02),
-      0 4px 8px rgba(0, 0, 0, 0.03),
-      0 8px 16px rgba(0, 0, 0, 0.04),
-      0 16px 32px rgba(0, 0, 0, 0.05),
-      0 0 0 0.5px ${Palette.neutral[200]}50,
-      0 20px 40px ${Palette.emerald[200]}20
-    `,
-  },
-
-  // ─── Glass Effect ──────────────────────────────────────────────────────────
-  glassContainer: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: "hidden",
-    borderRadius: TAB_BAR_RADIUS,
-  },
-
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: `${Palette.neutral.white}75`,
-  },
-
-  topHighlight: {
-    position: "absolute",
-    top: 0,
-    left: 24,
-    right: 24,
-    height: 1,
-  },
-
-  // ─── Luminous Border ───────────────────────────────────────────────────────
-  luminousBorder: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    opacity: 0.8,
-  },
-
-  // ─── Morphing Indicator ────────────────────────────────────────────────────
-  morphIndicator: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: 52,
-    height: 4,
-    alignItems: "center",
-  },
-
-  indicatorGlowOuter: {
-    position: "absolute",
-    top: -2,
-    left: -8,
-    right: -8,
-    height: 8,
-    opacity: 0.6,
-  },
-
-  indicatorPillMain: {
-    width: 32,
-    height: 3,
-    borderRadius: 1.5,
-    overflow: "hidden",
-    boxShadow: `0 0 8px ${Palette.emerald[500]}80`,
-  },
-
-  indicatorHighlight: {
-    position: "absolute",
-    top: 0,
-    left: 10,
-    right: 10,
-    height: 1,
-    backgroundColor: `${Palette.neutral.white}60`,
-    borderRadius: 0.5,
   },
 
   // ─── Tabs Row ──────────────────────────────────────────────────────────────
   tabsRow: {
     flex: 1,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
+    paddingTop: 16,
+    paddingHorizontal: 16,
   },
 
   // ─── Tab Item ──────────────────────────────────────────────────────────────
   tabItem: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 6,
+    justifyContent: "flex-start",
   },
 
   tabContent: {
     alignItems: "center",
     justifyContent: "center",
+    gap: 4,
   },
 
-  // ─── Ambient Glow ──────────────────────────────────────────────────────────
-  ambientGlow: {
-    position: "absolute",
-    top: -16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-  },
-
-  // ─── Icon Wrapper ──────────────────────────────────────────────────────────
-  iconWrapper: {
-    width: 44,
-    height: 32,
-    borderRadius: 16,
+  // ─── Icon Container ────────────────────────────────────────────────────────
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: NeuRadius.lg,
     alignItems: "center",
     justifyContent: "center",
-    borderCurve: "continuous",
-    overflow: "hidden",
+    position: "relative",
   },
 
-  iconBgPill: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 16,
-    overflow: "hidden",
-    borderCurve: "continuous",
+  // Flat state (non-focused) - external shadow, raised look
+  iconBgFlat: {
+    borderRadius: NeuRadius.lg,
   },
 
-  shimmerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    width: 40,
+  // Pressed state (focused) - inset shadow, depressed look
+  iconBgPressed: {
+    borderRadius: NeuRadius.lg,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)",
+  },
+
+  // ─── Active Dot ────────────────────────────────────────────────────────────
+  activeDot: {
+    position: "absolute",
+    bottom: -6,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
 
   // ─── Tab Label ─────────────────────────────────────────────────────────────
   tabLabel: {
     fontSize: 10,
-    fontFamily: "Manrope_600SemiBold",
-    fontWeight: "600",
-    letterSpacing: 0.1,
-    marginTop: 4,
-    color: Palette.neutral[600],
+    fontWeight: "500",
+    letterSpacing: 0.2,
+  },
+
+  tabLabelActive: {
+    fontWeight: "700",
   },
 });

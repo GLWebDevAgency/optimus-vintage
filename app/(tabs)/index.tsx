@@ -1,37 +1,46 @@
 /**
- * 💎 DASHBOARD - Premium Analytics Edition
- * Inspired by modern analytics dashboards (Linear, Stripe, Vercel)
+ * 💎 DASHBOARD - Neumorphic Light/Dark Edition
  *
- * Key Metrics for Vintage Resellers:
- * - Total Revenue (main hero number)
- * - Profit/Loss with trend
- * - Stock value & count
- * - Sales velocity
- * - Top performing lots
- * - ROI breakdown
+ * Design fidèle 100% au mockup de référence
+ * Style: Soft UI, Neumorphic, Glow accents
+ * Primary: #00D084 (Mint Green)
+ * Thème dynamique Light/Dark via useNeuColors()
  */
 
-import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
-import { PremiumScreen, usePremiumTheme } from "@/components/ui/PremiumUI";
+import { AppIcon } from "@/components/ui/AppIcon";
+import {
+    NeuCard,
+    NeuIndicatorDot,
+    NeuMetricCard,
+    NeuPeriodChip,
+    NeuQuickAction,
+    NeuScreen,
+    NeuTopLotCard,
+    useNeuColors,
+} from "@/components/ui/Neumorphic";
 import { SkeletonDashboard } from "@/components/ui/Skeleton";
-import { Palette, Radius, Spacing, Typography } from "@/constants/Theme";
 import { LotsRepository, SalesRepository } from "@/db/repositories";
 import { computeLotSummary } from "@/utils/engine/calculations";
 import { Haptic } from "@/utils/haptics";
 import { useQuery } from "@tanstack/react-query";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    Platform,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Animated, {
+    FadeIn,
+    FadeInDown,
+    FadeInUp,
+    SlideInRight,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path } from "react-native-svg";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📦 TYPES & CONSTANTS
@@ -51,7 +60,7 @@ const PERIOD_OPTIONS: PeriodOption[] = [
   { key: "30d", label: "30 jours", shortLabel: "30J", days: 30 },
   { key: "3m", label: "3 mois", shortLabel: "3M", days: 90 },
   { key: "1y", label: "1 an", shortLabel: "1A", days: 365 },
-  { key: "all", label: "Tout", shortLabel: "Tout", days: null },
+  { key: "all", label: "Tout", shortLabel: "TOUT", days: null },
 ];
 
 function getDateThreshold(days: number | null): Date | null {
@@ -74,6 +83,8 @@ function formatCurrency(value: number, compact = false): string {
 }
 
 function formatNumber(value: number): string {
+  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
   return value.toLocaleString("fr-FR");
 }
 
@@ -83,512 +94,15 @@ function formatPercent(value: number): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🎯 MINI COMPONENTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Period Chip Component
-interface PeriodChipProps {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}
-
-function PeriodChip({ label, selected, onPress }: PeriodChipProps) {
-  const theme = usePremiumTheme();
-
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.periodChip,
-        {
-          backgroundColor: selected ? theme.primary : "transparent",
-          borderColor: selected ? theme.primary : theme.border,
-        },
-      ]}
-    >
-      <Text
-        style={[
-          Typography.label.sm,
-          {
-            color: selected ? "#FFFFFF" : theme.textSecondary,
-            fontWeight: selected ? "700" : "500",
-          },
-        ]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-// Metric Card Component (3-column layout like reference)
-interface MetricCardProps {
-  icon: AppIconName;
-  iconColor: string;
-  iconBg: string;
-  label: string;
-  value: string;
-  onPress?: () => void;
-}
-
-function MetricCard({
-  icon,
-  iconColor,
-  iconBg,
-  label,
-  value,
-  onPress,
-}: MetricCardProps) {
-  const theme = usePremiumTheme();
-
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.metricCard,
-        { backgroundColor: theme.surfaceCard, borderColor: theme.borderCard },
-      ]}
-    >
-      <View style={[styles.metricIcon, { backgroundColor: iconBg }]}>
-        <AppIcon name={icon} size={16} color={iconColor} />
-      </View>
-      <View style={styles.metricContent}>
-        <Text style={[Typography.number.lg, { color: theme.text }]}>
-          {value}
-        </Text>
-        <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-          {label}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
-// Stat Row Item (for breakdown sections)
-interface StatRowProps {
-  icon: AppIconName;
-  iconColor: string;
-  label: string;
-  value: string;
-  valueColor?: string;
-  trend?: { value: string; positive: boolean };
-}
-
-function StatRow({
-  icon,
-  iconColor,
-  label,
-  value,
-  valueColor,
-  trend,
-}: StatRowProps) {
-  const theme = usePremiumTheme();
-
-  return (
-    <View style={styles.statRow}>
-      <View style={styles.statRowLeft}>
-        <View
-          style={[styles.statRowIcon, { backgroundColor: `${iconColor}15` }]}
-        >
-          <AppIcon name={icon} size={14} color={iconColor} />
-        </View>
-        <Text style={[Typography.body.sm, { color: theme.textSecondary }]}>
-          {label}
-        </Text>
-      </View>
-      <View style={styles.statRowRight}>
-        <Text
-          style={[Typography.number.md, { color: valueColor || theme.text }]}
-        >
-          {value}
-        </Text>
-        {trend && (
-          <View
-            style={[
-              styles.trendBadge,
-              {
-                backgroundColor: trend.positive
-                  ? theme.successSubtle
-                  : theme.dangerSubtle,
-              },
-            ]}
-          >
-            <AppIcon
-              name={trend.positive ? "trending-up" : "trending-down"}
-              size={10}
-              color={trend.positive ? theme.success : theme.danger}
-            />
-            <Text
-              style={[
-                Typography.label.xs,
-                { color: trend.positive ? theme.success : theme.danger },
-              ]}
-            >
-              {trend.value}
-            </Text>
-          </View>
-        )}
-      </View>
-    </View>
-  );
-}
-
-// Quick Action Button
-interface QuickActionBtnProps {
-  icon: AppIconName;
-  label: string;
-  onPress: () => void;
-  variant?: "primary" | "secondary";
-  accentColor?: string;
-  accentBg?: string;
-}
-
-function QuickActionBtn({
-  icon,
-  label,
-  onPress,
-  variant = "secondary",
-  accentColor,
-  accentBg,
-}: QuickActionBtnProps) {
-  const theme = usePremiumTheme();
-  const isPrimary = variant === "primary";
-
-  // Use custom accent color or fallback to theme
-  const iconColor = accentColor || theme.primary;
-  const iconBgColor = accentBg || theme.primarySubtle;
-
-  return (
-    <Pressable
-      onPress={() => {
-        Haptic.impactMedium();
-        onPress();
-      }}
-      style={[
-        styles.quickActionBtn,
-        {
-          backgroundColor: isPrimary ? iconColor : theme.surfaceCard,
-          borderColor: isPrimary ? iconColor : theme.borderCard,
-        },
-      ]}
-    >
-      <View
-        style={[
-          styles.quickActionIcon,
-          {
-            backgroundColor: isPrimary ? "rgba(255,255,255,0.2)" : iconBgColor,
-          },
-        ]}
-      >
-        <AppIcon
-          name={icon}
-          size={18}
-          color={isPrimary ? "#FFFFFF" : iconColor}
-        />
-      </View>
-      <Text
-        style={[
-          Typography.label.sm,
-          { color: isPrimary ? "#FFFFFF" : theme.text, marginTop: Spacing.xs },
-        ]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-// Donut Chart Component (visual breakdown)
-interface DonutSegment {
-  value: number;
-  color: string;
-  label: string;
-}
-
-// Semi-Circular Donut Chart avec SVG - Style référence
-function DonutChart({
-  segments,
-  centerValue,
-  centerLabel,
-}: {
-  segments: DonutSegment[];
-  centerValue: string;
-  centerLabel: string;
-}) {
-  const theme = usePremiumTheme();
-
-  // Configuration du semi-donut
-  const SIZE = 140;
-  const STROKE_WIDTH = 20;
-  const RADIUS = (SIZE - STROKE_WIDTH) / 2;
-  const CENTER = SIZE / 2;
-
-  // Calculer le total pour les proportions
-  const total = segments.reduce((sum, s) => sum + Math.abs(s.value), 0);
-
-  // Calculer les arcs pour un demi-cercle (180°)
-  // On commence à 180° (gauche) et on va vers 0° (droite)
-  let currentAngle = 180; // Commence à gauche
-
-  const arcs = segments.map((segment) => {
-    const percentage = total > 0 ? Math.abs(segment.value) / total : 0;
-    const sweepAngle = percentage * 180; // Sur 180° seulement
-    const startAngle = currentAngle;
-    currentAngle -= sweepAngle; // On va dans le sens anti-horaire
-
-    return {
-      ...segment,
-      startAngle,
-      endAngle: currentAngle,
-      sweepAngle,
-    };
-  });
-
-  // Fonction pour créer un arc SVG
-  const describeArc = (
-    cx: number,
-    cy: number,
-    r: number,
-    startAngle: number,
-    endAngle: number,
-  ): string => {
-    const start = polarToCartesian(cx, cy, r, startAngle);
-    const end = polarToCartesian(cx, cy, r, endAngle);
-    const largeArcFlag = Math.abs(startAngle - endAngle) > 180 ? 1 : 0;
-
-    return [
-      "M",
-      start.x,
-      start.y,
-      "A",
-      r,
-      r,
-      0,
-      largeArcFlag,
-      0,
-      end.x,
-      end.y,
-    ].join(" ");
-  };
-
-  const polarToCartesian = (
-    cx: number,
-    cy: number,
-    r: number,
-    angleInDegrees: number,
-  ) => {
-    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-    return {
-      x: cx + r * Math.cos(angleInRadians),
-      y: cy + r * Math.sin(angleInRadians),
-    };
-  };
-
-  return (
-    <View style={styles.donutContainer}>
-      {/* Semi-Donut SVG */}
-      <View
-        style={[styles.donutVisual, { width: SIZE, height: SIZE / 2 + 30 }]}
-      >
-        <View
-          style={{ width: SIZE, height: SIZE / 2 + 10, overflow: "hidden" }}
-        >
-          <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-            {/* Background arc (gris) */}
-            <Path
-              d={describeArc(CENTER, CENTER, RADIUS, 180, 0)}
-              stroke={theme.border}
-              strokeWidth={STROKE_WIDTH}
-              fill="none"
-              strokeLinecap="round"
-            />
-
-            {/* Segments colorés */}
-            {arcs.map((arc, index) => {
-              if (arc.sweepAngle < 0.5) return null; // Skip très petits segments
-              return (
-                <Path
-                  key={index}
-                  d={describeArc(
-                    CENTER,
-                    CENTER,
-                    RADIUS,
-                    arc.startAngle,
-                    arc.endAngle,
-                  )}
-                  stroke={arc.color}
-                  strokeWidth={STROKE_WIDTH}
-                  fill="none"
-                  strokeLinecap="round"
-                />
-              );
-            })}
-          </Svg>
-        </View>
-
-        {/* Centre avec valeur - positionné au milieu du demi-cercle */}
-        <View
-          style={[
-            styles.donutCenter,
-            {
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              alignItems: "center",
-            },
-          ]}
-        >
-          <Text
-            style={[
-              Typography.display.lg,
-              {
-                color: theme.text,
-                fontSize: 28,
-                fontWeight: "800",
-                letterSpacing: -0.5,
-              },
-            ]}
-          >
-            {centerValue}
-          </Text>
-          <Text
-            style={[
-              Typography.label.sm,
-              { color: theme.textMuted, marginTop: 2 },
-            ]}
-          >
-            {centerLabel}
-          </Text>
-        </View>
-      </View>
-
-      {/* Legend à droite */}
-      <View style={styles.donutLegend}>
-        {segments.map((segment, index) => (
-          <View key={index} style={styles.legendItem}>
-            <View
-              style={[styles.legendDot, { backgroundColor: segment.color }]}
-            />
-            <View style={styles.legendText}>
-              <Text style={[Typography.body.sm, { color: theme.text }]}>
-                {segment.label}
-              </Text>
-              <Text
-                style={[
-                  Typography.number.md,
-                  { color: segment.color, fontWeight: "600" },
-                ]}
-              >
-                {formatCurrency(segment.value)}
-              </Text>
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-// Top Lot Card
-interface TopLotProps {
-  rank: number;
-  name: string;
-  revenue: number;
-  profit: number;
-  soldCount: number;
-  onPress: () => void;
-}
-
-function TopLotCard({
-  rank,
-  name,
-  revenue,
-  profit,
-  soldCount,
-  onPress,
-}: TopLotProps) {
-  const theme = usePremiumTheme();
-  const isProfitable = profit >= 0;
-
-  // 🏆 Rank colors: Gold, Silver, Bronze
-  const getRankColors = (r: number) => {
-    switch (r) {
-      case 1:
-        return { bg: Palette.gold[500], text: "#FFFFFF" };
-      case 2:
-        return { bg: Palette.neutral[400], text: "#FFFFFF" };
-      case 3:
-        return { bg: Palette.amber[600], text: "#FFFFFF" };
-      default:
-        return { bg: theme.surfaceHighlight, text: theme.textSecondary };
-    }
-  };
-  const rankColors = getRankColors(rank);
-
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.topLotCard,
-        { backgroundColor: theme.surfaceCard, borderColor: theme.borderCard },
-      ]}
-    >
-      <View
-        style={[
-          styles.rankBadge,
-          {
-            backgroundColor: rankColors.bg,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            Typography.label.sm,
-            { color: rankColors.text, fontWeight: "700" },
-          ]}
-        >
-          #{rank}
-        </Text>
-      </View>
-      <View style={styles.topLotInfo}>
-        <Text
-          style={[Typography.body.md, { color: theme.text, fontWeight: "600" }]}
-          numberOfLines={1}
-        >
-          {name}
-        </Text>
-        <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-          {soldCount} ventes
-        </Text>
-      </View>
-      <View style={styles.topLotStats}>
-        <Text style={[Typography.number.md, { color: theme.text }]}>
-          {formatCurrency(revenue)}
-        </Text>
-        <Text
-          style={[
-            Typography.label.xs,
-            { color: isProfitable ? Palette.emerald[500] : Palette.rose[500] },
-          ]}
-        >
-          {isProfitable ? "+" : ""}
-          {formatCurrency(profit)}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🏠 DASHBOARD COMPONENT
+// 🏠 DASHBOARD SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
-  const theme = usePremiumTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>("30d");
+
+  // 🎨 Thème dynamique Light/Dark
+  const { palette, shadows, spacing, radius, typography } = useNeuColors();
 
   // ─── Data Queries ────────────────────────────────────────────────────
   const lotsQuery = useQuery({
@@ -641,14 +155,12 @@ export default function DashboardScreen() {
       totalStock += summary.remainingQuantity;
       if (summary.remainingQuantity > 0) activeLots++;
 
-      // Calculate stock value (remaining items × average cost)
       const avgCost =
         lot.totalCost && lot.initialQuantity
           ? Number(lot.totalCost) / lot.initialQuantity
           : 0;
       stockValue += summary.remainingQuantity * avgCost;
 
-      // Period-specific revenue
       const periodRevenue = lotSales.reduce(
         (sum, s) => sum + parseFloat(String(s.priceNet)),
         0,
@@ -666,9 +178,7 @@ export default function DashboardScreen() {
 
     const profit = totalRev - totalInvest;
     const roi = totalInvest > 0 ? (profit / totalInvest) * 100 : 0;
-    const avgSaleValue = sales.length > 0 ? totalRev / sales.length : 0;
 
-    // Top performing lots (by revenue)
     const topLots = lotStats
       .filter((l) => l.soldCount > 0)
       .sort((a, b) => b.revenue - a.revenue)
@@ -682,7 +192,6 @@ export default function DashboardScreen() {
       stockCount: totalStock,
       stockValue,
       salesCount: sales.length,
-      avgSaleValue,
       activeLots,
       topLots,
     };
@@ -703,41 +212,36 @@ export default function DashboardScreen() {
   // 🎨 RENDER
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  // Show skeleton while loading
   if (loading) {
     return (
-      <PremiumScreen>
+      <NeuScreen>
         <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            {
-              paddingTop: insets.top + Spacing.sm,
-              paddingBottom: insets.bottom + 120,
-            },
-          ]}
+          contentContainerStyle={{
+            paddingHorizontal: spacing.screen,
+            paddingTop: insets.top + spacing.sm,
+            paddingBottom: insets.bottom + 120,
+          }}
           showsVerticalScrollIndicator={false}
         >
           <SkeletonDashboard />
         </ScrollView>
-      </PremiumScreen>
+      </NeuScreen>
     );
   }
 
   return (
-    <PremiumScreen>
+    <NeuScreen>
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingTop: insets.top + Spacing.sm,
-            paddingBottom: insets.bottom + 120,
-          },
-        ]}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.screen,
+          paddingTop: insets.top + spacing.sm,
+          paddingBottom: insets.bottom + 120,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={theme.primary}
+            tintColor={palette.primary.main}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -745,51 +249,91 @@ export default function DashboardScreen() {
         {/* ═══ HEADER ═══ */}
         <Animated.View
           entering={FadeInDown.duration(400)}
-          style={styles.header}
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: spacing.lg,
+          }}
         >
-          <View style={styles.headerLeft}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing.md,
+            }}
+          >
             <View
-              style={[styles.avatarCircle, { backgroundColor: theme.primary }]}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: palette.primary.main,
+                justifyContent: "center",
+                alignItems: "center",
+                ...(Platform.OS === "web" &&
+                  ({ boxShadow: shadows.flat.cssSm } as any)),
+                ...(Platform.OS === "ios" && shadows.flat.iosSm),
+              }}
             >
-              <Text style={[Typography.heading.md, { color: "#FFFFFF" }]}>
+              <Text
+                style={{ ...typography.heading.md, color: palette.text.white }}
+              >
                 OV
               </Text>
             </View>
             <View>
-              <Text style={[Typography.heading.lg, { color: theme.text }]}>
+              <Text
+                style={{
+                  ...typography.heading.xl,
+                  color: palette.text.primary,
+                }}
+              >
                 Optimus Vintage
               </Text>
-              <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+              <Text
+                style={{ ...typography.body.xs, color: palette.text.muted }}
+              >
                 {lots.length} lots • {stats.stockCount} articles
               </Text>
             </View>
           </View>
           <Pressable
-            style={[
-              styles.headerBtn,
-              {
-                backgroundColor: theme.surfaceCard,
-                borderColor: theme.borderCard,
-              },
-            ]}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: radius.lg,
+              backgroundColor: palette.background.main,
+              justifyContent: "center",
+              alignItems: "center",
+              ...(Platform.OS === "web" &&
+                ({ boxShadow: shadows.flat.cssSm } as any)),
+              ...(Platform.OS === "ios" && shadows.flat.iosSm),
+            }}
             onPress={() => router.push("/(tabs)/settings")}
           >
-            <AppIcon name="settings" size={20} color={theme.textSecondary} />
+            <AppIcon name="settings" size={20} color={palette.text.muted} />
           </Pressable>
         </Animated.View>
 
         {/* ═══ PERIOD FILTER ═══ */}
         <Animated.View
           entering={FadeInDown.delay(50).duration(400)}
-          style={styles.periodSection}
+          style={{
+            marginBottom: spacing.lg,
+            marginHorizontal: -spacing.screen,
+          }}
         >
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.periodScroll}
+            contentContainerStyle={{
+              paddingHorizontal: spacing.screen,
+              gap: spacing.md,
+            }}
           >
             {PERIOD_OPTIONS.map((option) => (
-              <PeriodChip
+              <NeuPeriodChip
                 key={option.key}
                 label={option.shortLabel}
                 selected={selectedPeriod === option.key}
@@ -799,168 +343,267 @@ export default function DashboardScreen() {
           </ScrollView>
         </Animated.View>
 
-        {/* ═══ HERO REVENUE CARD ═══ */}
+        {/* ═══ HERO REVENUE CARD (Gradient) ═══ */}
         <Animated.View
           entering={FadeInUp.delay(100).duration(500)}
-          style={styles.section}
+          style={{ marginBottom: spacing.lg }}
         >
-          <View
-            style={[
-              styles.heroCard,
-              {
-                backgroundColor: theme.surfaceCard,
-                borderColor: theme.borderCard,
-              },
+          <LinearGradient
+            colors={[
+              palette.background.gradient.start,
+              palette.background.gradient.end,
             ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              borderRadius: radius["2xl"],
+              padding: spacing.xl,
+              overflow: "hidden",
+              ...(Platform.OS === "web" &&
+                ({ boxShadow: shadows.flat.css } as any)),
+              ...(Platform.OS === "ios" && shadows.flat.ios),
+            }}
           >
-            <View style={styles.heroHeader}>
-              <Text style={[Typography.label.sm, { color: theme.textMuted }]}>
+            {/* Header */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: spacing.lg,
+              }}
+            >
+              <Text
+                style={{
+                  ...typography.label.md,
+                  color: palette.text.muted,
+                  letterSpacing: 2,
+                }}
+              >
                 CHIFFRE D'AFFAIRES
               </Text>
               <Pressable
                 onPress={() => router.push("/(tabs)/sales")}
-                style={[
-                  styles.detailsBtn,
-                  { backgroundColor: theme.surfaceHighlight },
-                ]}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: spacing.xs,
+                  paddingHorizontal: spacing.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: palette.background.main,
+                  gap: 4,
+                  ...(Platform.OS === "web" &&
+                    ({ boxShadow: shadows.flat.cssSm } as any)),
+                }}
               >
                 <Text
-                  style={[Typography.label.xs, { color: theme.textSecondary }]}
+                  style={{
+                    ...typography.label.xs,
+                    color: palette.primary.main,
+                  }}
                 >
-                  Détails
+                  DÉTAILS
                 </Text>
                 <AppIcon
                   name="chevron-right"
                   size={14}
-                  color={theme.textSecondary}
+                  color={palette.primary.main}
                 />
               </Pressable>
             </View>
 
-            <View style={styles.heroValue}>
-              <Text style={[styles.heroNumber, { color: theme.text }]}>
+            {/* Hero Value */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "baseline",
+                marginBottom: spacing.xl,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 48,
+                  fontWeight: "800",
+                  color: palette.text.primary,
+                  letterSpacing: -1,
+                }}
+              >
                 {formatNumber(stats.revenue)}
-                <Text
-                  style={[Typography.heading.lg, { color: theme.textMuted }]}
-                >
-                  €
-                </Text>
+              </Text>
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: "400",
+                  color: palette.text.muted,
+                  marginLeft: 4,
+                }}
+              >
+                €
               </Text>
             </View>
 
-            {/* Mini stats under hero */}
-            <View style={styles.heroStats}>
-              <View style={styles.heroStat}>
+            {/* Mini Stats (3 columns) */}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {/* Profit */}
+              <View style={{ flex: 1, alignItems: "center" }}>
                 <View
-                  style={[
-                    styles.heroStatDot,
-                    { backgroundColor: Palette.emerald[500] },
-                  ]}
-                />
-                <Text
-                  style={[Typography.body.sm, { color: theme.textSecondary }]}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 4,
+                  }}
                 >
-                  Profit
-                </Text>
+                  <NeuIndicatorDot
+                    color={palette.accent.green}
+                    glowColor={palette.accent.greenGlow}
+                  />
+                  <Text
+                    style={{
+                      ...typography.label.xs,
+                      color: palette.text.muted,
+                      textTransform: "none",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Profit
+                  </Text>
+                </View>
                 <Text
-                  style={[
-                    Typography.number.sm,
-                    {
-                      color:
-                        stats.profit >= 0
-                          ? Palette.emerald[500]
-                          : Palette.rose[500],
-                    },
-                  ]}
+                  style={{
+                    ...typography.number.md,
+                    color:
+                      stats.profit >= 0
+                        ? palette.accent.green
+                        : palette.accent.red,
+                  }}
                 >
                   {stats.profit >= 0 ? "+" : ""}
                   {formatCurrency(stats.profit)}
                 </Text>
               </View>
+
+              {/* Divider */}
               <View
-                style={[
-                  styles.heroStatDivider,
-                  { backgroundColor: theme.border },
-                ]}
+                style={{
+                  width: 1,
+                  height: 40,
+                  backgroundColor: palette.divider.main,
+                }}
               />
-              <View style={styles.heroStat}>
+
+              {/* Ventes */}
+              <View style={{ flex: 1, alignItems: "center" }}>
                 <View
-                  style={[
-                    styles.heroStatDot,
-                    { backgroundColor: Palette.sky[500] },
-                  ]}
-                />
-                <Text
-                  style={[Typography.body.sm, { color: theme.textSecondary }]}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 4,
+                  }}
                 >
-                  Ventes
-                </Text>
+                  <NeuIndicatorDot
+                    color={palette.accent.blue}
+                    glowColor={palette.accent.blueGlow}
+                  />
+                  <Text
+                    style={{
+                      ...typography.label.xs,
+                      color: palette.text.muted,
+                      textTransform: "none",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Ventes
+                  </Text>
+                </View>
                 <Text
-                  style={[Typography.number.sm, { color: Palette.sky[400] }]}
+                  style={{
+                    ...typography.number.md,
+                    color: palette.accent.blue,
+                  }}
                 >
                   {stats.salesCount}
                 </Text>
               </View>
+
+              {/* Divider */}
               <View
-                style={[
-                  styles.heroStatDivider,
-                  { backgroundColor: theme.border },
-                ]}
+                style={{
+                  width: 1,
+                  height: 40,
+                  backgroundColor: palette.divider.main,
+                }}
               />
-              <View style={styles.heroStat}>
+
+              {/* ROI */}
+              <View style={{ flex: 1, alignItems: "center" }}>
                 <View
-                  style={[
-                    styles.heroStatDot,
-                    { backgroundColor: Palette.gold[500] },
-                  ]}
-                />
-                <Text
-                  style={[Typography.body.sm, { color: theme.textSecondary }]}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 4,
+                  }}
                 >
-                  ROI
-                </Text>
+                  <NeuIndicatorDot
+                    color={palette.accent.yellow}
+                    glowColor={palette.accent.yellowGlow}
+                  />
+                  <Text
+                    style={{
+                      ...typography.label.xs,
+                      color: palette.text.muted,
+                      textTransform: "none",
+                      fontWeight: "600",
+                    }}
+                  >
+                    ROI
+                  </Text>
+                </View>
                 <Text
-                  style={[
-                    Typography.number.sm,
-                    {
-                      color:
-                        stats.roi >= 0 ? Palette.gold[400] : Palette.rose[500],
-                    },
-                  ]}
+                  style={{
+                    ...typography.number.md,
+                    color:
+                      stats.roi >= 0
+                        ? palette.accent.yellow
+                        : palette.accent.red,
+                  }}
                 >
                   {formatPercent(stats.roi)}
                 </Text>
               </View>
             </View>
-          </View>
+          </LinearGradient>
         </Animated.View>
 
         {/* ═══ METRIC CARDS (3 columns) ═══ */}
         <Animated.View
           entering={FadeInUp.delay(150).duration(500)}
-          style={styles.metricsRow}
+          style={{
+            flexDirection: "row",
+            gap: spacing.md,
+            marginBottom: spacing.lg,
+          }}
         >
-          <MetricCard
+          <NeuMetricCard
             icon="inventory-2"
-            iconColor={Palette.violet[500]}
-            iconBg={Palette.violet[100]}
-            label="En stock"
+            iconColor={palette.accent.indigo}
             value={formatNumber(stats.stockCount)}
+            label="En Stock"
             onPress={() => router.push("/(tabs)/stock")}
           />
-          <MetricCard
+          <NeuMetricCard
             icon="account-balance-wallet"
-            iconColor={Palette.teal[500]}
-            iconBg={Palette.teal[100]}
-            label="Val. stock"
+            iconColor={palette.accent.teal}
             value={formatCurrency(stats.stockValue, true)}
+            label="Val. Stock"
           />
-          <MetricCard
+          <NeuMetricCard
             icon="folder"
-            iconColor={Palette.indigo[500]}
-            iconBg={Palette.indigo[100]}
-            label="Lots actifs"
+            iconColor={palette.accent.blue}
             value={formatNumber(stats.activeLots)}
+            label="Lots Actifs"
             onPress={() => router.push("/(tabs)/lots")}
           />
         </Animated.View>
@@ -968,45 +611,41 @@ export default function DashboardScreen() {
         {/* ═══ QUICK ACTIONS ═══ */}
         <Animated.View
           entering={FadeInUp.delay(200).duration(500)}
-          style={styles.section}
+          style={{ marginBottom: spacing.lg }}
         >
           <Text
-            style={[
-              Typography.heading.sm,
-              { color: theme.text, marginBottom: Spacing.md },
-            ]}
+            style={{
+              ...typography.heading.sm,
+              color: palette.text.primary,
+              marginBottom: spacing.md,
+            }}
           >
             Actions rapides
           </Text>
-          <View style={styles.quickActionsGrid}>
-            <QuickActionBtn
+          <View style={{ flexDirection: "row", gap: spacing.md }}>
+            <NeuQuickAction
               icon="add"
-              label="Nouveau lot"
+              label="Nouveau Lot"
               onPress={() => router.push("/lots/new")}
               variant="primary"
-              accentColor={Palette.emerald[500]}
-              accentBg={Palette.emerald[100]}
             />
-            <QuickActionBtn
+            <NeuQuickAction
               icon="sell"
               label="Vendre"
               onPress={() => router.push("/sales/new")}
-              accentColor={Palette.gold[500]}
-              accentBg={Palette.gold[100]}
+              iconColor={palette.accent.amber}
             />
-            <QuickActionBtn
+            <NeuQuickAction
               icon="inventory-2"
               label="Stock"
               onPress={() => router.push("/(tabs)/stock")}
-              accentColor={Palette.sky[500]}
-              accentBg={Palette.sky[100]}
+              iconColor={palette.accent.sky}
             />
-            <QuickActionBtn
+            <NeuQuickAction
               icon="analytics"
               label="Lots"
               onPress={() => router.push("/(tabs)/lots")}
-              accentColor={Palette.fuchsia[500]}
-              accentBg={Palette.fuchsia[100]}
+              iconColor={palette.accent.purple}
             />
           </View>
         </Animated.View>
@@ -1015,426 +654,125 @@ export default function DashboardScreen() {
         {stats.topLots.length > 0 && (
           <Animated.View
             entering={FadeInUp.delay(300).duration(500)}
-            style={styles.section}
+            style={{ marginBottom: spacing.lg }}
           >
-            <View style={styles.sectionHeader}>
-              <Text style={[Typography.heading.sm, { color: theme.text }]}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  ...typography.heading.sm,
+                  color: palette.text.primary,
+                }}
+              >
                 Top Performers
               </Text>
               <Pressable onPress={() => router.push("/(tabs)/lots")}>
-                <Text style={[Typography.label.sm, { color: theme.primary }]}>
-                  Voir tout
+                <Text
+                  style={{
+                    ...typography.label.sm,
+                    color: palette.primary.main,
+                  }}
+                >
+                  VOIR TOUT
                 </Text>
               </Pressable>
             </View>
-            <View style={styles.topLotsContainer}>
+            <View style={{ gap: spacing.sm }}>
               {stats.topLots.map((lot, index) => (
-                <TopLotCard
+                <Animated.View
                   key={lot.id}
-                  rank={index + 1}
-                  name={lot.name}
-                  revenue={lot.revenue}
-                  profit={lot.profit}
-                  soldCount={lot.soldCount}
-                  onPress={() => router.push(`/lots/${lot.id}`)}
-                />
+                  entering={SlideInRight.delay(350 + index * 100).duration(400)}
+                >
+                  <NeuTopLotCard
+                    rank={index + 1}
+                    name={lot.name}
+                    salesCount={lot.soldCount}
+                    revenue={formatCurrency(lot.revenue)}
+                    profit={`${lot.profit >= 0 ? "+" : ""}${formatCurrency(lot.profit)}`}
+                    profitPositive={lot.profit >= 0}
+                    onPress={() => router.push(`/lots/${lot.id}`)}
+                  />
+                </Animated.View>
               ))}
             </View>
           </Animated.View>
         )}
 
-        {/* ═══ KEY METRICS BREAKDOWN ═══ */}
-        <Animated.View
-          entering={FadeInUp.delay(350).duration(500)}
-          style={styles.section}
-        >
-          <Text
-            style={[
-              Typography.heading.sm,
-              { color: theme.text, marginBottom: Spacing.md },
-            ]}
+        {/* ═══ EMPTY STATE ═══ */}
+        {stats.topLots.length === 0 && lots.length === 0 && (
+          <Animated.View
+            entering={FadeIn.delay(400).duration(500)}
+            style={{ marginBottom: spacing.lg }}
           >
-            Détails
-          </Text>
-          <View
-            style={[
-              styles.detailsCard,
-              {
-                backgroundColor: theme.surfaceCard,
-                borderColor: theme.borderCard,
-              },
-            ]}
-          >
-            <StatRow
-              icon="trending-up"
-              iconColor={Palette.emerald[500]}
-              label="Revenu total"
-              value={formatCurrency(stats.revenue)}
-              valueColor={Palette.emerald[500]}
-            />
-            <StatRow
-              icon="trending-down"
-              iconColor={Palette.violet[500]}
-              label="Investissement"
-              value={formatCurrency(stats.investment)}
-              valueColor={Palette.violet[500]}
-            />
-            <StatRow
-              icon="account-balance-wallet"
-              iconColor={
-                stats.profit >= 0 ? Palette.teal[500] : Palette.rose[500]
-              }
-              label="Profit net"
-              value={formatCurrency(stats.profit)}
-              valueColor={
-                stats.profit >= 0 ? Palette.teal[500] : Palette.rose[500]
-              }
-              trend={{
-                value: formatPercent(stats.roi),
-                positive: stats.roi >= 0,
-              }}
-            />
-            <View style={[styles.divider, { backgroundColor: theme.border }]} />
-            <StatRow
-              icon="receipt"
-              iconColor={Palette.sky[500]}
-              label="Ventes effectuées"
-              value={String(stats.salesCount)}
-            />
-            <StatRow
-              icon="sell"
-              iconColor={Palette.gold[500]}
-              label="Prix moyen de vente"
-              value={formatCurrency(stats.avgSaleValue)}
-            />
-            <StatRow
-              icon="inventory"
-              iconColor={Palette.indigo[500]}
-              label="Valeur du stock"
-              value={formatCurrency(stats.stockValue)}
-              valueColor={Palette.indigo[500]}
-            />
-          </View>
-        </Animated.View>
+            <NeuCard
+              style={{ alignItems: "center" }}
+              padding="xl"
+              borderRadius="xl"
+            >
+              <AppIcon
+                name="inventory-2"
+                size={48}
+                color={palette.text.muted}
+              />
+              <Text
+                style={{
+                  ...typography.heading.lg,
+                  color: palette.text.primary,
+                  marginTop: spacing.lg,
+                  textAlign: "center",
+                }}
+              >
+                Commencez votre aventure
+              </Text>
+              <Text
+                style={{
+                  ...typography.body.md,
+                  color: palette.text.muted,
+                  marginTop: spacing.xs,
+                  textAlign: "center",
+                  maxWidth: 280,
+                }}
+              >
+                Créez votre premier lot pour suivre vos articles vintage
+              </Text>
+              <Pressable
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: spacing.xs,
+                  backgroundColor: palette.primary.main,
+                  paddingVertical: spacing.sm,
+                  paddingHorizontal: spacing.xl,
+                  borderRadius: radius.xl,
+                  marginTop: spacing.xl,
+                  ...(Platform.OS === "web" &&
+                    ({ boxShadow: shadows.glow.css } as any)),
+                  ...(Platform.OS === "ios" && shadows.glow.ios),
+                }}
+                onPress={() => router.push("/lots/new")}
+              >
+                <AppIcon name="add" size={18} color={palette.text.white} />
+                <Text
+                  style={{ ...typography.label.md, color: palette.text.white }}
+                >
+                  Créer un lot
+                </Text>
+              </Pressable>
+            </NeuCard>
+          </Animated.View>
+        )}
       </ScrollView>
-    </PremiumScreen>
+    </NeuScreen>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🎨 STYLES
+// 🎨 TYPE EXPORT pour NeuColors (utilisé pour la compatibilité)
 // ═══════════════════════════════════════════════════════════════════════════════
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-  },
-
-  // Header
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.lg,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-  },
-
-  // Period Filter
-  periodSection: {
-    marginBottom: Spacing.lg,
-    marginHorizontal: -Spacing.lg,
-  },
-  periodScroll: {
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.xs,
-  },
-  periodChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-  },
-
-  // Sections
-  section: {
-    marginBottom: Spacing.lg,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-
-  // Hero Card - Glassmorphic 3D effect
-  heroCard: {
-    borderRadius: Radius["2xl"],
-    borderWidth: 1,
-    padding: Spacing.xl,
-    // Multi-layer 3D shadow
-    boxShadow: `
-      0 2px 4px rgba(0, 0, 0, 0.02),
-      0 4px 8px rgba(0, 0, 0, 0.03),
-      0 8px 16px rgba(0, 0, 0, 0.04),
-      0 16px 32px rgba(16, 185, 129, 0.08)
-    `,
-  },
-  heroHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-  },
-  detailsBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    gap: 2,
-  },
-  heroValue: {
-    marginBottom: Spacing.lg,
-  },
-  heroNumber: {
-    fontSize: 48,
-    fontFamily: "Manrope_700Bold",
-    letterSpacing: -1,
-  },
-  heroStats: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  heroStat: {
-    flex: 1,
-    alignItems: "center",
-    gap: 4,
-  },
-  heroStatDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  heroStatDivider: {
-    width: 1,
-    height: 40,
-  },
-
-  // Metrics Row
-  metricsRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  metricCard: {
-    flex: 1,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    padding: Spacing.md,
-    alignItems: "center",
-    // Glassmorphic 3D effect
-    boxShadow: `
-      0 2px 4px rgba(0, 0, 0, 0.02),
-      0 4px 8px rgba(0, 0, 0, 0.03),
-      0 8px 16px rgba(16, 185, 129, 0.06)
-    `,
-  },
-  metricIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.lg,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-  },
-  metricContent: {
-    alignItems: "center",
-  },
-
-  // Quick Actions
-  quickActionsGrid: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  quickActionBtn: {
-    flex: 1,
-    alignItems: "center",
-    padding: Spacing.md,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    // Glassmorphic 3D effect
-    boxShadow: `
-      0 2px 4px rgba(0, 0, 0, 0.02),
-      0 4px 8px rgba(0, 0, 0, 0.03),
-      0 8px 16px rgba(16, 185, 129, 0.05)
-    `,
-  },
-  quickActionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.lg,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  // Breakdown Card - Glassmorphic
-  breakdownCard: {
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    padding: Spacing.lg,
-    boxShadow: `
-      0 2px 4px rgba(0, 0, 0, 0.02),
-      0 4px 8px rgba(0, 0, 0, 0.03),
-      0 8px 16px rgba(16, 185, 129, 0.06)
-    `,
-  },
-
-  // Donut Chart
-  donutContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Spacing.md,
-  },
-  donutVisual: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: Spacing.md,
-  },
-  donutCenter: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  donutRing: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  donutInner: {
-    justifyContent: "center",
-    alignItems: "center",
-    position: "absolute",
-  },
-  donutSegmentIndicator: {
-    position: "absolute",
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    top: 0,
-  },
-  donutLegend: {
-    flex: 1,
-    gap: Spacing.md,
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  legendText: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  // Top Lots
-  topLotsContainer: {
-    gap: Spacing.sm,
-  },
-  topLotCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.md,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    gap: Spacing.md,
-    // Glassmorphic 3D effect
-    boxShadow: `
-      0 2px 4px rgba(0, 0, 0, 0.02),
-      0 4px 8px rgba(0, 0, 0, 0.03)
-    `,
-  },
-  rankBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.lg,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  topLotInfo: {
-    flex: 1,
-  },
-  topLotStats: {
-    alignItems: "flex-end",
-  },
-
-  // Details Card - Glassmorphic 3D
-  detailsCard: {
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    padding: Spacing.lg,
-    boxShadow: `
-      0 2px 4px rgba(0, 0, 0, 0.02),
-      0 4px 8px rgba(0, 0, 0, 0.03),
-      0 8px 16px rgba(16, 185, 129, 0.06)
-    `,
-  },
-  statRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: Spacing.sm,
-  },
-  statRowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  statRowIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.md,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  statRowRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  trendBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-    gap: 2,
-  },
-  divider: {
-    height: 1,
-    marginVertical: Spacing.sm,
-  },
-});
+export type NeuColors = ReturnType<typeof useNeuColors>;

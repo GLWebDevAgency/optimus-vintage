@@ -1,72 +1,51 @@
 /**
- * 📦 STOCK SCREEN - Ultra Premium Edition
- * Premium inventory management with world-class animations
+ * 📦 STOCK SCREEN - Neumorphic Light/Dark Edition
+ *
+ * Design fidèle 100% au mockup de référence
+ * Style: Soft UI, Neumorphic, Glow accents
+ * Thème dynamique Light/Dark via useNeuColors()
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { Button, Card, Chip } from "@/components/ui/Components";
 import {
-    PremiumScreen,
-    usePremiumTheme,
-    type PremiumTheme,
-} from "@/components/ui/PremiumUI";
+    NeuListItem,
+    NeuPeriodChip,
+    NeuScreen,
+    NeuSearchBar,
+    NeuStatGrid,
+    useNeuColors,
+} from "@/components/ui/Neumorphic";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Typography } from "@/constants/Theme";
 import { Item, ItemsRepository, LotsRepository } from "@/db/repositories";
 import { Haptic } from "@/utils/haptics";
 import { useQuery } from "@tanstack/react-query";
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
-import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
     FlatList,
-    Keyboard,
-    LayoutAnimation,
+    Platform,
     Pressable,
     RefreshControl,
-    ScrollView,
-    StyleSheet,
     Text,
-    TextInput,
-    UIManager,
     View,
 } from "react-native";
-import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
+import Animated, {
+    FadeIn,
+    FadeInDown,
+    SlideInRight,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const isAndroid = process.env.EXPO_OS === "android";
-
-// Enable LayoutAnimation for Android
-if (isAndroid && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-// ============ TYPES ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📦 TYPES & CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 type SortOption = "newest" | "oldest" | "cost_high" | "cost_low" | "lot";
-type ViewMode = "list" | "compact" | "grid";
-
-interface StockStats {
-  totalItems: number;
-  totalValue: number;
-  avgCost: number;
-  lotsCount: number;
-}
-
-// ============ CONSTANTS ============
-
-const ITEMS_PER_PAGE = 20;
-const ANIMATION_STAGGER = 30; // ms between each item animation
-const MAX_ANIMATED_ITEMS = 10; // Only animate first N items for performance
+type ViewMode = "list" | "grid";
 
 const SORT_OPTIONS: { key: SortOption; label: string; icon: string }[] = [
   { key: "newest", label: "Récent", icon: "schedule" },
@@ -76,7 +55,6 @@ const SORT_OPTIONS: { key: SortOption; label: string; icon: string }[] = [
   { key: "lot", label: "Par Lot", icon: "inventory-2" },
 ];
 
-// Helper to get first photo from item
 function getItemFirstPhoto(item: Item): string | null {
   if (!item.photos) return null;
   try {
@@ -87,521 +65,217 @@ function getItemFirstPhoto(item: Item): string | null {
   }
 }
 
-// ============ ITEM CARD COMPONENT ============
+function formatCurrency(value: number): string {
+  return `€${value.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎴 ITEM CARD COMPONENT (Grid mode)
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface ItemCardProps {
   item: Item;
   index: number;
-  onSell: () => void;
   onPress?: () => void;
-  viewMode: ViewMode;
-  shouldAnimate: boolean;
 }
 
 const ItemCard = React.memo(function ItemCard({
   item,
   index,
-  onSell,
   onPress,
-  viewMode,
-  shouldAnimate,
 }: ItemCardProps) {
-  const theme = usePremiumTheme();
-  const unitCost = parseFloat(String(item.unitCost));
+  const { palette, shadows, radius, spacing } = useNeuColors();
+  const scale = useSharedValue(1);
+  const unitCost = parseFloat(String(item.unitCost)) || 0;
   const photoUri = getItemFirstPhoto(item);
 
-  // Grid view for 2-column card layout
-  if (viewMode === "grid") {
-    return (
-      <Animated.View
-        entering={
-          shouldAnimate
-            ? FadeIn.delay(index * ANIMATION_STAGGER).duration(200)
-            : undefined
-        }
-        style={styles.gridCardWrapper}
-      >
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.95, { damping: 20, stiffness: 300 });
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, { damping: 18, stiffness: 220 });
+  }, [scale]);
+
+  return (
+    <Animated.View
+      entering={FadeIn.delay(index * 50).duration(300)}
+      style={{ flex: 1, maxWidth: "50%", marginBottom: spacing.md }}
+    >
+      <Animated.View style={animatedStyle}>
         <Pressable
           onPress={onPress}
-          style={({ pressed }) => [
-            styles.gridCard,
-            {
-              backgroundColor: theme.surface,
-              borderColor: theme.borderCard,
-              opacity: pressed ? 0.9 : 1,
-              transform: [{ scale: pressed ? 0.98 : 1 }],
-            },
-          ]}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          style={{
+            backgroundColor: palette.background.main,
+            borderRadius: radius.xl,
+            overflow: "hidden",
+            borderCurve: "continuous",
+            ...(Platform.OS === "web" && {
+              boxShadow: shadows.flat.css as any,
+            }),
+          }}
         >
-          {/* Image or placeholder */}
+          {/* Image */}
           <View
-            style={[
-              styles.gridImageContainer,
-              { backgroundColor: theme.surfaceCard },
-            ]}
+            style={{
+              aspectRatio: 1,
+              backgroundColor: palette.background.dark,
+              borderRadius: radius.lg,
+              margin: spacing.sm,
+              overflow: "hidden",
+            }}
           >
             {photoUri ? (
               <Image
                 source={{ uri: photoUri }}
-                style={styles.gridImage}
+                style={{ width: "100%", height: "100%" }}
                 contentFit="cover"
                 transition={200}
               />
             ) : (
-              <AppIcon name="checkroom" size={32} color={theme.textMuted} />
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <AppIcon
+                  name="checkroom"
+                  size={32}
+                  color={palette.text.muted}
+                />
+              </View>
             )}
-            {/* Lot badge */}
-            <View
-              style={[styles.gridLotBadge, { backgroundColor: theme.primary }]}
-            >
-              <Text style={styles.gridLotText}>#{item.lotId}</Text>
-            </View>
           </View>
 
           {/* Info */}
-          <View style={styles.gridContent}>
+          <View style={{ padding: spacing.sm, paddingTop: 0 }}>
             <Text
-              style={[
-                Typography.body.sm,
-                { color: theme.text, fontWeight: "600" },
-              ]}
+              style={{
+                color: palette.text.primary,
+                fontSize: 13,
+                fontWeight: "700",
+                marginBottom: 2,
+              }}
               numberOfLines={1}
             >
-              {item.brand || "Marque inconnue"}
+              {item.brand && item.type
+                ? `${item.brand} ${item.type}`
+                : item.type || `Article #${item.id}`}
             </Text>
             <Text
-              style={[Typography.body.xs, { color: theme.textMuted }]}
-              numberOfLines={1}
+              style={{
+                color: palette.primary.main,
+                fontSize: 14,
+                fontWeight: "800",
+              }}
             >
-              {item.type || "Article"} • {item.size || "TU"}
+              {formatCurrency(unitCost)}
             </Text>
-
-            <View style={styles.gridFooter}>
-              <Text
-                style={[
-                  Typography.number.sm,
-                  { color: theme.primary, fontWeight: "700" },
-                ]}
-              >
-                €{unitCost.toFixed(2)}
-              </Text>
-              <Pressable
-                onPress={onSell}
-                hitSlop={8}
-                style={[styles.gridSellBtn, { backgroundColor: theme.primary }]}
-              >
-                <AppIcon name="sell" size={14} color={theme.textOnAccent} />
-              </Pressable>
-            </View>
           </View>
         </Pressable>
       </Animated.View>
-    );
-  }
-
-  // Compact view for dense lists
-  if (viewMode === "compact") {
-    return (
-      <Animated.View
-        entering={
-          shouldAnimate
-            ? FadeIn.delay(index * ANIMATION_STAGGER).duration(200)
-            : undefined
-        }
-      >
-        <Pressable
-          onPress={onPress}
-          style={({ pressed }) => [
-            styles.compactCard,
-            {
-              backgroundColor: theme.surface,
-              borderColor: theme.borderCard,
-              opacity: pressed ? 0.9 : 1,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.compactIcon,
-              { backgroundColor: theme.surfaceCard, overflow: "hidden" },
-            ]}
-          >
-            {photoUri ? (
-              <Image
-                source={{ uri: photoUri }}
-                style={{ width: "100%", height: "100%" }}
-                contentFit="cover"
-              />
-            ) : (
-              <AppIcon name="checkroom" size={18} color={theme.textMuted} />
-            )}
-          </View>
-
-          <View style={styles.compactInfo}>
-            <Text
-              style={[
-                Typography.body.sm,
-                { color: theme.text, fontWeight: "600" },
-              ]}
-              numberOfLines={1}
-            >
-              {item.brand || "Marque"} • {item.type || "Article"}
-            </Text>
-            <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-              Lot #{item.lotId} • {item.size || "TU"}
-            </Text>
-          </View>
-
-          <Text
-            style={[
-              Typography.number.sm,
-              { color: theme.primary, marginRight: Spacing.md },
-            ]}
-          >
-            €{unitCost.toFixed(2)}
-          </Text>
-
-          <Pressable
-            onPress={onSell}
-            hitSlop={8}
-            style={[styles.compactSellBtn, { backgroundColor: theme.primary }]}
-          >
-            <AppIcon name="sell" size={14} color={theme.textOnAccent} />
-          </Pressable>
-        </Pressable>
-      </Animated.View>
-    );
-  }
-
-  // Full card view
-  return (
-    <Animated.View
-      entering={
-        shouldAnimate
-          ? FadeInDown.delay(index * ANIMATION_STAGGER).duration(300)
-          : undefined
-      }
-    >
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
-      >
-        <Card variant="default" style={styles.itemCard}>
-          <View
-            style={[
-              styles.imageContainer,
-              { backgroundColor: theme.surfaceCard, overflow: "hidden" },
-            ]}
-          >
-            {photoUri ? (
-              <Image
-                source={{ uri: photoUri }}
-                style={{ width: "100%", height: "100%" }}
-                contentFit="cover"
-                transition={200}
-              />
-            ) : (
-              <AppIcon name="checkroom" size={28} color={theme.textMuted} />
-            )}
-            {/* Lot indicator */}
-            <View
-              style={[styles.lotIndicator, { backgroundColor: theme.primary }]}
-            >
-              <Text style={styles.lotIndicatorText}>#{item.lotId}</Text>
-            </View>
-          </View>
-
-          <View style={styles.cardContent}>
-            <View style={styles.cardInfo}>
-              <Text
-                style={[Typography.heading.xs, { color: theme.text }]}
-                numberOfLines={1}
-              >
-                {item.brand || "Marque inconnue"}
-              </Text>
-              <Text
-                style={[Typography.body.xs, { color: theme.textMuted }]}
-                numberOfLines={1}
-              >
-                {item.type || "Vêtement"} {item.color ? `• ${item.color}` : ""}
-              </Text>
-              <View style={styles.metaRow}>
-                <View
-                  style={[
-                    styles.sizeBadge,
-                    { backgroundColor: theme.surfaceCard },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      Typography.label.xs,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    {item.size || "TU"}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.conditionDot,
-                    {
-                      backgroundColor:
-                        item.condition === "New"
-                          ? theme.success
-                          : item.condition === "Good"
-                            ? theme.warning
-                            : theme.textMuted,
-                    },
-                  ]}
-                />
-                <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-                  {item.condition === "New"
-                    ? "Neuf"
-                    : item.condition === "Good"
-                      ? "Bon"
-                      : "Usé"}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.costTag,
-                  { backgroundColor: theme.primarySubtle },
-                ]}
-              >
-                <Text style={[Typography.label.xs, { color: theme.primary }]}>
-                  Coût: €{unitCost.toFixed(2)}
-                </Text>
-              </View>
-            </View>
-
-            <Pressable style={styles.sellButtonWrapper} onPress={onSell}>
-              <View
-                style={[
-                  styles.sellButton,
-                  {
-                    backgroundColor: theme.primary,
-                  },
-                ]}
-              >
-                <AppIcon name="sell" size={16} color={theme.textOnAccent} />
-                <Text
-                  style={[styles.sellButtonText, { color: theme.textOnAccent }]}
-                >
-                  Vendre
-                </Text>
-              </View>
-            </Pressable>
-          </View>
-        </Card>
-      </Pressable>
     </Animated.View>
   );
 });
 
-// ============ STATS BAR COMPONENT ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📋 ITEM LIST ROW (List mode)
+// ═══════════════════════════════════════════════════════════════════════════════
 
-function StatsBar({
-  stats,
-  theme,
-}: {
-  stats: StockStats;
-  theme: PremiumTheme;
-}) {
+const ItemListRow = React.memo(function ItemListRow({
+  item,
+  index,
+  onPress,
+}: ItemCardProps) {
+  const { palette, spacing } = useNeuColors();
+  const unitCost = parseFloat(String(item.unitCost)) || 0;
+
   return (
-    <Animated.View entering={FadeIn.duration(400)} style={styles.statsBar}>
-      <View
-        style={[
-          styles.statItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
-      >
-        <AppIcon name="inventory" size={16} color={theme.primary} />
-        <View>
-          <Text style={[Typography.number.sm, { color: theme.text }]}>
-            {stats.totalItems}
-          </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Articles
-          </Text>
-        </View>
-      </View>
-
-      <View
-        style={[
-          styles.statItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
-      >
-        <AppIcon
-          name="account-balance-wallet"
-          size={16}
-          color={theme.success}
-        />
-        <View>
-          <Text style={[Typography.number.sm, { color: theme.success }]}>
-            €{stats.totalValue.toFixed(0)}
-          </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Valeur
-          </Text>
-        </View>
-      </View>
-
-      <View
-        style={[
-          styles.statItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
-      >
-        <AppIcon name="analytics" size={16} color={theme.warning} />
-        <View>
-          <Text style={[Typography.number.sm, { color: theme.text }]}>
-            €{stats.avgCost.toFixed(2)}
-          </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Moy.
-          </Text>
-        </View>
-      </View>
+    <Animated.View entering={SlideInRight.delay(index * 30).duration(250)}>
+      <NeuListItem
+        title={
+          item.brand && item.type
+            ? `${item.brand} ${item.type}`
+            : item.type || `Article #${item.id}`
+        }
+        subtitle={item.condition || "État non précisé"}
+        leftIcon="checkroom"
+        leftIconColor={palette.primary.main}
+        rightValue={formatCurrency(unitCost)}
+        onPress={onPress}
+        showChevron
+        style={{ marginBottom: spacing.sm }}
+      />
     </Animated.View>
   );
-}
+});
 
-// ============ SEARCH BAR COMPONENT ============
-
-function SearchBar({
-  value,
-  onChangeText,
-  onClear,
-  theme,
-}: {
-  value: string;
-  onChangeText: (text: string) => void;
-  onClear: () => void;
-  theme: PremiumTheme;
-}) {
-  const inputRef = useRef<TextInput>(null);
-
-  return (
-    <View
-      style={[
-        styles.searchContainer,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-      ]}
-    >
-      <AppIcon name="search" size={20} color={theme.textMuted} />
-      <TextInput
-        ref={inputRef}
-        style={[styles.searchInput, { color: theme.text }]}
-        placeholder="Rechercher par marque, type, couleur..."
-        placeholderTextColor={theme.textMuted}
-        value={value}
-        onChangeText={onChangeText}
-        returnKeyType="search"
-        autoCorrect={false}
-        autoCapitalize="none"
-      />
-      {value.length > 0 && (
-        <Pressable onPress={onClear} hitSlop={8}>
-          <AppIcon name="close" size={18} color={theme.textMuted} />
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
-// ============ MAIN SCREEN ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📦 STOCK SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export default function StockScreen() {
   const insets = useSafeAreaInsets();
-  const theme = usePremiumTheme();
-  const flatListRef = useRef<FlatList>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  // Data state
+  // 🎨 Thème dynamique Light/Dark
+  const { palette, shadows, spacing, radius } = useNeuColors();
+
+  // ─── Data Queries ────────────────────────────────────────────────────
   const itemsQuery = useQuery({
-    queryKey: ["stock-items"],
-    queryFn: () => ItemsRepository.getAllStock(),
+    queryKey: ["items"],
+    queryFn: () => ItemsRepository.getAll(),
   });
+
   const lotsQuery = useQuery({
     queryKey: ["lots"],
     queryFn: () => LotsRepository.getAll(),
   });
-  const { refetch: refetchItems } = itemsQuery;
-  const { refetch: refetchLots } = lotsQuery;
-  const loading = itemsQuery.isLoading || lotsQuery.isLoading;
-  const refreshing =
-    (itemsQuery.isFetching || lotsQuery.isFetching) && !loading;
-  const allItems = itemsQuery.data ?? [];
+
+  const loading = itemsQuery.isLoading;
+  const refreshing = itemsQuery.isFetching && !loading;
+  const items = itemsQuery.data ?? [];
   const lots = lotsQuery.data ?? [];
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  // UI state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterLotId, setFilterLotId] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [showSortMenu, setShowSortMenu] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  // ============ DATA LOADING ============
 
   useFocusEffect(
     useCallback(() => {
-      refetchItems();
-      refetchLots();
-    }, [refetchItems, refetchLots]),
+      itemsQuery.refetch();
+      lotsQuery.refetch();
+    }, []),
   );
 
-  useEffect(() => {
-    if (!loading) {
-      setPage(1);
-      const timer = setTimeout(() => setHasAnimated(true), 500);
-      return () => clearTimeout(timer);
-    }
-
-    return undefined;
-  }, [loading, allItems, lots]);
-
-  // ============ FILTERING & SORTING ============
-
-  const processedItems = useMemo(() => {
-    let result = [...allItems];
-
-    // Filter by lot
-    if (filterLotId !== null) {
-      result = result.filter((i) => i.lotId === filterLotId);
-    }
+  // ─── Filtered & Sorted Items ─────────────────────────────────────────
+  const filteredItems = useMemo(() => {
+    let result = [...items];
 
     // Search filter
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
+      const query = searchQuery.toLowerCase();
       result = result.filter(
         (item) =>
-          item.brand?.toLowerCase().includes(query) ||
           item.type?.toLowerCase().includes(query) ||
-          item.color?.toLowerCase().includes(query) ||
-          item.size?.toLowerCase().includes(query) ||
-          `lot ${item.lotId}`.includes(query) ||
-          `#${item.id}`.includes(query),
+          item.brand?.toLowerCase().includes(query) ||
+          item.color?.toLowerCase().includes(query),
       );
     }
 
     // Sort
     switch (sortBy) {
       case "newest":
-        result.sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateB - dateA;
-        });
+        result.sort((a, b) => b.id - a.id);
         break;
       case "oldest":
-        result.sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateA - dateB;
-        });
+        result.sort((a, b) => a.id - b.id);
         break;
       case "cost_high":
         result.sort(
@@ -621,743 +295,333 @@ export default function StockScreen() {
     }
 
     return result;
-  }, [allItems, filterLotId, searchQuery, sortBy]);
+  }, [items, searchQuery, sortBy]);
 
-  // Paginated items
-  const paginatedItems = useMemo(() => {
-    return processedItems.slice(0, page * ITEMS_PER_PAGE);
-  }, [processedItems, page]);
-
-  const hasMore = paginatedItems.length < processedItems.length;
-
-  // Stats
-  const stats = useMemo<StockStats>(() => {
-    const items =
-      filterLotId !== null
-        ? allItems.filter((i) => i.lotId === filterLotId)
-        : allItems;
-
-    const totalValue = items.reduce(
-      (sum, i) => sum + parseFloat(String(i.unitCost)),
+  // ─── Stats ───────────────────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const totalItems = filteredItems.length;
+    const totalValue = filteredItems.reduce(
+      (sum, item) => sum + parseFloat(String(item.unitCost)),
       0,
     );
-    const uniqueLots = new Set(items.map((i) => i.lotId)).size;
+    const avgCost = totalItems > 0 ? totalValue / totalItems : 0;
+    return { totalItems, totalValue, avgCost };
+  }, [filteredItems]);
 
-    return {
-      totalItems: items.length,
-      totalValue,
-      avgCost: items.length > 0 ? totalValue / items.length : 0,
-      lotsCount: uniqueLots,
-    };
-  }, [allItems, filterLotId]);
-
-  // ============ HANDLERS ============
-
-  const handleSell = useCallback((item: Item) => {
-    router.push({
-      pathname: "/sales/new",
-      params: { itemId: item.id, lotId: item.lotId },
-    });
-  }, []);
-
-  const handleLoadMore = useCallback(() => {
-    if (!loadingMore && hasMore) {
-      setLoadingMore(true);
-      setPage((p) => p + 1);
-      setTimeout(() => setLoadingMore(false), 100);
-    }
-  }, [loadingMore, hasMore]);
-
+  // ─── Handlers ────────────────────────────────────────────────────────
   const handleRefresh = useCallback(() => {
-    setHasAnimated(false);
-    refetchItems();
-    refetchLots();
-  }, [refetchItems, refetchLots]);
+    Haptic.selection();
+    itemsQuery.refetch();
+    lotsQuery.refetch();
+  }, [itemsQuery, lotsQuery]);
 
-  const handleSearch = useCallback((text: string) => {
-    setSearchQuery(text);
-    setPage(1); // Reset pagination on search
+  const handleItemPress = useCallback((item: Item) => {
+    Haptic.selection();
+    // Navigate to item detail
+    router.push(`/lots/${item.lotId}`);
   }, []);
 
-  const handleClearSearch = useCallback(() => {
-    setSearchQuery("");
-    Keyboard.dismiss();
-  }, []);
+  // ─── Render ──────────────────────────────────────────────────────────
 
-  const handleSortChange = useCallback((option: SortOption) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setSortBy(option);
-    setShowSortMenu(false);
-    setPage(1);
-  }, []);
-
-  const handleFilterChange = useCallback((lotId: number | null) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setFilterLotId(lotId);
-    setPage(1);
-  }, []);
-
-  const toggleViewMode = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setViewMode((v) => {
-      if (v === "list") return "compact";
-      if (v === "compact") return "grid";
-      return "list";
-    });
-  }, []);
-
-  const getViewModeIcon = useCallback((): string => {
-    switch (viewMode) {
-      case "list":
-        return "view-stream";
-      case "compact":
-        return "view-agenda";
-      case "grid":
-        return "grid-view";
-      default:
-        return "view-stream";
-    }
-  }, [viewMode]);
-
-  // ============ RENDER ============
-
-  const renderItem = useCallback(
-    ({ item, index }: { item: Item; index: number }) => (
-      <ItemCard
-        item={item}
-        index={index}
-        onSell={() => handleSell(item)}
-        onPress={() => router.push(`/items/edit/${item.id}`)}
-        viewMode={viewMode}
-        shouldAnimate={!hasAnimated && index < MAX_ANIMATED_ITEMS}
-      />
-    ),
-    [viewMode, hasAnimated, handleSell],
-  );
-
-  const renderFooter = useCallback(() => {
-    if (!hasMore) return null;
-
+  if (loading) {
     return (
-      <View style={styles.footerLoader}>
-        {loadingMore ? (
-          <ActivityIndicator size="small" color={theme.primary} />
-        ) : (
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            {processedItems.length - paginatedItems.length} articles de plus
-          </Text>
-        )}
-      </View>
+      <NeuScreen style={{ paddingTop: insets.top }}>
+        <SkeletonList />
+      </NeuScreen>
     );
-  }, [
-    hasMore,
-    loadingMore,
-    processedItems.length,
-    paginatedItems.length,
-    theme,
-  ]);
-
-  const renderEmpty = useCallback(() => {
-    if (loading) return null;
-
-    if (searchQuery) {
-      return (
-        <View style={styles.empty}>
-          <View
-            style={[styles.emptyIcon, { backgroundColor: theme.surfaceCard }]}
-          >
-            <AppIcon name="search-off" size={48} color={theme.textMuted} />
-          </View>
-          <Text
-            style={[
-              Typography.heading.md,
-              { color: theme.text, marginTop: Spacing.lg },
-            ]}
-          >
-            Aucun résultat
-          </Text>
-          <Text
-            style={[
-              Typography.body.sm,
-              {
-                color: theme.textMuted,
-                textAlign: "center",
-                marginTop: Spacing.xs,
-              },
-            ]}
-          >
-            Aucun article ne correspond à "{searchQuery}"
-          </Text>
-          <Button
-            variant="ghost"
-            size="sm"
-            onPress={handleClearSearch}
-            style={{ marginTop: Spacing.lg }}
-          >
-            Effacer la recherche
-          </Button>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.empty}>
-        <View
-          style={[styles.emptyIcon, { backgroundColor: theme.primarySubtle }]}
-        >
-          <AppIcon name="checkroom" size={48} color={theme.primary} />
-        </View>
-        <Text
-          style={[
-            Typography.heading.md,
-            { color: theme.text, marginTop: Spacing.lg },
-          ]}
-        >
-          Stock vide
-        </Text>
-        <Text
-          style={[
-            Typography.body.sm,
-            {
-              color: theme.textMuted,
-              textAlign: "center",
-              marginTop: Spacing.xs,
-            },
-          ]}
-        >
-          Ajoutez des articles via les Lots pour remplir votre stock
-        </Text>
-        <Button
-          variant="primary"
-          size="md"
-          icon={<AppIcon name="add" size={18} color="#FFF" />}
-          onPress={() => router.push("/lots/new")}
-          style={{ marginTop: Spacing.xl }}
-        >
-          Créer un Lot
-        </Button>
-      </View>
-    );
-  }, [loading, searchQuery, theme, handleClearSearch]);
-
-  const keyExtractor = useCallback((item: Item) => item.id.toString(), []);
-  const colorScheme = useColorScheme() ?? "light";
+  }
 
   return (
-    <PremiumScreen>
-      {/* Floating Header with Blur */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <BlurView
-          intensity={80}
-          tint={colorScheme === "dark" ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: theme.surface + "E6" },
-          ]}
-        />
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={[Typography.display.sm, { color: theme.text }]}>
-              Stock
-            </Text>
-            <Text style={[Typography.body.sm, { color: theme.textSecondary }]}>
-              {processedItems.length}{" "}
-              {filterLotId ? "filtrés" : "articles en stock"}
-            </Text>
-          </View>
-          <View style={styles.headerActions}>
-            <Pressable
-              style={[
-                styles.headerBtn,
-                { backgroundColor: theme.surfaceHighlight },
-              ]}
-              onPress={() => {
-                Haptic.selection();
-                toggleViewMode();
+    <NeuScreen>
+      <FlatList
+        data={filteredItems}
+        keyExtractor={(item) => String(item.id)}
+        numColumns={viewMode === "grid" ? 2 : 1}
+        key={viewMode} // Force re-render when changing view mode
+        contentContainerStyle={{
+          paddingHorizontal: spacing.lg,
+          paddingTop: insets.top + spacing.md,
+          paddingBottom: insets.bottom + 100,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={palette.primary.main}
+            colors={[palette.primary.main]}
+          />
+        }
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <Animated.View
+              entering={FadeInDown.delay(100).duration(400)}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: spacing.lg,
+              }}
+            >
+              <View>
+                <Text
+                  style={{
+                    color: palette.text.primary,
+                    fontSize: 28,
+                    fontWeight: "800",
+                    letterSpacing: -0.5,
+                  }}
+                >
+                  Mon Stock
+                </Text>
+                <Text
+                  style={{
+                    color: palette.text.muted,
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                >
+                  {stats.totalItems} articles •{" "}
+                  {formatCurrency(stats.totalValue)}
+                </Text>
+              </View>
+
+              {/* View Mode Toggle */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  backgroundColor: palette.background.main,
+                  borderRadius: radius.lg,
+                  padding: 4,
+                  ...(Platform.OS === "web" && {
+                    boxShadow: shadows.pressed.css as any,
+                  }),
+                  borderWidth: 1,
+                  borderColor: shadows.pressed.borderColor,
+                }}
+              >
+                <Pressable
+                  onPress={() => {
+                    Haptic.selection();
+                    setViewMode("grid");
+                  }}
+                  style={{
+                    width: 36,
+                    height: 32,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: radius.md,
+                    ...(viewMode === "grid" && {
+                      backgroundColor: palette.background.light,
+                      ...(Platform.OS === "web" && {
+                        boxShadow: shadows.flat.css as any,
+                      }),
+                    }),
+                  }}
+                >
+                  <AppIcon
+                    name="grid-view"
+                    size={18}
+                    color={
+                      viewMode === "grid"
+                        ? palette.primary.main
+                        : palette.text.muted
+                    }
+                  />
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    Haptic.selection();
+                    setViewMode("list");
+                  }}
+                  style={{
+                    width: 36,
+                    height: 32,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: radius.md,
+                    ...(viewMode === "list" && {
+                      backgroundColor: palette.background.light,
+                      ...(Platform.OS === "web" && {
+                        boxShadow: shadows.flat.css as any,
+                      }),
+                    }),
+                  }}
+                >
+                  <AppIcon
+                    name="view-list"
+                    size={18}
+                    color={
+                      viewMode === "list"
+                        ? palette.primary.main
+                        : palette.text.muted
+                    }
+                  />
+                </Pressable>
+              </View>
+            </Animated.View>
+
+            {/* Search Bar */}
+            <Animated.View
+              entering={FadeInDown.delay(200).duration(400)}
+              style={{
+                flexDirection: "row",
+                gap: spacing.sm,
+                marginBottom: spacing.lg,
+              }}
+            >
+              <NeuSearchBar
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onClear={() => setSearchQuery("")}
+                placeholder="Rechercher article, marque..."
+                style={{ flex: 1 }}
+              />
+              <Pressable
+                onPress={() => Haptic.selection()}
+                style={{
+                  width: 48,
+                  height: 48,
+                  backgroundColor: palette.background.main,
+                  borderRadius: radius.xl,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  ...(Platform.OS === "web" && {
+                    boxShadow: shadows.flat.css as any,
+                  }),
+                }}
+              >
+                <AppIcon name="tune" size={20} color={palette.primary.main} />
+              </Pressable>
+            </Animated.View>
+
+            {/* Stats Grid */}
+            <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+              <NeuStatGrid
+                items={[
+                  {
+                    icon: "checkroom",
+                    iconColor: palette.primary.main,
+                    value: String(stats.totalItems),
+                    label: "Articles",
+                  },
+                  {
+                    icon: "payments",
+                    iconColor: palette.accent.yellow,
+                    value: formatCurrency(stats.totalValue),
+                    label: "Valeur",
+                  },
+                  {
+                    icon: "analytics",
+                    iconColor: palette.accent.blue,
+                    value: formatCurrency(stats.avgCost),
+                    label: "Moy/pièce",
+                  },
+                ]}
+                style={{
+                  marginHorizontal: spacing.lg,
+                  marginBottom: spacing.lg,
+                }}
+              />
+            </Animated.View>
+
+            {/* Sort Chips */}
+            <Animated.View
+              entering={FadeInDown.delay(400).duration(400)}
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: spacing.xs,
+                marginBottom: spacing.lg,
+              }}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <NeuPeriodChip
+                  key={option.key}
+                  label={option.label}
+                  selected={sortBy === option.key}
+                  onPress={() => {
+                    Haptic.selection();
+                    setSortBy(option.key);
+                  }}
+                />
+              ))}
+            </Animated.View>
+          </>
+        }
+        ListEmptyComponent={
+          <Animated.View
+            entering={FadeIn.duration(400)}
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: spacing["3xl"],
+            }}
+          >
+            <View
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                backgroundColor: palette.background.main,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: spacing.lg,
+                ...(Platform.OS === "web" && {
+                  boxShadow: shadows.pressed.css as any,
+                }),
+                borderWidth: 1,
+                borderColor: shadows.pressed.borderColor,
               }}
             >
               <AppIcon
-                name={getViewModeIcon() as any}
-                size={20}
-                color={theme.textSecondary}
+                name="inventory-2"
+                size={48}
+                color={palette.text.muted}
               />
-            </Pressable>
-          </View>
-        </View>
-      </View>
-
-      <View style={{ flex: 1, paddingTop: insets.top + 90 }}>
-        {/* Search Bar */}
-        <View style={styles.searchSection}>
-          <SearchBar
-            value={searchQuery}
-            onChangeText={handleSearch}
-            onClear={handleClearSearch}
-            theme={theme}
-          />
-
-          {/* Sort Button */}
-          <Pressable
-            style={[
-              styles.sortButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
-            onPress={() => {
-              Haptic.selection();
-              setShowSortMenu(!showSortMenu);
-            }}
-          >
-            <AppIcon
-              name={
-                (SORT_OPTIONS.find((o) => o.key === sortBy)?.icon as any) ||
-                "sort"
-              }
-              size={18}
-              color={theme.primary}
-            />
-          </Pressable>
-        </View>
-
-        {/* Sort Menu Dropdown */}
-        {showSortMenu && (
-          <Animated.View
-            entering={FadeIn.duration(150)}
-            exiting={FadeOut.duration(100)}
-            style={[
-              styles.sortMenu,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
-          >
-            {SORT_OPTIONS.map((option) => (
-              <Pressable
-                key={option.key}
-                style={[
-                  styles.sortOption,
-                  sortBy === option.key && {
-                    backgroundColor: theme.primarySubtle,
-                  },
-                ]}
-                onPress={() => handleSortChange(option.key)}
-              >
-                <AppIcon
-                  name={option.icon as any}
-                  size={16}
-                  color={
-                    sortBy === option.key ? theme.primary : theme.textSecondary
-                  }
-                />
-                <Text
-                  style={[
-                    Typography.body.sm,
-                    {
-                      color: sortBy === option.key ? theme.primary : theme.text,
-                    },
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            ))}
+            </View>
+            <Text
+              style={{
+                color: palette.text.primary,
+                fontSize: 18,
+                fontWeight: "700",
+                marginBottom: spacing.xs,
+              }}
+            >
+              Aucun article
+            </Text>
+            <Text
+              style={{
+                color: palette.text.muted,
+                fontSize: 14,
+                textAlign: "center",
+              }}
+            >
+              {searchQuery
+                ? "Aucun résultat pour cette recherche"
+                : "Ajoutez un lot pour commencer"}
+            </Text>
           </Animated.View>
-        )}
-
-        {/* Stats Bar */}
-        {allItems.length > 0 && <StatsBar stats={stats} theme={theme} />}
-
-        {/* Filter Chips */}
-        <Animated.View
-          entering={FadeInDown.delay(100).duration(400)}
-          style={styles.filterBar}
-        >
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterScroll}
-          >
-            <Chip
-              label="Tout le stock"
-              selected={filterLotId === null}
-              icon={
-                <AppIcon
-                  name="inventory-2"
-                  size={14}
-                  color={
-                    filterLotId === null
-                      ? theme.textOnAccent
-                      : theme.textSecondary
-                  }
-                />
-              }
-              onPress={() => handleFilterChange(null)}
+        }
+        renderItem={({ item, index }) =>
+          viewMode === "grid" ? (
+            <ItemCard
+              item={item}
+              index={index}
+              onPress={() => handleItemPress(item)}
             />
-
-            {lots.map((lot) => {
-              const lotItemCount = allItems.filter(
-                (i) => i.lotId === lot.id,
-              ).length;
-              if (lotItemCount === 0) return null;
-
-              return (
-                <Chip
-                  key={lot.id}
-                  label={`${lot.name || `Lot #${lot.id}`} (${lotItemCount})`}
-                  selected={filterLotId === lot.id}
-                  onPress={() =>
-                    handleFilterChange(lot.id === filterLotId ? null : lot.id)
-                  }
-                />
-              );
-            })}
-          </ScrollView>
-        </Animated.View>
-
-        {/* Items List */}
-        {loading && !refreshing ? (
-          <View style={styles.loaderContainer}>
-            <SkeletonList count={6} />
-          </View>
-        ) : (
-          <FlatList
-            key={viewMode === "grid" ? "grid" : "list"}
-            ref={flatListRef}
-            data={paginatedItems}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            numColumns={viewMode === "grid" ? 2 : 1}
-            columnWrapperStyle={
-              viewMode === "grid" ? styles.gridRow : undefined
-            }
-            contentInsetAdjustmentBehavior="automatic"
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor={theme.primary}
-                colors={[theme.primary]}
-              />
-            }
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.3}
-            contentContainerStyle={[
-              styles.listContent,
-              paginatedItems.length === 0 && styles.emptyList,
-            ]}
-            ListEmptyComponent={renderEmpty}
-            ListFooterComponent={renderFooter}
-            showsVerticalScrollIndicator={false}
-            // Performance optimizations
-            removeClippedSubviews={isAndroid}
-            maxToRenderPerBatch={10}
-            windowSize={10}
-            initialNumToRender={10}
-            getItemLayout={
-              viewMode === "compact"
-                ? (_, index) => ({
-                    length: 56,
-                    offset: 56 * index,
-                    index,
-                  })
-                : undefined
-            }
-          />
-        )}
-      </View>
-    </PremiumScreen>
+          ) : (
+            <ItemListRow
+              item={item}
+              index={index}
+              onPress={() => handleItemPress(item)}
+            />
+          )
+        }
+        columnWrapperStyle={
+          viewMode === "grid" ? { gap: spacing.md } : undefined
+        }
+      />
+    </NeuScreen>
   );
 }
-
-// ============ STYLES ============
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    overflow: "hidden",
-  },
-  headerContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-  },
-  headerActions: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  searchSection: {
-    flexDirection: "row",
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    height: 44,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    gap: Spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: "Manrope_400Regular",
-  },
-  sortButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sortMenu: {
-    position: "absolute",
-    top: 130,
-    right: Spacing.xl,
-    zIndex: 100,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-  },
-  sortOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  statsBar: {
-    flexDirection: "row",
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  statItem: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  filterBar: {
-    marginBottom: Spacing.sm,
-  },
-  filterScroll: {
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  listContent: {
-    padding: Spacing.xl,
-    paddingBottom: 120,
-  },
-  emptyList: {
-    flexGrow: 1,
-  },
-  loaderContainer: {
-    flex: 1,
-    paddingTop: Spacing["2xl"],
-  },
-  footerLoader: {
-    paddingVertical: Spacing.lg,
-    alignItems: "center",
-  },
-
-  // Full Card Styles
-  itemCard: {
-    flexDirection: "row",
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  imageContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: Radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.md,
-    position: "relative",
-  },
-  lotIndicator: {
-    position: "absolute",
-    bottom: -4,
-    right: -4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-  },
-  lotIndicatorText: {
-    fontSize: 9,
-    fontFamily: "Manrope_700Bold",
-    color: "#FFF",
-  },
-  cardContent: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  cardInfo: {
-    flex: 1,
-  },
-  sizeBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.sm,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    marginTop: Spacing.xs,
-  },
-  conditionDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  costTag: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.sm,
-    alignSelf: "flex-start",
-    marginTop: Spacing.sm,
-  },
-  sellButtonWrapper: {
-    marginLeft: Spacing.md,
-  },
-  sellButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
-  },
-  sellButtonText: {
-    fontFamily: "Manrope_700Bold",
-    fontSize: 13,
-  },
-
-  // Compact Card Styles
-  compactCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.xs,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  compactIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.sm,
-  },
-  compactInfo: {
-    flex: 1,
-  },
-  compactSellBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  // Grid Card Styles
-  gridRow: {
-    justifyContent: "space-between",
-    gap: Spacing.md,
-  },
-  gridCardWrapper: {
-    flex: 1,
-    maxWidth: "48%",
-  },
-  gridCard: {
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    overflow: "hidden",
-    marginBottom: Spacing.md,
-  },
-  gridImageContainer: {
-    aspectRatio: 1,
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-    overflow: "hidden",
-  },
-  gridImage: {
-    width: "100%",
-    height: "100%",
-  },
-  gridLotBadge: {
-    position: "absolute",
-    top: Spacing.sm,
-    right: Spacing.sm,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-  },
-  gridLotText: {
-    fontSize: 10,
-    fontFamily: "Manrope_700Bold",
-    color: "#FFF",
-  },
-  gridContent: {
-    padding: Spacing.md,
-  },
-  gridFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: Spacing.sm,
-  },
-  gridSellBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  // Empty State
-  empty: {
-    alignItems: "center",
-    paddingVertical: Spacing["4xl"],
-    paddingHorizontal: Spacing.xl,
-  },
-  emptyIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: Radius["2xl"],
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

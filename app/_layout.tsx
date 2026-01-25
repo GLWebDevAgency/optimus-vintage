@@ -1,14 +1,18 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Manrope_200ExtraLight,
-  Manrope_300Light,
-  Manrope_400Regular,
-  Manrope_500Medium,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-  Manrope_800ExtraBold,
+    Manrope_200ExtraLight,
+    Manrope_300Light,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
 } from "@expo-google-fonts/manrope";
+import {
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider,
+} from "@react-navigation/native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { router } from "expo-router";
 import { Stack } from "expo-router/stack";
@@ -16,13 +20,13 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 
-import { useColorScheme } from "@/components/useColorScheme";
+import { NeuThemeProvider, useNeuTheme } from "@/constants/ThemeContext";
 import { ensureTables } from "@/db/migrate";
 import { useSettingsStore } from "@/store/settings";
 
 export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
+    // Catch any errors thrown by the Layout component.
+    ErrorBoundary
 } from "expo-router";
 
 const queryClient = new QueryClient({
@@ -81,14 +85,16 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RootLayoutNav />
+      <NeuThemeProvider>
+        <RootLayoutNav />
+      </NeuThemeProvider>
     </QueryClientProvider>
   );
 }
 
 // Separate component to use router hook safely
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const { isDark } = useNeuTheme();
   const { isOnboardingDone } = useSettingsStore();
   const [isReady, setIsReady] = useState(false);
 
@@ -110,24 +116,32 @@ function RootLayoutNav() {
   }, []);
 
   useEffect(() => {
-      if (!isReady) return;
-      
-      if (!isOnboardingDone) {
-          router.replace('/onboarding');
-      }
-  }, [isReady, isOnboardingDone]);
+    if (!isReady) return;
 
+    if (!isOnboardingDone) {
+      router.replace("/onboarding");
+    }
+  }, [isReady, isOnboardingDone]);
 
   if (!isReady) return null; // Or a splash
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="lots" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="sales" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen
+          name="lots"
+          options={{ headerShown: false, presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="sales"
+          options={{ headerShown: false, presentation: "modal" }}
+        />
+        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        <Stack.Screen
+          name="onboarding"
+          options={{ headerShown: false, animation: "fade" }}
+        />
       </Stack>
     </ThemeProvider>
   );

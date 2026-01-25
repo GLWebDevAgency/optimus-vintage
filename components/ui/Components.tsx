@@ -5,8 +5,7 @@
  * v2.0 - Consolidated from LuxuryComponents + WarmComponents
  */
 
-import { useColorScheme } from "@/components/useColorScheme";
-import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { useNeuTheme } from "@/constants/ThemeContext";
 import { BlurView } from "expo-blur";
 import React, { useEffect, useRef } from "react";
 import {
@@ -49,8 +48,7 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, shadows, spacing, radius, typography } = useNeuTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -74,54 +72,54 @@ export function Button({
   const sizeStyles = {
     sm: {
       height: 32,
-      paddingHorizontal: Spacing.md,
-      gap: Spacing.xs,
+      paddingHorizontal: spacing.md,
+      gap: spacing.xs,
     },
     md: {
       height: 44,
-      paddingHorizontal: Spacing.lg,
-      gap: Spacing.sm,
+      paddingHorizontal: spacing.lg,
+      gap: spacing.sm,
     },
     lg: {
       height: 52,
-      paddingHorizontal: Spacing.xl,
-      gap: Spacing.md,
+      paddingHorizontal: spacing.xl,
+      gap: spacing.md,
     },
   };
 
   const variantStyles: Record<string, ViewStyle> = {
     primary: {
-      backgroundColor: theme.primary,
+      backgroundColor: palette.primary.main,
       borderWidth: 0,
-      boxShadow: theme.shadowGlow,
+      boxShadow: shadows.glow.css,
     },
     secondary: {
-      backgroundColor: theme.surfaceGlassStrong,
+      backgroundColor: palette.background.elevated,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: palette.background.dark,
     },
     ghost: {
       backgroundColor: "transparent",
       borderWidth: 0,
     },
     danger: {
-      backgroundColor: theme.danger,
+      backgroundColor: palette.accent.red,
       borderWidth: 0,
-      boxShadow: theme.shadowGlow,
+      boxShadow: shadows.glow.css,
     },
     success: {
-      backgroundColor: theme.success,
+      backgroundColor: palette.accent.green ?? palette.primary.main,
       borderWidth: 0,
-      boxShadow: theme.shadowGlow,
+      boxShadow: shadows.glow.css,
     },
   };
 
   const textColorMap: Record<string, string> = {
-    primary: theme.textOnAccent,
-    secondary: theme.text,
-    ghost: theme.text,
-    danger: "#FFFFFF",
-    success: "#FFFFFF",
+    primary: palette.text.white,
+    secondary: palette.text.primary,
+    ghost: palette.text.primary,
+    danger: palette.text.white,
+    success: palette.text.white,
   };
 
   const isDisabled = disabled || loading;
@@ -144,7 +142,7 @@ export function Button({
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            borderRadius: Radius.lg,
+            borderRadius: radius.lg,
             opacity: pressed ? 0.8 : opacity,
             borderCurve: "continuous",
           },
@@ -161,7 +159,7 @@ export function Button({
             <Text
               style={{
                 color: textColorMap[variant],
-                ...Typography.label[size === "lg" ? "lg" : "md"],
+                ...typography.label[size === "lg" ? "lg" : "md"],
                 fontWeight: "600",
               }}
             >
@@ -179,9 +177,21 @@ export function Button({
 // 🃏 CARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
+type SpacingKey =
+  | "3xs"
+  | "2xs"
+  | "xs"
+  | "sm"
+  | "md"
+  | "lg"
+  | "xl"
+  | "2xl"
+  | "3xl"
+  | "4xl";
+
 interface CardProps {
   variant?: "default" | "glass" | "elevated";
-  padding?: keyof typeof Spacing;
+  padding?: SpacingKey;
   noPadding?: boolean;
   children: React.ReactNode;
   style?: ViewStyle;
@@ -196,8 +206,7 @@ export function Card({
   style,
   onPress,
 }: CardProps) {
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, shadows, spacing, radius } = useNeuTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -224,21 +233,21 @@ export function Card({
 
   const variantStyles: Record<string, ViewStyle> = {
     default: {
-      backgroundColor: theme.surfaceCard,
+      backgroundColor: palette.background.elevated,
       borderWidth: 1,
-      borderColor: theme.borderCard,
-      boxShadow: theme.shadowCard,
+      borderColor: palette.divider?.main ?? palette.background.dark,
+      boxShadow: shadows.convex.css,
     },
     glass: {
-      backgroundColor: theme.surfaceGlass,
+      backgroundColor: palette.background.elevated,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: palette.background.dark,
     },
     elevated: {
-      backgroundColor: theme.surfaceCard,
+      backgroundColor: palette.background.elevated,
       borderWidth: 1,
-      borderColor: theme.borderCard,
-      boxShadow: theme.shadowCardHover,
+      borderColor: palette.divider?.main ?? palette.background.dark,
+      boxShadow: shadows.hover?.css ?? shadows.convex.css,
     },
   };
 
@@ -246,8 +255,8 @@ export function Card({
     <View
       style={[
         {
-          borderRadius: Radius.xl,
-          padding: noPadding ? 0 : Spacing[padding],
+          borderRadius: radius.xl,
+          padding: noPadding ? 0 : spacing[padding],
           borderCurve: "continuous",
         },
         variantStyles[variant],
@@ -289,12 +298,12 @@ interface ShimmerSkeletonProps {
 export function ShimmerSkeleton({
   width = "100%" as const,
   height = 20,
-  borderRadius = Radius.md,
+  borderRadius,
   style,
 }: ShimmerSkeletonProps) {
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, radius } = useNeuTheme();
   const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const resolvedBorderRadius = borderRadius ?? radius.md;
 
   useEffect(() => {
     Animated.loop(
@@ -326,8 +335,8 @@ export function ShimmerSkeleton({
         {
           width,
           height,
-          borderRadius,
-          backgroundColor: theme.surfaceGlass,
+          borderRadius: resolvedBorderRadius,
+          backgroundColor: palette.background.elevated,
           opacity,
         },
         style,
@@ -355,8 +364,7 @@ export function SectionHeader({
   action,
   style,
 }: SectionHeaderProps) {
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, spacing, typography } = useNeuTheme();
 
   // Handle action as object { label, onPress } or ReactNode
   const renderAction = () => {
@@ -368,7 +376,7 @@ export function SectionHeader({
     ) {
       return (
         <Pressable onPress={action.onPress}>
-          <Text style={{ ...Typography.label.sm, color: theme.primary }}>
+          <Text style={{ ...typography.label.sm, color: palette.primary.main }}>
             {action.label}
           </Text>
         </Pressable>
@@ -384,8 +392,8 @@ export function SectionHeader({
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: Spacing.md,
-          marginBottom: Spacing.md,
+          gap: spacing.md,
+          marginBottom: spacing.md,
         },
         style,
       ]}
@@ -395,16 +403,20 @@ export function SectionHeader({
           flexDirection: "row",
           alignItems: "center",
           flex: 1,
-          gap: Spacing.sm,
+          gap: spacing.sm,
         }}
       >
         {icon}
-        <View style={{ flex: 1, gap: Spacing["2xs"] }}>
-          <Text style={{ ...Typography.heading.lg, color: theme.text }}>
+        <View style={{ flex: 1, gap: spacing["2xs"] }}>
+          <Text
+            style={{ ...typography.heading.lg, color: palette.text.primary }}
+          >
             {title}
           </Text>
           {subtitle && (
-            <Text style={{ ...Typography.body.sm, color: theme.textSecondary }}>
+            <Text
+              style={{ ...typography.body.sm, color: palette.text.secondary }}
+            >
               {subtitle}
             </Text>
           )}
@@ -438,42 +450,41 @@ export function Chip({
   onPress,
   style,
 }: ChipProps) {
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, spacing, radius, typography } = useNeuTheme();
 
   const variantStyles: Record<string, { bg: string; text: string }> = {
     default: {
-      bg: selected ? theme.primarySubtle : theme.surfaceGlassStrong,
-      text: selected ? theme.primary : theme.text,
+      bg: selected ? palette.primary.subtle : palette.background.elevated,
+      text: selected ? palette.primary.main : palette.text.primary,
     },
     success: {
-      bg: theme.successSubtle,
-      text: theme.success,
+      bg: palette.primary.subtle,
+      text: palette.accent.green ?? palette.primary.main,
     },
     danger: {
-      bg: theme.dangerSubtle,
-      text: theme.danger,
+      bg: palette.accent.redGlow ?? "rgba(239, 68, 68, 0.15)",
+      text: palette.accent.red,
     },
     warning: {
-      bg: theme.warningSubtle,
-      text: theme.warning,
+      bg: palette.accent.amberGlow ?? "rgba(245, 158, 11, 0.15)",
+      text: palette.accent.amber,
     },
     info: {
-      bg: theme.infoSubtle,
-      text: theme.info,
+      bg: palette.accent.blueGlow ?? "rgba(59, 130, 246, 0.15)",
+      text: palette.accent.blue,
     },
   };
 
   const sizeStyles = {
     sm: {
-      paddingVertical: Spacing["2xs"],
-      paddingHorizontal: Spacing.xs,
-      typography: Typography.label.xs,
+      paddingVertical: spacing["2xs"],
+      paddingHorizontal: spacing.xs,
+      typography: typography.label.xs,
     },
     md: {
-      paddingVertical: Spacing.xs,
-      paddingHorizontal: Spacing.sm,
-      typography: Typography.label.sm,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      typography: typography.label.sm,
     },
   };
 
@@ -483,13 +494,13 @@ export function Chip({
         {
           flexDirection: "row",
           alignItems: "center",
-          gap: Spacing["2xs"],
+          gap: spacing["2xs"],
           backgroundColor: variantStyles[variant].bg,
-          borderRadius: Radius.full,
+          borderRadius: radius.full,
           alignSelf: "flex-start",
           borderCurve: "continuous",
           borderWidth: selected ? 1 : 0,
-          borderColor: selected ? theme.primary : "transparent",
+          borderColor: selected ? palette.primary.main : "transparent",
         },
         sizeStyles[size],
         style,
@@ -536,38 +547,16 @@ export function AnimatedPremiumBackground({
   variant = "light",
   children,
 }: AnimatedPremiumBackgroundProps) {
-  const colorScheme = useColorScheme() ?? "light";
+  const { palette, isDark } = useNeuTheme();
 
   // MoonRow style: clean, simple backgrounds
   const getBackgroundColor = () => {
-    if (colorScheme === "light") {
-      switch (variant) {
-        case "navy":
-          return Palette.navy[900];
-        case "warm":
-        case "graphite":
-        case "midnight":
-        case "aurora":
-        case "cool":
-        case "light":
-        default:
-          return Palette.neutral.white;
-      }
+    if (!isDark) {
+      // Light mode
+      return palette.background.main;
     } else {
-      // Dark mode: navy-based backgrounds
-      switch (variant) {
-        case "light":
-          return Palette.navy[900];
-        case "navy":
-          return Palette.navy[950];
-        case "warm":
-        case "graphite":
-        case "midnight":
-        case "aurora":
-        case "cool":
-        default:
-          return Palette.navy[900];
-      }
+      // Dark mode
+      return palette.background.main;
     }
   };
 
@@ -600,8 +589,7 @@ export function GlassContainer({
   children,
   style,
 }: GlassContainerProps) {
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, radius, isDark } = useNeuTheme();
 
   const blurIntensity = {
     light: isIOS ? 10 : undefined,
@@ -610,22 +598,22 @@ export function GlassContainer({
   };
 
   const fallbackOpacity = {
-    light: theme.surfaceGlass,
-    medium: theme.surfaceGlassStrong,
-    strong: Palette.glass.white20,
+    light: palette.background.elevated,
+    medium: palette.background.elevated,
+    strong: "rgba(255, 255, 255, 0.2)",
   };
 
   if (isIOS) {
     return (
       <BlurView
         intensity={blurIntensity[intensity]!}
-        tint={colorScheme === "dark" ? "dark" : "light"}
+        tint={isDark ? "dark" : "light"}
         style={[
           {
-            borderRadius: Radius.xl,
+            borderRadius: radius.xl,
             overflow: "hidden",
             borderWidth: 1,
-            borderColor: theme.border,
+            borderColor: palette.background.dark,
             borderCurve: "continuous",
           },
           style,
@@ -642,9 +630,9 @@ export function GlassContainer({
       style={[
         {
           backgroundColor: fallbackOpacity[intensity],
-          borderRadius: Radius.xl,
+          borderRadius: radius.xl,
           borderWidth: 1,
-          borderColor: theme.border,
+          borderColor: palette.background.dark,
           borderCurve: "continuous",
         },
         style,
@@ -698,8 +686,7 @@ export function LuxuryListItem({
 }: LuxuryListItemProps) {
   const resolvedLeftContent = leftContent || leftImage;
   const resolvedRightContent = rightContent || rightElement;
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, spacing, radius, typography } = useNeuTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -721,12 +708,24 @@ export function LuxuryListItem({
   };
 
   const getBadgeStyle = (): { bg: string; text: string } => {
-    if (!badge) return { bg: "transparent", text: theme.text };
+    if (!badge) return { bg: "transparent", text: palette.text.primary };
     const colors = {
-      success: { bg: theme.successSubtle, text: theme.success },
-      danger: { bg: theme.dangerSubtle, text: theme.danger },
-      warning: { bg: theme.warningSubtle, text: theme.warning },
-      info: { bg: theme.infoSubtle, text: theme.info },
+      success: {
+        bg: palette.primary.subtle,
+        text: palette.accent.green ?? palette.primary.main,
+      },
+      danger: {
+        bg: palette.accent.redGlow ?? "rgba(239, 68, 68, 0.15)",
+        text: palette.accent.red,
+      },
+      warning: {
+        bg: palette.accent.amberGlow ?? "rgba(245, 158, 11, 0.15)",
+        text: palette.accent.amber,
+      },
+      info: {
+        bg: palette.accent.blueGlow ?? "rgba(59, 130, 246, 0.15)",
+        text: palette.accent.blue,
+      },
     };
     return colors[badge.variant];
   };
@@ -737,14 +736,16 @@ export function LuxuryListItem({
         {
           flexDirection: "row",
           alignItems: "center",
-          padding: Spacing.md,
-          backgroundColor: theme.surfaceCard,
-          borderRadius: showDivider ? 0 : Radius.lg,
-          gap: Spacing.md,
+          padding: spacing.md,
+          backgroundColor: palette.background.elevated,
+          borderRadius: showDivider ? 0 : radius.lg,
+          gap: spacing.md,
           borderWidth: showDivider ? 0 : 1,
           borderBottomWidth: showDivider ? 1 : 1,
           borderColor:
-            variant === "danger" ? theme.dangerSubtle : theme.borderCard,
+            variant === "danger"
+              ? (palette.accent.redGlow ?? "rgba(239, 68, 68, 0.15)")
+              : (palette.divider?.main ?? palette.background.dark),
           borderCurve: "continuous",
         },
         style,
@@ -757,9 +758,11 @@ export function LuxuryListItem({
             style={{
               width: 40,
               height: 40,
-              borderRadius: Radius.md,
+              borderRadius: radius.md,
               backgroundColor:
-                variant === "danger" ? theme.dangerSubtle : theme.surfaceGlass,
+                variant === "danger"
+                  ? (palette.accent.redGlow ?? "rgba(239, 68, 68, 0.15)")
+                  : palette.background.elevated,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -772,9 +775,10 @@ export function LuxuryListItem({
       <View style={{ flex: 1 }}>
         <Text
           style={{
-            ...Typography.body.md,
+            ...typography.body.md,
             fontWeight: "500",
-            color: variant === "danger" ? theme.danger : theme.text,
+            color:
+              variant === "danger" ? palette.accent.red : palette.text.primary,
           }}
         >
           {title}
@@ -782,9 +786,9 @@ export function LuxuryListItem({
         {subtitle && (
           <Text
             style={{
-              ...Typography.body.sm,
-              color: theme.textMuted,
-              marginTop: Spacing["3xs"],
+              ...typography.body.sm,
+              color: palette.text.muted,
+              marginTop: spacing["3xs"],
             }}
           >
             {subtitle}
@@ -794,14 +798,14 @@ export function LuxuryListItem({
 
       {/* Right side: value and/or badge */}
       <View
-        style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm }}
+        style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}
       >
         {value && (
           <Text
             style={{
-              ...Typography.body.md,
+              ...typography.body.md,
               fontWeight: "600",
-              color: valueColor || theme.text,
+              color: valueColor || palette.text.primary,
             }}
           >
             {value}
@@ -810,15 +814,15 @@ export function LuxuryListItem({
         {badge && (
           <View
             style={{
-              paddingHorizontal: Spacing.sm,
-              paddingVertical: Spacing["3xs"],
-              borderRadius: Radius.sm,
+              paddingHorizontal: spacing.sm,
+              paddingVertical: spacing["3xs"],
+              borderRadius: radius.sm,
               backgroundColor: getBadgeStyle().bg,
             }}
           >
             <Text
               style={{
-                ...Typography.label.xs,
+                ...typography.label.xs,
                 color: getBadgeStyle().text,
               }}
             >
@@ -878,8 +882,7 @@ export function StatCard({
   delay,
 }: StatCardProps) {
   const displayTitle = title || label || "";
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, spacing, radius, typography } = useNeuTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -909,14 +912,18 @@ export function StatCard({
       style={[
         {
           backgroundColor:
-            variant === "accent" ? theme.primarySubtle : theme.surfaceCard,
-          borderRadius: Radius.xl,
-          padding: Spacing.lg,
+            variant === "accent"
+              ? palette.primary.subtle
+              : palette.background.elevated,
+          borderRadius: radius.xl,
+          padding: spacing.lg,
           borderWidth: 1,
           borderColor:
-            variant === "accent" ? Palette.accent.glow : theme.borderCard,
+            variant === "accent"
+              ? palette.primary.glow
+              : (palette.divider?.main ?? palette.background.dark),
           borderCurve: "continuous",
-          gap: Spacing.sm,
+          gap: spacing.sm,
         },
         style,
       ]}
@@ -928,7 +935,7 @@ export function StatCard({
           justifyContent: "space-between",
         }}
       >
-        <Text style={{ ...Typography.label.sm, color: theme.textMuted }}>
+        <Text style={{ ...typography.label.sm, color: palette.text.muted }}>
           {displayTitle}
         </Text>
         {icon}
@@ -937,19 +944,19 @@ export function StatCard({
         style={{
           flexDirection: "row",
           alignItems: "baseline",
-          gap: Spacing.xs,
+          gap: spacing.xs,
         }}
       >
-        <Text style={{ ...Typography.display.md, color: theme.text }}>
+        <Text style={{ ...typography.display.md, color: palette.text.primary }}>
           {value}
         </Text>
         {trend && (
           <Text
             style={{
-              ...Typography.label.sm,
+              ...typography.label.sm,
               color: trend.isPositive
-                ? Palette.success[500]
-                : Palette.danger[500],
+                ? palette.accent.green
+                : palette.accent.red,
             }}
           >
             {trend.isPositive ? "+" : ""}
@@ -958,7 +965,7 @@ export function StatCard({
         )}
       </View>
       {subtitle && (
-        <Text style={{ ...Typography.body.sm, color: theme.textSecondary }}>
+        <Text style={{ ...typography.body.sm, color: palette.text.secondary }}>
           {subtitle}
         </Text>
       )}
@@ -1005,11 +1012,10 @@ export function ProgressCircle({
   value,
   children,
 }: ProgressCircleProps) {
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, typography } = useNeuTheme();
 
-  const progressColor = color || Palette.accent[500];
-  const bgColor = backgroundColor || theme.surfaceGlass;
+  const progressColor = color || palette.primary.main;
+  const bgColor = backgroundColor || palette.background.elevated;
 
   return (
     <View
@@ -1050,8 +1056,8 @@ export function ProgressCircle({
       {value && (
         <Text
           style={{
-            ...Typography.label.sm,
-            color: theme.text,
+            ...typography.label.sm,
+            color: palette.text.primary,
             fontWeight: "600",
           }}
         >

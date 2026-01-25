@@ -1,66 +1,61 @@
 /**
- * 💰 SALES SCREEN - Ultra Premium Edition
- * Premium transaction history with animations
+ * 💰 SALES SCREEN - Neumorphic Dark Edition
+ *
+ * Design fidèle 100% au mockup de référence
+ * Style: Soft UI, Dark Neumorphic, Period filters
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import {
-    Card,
-    Chip,
-    LuxuryListItem,
-    SectionHeader,
-} from "@/components/ui/Components";
-import {
-    PremiumColors,
-    PremiumScreen,
-    usePremiumTheme,
-} from "@/components/ui/PremiumUI";
+    NeuPeriodChip,
+    NeuScreen,
+    useNeuColors,
+} from "@/components/ui/Neumorphic";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Typography } from "@/constants/Theme";
 import { Sale, SalesRepository } from "@/db/repositories";
 import { Haptic } from "@/utils/haptics";
 import { useQuery } from "@tanstack/react-query";
-import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
     FlatList,
+    Platform,
     Pressable,
     RefreshControl,
-    ScrollView,
-    StyleSheet,
     Text,
     View,
 } from "react-native";
 import Animated, {
+    FadeIn,
     FadeInDown,
     SlideInRight,
-    ZoomIn,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ============ TYPES ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📦 TYPES & CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 type PeriodFilter = "7d" | "30d" | "3m" | "1y" | "all";
 
 interface PeriodOption {
   key: PeriodFilter;
   label: string;
-  days: number | null; // null = all time
+  shortLabel: string;
+  days: number | null;
 }
 
-// ============ CONSTANTS ============
-
 const PERIOD_OPTIONS: PeriodOption[] = [
-  { key: "7d", label: "7 jours", days: 7 },
-  { key: "30d", label: "30 jours", days: 30 },
-  { key: "3m", label: "3 mois", days: 90 },
-  { key: "1y", label: "1 an", days: 365 },
-  { key: "all", label: "Tout", days: null },
+  { key: "7d", label: "7 jours", shortLabel: "7J", days: 7 },
+  { key: "30d", label: "30 jours", shortLabel: "30J", days: 30 },
+  { key: "3m", label: "3 mois", shortLabel: "3M", days: 90 },
+  { key: "1y", label: "1 an", shortLabel: "1A", days: 365 },
+  { key: "all", label: "Tout", shortLabel: "TOUT", days: null },
 ];
-
-// ============ HELPERS ============
 
 function getDateThreshold(days: number | null): Date | null {
   if (days === null) return null;
@@ -70,440 +65,687 @@ function getDateThreshold(days: number | null): Date | null {
   return date;
 }
 
-function filterSalesByPeriod(sales: Sale[], period: PeriodFilter): Sale[] {
-  const option = PERIOD_OPTIONS.find((p) => p.key === period);
-  if (!option || option.days === null) return sales;
-
-  const threshold = getDateThreshold(option.days);
-  if (!threshold) return sales;
-
-  return sales.filter((sale) => new Date(sale.saleDate) >= threshold);
+function formatCurrency(value: number): string {
+  return `€${value.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎴 SALE CARD COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface SaleCardProps {
+  sale: Sale;
+  index: number;
+}
+
+const SaleCard = React.memo(function SaleCard({ sale, index }: SaleCardProps) {
+  const { palette, shadows, spacing, radius } = useNeuColors();
+  const scale = useSharedValue(1);
+  const priceNet = parseFloat(String(sale.priceNet)) || 0;
+  const priceGross = parseFloat(String(sale.priceGross)) || 0;
+  const fees = priceGross - priceNet;
+  const isCompleted = sale.status === "COMPLETED";
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.97, { damping: 20, stiffness: 300 });
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, { damping: 18, stiffness: 220 });
+  }, [scale]);
+
+  const handlePress = useCallback(() => {
+    Haptic.selection();
+    // Navigate to sale detail or lot
+    router.push(`/lots/${sale.lotId}`);
+  }, [sale.lotId]);
+
+  return (
+    <Animated.View entering={SlideInRight.delay(index * 50).duration(300)}>
+      <Animated.View style={animatedStyle}>
+        <Pressable
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          style={[
+            {
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              backgroundColor: palette.background.main,
+              borderRadius: radius.xl,
+              padding: spacing.md,
+            },
+            Platform.OS === "web" && { boxShadow: shadows.flat.css as any },
+          ]}
+        >
+          {/* Left: Icon + Info */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing.md,
+              flex: 1,
+            }}
+          >
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: radius.lg,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: isCompleted
+                  ? palette.accent.green + "20"
+                  : palette.accent.yellow + "20",
+              }}
+            >
+              <AppIcon
+                name={isCompleted ? "check-circle" : "schedule"}
+                size={20}
+                color={
+                  isCompleted ? palette.accent.green : palette.accent.yellow
+                }
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  color: palette.text.primary,
+                  fontSize: 14,
+                  fontWeight: "700",
+                }}
+                numberOfLines={1}
+              >
+                {`Vente #${sale.id}`}
+              </Text>
+              <Text
+                style={{
+                  color: palette.text.muted,
+                  fontSize: 12,
+                  marginTop: 2,
+                }}
+              >
+                {formatDate(sale.saleDate)} • {sale.platform || "Direct"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Right: Price */}
+          <View style={{ alignItems: "flex-end" }}>
+            <Text
+              style={{
+                color: palette.accent.green,
+                fontSize: 16,
+                fontWeight: "800",
+              }}
+            >
+              {formatCurrency(priceNet)}
+            </Text>
+            {fees > 0 && (
+              <Text
+                style={{
+                  color: palette.text.muted,
+                  fontSize: 11,
+                  marginTop: 2,
+                }}
+              >
+                -{formatCurrency(fees)} frais
+              </Text>
+            )}
+          </View>
+        </Pressable>
+      </Animated.View>
+    </Animated.View>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 💰 SALES SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export default function SalesScreen() {
+  const { palette, shadows, spacing, radius } = useNeuColors();
   const insets = useSafeAreaInsets();
-  const theme = usePremiumTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>("30d");
 
+  // ─── Data Query ──────────────────────────────────────────────────────
   const salesQuery = useQuery({
     queryKey: ["sales"],
     queryFn: () => SalesRepository.getAll(),
   });
-  const { refetch } = salesQuery;
-  const allSales = (salesQuery.data ?? []).slice().reverse();
+
   const loading = salesQuery.isLoading;
   const refreshing = salesQuery.isFetching && !loading;
-
-  // Filter sales by period
-  const sales = useMemo(() => {
-    return filterSalesByPeriod(allSales, selectedPeriod);
-  }, [allSales, selectedPeriod]);
-
-  const { totalRevenue, salesCount, avgSaleValue, previousPeriodComparison } =
-    useMemo(() => {
-      const completed = sales.filter((sale) => sale.status === "COMPLETED");
-      const total = completed.reduce(
-        (sum, sale) => sum + parseFloat(String(sale.priceNet)),
-        0,
-      );
-      const avg = completed.length > 0 ? total / completed.length : 0;
-
-      // Calculate previous period for comparison
-      const option = PERIOD_OPTIONS.find((p) => p.key === selectedPeriod);
-      let comparison = 0;
-
-      if (option && option.days !== null) {
-        const previousThreshold = getDateThreshold(option.days * 2);
-        const currentThreshold = getDateThreshold(option.days);
-
-        if (previousThreshold && currentThreshold) {
-          const previousSales = allSales.filter((sale) => {
-            const saleDate = new Date(sale.saleDate);
-            return (
-              saleDate >= previousThreshold &&
-              saleDate < currentThreshold &&
-              sale.status === "COMPLETED"
-            );
-          });
-          const previousTotal = previousSales.reduce(
-            (sum, sale) => sum + parseFloat(String(sale.priceNet)),
-            0,
-          );
-
-          if (previousTotal > 0) {
-            comparison = ((total - previousTotal) / previousTotal) * 100;
-          } else if (total > 0) {
-            comparison = 100; // New sales, 100% increase
-          }
-        }
-      }
-
-      return {
-        totalRevenue: total,
-        salesCount: completed.length,
-        avgSaleValue: avg,
-        previousPeriodComparison: comparison,
-      };
-    }, [sales, allSales, selectedPeriod]);
+  const allSales = (salesQuery.data ?? []).slice().reverse();
 
   useFocusEffect(
     useCallback(() => {
-      refetch();
-    }, [refetch]),
+      salesQuery.refetch();
+    }, []),
   );
 
-  const handlePeriodChange = useCallback((period: PeriodFilter) => {
+  // ─── Filtered Sales ──────────────────────────────────────────────────
+  const filteredSales = useMemo(() => {
+    const option = PERIOD_OPTIONS.find((p) => p.key === selectedPeriod);
+    if (!option || option.days === null) return allSales;
+    const threshold = getDateThreshold(option.days);
+    if (!threshold) return allSales;
+    return allSales.filter((s) => new Date(s.saleDate) >= threshold);
+  }, [allSales, selectedPeriod]);
+
+  // ─── Stats ───────────────────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const completed = filteredSales.filter((s) => s.status === "COMPLETED");
+    const pending = filteredSales.filter((s) => s.status === "PENDING");
+    const totalRevenue = completed.reduce(
+      (sum, s) => sum + parseFloat(String(s.priceNet)),
+      0,
+    );
+    const totalFees = completed.reduce(
+      (sum, s) =>
+        sum +
+        (parseFloat(String(s.priceGross)) - parseFloat(String(s.priceNet))),
+      0,
+    );
+    const avgValue = completed.length > 0 ? totalRevenue / completed.length : 0;
+
+    // Compare with previous period
+    const option = PERIOD_OPTIONS.find((p) => p.key === selectedPeriod);
+    let previousTotal = 0;
+    let comparison = 0;
+
+    if (option && option.days !== null) {
+      const prevThreshold = getDateThreshold(option.days * 2);
+      const currThreshold = getDateThreshold(option.days);
+      if (prevThreshold && currThreshold) {
+        const previousSales = allSales.filter((s) => {
+          const d = new Date(s.saleDate);
+          return (
+            d >= prevThreshold && d < currThreshold && s.status === "COMPLETED"
+          );
+        });
+        previousTotal = previousSales.reduce(
+          (sum, s) => sum + parseFloat(String(s.priceNet)),
+          0,
+        );
+        if (previousTotal > 0) {
+          comparison = ((totalRevenue - previousTotal) / previousTotal) * 100;
+        } else if (totalRevenue > 0) {
+          comparison = 100;
+        }
+      }
+    }
+
+    return {
+      salesCount: completed.length,
+      pendingCount: pending.length,
+      totalRevenue,
+      totalFees,
+      avgValue,
+      comparison,
+    };
+  }, [filteredSales, allSales, selectedPeriod]);
+
+  // ─── Handlers ────────────────────────────────────────────────────────
+  const handleRefresh = useCallback(() => {
     Haptic.selection();
-    setSelectedPeriod(period);
+    salesQuery.refetch();
+  }, [salesQuery]);
+
+  const handleAddSale = useCallback(() => {
+    Haptic.selection();
+    router.push("/sales/new");
   }, []);
 
-  const renderItem = ({ item, index }: { item: Sale; index: number }) => {
-    const isCompleted = item.status === "COMPLETED";
+  // ─── Render ──────────────────────────────────────────────────────────
 
+  if (loading) {
     return (
-      <Animated.View entering={SlideInRight.delay(index * 40).duration(300)}>
-        <LuxuryListItem
-          title={`Lot #${item.lotId} • Article #${item.itemId}`}
-          subtitle={new Date(item.saleDate).toLocaleDateString("fr-FR", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-          leftContent={
+      <NeuScreen style={{ paddingTop: insets.top }}>
+        <SkeletonList />
+      </NeuScreen>
+    );
+  }
+
+  return (
+    <NeuScreen>
+      <FlatList
+        data={filteredSales}
+        keyExtractor={(sale) => String(sale.id)}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.lg,
+          paddingTop: insets.top + spacing.md,
+          paddingBottom: insets.bottom + 100,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={palette.primary.main}
+            colors={[palette.primary.main]}
+          />
+        }
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <Animated.View
+              entering={FadeInDown.delay(100).duration(400)}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: spacing.lg,
+              }}
+            >
+              <View>
+                <Text
+                  style={{
+                    color: palette.text.primary,
+                    fontSize: 28,
+                    fontWeight: "800",
+                    letterSpacing: -0.5,
+                  }}
+                >
+                  Mes Ventes
+                </Text>
+                <Text
+                  style={{
+                    color: palette.text.muted,
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                >
+                  {stats.salesCount} ventes •{" "}
+                  {formatCurrency(stats.totalRevenue)}
+                </Text>
+              </View>
+
+              {/* Add Button */}
+              <Pressable
+                onPress={handleAddSale}
+                style={[
+                  {
+                    width: 48,
+                    height: 48,
+                    borderRadius: radius.lg,
+                    backgroundColor: palette.primary.main,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  },
+                  Platform.OS === "web" && {
+                    boxShadow: `0 0 15px ${palette.primary.main}50`,
+                  },
+                ]}
+              >
+                <AppIcon name="add" size={24} color={palette.text.white} />
+              </Pressable>
+            </Animated.View>
+
+            {/* Period Chips */}
+            <Animated.View
+              entering={FadeInDown.delay(200).duration(400)}
+              style={{
+                flexDirection: "row",
+                gap: spacing.xs,
+                marginBottom: spacing.lg,
+              }}
+            >
+              {PERIOD_OPTIONS.map((option) => (
+                <NeuPeriodChip
+                  key={option.key}
+                  label={option.shortLabel}
+                  selected={selectedPeriod === option.key}
+                  onPress={() => {
+                    Haptic.selection();
+                    setSelectedPeriod(option.key);
+                  }}
+                />
+              ))}
+            </Animated.View>
+
+            {/* Revenue Hero Card */}
+            <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+              <LinearGradient
+                colors={[palette.primary.main, palette.primary.dark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[
+                  {
+                    borderRadius: radius["2xl"],
+                    padding: spacing.xl,
+                    marginBottom: spacing.lg,
+                  },
+                  Platform.OS === "web" && {
+                    boxShadow: `0 8px 32px ${palette.primary.main}40`,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: 11,
+                    fontWeight: "700",
+                    letterSpacing: 1,
+                    marginBottom: spacing.xs,
+                  }}
+                >
+                  REVENU NET
+                </Text>
+                <Text
+                  style={{
+                    color: palette.text.white,
+                    fontSize: 36,
+                    fontWeight: "800",
+                    letterSpacing: -1,
+                  }}
+                >
+                  {formatCurrency(stats.totalRevenue)}
+                </Text>
+                {stats.comparison !== 0 && (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      marginTop: spacing.xs,
+                    }}
+                  >
+                    <AppIcon
+                      name={
+                        stats.comparison >= 0 ? "trending-up" : "trending-down"
+                      }
+                      size={14}
+                      color={palette.text.white}
+                    />
+                    <Text
+                      style={{
+                        color: "rgba(255,255,255,0.8)",
+                        fontSize: 12,
+                        fontWeight: "600",
+                      }}
+                    >
+                      {stats.comparison >= 0 ? "+" : ""}
+                      {stats.comparison.toFixed(0)}% vs période préc.
+                    </Text>
+                  </View>
+                )}
+
+                {/* Mini Stats */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginTop: spacing.lg,
+                    paddingTop: spacing.md,
+                    borderTopWidth: 1,
+                    borderTopColor: "rgba(255,255,255,0.2)",
+                  }}
+                >
+                  <View style={{ flex: 1, alignItems: "center" }}>
+                    <Text
+                      style={{
+                        color: palette.text.white,
+                        fontSize: 16,
+                        fontWeight: "800",
+                      }}
+                    >
+                      {stats.salesCount}
+                    </Text>
+                    <Text
+                      style={{
+                        color: "rgba(255,255,255,0.7)",
+                        fontSize: 10,
+                        fontWeight: "600",
+                        marginTop: 2,
+                      }}
+                    >
+                      Ventes
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 1,
+                      backgroundColor: "rgba(255,255,255,0.2)",
+                    }}
+                  />
+                  <View style={{ flex: 1, alignItems: "center" }}>
+                    <Text
+                      style={{
+                        color: palette.text.white,
+                        fontSize: 16,
+                        fontWeight: "800",
+                      }}
+                    >
+                      {formatCurrency(stats.avgValue)}
+                    </Text>
+                    <Text
+                      style={{
+                        color: "rgba(255,255,255,0.7)",
+                        fontSize: 10,
+                        fontWeight: "600",
+                        marginTop: 2,
+                      }}
+                    >
+                      Moy/vente
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 1,
+                      backgroundColor: "rgba(255,255,255,0.2)",
+                    }}
+                  />
+                  <View style={{ flex: 1, alignItems: "center" }}>
+                    <Text
+                      style={{
+                        color: palette.text.white,
+                        fontSize: 16,
+                        fontWeight: "800",
+                      }}
+                    >
+                      {formatCurrency(stats.totalFees)}
+                    </Text>
+                    <Text
+                      style={{
+                        color: "rgba(255,255,255,0.7)",
+                        fontSize: 10,
+                        fontWeight: "600",
+                        marginTop: 2,
+                      }}
+                    >
+                      Frais
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </Animated.View>
+
+            {/* Pending Sales Alert */}
+            {stats.pendingCount > 0 && (
+              <Animated.View entering={FadeInDown.delay(400).duration(400)}>
+                <View
+                  style={[
+                    {
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      backgroundColor: palette.background.main,
+                      borderRadius: radius.xl,
+                      padding: spacing.md,
+                      marginBottom: spacing.lg,
+                    },
+                    Platform.OS === "web" && {
+                      boxShadow: shadows.flat.css as any,
+                    },
+                  ]}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: spacing.md,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: radius.lg,
+                        backgroundColor: palette.accent.yellow + "20",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <AppIcon
+                        name="schedule"
+                        size={18}
+                        color={palette.accent.yellow}
+                      />
+                    </View>
+                    <View>
+                      <Text
+                        style={{
+                          color: palette.text.primary,
+                          fontSize: 14,
+                          fontWeight: "700",
+                        }}
+                      >
+                        {stats.pendingCount} vente
+                        {stats.pendingCount > 1 ? "s" : ""} en attente
+                      </Text>
+                      <Text
+                        style={{
+                          color: palette.text.muted,
+                          fontSize: 12,
+                          marginTop: 2,
+                        }}
+                      >
+                        En cours de traitement
+                      </Text>
+                    </View>
+                  </View>
+                  <AppIcon
+                    name="chevron-right"
+                    size={20}
+                    color={palette.text.muted}
+                  />
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Section Title */}
+            <Animated.View
+              entering={FadeInDown.delay(500).duration(400)}
+              style={{ marginBottom: spacing.md }}
+            >
+              <Text
+                style={{
+                  color: palette.text.primary,
+                  fontSize: 16,
+                  fontWeight: "700",
+                }}
+              >
+                Historique
+              </Text>
+            </Animated.View>
+          </>
+        }
+        ListEmptyComponent={
+          <Animated.View
+            entering={FadeIn.duration(400)}
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: spacing["3xl"],
+            }}
+          >
             <View
               style={[
-                styles.statusIcon,
                 {
-                  backgroundColor: isCompleted
-                    ? theme.successSubtle
-                    : theme.dangerSubtle,
+                  width: 80,
+                  height: 80,
+                  borderRadius: 40,
+                  backgroundColor: palette.background.main,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: spacing.lg,
+                  borderWidth: 1,
+                  borderColor: shadows.pressed.borderColor,
+                },
+                Platform.OS === "web" && {
+                  boxShadow: shadows.pressed.css as any,
                 },
               ]}
             >
               <AppIcon
-                name={isCompleted ? "check-circle" : "cancel"}
-                size={18}
-                color={isCompleted ? theme.success : theme.danger}
+                name="point-of-sale"
+                size={48}
+                color={palette.text.muted}
               />
             </View>
-          }
-          value={`${isCompleted ? "+" : ""}€${parseFloat(String(item.priceNet)).toFixed(2)}`}
-          valueColor={isCompleted ? theme.success : theme.textMuted}
-          badge={
-            isCompleted ? undefined : { label: item.status, variant: "danger" }
-          }
-          showDivider={index < sales.length - 1}
-          onPress={() => router.push(`/sales/${item.id}`)}
-          index={index}
-        />
-      </Animated.View>
-    );
-  };
-
-  const colorScheme = useColorScheme() ?? "light";
-
-  return (
-    <PremiumScreen>
-      {/* Floating Header with Blur */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <BlurView
-          intensity={80}
-          tint={colorScheme === "dark" ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: theme.surface + "E6" },
-          ]}
-        />
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={[Typography.display.sm, { color: theme.text }]}>
-              Ventes
+            <Text
+              style={{
+                color: palette.text.primary,
+                fontSize: 18,
+                fontWeight: "700",
+                marginBottom: spacing.xs,
+              }}
+            >
+              Aucune vente
             </Text>
-            <Text style={[Typography.body.sm, { color: theme.textSecondary }]}>
-              Historique & Revenus
+            <Text
+              style={{
+                color: palette.text.muted,
+                fontSize: 14,
+                textAlign: "center",
+                marginBottom: spacing.lg,
+              }}
+            >
+              Vos ventes apparaîtront ici
             </Text>
-          </View>
-          <Pressable
-            style={[styles.addButton, { backgroundColor: theme.primary }]}
-            onPress={() => {
-              Haptic.impactMedium();
-              router.push("/sales/new");
-            }}
-          >
-            <AppIcon name="add" size={24} color={PremiumColors.textWhite} />
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={{ paddingTop: insets.top + 90, flex: 1 }}>
-        {/* Period Filter Chips */}
-        <Animated.View
-          entering={FadeInDown.delay(100).duration(400)}
-          style={styles.filterSection}
-        >
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterScroll}
-          >
-            {PERIOD_OPTIONS.map((option, index) => (
-              <Animated.View
-                key={option.key}
-                entering={ZoomIn.delay(100 + index * 50).duration(300)}
+            <Pressable
+              onPress={handleAddSale}
+              style={[
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: spacing.xs,
+                  backgroundColor: palette.primary.main,
+                  paddingVertical: 12,
+                  paddingHorizontal: 20,
+                  borderRadius: radius.xl,
+                },
+                Platform.OS === "web" && {
+                  boxShadow: shadows.glow.cssMd as any,
+                },
+              ]}
+            >
+              <AppIcon name="add" size={18} color={palette.text.white} />
+              <Text
+                style={{
+                  color: palette.text.white,
+                  fontSize: 14,
+                  fontWeight: "700",
+                }}
               >
-                <Chip
-                  label={option.label}
-                  selected={selectedPeriod === option.key}
-                  onPress={() => handlePeriodChange(option.key)}
-                />
-              </Animated.View>
-            ))}
-          </ScrollView>
-        </Animated.View>
-
-        {/* Revenue Hero Card */}
-        <Animated.View
-          style={styles.heroSection}
-          entering={FadeInDown.delay(200).duration(500)}
-        >
-          <Card variant="elevated">
-            <View style={styles.revenueContent}>
-              <View style={{ flex: 1 }}>
-                <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-                  REVENU{" "}
-                  {PERIOD_OPTIONS.find(
-                    (p) => p.key === selectedPeriod,
-                  )?.label.toUpperCase()}
-                </Text>
-                <Text
-                  style={[
-                    Typography.display.lg,
-                    { color: theme.success, marginTop: Spacing.xs },
-                  ]}
-                >
-                  €{totalRevenue.toFixed(2)}
-                </Text>
-                <View style={styles.revenueStats}>
-                  <View style={styles.revenueStat}>
-                    <AppIcon name="receipt" size={14} color={theme.textMuted} />
-                    <Text
-                      style={[
-                        Typography.body.sm,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      {salesCount} transactions
-                    </Text>
-                  </View>
-                  <View style={styles.revenueStat}>
-                    <AppIcon
-                      name={
-                        previousPeriodComparison >= 0
-                          ? "trending-up"
-                          : "trending-down"
-                      }
-                      size={14}
-                      color={
-                        previousPeriodComparison >= 0
-                          ? theme.success
-                          : theme.danger
-                      }
-                    />
-                    <Text
-                      style={[
-                        Typography.body.sm,
-                        {
-                          color:
-                            previousPeriodComparison >= 0
-                              ? theme.success
-                              : theme.danger,
-                        },
-                      ]}
-                    >
-                      {previousPeriodComparison >= 0 ? "+" : ""}
-                      {previousPeriodComparison.toFixed(0)}% vs précédent
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <View
-                style={[
-                  styles.revenueIcon,
-                  { backgroundColor: theme.successSubtle },
-                ]}
-              >
-                <AppIcon
-                  name="account-balance-wallet"
-                  size={32}
-                  color={theme.success}
-                />
-              </View>
-            </View>
-          </Card>
-        </Animated.View>
-
-        {/* Transactions List */}
-        <Animated.View
-          entering={FadeInDown.delay(300).duration(500)}
-          style={styles.listSection}
-        >
-          <SectionHeader
-            title="Transactions récentes"
-            icon={<AppIcon name="history" size={20} color={theme.primary} />}
-          />
-
-          <Card variant="default" noPadding style={styles.listCard}>
-            <FlatList
-              data={sales}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={renderItem}
-              contentInsetAdjustmentBehavior="automatic"
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={refetch}
-                  tintColor={theme.primary}
-                />
-              }
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingVertical: Spacing.md }}
-              ListEmptyComponent={
-                !loading ? (
-                  <View style={styles.empty}>
-                    <View
-                      style={[
-                        styles.emptyIcon,
-                        { backgroundColor: theme.primarySubtle },
-                      ]}
-                    >
-                      <AppIcon
-                        name="point-of-sale"
-                        size={40}
-                        color={theme.primary}
-                      />
-                    </View>
-                    <Text
-                      style={[
-                        Typography.heading.md,
-                        { color: theme.text, marginTop: Spacing.lg },
-                      ]}
-                    >
-                      Aucune vente
-                    </Text>
-                    <Text
-                      style={[
-                        Typography.body.sm,
-                        { color: theme.textMuted, textAlign: "center" },
-                      ]}
-                    >
-                      Enregistrez votre première vente depuis le stock
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.loadingContainer}>
-                    <SkeletonList count={5} />
-                  </View>
-                )
-              }
-            />
-          </Card>
-        </Animated.View>
-      </View>
-    </PremiumScreen>
+                Ajouter une vente
+              </Text>
+            </Pressable>
+          </Animated.View>
+        }
+        renderItem={({ item, index }) => <SaleCard sale={item} index={index} />}
+        ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+      />
+    </NeuScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    overflow: "hidden",
-  },
-  headerContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-  },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  filterSection: {
-    marginBottom: Spacing.md,
-  },
-  filterScroll: {
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  heroSection: {
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.lg,
-  },
-  revenueContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  revenueStats: {
-    marginTop: Spacing.md,
-    gap: Spacing.xs,
-  },
-  revenueStat: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-  },
-  revenueIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: Radius.xl,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  listSection: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-  },
-  listCard: {
-    flex: 1,
-    marginBottom: 100,
-    borderRadius: Radius.xl,
-    overflow: "hidden",
-  },
-  statusIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  empty: {
-    alignItems: "center",
-    paddingVertical: Spacing["4xl"],
-    paddingHorizontal: Spacing.xl,
-  },
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: Radius["2xl"],
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingContainer: {
-    padding: Spacing.xl,
-  },
-});

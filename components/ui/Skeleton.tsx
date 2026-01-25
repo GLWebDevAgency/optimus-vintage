@@ -15,7 +15,7 @@
  * <SkeletonDashboard /> // Full dashboard skeleton
  */
 
-import { Palette, Radius, Spacing } from "@/constants/Theme";
+import { useNeuTheme } from "@/constants/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo } from "react";
 import {
@@ -37,16 +37,10 @@ import Animated, {
 // 🎨 SKELETON COLORS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const SkeletonColors = {
-  light: {
-    base: Palette.neutral[200],
-    highlight: Palette.neutral[100],
-  },
-  dark: {
-    base: Palette.navy[800],
-    highlight: Palette.navy[700],
-  },
-};
+const getSkeletonColors = (isDark: boolean) => ({
+  base: isDark ? "#2A2A32" : "#D1D9E6", // Dark: surface dark, Light: neumorphic muted
+  highlight: isDark ? "#32323A" : "#E8EDF5", // Légèrement plus clair
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 💀 BASE SKELETON COMPONENT
@@ -63,8 +57,6 @@ interface SkeletonProps {
   variant?: "text" | "circle" | "rect" | "card";
   /** Size for circle variant */
   size?: number;
-  /** Theme mode */
-  mode?: "light" | "dark";
   /** Custom style */
   style?: ViewStyle;
   /** Animation duration in ms */
@@ -74,15 +66,16 @@ interface SkeletonProps {
 export function Skeleton({
   width = "100%",
   height = 16,
-  borderRadius = Radius.sm,
+  borderRadius: customBorderRadius,
   variant = "rect",
   size,
-  mode = "light",
   style,
   duration = 1200,
 }: SkeletonProps) {
+  const { radius, isDark } = useNeuTheme();
   const shimmerPosition = useSharedValue(-1);
-  const colors = SkeletonColors[mode];
+  const colors = getSkeletonColors(isDark);
+  const borderRadius = customBorderRadius ?? radius.sm;
 
   // Check for reduced motion preference
   const [reduceMotion, setReduceMotion] = React.useState(false);
@@ -127,18 +120,18 @@ export function Skeleton({
         return {
           width,
           height: height || 14,
-          borderRadius: Radius.xs,
+          borderRadius: radius.xs,
         };
       case "card":
         return {
           width: "100%" as const,
           height: height || 120,
-          borderRadius: Radius.lg,
+          borderRadius: radius.lg,
         };
       default:
         return { width, height, borderRadius };
     }
-  }, [variant, width, height, size, borderRadius]);
+  }, [variant, width, height, size, borderRadius, radius]);
 
   return (
     <View
@@ -172,53 +165,50 @@ export function Skeleton({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Skeleton for metric cards */
-export function SkeletonMetricCard({
-  mode = "light",
-}: {
-  mode?: "light" | "dark";
-}) {
+export function SkeletonMetricCard() {
   return (
     <View style={styles.metricCard}>
-      <Skeleton variant="circle" size={32} mode={mode} />
+      <Skeleton variant="circle" size={32} />
       <View style={styles.metricContent}>
-        <Skeleton width={60} height={24} mode={mode} />
-        <Skeleton width={50} height={12} mode={mode} style={{ marginTop: 4 }} />
+        <Skeleton width={60} height={24} />
+        <Skeleton width={50} height={12} style={{ marginTop: 4 }} />
       </View>
     </View>
   );
 }
 
 /** Skeleton for hero revenue card */
-export function SkeletonHeroCard({
-  mode = "light",
-}: {
-  mode?: "light" | "dark";
-}) {
+export function SkeletonHeroCard() {
+  const { radius, isDark, palette } = useNeuTheme();
   return (
-    <View style={[styles.heroCard, mode === "dark" && styles.heroCardDark]}>
+    <View
+      style={[
+        styles.heroCard,
+        {
+          backgroundColor: isDark
+            ? palette.background.elevated
+            : palette.background.main,
+          borderColor: isDark ? palette.divider.main : palette.divider.light,
+        },
+      ]}
+    >
       {/* Period chips */}
       <View style={styles.periodChips}>
         {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton
-            key={i}
-            width={40}
-            height={28}
-            borderRadius={Radius.full}
-            mode={mode}
-          />
+          <Skeleton key={i} width={40} height={28} borderRadius={radius.full} />
         ))}
       </View>
 
       {/* Main value */}
-      <Skeleton width={180} height={48} mode={mode} style={{ marginTop: 16 }} />
+      <Skeleton width={180} height={48} style={{ marginTop: 16 }} />
 
       {/* Mini stats */}
       <View style={styles.heroStats}>
         {[1, 2, 3].map((i) => (
           <View key={i} style={styles.heroStat}>
-            <Skeleton variant="circle" size={8} mode={mode} />
-            <Skeleton width={50} height={12} mode={mode} />
-            <Skeleton width={60} height={16} mode={mode} />
+            <Skeleton variant="circle" size={8} />
+            <Skeleton width={50} height={12} />
+            <Skeleton width={60} height={16} />
           </View>
         ))}
       </View>
@@ -227,22 +217,13 @@ export function SkeletonHeroCard({
 }
 
 /** Skeleton for quick action buttons */
-export function SkeletonQuickActions({
-  mode = "light",
-}: {
-  mode?: "light" | "dark";
-}) {
+export function SkeletonQuickActions() {
   return (
     <View style={styles.quickActionsGrid}>
       {[1, 2, 3, 4].map((i) => (
         <View key={i} style={styles.quickActionBtn}>
-          <Skeleton variant="circle" size={40} mode={mode} />
-          <Skeleton
-            width={50}
-            height={12}
-            mode={mode}
-            style={{ marginTop: 8 }}
-          />
+          <Skeleton variant="circle" size={40} />
+          <Skeleton width={50} height={12} style={{ marginTop: 8 }} />
         </View>
       ))}
     </View>
@@ -250,39 +231,31 @@ export function SkeletonQuickActions({
 }
 
 /** Skeleton for top lot cards */
-export function SkeletonTopLotCard({
-  mode = "light",
-}: {
-  mode?: "light" | "dark";
-}) {
+export function SkeletonTopLotCard() {
   return (
     <View style={styles.topLotCard}>
-      <Skeleton variant="circle" size={28} mode={mode} />
+      <Skeleton variant="circle" size={28} />
       <View style={styles.topLotInfo}>
-        <Skeleton width={120} height={16} mode={mode} />
-        <Skeleton width={60} height={12} mode={mode} style={{ marginTop: 4 }} />
+        <Skeleton width={120} height={16} />
+        <Skeleton width={60} height={12} style={{ marginTop: 4 }} />
       </View>
       <View style={styles.topLotStats}>
-        <Skeleton width={70} height={18} mode={mode} />
-        <Skeleton width={50} height={12} mode={mode} style={{ marginTop: 4 }} />
+        <Skeleton width={70} height={18} />
+        <Skeleton width={50} height={12} style={{ marginTop: 4 }} />
       </View>
     </View>
   );
 }
 
 /** Skeleton for stat row in details section */
-export function SkeletonStatRow({
-  mode = "light",
-}: {
-  mode?: "light" | "dark";
-}) {
+export function SkeletonStatRow() {
   return (
     <View style={styles.statRow}>
       <View style={styles.statRowLeft}>
-        <Skeleton variant="circle" size={28} mode={mode} />
-        <Skeleton width={100} height={14} mode={mode} />
+        <Skeleton variant="circle" size={28} />
+        <Skeleton width={100} height={14} />
       </View>
-      <Skeleton width={80} height={18} mode={mode} />
+      <Skeleton width={80} height={18} />
     </View>
   );
 }
@@ -291,62 +264,74 @@ export function SkeletonStatRow({
 // 📱 FULL DASHBOARD SKELETON
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function SkeletonDashboard({
-  mode = "light",
-}: {
-  mode?: "light" | "dark";
-}) {
+export function SkeletonDashboard() {
+  const { spacing, radius, isDark, palette } = useNeuTheme();
+
   return (
-    <View style={styles.dashboardContainer}>
+    <View
+      style={[
+        styles.dashboardContainer,
+        { padding: spacing.lg, gap: spacing.lg },
+      ]}
+    >
       {/* Hero Card */}
-      <SkeletonHeroCard mode={mode} />
+      <SkeletonHeroCard />
 
       {/* Metric Cards Row */}
-      <View style={styles.metricsRow}>
-        <SkeletonMetricCard mode={mode} />
-        <SkeletonMetricCard mode={mode} />
-        <SkeletonMetricCard mode={mode} />
+      <View style={[styles.metricsRow, { gap: spacing.sm }]}>
+        <SkeletonMetricCard />
+        <SkeletonMetricCard />
+        <SkeletonMetricCard />
       </View>
 
       {/* Quick Actions */}
-      <View style={styles.section}>
-        <Skeleton
-          width={120}
-          height={20}
-          mode={mode}
-          style={{ marginBottom: 12 }}
-        />
-        <SkeletonQuickActions mode={mode} />
+      <View style={[styles.section, { gap: spacing.sm }]}>
+        <Skeleton width={120} height={20} style={{ marginBottom: 12 }} />
+        <SkeletonQuickActions />
       </View>
 
       {/* Top Performers */}
-      <View style={styles.section}>
-        <Skeleton
-          width={140}
-          height={20}
-          mode={mode}
-          style={{ marginBottom: 12 }}
-        />
-        <SkeletonTopLotCard mode={mode} />
-        <SkeletonTopLotCard mode={mode} />
-        <SkeletonTopLotCard mode={mode} />
+      <View style={[styles.section, { gap: spacing.sm }]}>
+        <Skeleton width={140} height={20} style={{ marginBottom: 12 }} />
+        <SkeletonTopLotCard />
+        <SkeletonTopLotCard />
+        <SkeletonTopLotCard />
       </View>
 
       {/* Details Section */}
-      <View style={styles.section}>
-        <Skeleton
-          width={80}
-          height={20}
-          mode={mode}
-          style={{ marginBottom: 12 }}
-        />
-        <View style={styles.detailsCard}>
-          <SkeletonStatRow mode={mode} />
-          <SkeletonStatRow mode={mode} />
-          <SkeletonStatRow mode={mode} />
-          <View style={styles.divider} />
-          <SkeletonStatRow mode={mode} />
-          <SkeletonStatRow mode={mode} />
+      <View style={[styles.section, { gap: spacing.sm }]}>
+        <Skeleton width={80} height={20} style={{ marginBottom: 12 }} />
+        <View
+          style={[
+            styles.detailsCard,
+            {
+              borderRadius: radius.lg,
+              padding: spacing.md,
+              gap: spacing.sm,
+              backgroundColor: isDark
+                ? palette.background.elevated
+                : palette.background.main,
+              borderColor: isDark
+                ? palette.divider.main
+                : palette.divider.light,
+            },
+          ]}
+        >
+          <SkeletonStatRow />
+          <SkeletonStatRow />
+          <SkeletonStatRow />
+          <View
+            style={[
+              styles.divider,
+              {
+                backgroundColor: isDark
+                  ? palette.divider.main
+                  : palette.divider.light,
+              },
+            ]}
+          />
+          <SkeletonStatRow />
+          <SkeletonStatRow />
         </View>
       </View>
     </View>
@@ -358,60 +343,50 @@ export function SkeletonDashboard({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Skeleton for list items (stock, lots, sales) */
-export function SkeletonListItem({
-  mode = "light",
-}: {
-  mode?: "light" | "dark";
-}) {
+export function SkeletonListItem() {
+  const { spacing, radius, isDark, palette } = useNeuTheme();
+
   return (
-    <View style={styles.listItem}>
+    <View
+      style={[
+        styles.listItem,
+        {
+          padding: spacing.md,
+          borderRadius: radius.lg,
+          marginBottom: spacing.sm,
+          gap: spacing.md,
+          backgroundColor: isDark
+            ? palette.background.elevated
+            : palette.background.main,
+          borderColor: isDark ? palette.divider.main : palette.divider.light,
+        },
+      ]}
+    >
       <Skeleton
         variant="rect"
         width={60}
         height={60}
-        borderRadius={Radius.md}
-        mode={mode}
+        borderRadius={radius.md}
       />
       <View style={styles.listItemContent}>
-        <Skeleton width="70%" height={16} mode={mode} />
-        <Skeleton
-          width="40%"
-          height={12}
-          mode={mode}
-          style={{ marginTop: 6 }}
-        />
-        <Skeleton
-          width="50%"
-          height={12}
-          mode={mode}
-          style={{ marginTop: 4 }}
-        />
+        <Skeleton width="70%" height={16} />
+        <Skeleton width="40%" height={12} style={{ marginTop: 6 }} />
+        <Skeleton width="50%" height={12} style={{ marginTop: 4 }} />
       </View>
       <View style={styles.listItemRight}>
-        <Skeleton width={60} height={18} mode={mode} />
-        <Skeleton
-          variant="circle"
-          size={24}
-          mode={mode}
-          style={{ marginTop: 8 }}
-        />
+        <Skeleton width={60} height={18} />
+        <Skeleton variant="circle" size={24} style={{ marginTop: 8 }} />
       </View>
     </View>
   );
 }
 
 /** Full list skeleton */
-export function SkeletonList({
-  count = 5,
-  mode = "light",
-}: {
-  count?: number;
-  mode?: "light" | "dark";
-}) {
+export function SkeletonList({ count = 5 }: { count?: number }) {
   return (
     <View>
       {Array.from({ length: count }).map((_, i) => (
-        <SkeletonListItem key={i} mode={mode} />
+        <SkeletonListItem key={i} />
       ))}
     </View>
   );
@@ -441,54 +416,44 @@ const styles = StyleSheet.create({
 
   // Dashboard skeleton styles
   dashboardContainer: {
-    padding: Spacing.lg,
-    gap: Spacing.lg,
+    // padding et gap appliqués dynamiquement
   },
 
   // Hero card
   heroCard: {
-    backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
+    borderRadius: 24, // radius.xl
+    padding: 20, // spacing.lg
     borderWidth: 1,
-    borderColor: Palette.neutral[200],
-  },
-  heroCardDark: {
-    backgroundColor: Palette.navy[800],
-    borderColor: Palette.navy[700],
   },
   periodChips: {
     flexDirection: "row",
-    gap: Spacing.xs,
+    gap: 8, // spacing.xs
   },
   heroStats: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.md,
+    marginTop: 20, // spacing.lg
+    paddingTop: 16, // spacing.md
     borderTopWidth: 1,
-    borderTopColor: Palette.neutral[200],
   },
   heroStat: {
     alignItems: "center",
-    gap: Spacing.xs,
+    gap: 8, // spacing.xs
   },
 
   // Metric cards
   metricsRow: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    // gap appliqué dynamiquement
   },
   metricCard: {
     flex: 1,
-    backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
+    borderRadius: 20, // radius.lg
+    padding: 16, // spacing.md
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
+    gap: 12, // spacing.sm
     borderWidth: 1,
-    borderColor: Palette.neutral[200],
   },
   metricContent: {
     flex: 1,
@@ -498,30 +463,26 @@ const styles = StyleSheet.create({
   quickActionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.sm,
+    gap: 12, // spacing.sm
   },
   quickActionBtn: {
     flex: 1,
     minWidth: "22%",
-    backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
+    borderRadius: 20, // radius.lg
+    padding: 16, // spacing.md
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Palette.neutral[200],
   },
 
   // Top lot card
   topLotCard: {
-    backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
+    borderRadius: 20, // radius.lg
+    padding: 16, // spacing.md
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-    marginBottom: Spacing.xs,
+    gap: 12, // spacing.sm
+    marginBottom: 8, // spacing.xs
     borderWidth: 1,
-    borderColor: Palette.neutral[200],
   },
   topLotInfo: {
     flex: 1,
@@ -532,44 +493,35 @@ const styles = StyleSheet.create({
 
   // Details section
   section: {
-    gap: Spacing.sm,
+    // gap appliqué dynamiquement
   },
   detailsCard: {
-    backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    gap: Spacing.sm,
     borderWidth: 1,
-    borderColor: Palette.neutral[200],
+    // borderRadius, padding, gap, backgroundColor, borderColor appliqués dynamiquement
   },
   statRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: Spacing.xs,
+    paddingVertical: 8, // spacing.xs
   },
   statRowLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
+    gap: 12, // spacing.sm
   },
   divider: {
     height: 1,
-    backgroundColor: Palette.neutral[200],
-    marginVertical: Spacing.xs,
+    marginVertical: 8, // spacing.xs
+    // backgroundColor appliqué dynamiquement
   },
 
   // List skeleton
   listItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.md,
-    backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.lg,
-    marginBottom: Spacing.sm,
-    gap: Spacing.md,
     borderWidth: 1,
-    borderColor: Palette.neutral[200],
+    // padding, borderRadius, marginBottom, gap, backgroundColor, borderColor appliqués dynamiquement
   },
   listItemContent: {
     flex: 1,

@@ -5,8 +5,7 @@
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import { Button } from "@/components/ui/Components";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { useNeuColors } from "@/components/ui/Neumorphic";
 import { ItemsRepository, SalesRepository } from "@/db/repositories";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -17,7 +16,6 @@ import {
     Alert,
     Pressable,
     ScrollView,
-    StyleSheet,
     Text,
     View,
 } from "react-native";
@@ -27,8 +25,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function SaleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
+  const { palette, shadows, spacing, radius, typography, colorScheme } =
+    useNeuColors();
   const queryClient = useQueryClient();
 
   const saleId = id ? parseInt(id, 10) : null;
@@ -101,14 +99,21 @@ export default function SaleDetailScreen() {
   if (saleQuery.isLoading) {
     return (
       <View
-        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: spacing.xl,
+          backgroundColor: palette.background.main,
+        }}
       >
-        <ActivityIndicator size="large" color={theme.primary} />
+        <ActivityIndicator size="large" color={palette.primary.main} />
         <Text
-          style={[
-            Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.md },
-          ]}
+          style={{
+            ...typography.body.sm,
+            color: palette.text.muted,
+            marginTop: spacing.md,
+          }}
         >
           Loading sale...
         </Text>
@@ -120,21 +125,35 @@ export default function SaleDetailScreen() {
   if (!saleQuery.data) {
     return (
       <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: spacing.xl,
+          backgroundColor: palette.background.main,
+        }}
       >
         <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: spacing.lg,
+            backgroundColor: "rgba(239, 68, 68, 0.15)",
+          }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
+          <AppIcon name="error-outline" size={40} color={palette.accent.red} />
         </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
+        <Text style={{ ...typography.heading.md, color: palette.text.primary }}>
           Sale Not Found
         </Text>
         <Button
           variant="ghost"
           size="md"
           onPress={() => router.back()}
-          style={{ marginTop: Spacing.xl }}
+          style={{ marginTop: spacing.xl }}
         >
           Go Back
         </Button>
@@ -154,16 +173,16 @@ export default function SaleDetailScreen() {
   const priceNet = parseFloat(String(sale.priceNet));
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={{ flex: 1, backgroundColor: palette.background.main }}>
       <Stack.Screen
         options={{
           title: "Sale Details",
-          headerStyle: { backgroundColor: theme.background },
-          headerTintColor: theme.text,
+          headerStyle: { backgroundColor: palette.background.main },
+          headerTintColor: palette.text.primary,
           headerShadowVisible: false,
           headerLeft: () => (
             <Pressable onPress={() => router.back()} hitSlop={8}>
-              <AppIcon name="close" size={24} color={theme.text} />
+              <AppIcon name="close" size={24} color={palette.text.primary} />
             </Pressable>
           ),
         }}
@@ -171,29 +190,32 @@ export default function SaleDetailScreen() {
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
 
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + 120 },
-        ]}
+        contentContainerStyle={{
+          padding: spacing.xl,
+          paddingBottom: insets.bottom + 120,
+        }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* Status Header */}
         <Animated.View
           entering={FadeInDown.delay(50).duration(400)}
-          style={styles.statusHeader}
+          style={{ alignItems: "center", marginBottom: spacing.xl }}
         >
           <View
-            style={[
-              styles.statusIcon,
-              {
-                backgroundColor: isCompleted
-                  ? theme.successSubtle
-                  : isCancelled
-                    ? theme.dangerSubtle
-                    : theme.warningSubtle,
-              },
-            ]}
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: spacing.md,
+              backgroundColor: isCompleted
+                ? "rgba(16, 185, 129, 0.15)"
+                : isCancelled
+                  ? "rgba(239, 68, 68, 0.15)"
+                  : "rgba(245, 158, 11, 0.15)",
+            }}
           >
             <AppIcon
               name={
@@ -206,17 +228,19 @@ export default function SaleDetailScreen() {
               size={36}
               color={
                 isCompleted
-                  ? theme.success
+                  ? palette.accent.green
                   : isCancelled
-                    ? theme.danger
-                    : theme.warning
+                    ? palette.accent.red
+                    : palette.accent.yellow
               }
             />
           </View>
-          <Text style={[Typography.heading.lg, { color: theme.text }]}>
+          <Text
+            style={{ ...typography.heading.lg, color: palette.text.primary }}
+          >
             {isCompleted ? "Sale Completed" : sale.status}
           </Text>
-          <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+          <Text style={{ ...typography.body.sm, color: palette.text.muted }}>
             {new Date(sale.saleDate).toLocaleDateString("en-US", {
               weekday: "long",
               day: "numeric",
@@ -228,29 +252,41 @@ export default function SaleDetailScreen() {
 
         {/* Amount Card */}
         <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <View style={styles.amountCard}>
-            <Text style={[Typography.label.sm, { color: theme.textMuted }]}>
+          <View
+            style={{
+              alignItems: "center",
+              paddingVertical: spacing.xl,
+              marginBottom: spacing.xl,
+            }}
+          >
+            <Text style={{ ...typography.label.sm, color: palette.text.muted }}>
               NET AMOUNT
             </Text>
             <Text
-              style={[
-                Typography.hero,
-                {
-                  color: isCompleted ? theme.success : theme.textMuted,
-                  textDecorationLine: isCancelled ? "line-through" : "none",
-                },
-              ]}
+              style={{
+                ...typography.display["2xl"],
+                color: isCompleted ? palette.accent.green : palette.text.muted,
+                textDecorationLine: isCancelled ? "line-through" : "none",
+              }}
             >
               €{priceNet.toFixed(2)}
             </Text>
             <View
-              style={[
-                styles.platformBadge,
-                { backgroundColor: theme.primaryMuted },
-              ]}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: spacing.xs,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.xs,
+                borderRadius: radius.full,
+                marginTop: spacing.md,
+                backgroundColor: palette.primary.subtle,
+              }}
             >
-              <AppIcon name="store" size={14} color={theme.primary} />
-              <Text style={[Typography.label.sm, { color: theme.primary }]}>
+              <AppIcon name="store" size={14} color={palette.primary.main} />
+              <Text
+                style={{ ...typography.label.sm, color: palette.primary.main }}
+              >
                 {sale.platform || "Vinted"}
               </Text>
             </View>
@@ -260,57 +296,135 @@ export default function SaleDetailScreen() {
         {/* Breakdown */}
         <Animated.View
           entering={FadeInDown.delay(150).duration(400)}
-          style={styles.section}
+          style={{ marginBottom: spacing.xl }}
         >
-          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: "600",
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+              marginBottom: spacing.sm,
+              color: palette.text.secondary,
+            }}
+          >
             Breakdown
           </Text>
           <View>
-            <View style={styles.breakdownRow}>
-              <Text style={[Typography.body.md, { color: theme.text }]}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingVertical: spacing.sm,
+              }}
+            >
+              <Text
+                style={{ ...typography.body.md, color: palette.text.primary }}
+              >
                 Gross Price
               </Text>
-              <Text style={[Typography.number.md, { color: theme.text }]}>
+              <Text
+                style={{ ...typography.number.md, color: palette.text.primary }}
+              >
                 €{priceGross.toFixed(2)}
               </Text>
             </View>
-            <View style={[styles.divider, { backgroundColor: theme.border }]} />
-            <View style={styles.breakdownRow}>
-              <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+            <View
+              style={{
+                height: 1,
+                marginVertical: spacing.sm,
+                backgroundColor: palette.divider.main,
+              }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingVertical: spacing.sm,
+              }}
+            >
+              <Text
+                style={{ ...typography.body.sm, color: palette.text.muted }}
+              >
                 Platform Fees
               </Text>
-              <Text style={[Typography.number.sm, { color: theme.danger }]}>
+              <Text
+                style={{ ...typography.number.sm, color: palette.accent.red }}
+              >
                 -€{platformFees.toFixed(2)}
               </Text>
             </View>
-            <View style={styles.breakdownRow}>
-              <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingVertical: spacing.sm,
+              }}
+            >
+              <Text
+                style={{ ...typography.body.sm, color: palette.text.muted }}
+              >
                 Shipping Fees
               </Text>
-              <Text style={[Typography.number.sm, { color: theme.danger }]}>
+              <Text
+                style={{ ...typography.number.sm, color: palette.accent.red }}
+              >
                 -€{shippingFees.toFixed(2)}
               </Text>
             </View>
             {miscFees > 0 && (
-              <View style={styles.breakdownRow}>
-                <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingVertical: spacing.sm,
+                }}
+              >
+                <Text
+                  style={{ ...typography.body.sm, color: palette.text.muted }}
+                >
                   Other Fees
                 </Text>
-                <Text style={[Typography.number.sm, { color: theme.danger }]}>
+                <Text
+                  style={{ ...typography.number.sm, color: palette.accent.red }}
+                >
                   -€{miscFees.toFixed(2)}
                 </Text>
               </View>
             )}
-            <View style={[styles.divider, { backgroundColor: theme.border }]} />
-            <View style={styles.breakdownRow}>
-              <Text style={[Typography.heading.sm, { color: theme.text }]}>
+            <View
+              style={{
+                height: 1,
+                marginVertical: spacing.sm,
+                backgroundColor: palette.divider.main,
+              }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingVertical: spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  ...typography.heading.sm,
+                  color: palette.text.primary,
+                }}
+              >
                 Net Profit
               </Text>
               <Text
-                style={[
-                  Typography.number.md,
-                  { color: theme.success, fontWeight: "700" },
-                ]}
+                style={{
+                  ...typography.number.md,
+                  color: palette.accent.green,
+                  fontWeight: "700",
+                }}
               >
                 €{priceNet.toFixed(2)}
               </Text>
@@ -322,57 +436,87 @@ export default function SaleDetailScreen() {
         {item && (
           <Animated.View
             entering={FadeInDown.delay(200).duration(400)}
-            style={styles.section}
+            style={{ marginBottom: spacing.xl }}
           >
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: "600",
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                marginBottom: spacing.sm,
+                color: palette.text.secondary,
+              }}
+            >
               Item
             </Text>
-            <View style={styles.itemCard}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: spacing.md,
+              }}
+            >
               <View
-                style={[
-                  styles.itemIcon,
-                  { backgroundColor: theme.primaryMuted },
-                ]}
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: radius.md,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: palette.primary.subtle,
+                }}
               >
-                <AppIcon name="checkroom" size={24} color={theme.primary} />
+                <AppIcon
+                  name="checkroom"
+                  size={24}
+                  color={palette.primary.main}
+                />
               </View>
-              <View style={styles.itemInfo}>
-                <Text style={[Typography.heading.xs, { color: theme.text }]}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    ...typography.heading.sm,
+                    color: palette.text.primary,
+                  }}
+                >
                   {item.brand || "Unknown Brand"}
                 </Text>
-                <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+                <Text
+                  style={{ ...typography.body.sm, color: palette.text.muted }}
+                >
                   {item.type || "Clothing"} • {item.size || "OS"} •{" "}
                   {item.condition || "Good"}
                 </Text>
-                <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
+                <Text
+                  style={{ ...typography.body.xs, color: palette.text.muted }}
+                >
                   Cost: €{parseFloat(String(item.unitCost)).toFixed(2)}
                 </Text>
               </View>
               <View
-                style={[
-                  styles.itemStatus,
-                  {
-                    backgroundColor:
-                      item.status === "SOLD"
-                        ? theme.successSubtle
-                        : item.status === "STOCK"
-                          ? theme.primaryMuted
-                          : theme.warningSubtle,
-                  },
-                ]}
+                style={{
+                  paddingHorizontal: spacing.sm,
+                  paddingVertical: spacing.xs,
+                  borderRadius: radius.sm,
+                  backgroundColor:
+                    item.status === "SOLD"
+                      ? "rgba(16, 185, 129, 0.15)"
+                      : item.status === "STOCK"
+                        ? palette.primary.subtle
+                        : "rgba(245, 158, 11, 0.15)",
+                }}
               >
                 <Text
-                  style={[
-                    Typography.label.xs,
-                    {
-                      color:
-                        item.status === "SOLD"
-                          ? theme.success
-                          : item.status === "STOCK"
-                            ? theme.primary
-                            : theme.warning,
-                    },
-                  ]}
+                  style={{
+                    ...typography.label.xs,
+                    color:
+                      item.status === "SOLD"
+                        ? palette.accent.green
+                        : item.status === "STOCK"
+                          ? palette.primary.main
+                          : palette.accent.yellow,
+                  }}
                 >
                   {item.status}
                 </Text>
@@ -384,31 +528,62 @@ export default function SaleDetailScreen() {
         {/* Lot Reference */}
         <Animated.View
           entering={FadeInDown.delay(250).duration(400)}
-          style={styles.section}
+          style={{ marginBottom: spacing.xl }}
         >
-          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: "600",
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+              marginBottom: spacing.sm,
+              color: palette.text.secondary,
+            }}
+          >
             Reference
           </Text>
-          <View style={styles.referenceRow}>
+          <View style={{ flexDirection: "row", gap: spacing.md }}>
             <View
-              style={[
-                styles.refBadge,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-              ]}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: spacing.xs,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.sm,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                backgroundColor: palette.background.elevated,
+                borderColor: palette.divider.main,
+              }}
             >
-              <AppIcon name="inventory-2" size={16} color={theme.primary} />
-              <Text style={[Typography.label.sm, { color: theme.text }]}>
+              <AppIcon
+                name="inventory-2"
+                size={16}
+                color={palette.primary.main}
+              />
+              <Text
+                style={{ ...typography.label.sm, color: palette.text.primary }}
+              >
                 Lot #{sale.lotId}
               </Text>
             </View>
             <View
-              style={[
-                styles.refBadge,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-              ]}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: spacing.xs,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.sm,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                backgroundColor: palette.background.elevated,
+                borderColor: palette.divider.main,
+              }}
             >
-              <AppIcon name="receipt" size={16} color={theme.textMuted} />
-              <Text style={[Typography.label.sm, { color: theme.text }]}>
+              <AppIcon name="receipt" size={16} color={palette.text.muted} />
+              <Text
+                style={{ ...typography.label.sm, color: palette.text.primary }}
+              >
                 Sale #{sale.id}
               </Text>
             </View>
@@ -419,10 +594,14 @@ export default function SaleDetailScreen() {
       {/* Cancel CTA - only show for completed sales */}
       {isCompleted && (
         <View
-          style={[
-            styles.ctaContainer,
-            { paddingBottom: insets.bottom + Spacing.lg },
-          ]}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: spacing.lg,
+            paddingBottom: insets.bottom + spacing.lg,
+          }}
         >
           <Button
             variant="danger"
@@ -430,7 +609,7 @@ export default function SaleDetailScreen() {
             onPress={handleCancel}
             disabled={cancelSale.isPending}
             icon={<AppIcon name="cancel" size={20} color="#FFF" />}
-            style={styles.ctaButton}
+            style={{ width: "100%" }}
           >
             {cancelSale.isPending ? "Cancelling..." : "Cancel Sale"}
           </Button>
@@ -439,121 +618,3 @@ export default function SaleDetailScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: Spacing.xl,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: Spacing.xl,
-  },
-  errorIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  content: {
-    padding: Spacing.xl,
-  },
-  statusHeader: {
-    alignItems: "center",
-    marginBottom: Spacing.xl,
-  },
-  statusIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-  amountCard: {
-    alignItems: "center",
-    paddingVertical: Spacing.xl,
-    marginBottom: Spacing.xl,
-  },
-  platformBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    marginTop: Spacing.md,
-  },
-  section: {
-    marginBottom: Spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: Spacing.sm,
-  },
-  breakdownRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: Spacing.sm,
-  },
-  divider: {
-    height: 1,
-    marginVertical: Spacing.sm,
-  },
-  itemCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  itemIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.md,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  itemInfo: {
-    flex: 1,
-  },
-  itemStatus: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.sm,
-  },
-  referenceRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  refBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  ctaContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: Spacing.lg,
-  },
-  ctaButton: {
-    width: "100%",
-  },
-});

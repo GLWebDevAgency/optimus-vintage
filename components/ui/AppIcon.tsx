@@ -96,6 +96,27 @@ const ICON_MAP = {
   "arrow-upward": { symbol: "arrow.up", material: "arrow-upward" },
   "arrow-downward": { symbol: "arrow.down", material: "arrow-downward" },
   "receipt-long": { symbol: "doc.text.fill", material: "receipt-long" },
+  // Neumorphic UI icons
+  image: { symbol: "photo.fill", material: "image" },
+  "folder-open": { symbol: "folder.fill", material: "folder-open" },
+  assignment: { symbol: "doc.text.fill", material: "assignment" },
+  "view-list": { symbol: "list.bullet", material: "view-list" },
+  notifications: { symbol: "bell.fill", material: "notifications" },
+  "cloud-upload": { symbol: "icloud.and.arrow.up", material: "cloud-upload" },
+  sync: { symbol: "arrow.triangle.2.circlepath", material: "sync" },
+  info: { symbol: "info.circle.fill", material: "info" },
+  help: { symbol: "questionmark.circle.fill", material: "help" },
+  star: { symbol: "star.fill", material: "star" },
+  "delete-outline": { symbol: "trash", material: "delete-outline" },
+  autorenew: { symbol: "arrow.triangle.2.circlepath", material: "autorenew" },
+  "more-vert": { symbol: "ellipsis", material: "more-vert" },
+  // Theme icons
+  "light-mode": { symbol: "sun.max.fill", material: "light-mode" },
+  "dark-mode": { symbol: "moon.fill", material: "dark-mode" },
+  "brightness-auto": {
+    symbol: "circle.lefthalf.filled",
+    material: "brightness-auto",
+  },
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;

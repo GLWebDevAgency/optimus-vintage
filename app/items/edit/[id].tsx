@@ -6,8 +6,7 @@
 import { AppIcon } from "@/components/ui/AppIcon";
 import { Button, ShimmerSkeleton } from "@/components/ui/Components";
 import { ItemPhotoPicker } from "@/components/ui/ItemPhotoPicker";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { useNeuTheme } from "@/constants/ThemeContext";
 import { ItemsRepository, NewItem } from "@/db/repositories";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -46,8 +45,8 @@ const STATUS_OPTIONS = [
 export default function EditItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const { palette, shadows, spacing, radius, typography, isDark } =
+    useNeuTheme();
   const queryClient = useQueryClient();
 
   // Form state
@@ -184,13 +183,16 @@ export default function EditItemScreen() {
   if (itemQuery.isLoading) {
     return (
       <View
-        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: palette.background.main },
+        ]}
       >
-        <ShimmerSkeleton width={200} height={100} borderRadius={Radius.xl} />
+        <ShimmerSkeleton width={200} height={100} borderRadius={radius.xl} />
         <Text
           style={[
-            Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.md },
+            typography.body.sm,
+            { color: palette.text.muted, marginTop: spacing.md },
           ]}
         >
           Chargement de l'article...
@@ -203,21 +205,27 @@ export default function EditItemScreen() {
   if (!itemQuery.data) {
     return (
       <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
+        style={[
+          styles.errorContainer,
+          { backgroundColor: palette.background.main },
+        ]}
       >
         <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          style={[
+            styles.errorIcon,
+            { backgroundColor: palette.accent.red + "20" },
+          ]}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
+          <AppIcon name="error-outline" size={40} color={palette.accent.red} />
         </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
+        <Text style={[typography.heading.md, { color: palette.text.primary }]}>
           Item Not Found
         </Text>
         <Button
           variant="ghost"
           size="md"
           onPress={() => router.back()}
-          style={{ marginTop: Spacing.xl }}
+          style={{ marginTop: spacing.xl }}
         >
           Go Back
         </Button>
@@ -230,17 +238,17 @@ export default function EditItemScreen() {
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={[styles.container, { backgroundColor: palette.background.main }]}
     >
       <Stack.Screen
         options={{
           title: "Edit Item",
-          headerStyle: { backgroundColor: theme.background },
-          headerTintColor: theme.text,
+          headerStyle: { backgroundColor: palette.background.main },
+          headerTintColor: palette.text.primary,
           headerShadowVisible: false,
           headerLeft: () => (
             <Pressable onPress={() => router.back()} hitSlop={8}>
-              <AppIcon name="close" size={24} color={theme.text} />
+              <AppIcon name="close" size={24} color={palette.text.primary} />
             </Pressable>
           ),
           headerRight: () => (
@@ -248,13 +256,13 @@ export default function EditItemScreen() {
               <AppIcon
                 name="cancel"
                 size={24}
-                color={isDeleting ? theme.textMuted : theme.danger}
+                color={isDeleting ? palette.text.muted : palette.accent.red}
               />
             </Pressable>
           ),
         }}
       />
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <StatusBar style={isDark ? "light" : "dark"} />
 
       <ScrollView
         contentContainerStyle={[
@@ -270,15 +278,20 @@ export default function EditItemScreen() {
           style={styles.itemHeader}
         >
           <View
-            style={[styles.itemIcon, { backgroundColor: theme.primaryMuted }]}
+            style={[
+              styles.itemIcon,
+              { backgroundColor: palette.primary.subtle },
+            ]}
           >
-            <AppIcon name="checkroom" size={28} color={theme.primary} />
+            <AppIcon name="checkroom" size={28} color={palette.primary.main} />
           </View>
           <View style={styles.itemInfo}>
-            <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+            <Text style={[typography.body.sm, { color: palette.text.muted }]}>
               Lot #{item.lotId}
             </Text>
-            <Text style={[Typography.heading.sm, { color: theme.text }]}>
+            <Text
+              style={[typography.heading.sm, { color: palette.text.primary }]}
+            >
               Item #{item.id}
             </Text>
           </View>
@@ -289,7 +302,9 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(75).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Photos</Text>
+          <Text style={[styles.label, { color: palette.text.muted }]}>
+            Photos
+          </Text>
           <ItemPhotoPicker
             photos={photos}
             onPhotosChange={setPhotos}
@@ -302,20 +317,22 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(100).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Brand</Text>
+          <Text style={[styles.label, { color: palette.text.muted }]}>
+            Brand
+          </Text>
           <TextInput
             style={[
               styles.textInput,
               {
-                backgroundColor: theme.surface,
-                color: theme.text,
-                borderColor: theme.border,
+                backgroundColor: palette.background.elevated,
+                color: palette.text.primary,
+                borderColor: palette.background.dark,
               },
             ]}
             value={brand}
             onChangeText={setBrand}
             placeholder="e.g., Nike, Levi's, Zara..."
-            placeholderTextColor={theme.textMuted}
+            placeholderTextColor={palette.text.muted}
           />
         </Animated.View>
 
@@ -324,7 +341,9 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(150).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Type</Text>
+          <Text style={[styles.label, { color: palette.text.muted }]}>
+            Type
+          </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -336,8 +355,14 @@ export default function EditItemScreen() {
                 style={[
                   styles.chip,
                   {
-                    backgroundColor: type === t ? theme.primary : theme.surface,
-                    borderColor: type === t ? theme.primary : theme.border,
+                    backgroundColor:
+                      type === t
+                        ? palette.primary.main
+                        : palette.background.elevated,
+                    borderColor:
+                      type === t
+                        ? palette.primary.main
+                        : palette.background.dark,
                   },
                 ]}
                 onPress={() => setType(t)}
@@ -345,7 +370,7 @@ export default function EditItemScreen() {
                 <Text
                   style={[
                     styles.chipText,
-                    { color: type === t ? "#FFF" : theme.textMuted },
+                    { color: type === t ? "#FFF" : palette.text.muted },
                   ]}
                 >
                   {t}
@@ -360,20 +385,22 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(200).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Color</Text>
+          <Text style={[styles.label, { color: palette.text.muted }]}>
+            Color
+          </Text>
           <TextInput
             style={[
               styles.textInput,
               {
-                backgroundColor: theme.surface,
-                color: theme.text,
-                borderColor: theme.border,
+                backgroundColor: palette.background.elevated,
+                color: palette.text.primary,
+                borderColor: palette.background.dark,
               },
             ]}
             value={color}
             onChangeText={setColor}
             placeholder="e.g., Black, Navy Blue..."
-            placeholderTextColor={theme.textMuted}
+            placeholderTextColor={palette.text.muted}
           />
         </Animated.View>
 
@@ -382,7 +409,9 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(250).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Size</Text>
+          <Text style={[styles.label, { color: palette.text.muted }]}>
+            Size
+          </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -395,8 +424,14 @@ export default function EditItemScreen() {
                   styles.chip,
                   styles.chipSmall,
                   {
-                    backgroundColor: size === s ? theme.primary : theme.surface,
-                    borderColor: size === s ? theme.primary : theme.border,
+                    backgroundColor:
+                      size === s
+                        ? palette.primary.main
+                        : palette.background.elevated,
+                    borderColor:
+                      size === s
+                        ? palette.primary.main
+                        : palette.background.dark,
                   },
                 ]}
                 onPress={() => setSize(s)}
@@ -404,7 +439,7 @@ export default function EditItemScreen() {
                 <Text
                   style={[
                     styles.chipText,
-                    { color: size === s ? "#FFF" : theme.textMuted },
+                    { color: size === s ? "#FFF" : palette.text.muted },
                   ]}
                 >
                   {s}
@@ -419,7 +454,7 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(300).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
+          <Text style={[styles.label, { color: palette.text.muted }]}>
             Condition
           </Text>
           <ScrollView
@@ -434,8 +469,13 @@ export default function EditItemScreen() {
                   styles.chip,
                   {
                     backgroundColor:
-                      condition === c ? theme.primary : theme.surface,
-                    borderColor: condition === c ? theme.primary : theme.border,
+                      condition === c
+                        ? palette.primary.main
+                        : palette.background.elevated,
+                    borderColor:
+                      condition === c
+                        ? palette.primary.main
+                        : palette.background.dark,
                   },
                 ]}
                 onPress={() => setCondition(c)}
@@ -443,7 +483,7 @@ export default function EditItemScreen() {
                 <Text
                   style={[
                     styles.chipText,
-                    { color: condition === c ? "#FFF" : theme.textMuted },
+                    { color: condition === c ? "#FFF" : palette.text.muted },
                   ]}
                 >
                   {c}
@@ -458,25 +498,30 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(350).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
+          <Text style={[styles.label, { color: palette.text.muted }]}>
             Unit Cost
           </Text>
           <View
             style={[
               styles.currencyInput,
-              { backgroundColor: theme.surface, borderColor: theme.border },
+              {
+                backgroundColor: palette.background.elevated,
+                borderColor: palette.background.dark,
+              },
             ]}
           >
-            <Text style={[styles.currencySymbol, { color: theme.primary }]}>
+            <Text
+              style={[styles.currencySymbol, { color: palette.primary.main }]}
+            >
               €
             </Text>
             <TextInput
-              style={[styles.currencyValue, { color: theme.text }]}
+              style={[styles.currencyValue, { color: palette.text.primary }]}
               value={unitCost}
               onChangeText={setUnitCost}
               keyboardType="decimal-pad"
               placeholder="0.00"
-              placeholderTextColor={theme.textMuted}
+              placeholderTextColor={palette.text.muted}
             />
           </View>
         </Animated.View>
@@ -486,15 +531,17 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(400).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Status</Text>
+          <Text style={[styles.label, { color: palette.text.muted }]}>
+            Status
+          </Text>
           <View style={styles.statusContainer}>
             {STATUS_OPTIONS.map((s) => {
               const statusColor =
                 s.color === "success"
-                  ? theme.success
+                  ? palette.accent.green
                   : s.color === "warning"
-                    ? theme.warning
-                    : theme.primary;
+                    ? palette.accent.amber
+                    : palette.primary.main;
               return (
                 <Pressable
                   key={s.id}
@@ -502,8 +549,11 @@ export default function EditItemScreen() {
                     styles.statusButton,
                     {
                       backgroundColor:
-                        status === s.id ? statusColor + "20" : theme.surface,
-                      borderColor: status === s.id ? statusColor : theme.border,
+                        status === s.id
+                          ? statusColor + "20"
+                          : palette.background.elevated,
+                      borderColor:
+                        status === s.id ? statusColor : palette.background.dark,
                     },
                   ]}
                   onPress={() => setStatus(s.id)}
@@ -515,7 +565,8 @@ export default function EditItemScreen() {
                     style={[
                       styles.statusText,
                       {
-                        color: status === s.id ? statusColor : theme.textMuted,
+                        color:
+                          status === s.id ? statusColor : palette.text.muted,
                       },
                     ]}
                   >
@@ -532,7 +583,7 @@ export default function EditItemScreen() {
       <View
         style={[
           styles.ctaContainer,
-          { paddingBottom: insets.bottom + Spacing.lg },
+          { paddingBottom: insets.bottom + spacing.lg },
         ]}
       >
         <Button
@@ -558,13 +609,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: Spacing.xl,
+    padding: 24,
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: Spacing.xl,
+    padding: 24,
   },
   errorIcon: {
     width: 80,
@@ -572,21 +623,21 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.lg,
+    marginBottom: 20,
   },
   content: {
-    padding: Spacing.xl,
+    padding: 24,
   },
   itemHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    gap: 16,
+    marginBottom: 24,
   },
   itemIcon: {
     width: 56,
     height: 56,
-    borderRadius: Radius.md,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -594,33 +645,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: 24,
   },
   label: {
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: Spacing.sm,
+    marginBottom: 8,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   textInput: {
     borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
   },
   chipContainer: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: 8,
   },
   chip: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
   },
   chipSmall: {
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: 8,
     minWidth: 44,
     alignItems: "center",
   },
@@ -632,32 +683,32 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
+    borderRadius: 12,
+    paddingHorizontal: 16,
   },
   currencySymbol: {
     fontSize: 20,
     fontWeight: "700",
-    marginRight: Spacing.xs,
+    marginRight: 4,
   },
   currencyValue: {
     flex: 1,
     fontSize: 20,
     fontWeight: "600",
-    paddingVertical: Spacing.md,
+    paddingVertical: 16,
   },
   statusContainer: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: 8,
   },
   statusButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.xs,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+    gap: 4,
+    paddingVertical: 16,
+    borderRadius: 12,
     borderWidth: 1,
   },
   statusDot: {
@@ -674,7 +725,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: Spacing.lg,
+    padding: 20,
   },
   ctaButton: {
     width: "100%",

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Statistiques Détaillées Neumorphic Dark</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#00D084",
+                        "primary-dark": "#00a86b",
+                        "background-dark": "#262A33",
+                        "text-dark": "#E2E8F0",
+                        "muted-dark": "#718096",
+                        "accent-purple": "#8B5CF6",
+                        "accent-blue": "#3B82F6",
+                        "accent-orange": "#F59E0B",
+                    },
+                    fontFamily: {
+                        display: ["Nunito", "sans-serif"],
+                    },
+                    boxShadow: {
+                        'neu-dark': '6px 6px 12px #1b1e24, -6px -6px 12px #313642',
+                        'neu-dark-sm': '3px 3px 6px #1b1e24, -3px -3px 6px #313642',
+                        'neu-dark-pressed': 'inset 4px 4px 8px #1b1e24, inset -4px -4px 8px #313642',
+                        'neu-dark-pressed-sm': 'inset 2px 2px 4px #1b1e24, inset -2px -2px 4px #313642',
+                        'glow-primary': '0 0 15px rgba(0, 208, 132, 0.4)',
+                        'glow-line': '0 0 10px rgba(0, 208, 132, 0.6)',
+                    },
+                    borderRadius: {
+                        DEFAULT: "1rem",
+                        'xl': "1.5rem",
+                        '2xl': "2rem",
+                        '3xl': "2.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-dark text-text-dark min-h-screen antialiased overflow-x-hidden pb-24 selection:bg-primary selection:text-white">
+<header class="px-6 pt-8 pb-6 flex items-center gap-4 sticky top-0 z-40 bg-background-dark/95 backdrop-blur-sm">
+<button class="w-12 h-12 rounded-xl bg-background-dark shadow-neu-dark flex items-center justify-center text-gray-400 active:shadow-neu-dark-pressed transition-all duration-200 group">
+<span class="material-icons-round text-2xl group-active:scale-95 transition-transform">chevron_left</span>
+</button>
+<h1 class="text-xl font-extrabold text-white leading-tight flex-1">Statistiques Détaillées</h1>
+</header>
+<main class="px-6 space-y-8">
+<section>
+<div class="flex justify-between items-end mb-4 px-2">
+<h2 class="text-sm font-bold text-gray-300">Tendance des ventes</h2>
+<span class="text-xs font-bold text-primary flex items-center gap-1">
+                    +12.5% <span class="material-icons-round text-sm">trending_up</span>
+</span>
+</div>
+<div class="w-full h-64 rounded-2xl bg-background-dark shadow-neu-dark-pressed p-4 relative overflow-hidden">
+<div class="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none">
+<div class="w-full h-[1px] bg-gray-700/30"></div>
+<div class="w-full h-[1px] bg-gray-700/30"></div>
+<div class="w-full h-[1px] bg-gray-700/30"></div>
+<div class="w-full h-[1px] bg-gray-700/30"></div>
+<div class="w-full h-[1px] bg-gray-700/30"></div>
+</div>
+<svg class="w-full h-full visible" preserveAspectRatio="none" viewBox="0 0 100 50">
+<defs>
+<linearGradient id="gradientArea" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#00D084" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#00D084" stop-opacity="0"></stop>
+</linearGradient>
+</defs>
+<path d="M0,50 L0,35 C10,30 20,40 30,32 C40,24 50,15 60,20 C70,25 80,10 90,15 C95,18 100,5 100,5 L100,50 Z" fill="url(#gradientArea)"></path>
+<path class="drop-shadow-[0_0_6px_rgba(0,208,132,0.6)]" d="M0,35 C10,30 20,40 30,32 C40,24 50,15 60,20 C70,25 80,10 90,15 C95,18 100,5 100,5" fill="none" stroke="#00D084" stroke-linecap="round" stroke-width="1.5"></path>
+<circle cx="30" cy="32" fill="#262A33" r="1.5" stroke="#00D084" stroke-width="1"></circle>
+<circle cx="60" cy="20" fill="#262A33" r="1.5" stroke="#00D084" stroke-width="1"></circle>
+<circle cx="90" cy="15" fill="#262A33" r="1.5" stroke="#00D084" stroke-width="1"></circle>
+</svg>
+<div class="absolute bottom-2 left-4 right-4 flex justify-between text-[8px] text-gray-500 font-bold uppercase tracking-wider">
+<span>Lun</span>
+<span>Mar</span>
+<span>Mer</span>
+<span>Jeu</span>
+<span>Ven</span>
+<span>Sam</span>
+<span>Dim</span>
+</div>
+</div>
+</section>
+<section class="grid grid-cols-3 gap-4">
+<div class="bg-background-dark rounded-2xl p-3 pt-4 shadow-neu-dark flex flex-col items-center justify-between min-h-[110px]">
+<div class="w-8 h-8 rounded-lg shadow-neu-dark-pressed flex items-center justify-center text-primary mb-2">
+<span class="material-icons-round text-lg">attach_money</span>
+</div>
+<div class="text-center">
+<span class="block text-xs font-bold text-gray-400 mb-0.5">CA Total</span>
+<span class="block text-sm font-extrabold text-white">4.2k€</span>
+</div>
+</div>
+<div class="bg-background-dark rounded-2xl p-3 pt-4 shadow-neu-dark flex flex-col items-center justify-between min-h-[110px]">
+<div class="w-8 h-8 rounded-lg shadow-neu-dark-pressed flex items-center justify-center text-accent-blue mb-2">
+<span class="material-icons-round text-lg">show_chart</span>
+</div>
+<div class="text-center">
+<span class="block text-xs font-bold text-gray-400 mb-0.5">Profit Net</span>
+<span class="block text-sm font-extrabold text-white">3.1k€</span>
+</div>
+</div>
+<div class="bg-background-dark rounded-2xl p-3 pt-4 shadow-neu-dark flex flex-col items-center justify-between min-h-[110px]">
+<div class="w-8 h-8 rounded-lg shadow-neu-dark-pressed flex items-center justify-center text-accent-orange mb-2">
+<span class="material-icons-round text-lg">receipt_long</span>
+</div>
+<div class="text-center">
+<span class="block text-[10px] font-bold text-gray-400 mb-0.5 leading-tight">Moyenne<br/>Vente</span>
+<span class="block text-sm font-extrabold text-white">54€</span>
+</div>
+</div>
+</section>
+<section>
+<h3 class="text-sm font-bold text-white mb-6 pl-2">Répartition par Catégorie</h3>
+<div class="flex items-center gap-6">
+<div class="relative w-32 h-32 flex-shrink-0">
+<div class="absolute inset-0 rounded-full shadow-neu-dark-pressed"></div>
+<svg class="w-full h-full transform -rotate-90 p-2" viewBox="0 0 36 36">
+<path class="text-transparent" d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#313642" stroke-width="3"></path>
+<path class="text-primary drop-shadow-[0_0_3px_rgba(0,208,132,0.8)]" d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="40, 100" stroke-linecap="round" stroke-width="3"></path>
+<path class="text-accent-purple drop-shadow-[0_0_3px_rgba(139,92,246,0.8)]" d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="25, 100" stroke-dashoffset="-45" stroke-linecap="round" stroke-width="3"></path>
+<path class="text-accent-orange drop-shadow-[0_0_3px_rgba(245,158,11,0.8)]" d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="15, 100" stroke-dashoffset="-75" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-xs font-bold text-gray-500">Total</span>
+<span class="text-lg font-extrabold text-white">120</span>
+</div>
+</div>
+<div class="flex-1 space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary shadow-[0_0_8px_rgba(0,208,132,0.6)]"></div>
+<span class="text-xs font-bold text-gray-400">Vêtements</span>
+</div>
+<span class="text-xs font-bold text-white">40%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-accent-purple shadow-[0_0_8px_rgba(139,92,246,0.6)]"></div>
+<span class="text-xs font-bold text-gray-400">Accessoires</span>
+</div>
+<span class="text-xs font-bold text-white">25%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-accent-orange shadow-[0_0_8px_rgba(245,158,11,0.6)]"></div>
+<span class="text-xs font-bold text-gray-400">Chaussures</span>
+</div>
+<span class="text-xs font-bold text-white">15%</span>
+</div>
+</div>
+</div>
+</section>
+<section class="pb-6">
+<div class="rounded-xl bg-background-dark shadow-neu-dark-pressed p-1.5 flex justify-between items-center">
+<button class="flex-1 py-2 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors">
+                    Semaine
+                </button>
+<button class="flex-1 py-2 rounded-lg bg-background-dark shadow-neu-dark text-xs font-bold text-primary transition-all transform scale-100">
+                    Mois
+                </button>
+<button class="flex-1 py-2 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors">
+                    Année
+                </button>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 w-full bg-background-dark pb-6 pt-4 rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.2)] z-50">
+<div class="flex justify-around items-end px-4">
+<button class="flex flex-col items-center gap-1 group text-gray-500 hover:text-gray-300">
+<div class="w-10 h-10 flex items-center justify-center">
+<span class="material-icons-round text-2xl">home</span>
+</div>
+<span class="text-[10px] font-medium">Accueil</span>
+</button>
+<button class="flex flex-col items-center gap-1 group text-gray-500 hover:text-gray-300">
+<div class="w-10 h-10 flex items-center justify-center">
+<span class="material-icons-round text-2xl">grid_view</span>
+</div>
+<span class="text-[10px] font-medium">Lots</span>
+</button>
+<button class="flex flex-col items-center gap-1 group text-gray-500 hover:text-gray-300">
+<div class="w-10 h-10 flex items-center justify-center">
+<span class="material-icons-round text-2xl">checkroom</span>
+</div>
+<span class="text-[10px] font-medium">Stock</span>
+</button>
+<button class="flex flex-col items-center gap-1 group">
+<div class="w-12 h-12 rounded-xl bg-background-dark shadow-neu-dark-pressed flex items-center justify-center text-primary relative">
+<span class="material-icons-round text-2xl">credit_card</span>
+<div class="absolute -bottom-1 w-1 h-1 rounded-full bg-primary shadow-[0_0_5px_#00D084]"></div>
+</div>
+<span class="text-[10px] font-bold text-white mt-1">Ventes</span>
+</button>
+<button class="flex flex-col items-center gap-1 group text-gray-500 hover:text-gray-300">
+<div class="w-10 h-10 flex items-center justify-center">
+<span class="material-icons-round text-2xl">settings</span>
+</div>
+<span class="text-[10px] font-medium">Réglages</span>
+</button>
+</div>
+</nav>
+<script>
+        // Ensure dark mode is active for this design
+        document.documentElement.classList.add('dark');
+    </script>
+
+</body></html>

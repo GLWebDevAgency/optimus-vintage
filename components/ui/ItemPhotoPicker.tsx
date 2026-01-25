@@ -4,8 +4,7 @@
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme } from "@/constants/Theme";
+import { useNeuTheme } from "@/constants/ThemeContext";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import React from "react";
@@ -32,8 +31,7 @@ export function ItemPhotoPicker({
   onPhotosChange,
   maxPhotos = MAX_PHOTOS,
 }: ItemPhotoPickerProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
+  const { palette, spacing, radius } = useNeuTheme();
 
   const pickImage = async () => {
     if (photos.length >= maxPhotos) {
@@ -126,7 +124,10 @@ export function ItemPhotoPicker({
             layout={Layout.springify()}
           >
             <Pressable
-              style={[styles.photoContainer, { borderColor: theme.border }]}
+              style={[
+                styles.photoContainer,
+                { borderColor: palette.background.dark },
+              ]}
               onPress={() => removePhoto(index)}
             >
               <Image
@@ -136,7 +137,10 @@ export function ItemPhotoPicker({
                 transition={200}
               />
               <View
-                style={[styles.removeButton, { backgroundColor: theme.danger }]}
+                style={[
+                  styles.removeButton,
+                  { backgroundColor: palette.accent.red },
+                ]}
               >
                 <AppIcon name="close" size={14} color="#FFF" />
               </View>
@@ -148,38 +152,44 @@ export function ItemPhotoPicker({
           <Pressable
             style={[
               styles.addButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
+              {
+                backgroundColor: palette.background.elevated,
+                borderColor: palette.background.dark,
+              },
             ]}
             onPress={pickImage}
           >
-            <AppIcon name="camera-add" size={28} color={theme.primary} />
-            <Text style={[styles.addText, { color: theme.textMuted }]}>
+            <AppIcon name="camera-add" size={28} color={palette.primary.main} />
+            <Text
+              style={[styles.addText, { color: palette.text.primaryMuted }]}
+            >
               Add Photo
             </Text>
           </Pressable>
         )}
       </ScrollView>
 
-      <Text style={[styles.hint, { color: theme.textMuted }]}>
+      <Text style={[styles.hint, { color: palette.text.muted }]}>
         {photos.length}/{maxPhotos} photos • Tap photo to remove
       </Text>
     </View>
   );
 }
 
+// Fixed values for StyleSheet (hooks cannot be used at module level)
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.xs,
+    gap: 4, // spacing.xs
   },
   scrollContent: {
     flexDirection: "row",
-    gap: Spacing.md,
-    paddingVertical: Spacing.xs,
+    gap: 12, // spacing.md
+    paddingVertical: 4, // spacing.xs
   },
   photoContainer: {
     width: 100,
     height: 100,
-    borderRadius: Radius.md,
+    borderRadius: 10, // radius.md
     borderWidth: 1,
     overflow: "hidden",
     borderCurve: "continuous",
@@ -201,12 +211,12 @@ const styles = StyleSheet.create({
   addButton: {
     width: 100,
     height: 100,
-    borderRadius: Radius.md,
+    borderRadius: 10, // radius.md
     borderWidth: 2,
     borderStyle: "dashed",
     justifyContent: "center",
     alignItems: "center",
-    gap: Spacing.xs,
+    gap: 4, // spacing.xs
     borderCurve: "continuous",
   },
   addText: {
@@ -216,6 +226,6 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 12,
     textAlign: "center",
-    marginTop: Spacing.xs,
+    marginTop: 4, // spacing.xs
   },
 });

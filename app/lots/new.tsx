@@ -5,8 +5,7 @@
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import { AnimatedPremiumBackground, Button } from "@/components/ui/Components";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { useNeuColors } from "@/components/ui/Neumorphic";
 import { ItemsRepository, LotsRepository } from "@/db/repositories";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
@@ -17,7 +16,6 @@ import {
     KeyboardAvoidingView,
     Pressable,
     ScrollView,
-    StyleSheet,
     Text,
     TextInput,
     View,
@@ -40,8 +38,8 @@ const LOT_TYPES = [
 
 export default function AddLotScreen() {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
+  const { palette, shadows, spacing, radius, typography, colorScheme } =
+    useNeuColors();
 
   // Form state
   const [provider, setProvider] = useState("");
@@ -175,7 +173,7 @@ export default function AddLotScreen() {
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={{ flex: 1, backgroundColor: palette.background.main }}
     >
       {/* ═══ Animated Premium Background ═══ */}
       <AnimatedPremiumBackground variant="light" />
@@ -184,13 +182,13 @@ export default function AddLotScreen() {
         options={{
           title: "Nouveau lot",
           headerShown: true,
-          headerStyle: { backgroundColor: theme.surface },
-          headerTintColor: theme.text,
-          headerTitleStyle: Typography.heading.sm,
+          headerStyle: { backgroundColor: palette.background.elevated },
+          headerTintColor: palette.text.primary,
+          headerTitleStyle: typography.heading.sm,
           headerShadowVisible: false,
           headerLeft: () => (
             <Pressable onPress={() => router.back()} hitSlop={8}>
-              <AppIcon name="close" size={24} color={theme.text} />
+              <AppIcon name="close" size={24} color={palette.text.primary} />
             </Pressable>
           ),
         }}
@@ -198,22 +196,41 @@ export default function AddLotScreen() {
 
       {/* Completion Progress Bar - Single unified bar */}
       <View
-        style={[styles.progressContainer, { backgroundColor: theme.surface }]}
+        style={{
+          flexDirection: "column",
+          gap: spacing.xs,
+          paddingHorizontal: spacing.xl,
+          paddingVertical: spacing.md,
+          backgroundColor: palette.background.elevated,
+        }}
       >
         <View
-          style={[styles.progressTrackFull, { backgroundColor: theme.border }]}
+          style={{
+            width: "100%",
+            height: 4,
+            borderRadius: 2,
+            overflow: "hidden",
+            backgroundColor: palette.divider.main,
+          }}
         >
           <Animated.View
-            style={[
-              styles.progressFill,
-              {
-                backgroundColor: theme.primary,
-                width: `${Math.min(100, (provider ? 25 : 0) + (totalCost ? 25 : 0) + (quantity > 0 ? 25 : 0) + (itemSetupMode ? 25 : 0))}%`,
-              },
-            ]}
+            style={{
+              height: "100%",
+              borderRadius: 2,
+              backgroundColor: palette.primary.main,
+              width: `${Math.min(100, (provider ? 25 : 0) + (totalCost ? 25 : 0) + (quantity > 0 ? 25 : 0) + (itemSetupMode ? 25 : 0))}%`,
+            }}
           />
         </View>
-        <Text style={[styles.progressLabel, { color: theme.textMuted }]}>
+        <Text
+          style={{
+            fontSize: 12,
+            fontWeight: "500",
+            textAlign: "center",
+            marginTop: spacing.xs,
+            color: palette.text.muted,
+          }}
+        >
           {provider && totalCost && quantity > 0 && itemSetupMode
             ? "✓ Prêt à créer"
             : "Compléter les informations"}
@@ -221,58 +238,95 @@ export default function AddLotScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + 120 },
-        ]}
+        contentContainerStyle={{
+          padding: spacing.xl,
+          paddingBottom: insets.bottom + 120,
+        }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* Section: Informations de base */}
         <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <View style={styles.sectionHeader}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing.md,
+              marginBottom: spacing.lg,
+            }}
+          >
             <View
-              style={[
-                styles.sectionIcon,
-                { backgroundColor: theme.primaryMuted },
-              ]}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: radius.md,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: palette.primary.subtle,
+              }}
             >
-              <AppIcon name="folder" size={18} color={theme.primary} />
+              <AppIcon name="folder" size={18} color={palette.primary.main} />
             </View>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                color: palette.text.primary,
+              }}
+            >
               Informations de base
             </Text>
           </View>
 
           {/* Supplier Selector */}
-          <Text style={[styles.fieldLabel, { color: theme.textMuted }]}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "600",
+              letterSpacing: 0.5,
+              marginBottom: spacing.sm,
+              marginTop: spacing.md,
+              color: palette.text.muted,
+            }}
+          >
             FOURNISSEUR
           </Text>
-          <View style={styles.typeSelector}>
+          <View
+            style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" }}
+          >
             {PROVIDERS.map((p) => (
               <Pressable
                 key={p.id}
-                style={[
-                  styles.providerChip,
-                  {
-                    backgroundColor:
-                      provider === p.id ? theme.primary : theme.surface,
-                    borderColor:
-                      provider === p.id ? theme.primary : theme.border,
-                  },
-                ]}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: spacing.xs,
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.sm,
+                  borderRadius: radius.full,
+                  borderWidth: 1,
+                  backgroundColor:
+                    provider === p.id
+                      ? palette.primary.main
+                      : palette.background.elevated,
+                  borderColor:
+                    provider === p.id
+                      ? palette.primary.main
+                      : palette.divider.main,
+                }}
                 onPress={() => setProvider(p.id)}
               >
                 <AppIcon
                   name={p.icon as any}
                   size={18}
-                  color={provider === p.id ? "#FFF" : theme.textMuted}
+                  color={provider === p.id ? "#FFF" : palette.text.muted}
                 />
                 <Text
-                  style={[
-                    styles.typeLabel,
-                    { color: provider === p.id ? "#FFF" : theme.text },
-                  ]}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: "600",
+                    color: provider === p.id ? "#FFF" : palette.text.primary,
+                  }}
                 >
                   {p.label}
                 </Text>
@@ -281,17 +335,33 @@ export default function AddLotScreen() {
           </View>
 
           {/* Date Selector */}
-          <Text style={[styles.fieldLabel, { color: theme.textMuted }]}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "600",
+              letterSpacing: 0.5,
+              marginBottom: spacing.sm,
+              marginTop: spacing.md,
+              color: palette.text.muted,
+            }}
+          >
             DATE D'ACHAT
           </Text>
           <Pressable
-            style={[
-              styles.dateButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: spacing.lg,
+              paddingVertical: spacing.md,
+              borderRadius: radius.lg,
+              borderWidth: 1,
+              backgroundColor: palette.background.elevated,
+              borderColor: palette.divider.main,
+            }}
             onPress={() => setShowDateSelector(!showDateSelector)}
           >
-            <Text style={[styles.dateText, { color: theme.text }]}>
+            <Text style={{ fontSize: 16, color: palette.text.primary }}>
               {formatDate(buyDate)}
             </Text>
             <AppIcon
@@ -299,7 +369,7 @@ export default function AddLotScreen() {
                 showDateSelector ? "keyboard-arrow-up" : "keyboard-arrow-down"
               }
               size={24}
-              color={theme.primary}
+              color={palette.primary.main}
             />
           </Pressable>
 
@@ -307,15 +377,22 @@ export default function AddLotScreen() {
           {showDateSelector && (
             <Animated.View
               entering={FadeInDown.duration(200)}
-              style={[
-                styles.inlineDatePicker,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-              ]}
+              style={{
+                marginTop: spacing.sm,
+                paddingVertical: spacing.md,
+                borderRadius: radius.lg,
+                borderWidth: 1,
+                backgroundColor: palette.background.elevated,
+                borderColor: palette.divider.main,
+              }}
             >
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.dateChipsContainer}
+                contentContainerStyle={{
+                  paddingHorizontal: spacing.sm,
+                  gap: spacing.sm,
+                }}
               >
                 {dateOptions.slice(25, 38).map((date, index) => {
                   const isSelected =
@@ -325,49 +402,56 @@ export default function AddLotScreen() {
                   return (
                     <Pressable
                       key={index}
-                      style={[
-                        styles.dateChip,
-                        {
-                          backgroundColor: isSelected
-                            ? theme.primary
-                            : theme.background,
-                          borderColor:
-                            isToday && !isSelected
-                              ? theme.primary
-                              : theme.border,
-                        },
-                      ]}
+                      style={{
+                        width: 56,
+                        height: 72,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: radius.lg,
+                        borderWidth: 1,
+                        backgroundColor: isSelected
+                          ? palette.primary.main
+                          : palette.background.main,
+                        borderColor:
+                          isToday && !isSelected
+                            ? palette.primary.main
+                            : palette.divider.main,
+                      }}
                       onPress={() => {
                         setBuyDate(date);
                         setShowDateSelector(false);
                       }}
                     >
                       <Text
-                        style={[
-                          styles.dateChipDay,
-                          { color: isSelected ? "#FFF" : theme.textMuted },
-                        ]}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: "500",
+                          marginBottom: 4,
+                          color: isSelected ? "#FFF" : palette.text.muted,
+                        }}
                       >
                         {date.toLocaleDateString("en-US", { weekday: "short" })}
                       </Text>
                       <Text
-                        style={[
-                          styles.dateChipNumber,
-                          { color: isSelected ? "#FFF" : theme.text },
-                        ]}
+                        style={{
+                          fontSize: 18,
+                          fontWeight: "700",
+                          color: isSelected ? "#FFF" : palette.text.primary,
+                        }}
                       >
                         {date.getDate()}
                       </Text>
                       {isToday && (
                         <View
-                          style={[
-                            styles.todayDot,
-                            {
-                              backgroundColor: isSelected
-                                ? "#FFF"
-                                : theme.primary,
-                            },
-                          ]}
+                          style={{
+                            width: 5,
+                            height: 5,
+                            borderRadius: 2.5,
+                            marginTop: 4,
+                            backgroundColor: isSelected
+                              ? "#FFF"
+                              : palette.primary.main,
+                          }}
                         />
                       )}
                     </Pressable>
@@ -378,29 +462,46 @@ export default function AddLotScreen() {
           )}
 
           {/* Lot Type */}
-          <Text style={[styles.fieldLabel, { color: theme.textMuted }]}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "600",
+              letterSpacing: 0.5,
+              marginBottom: spacing.sm,
+              marginTop: spacing.md,
+              color: palette.text.muted,
+            }}
+          >
             TYPE DE LOT
           </Text>
-          <View style={styles.typeSelector}>
+          <View
+            style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" }}
+          >
             {LOT_TYPES.map((type) => (
               <Pressable
                 key={type.id}
-                style={[
-                  styles.typeOption,
-                  {
-                    backgroundColor:
-                      lotType === type.id ? theme.primary : theme.surface,
-                    borderColor:
-                      lotType === type.id ? theme.primary : theme.border,
-                  },
-                ]}
+                style={{
+                  paddingHorizontal: spacing.lg,
+                  paddingVertical: spacing.sm,
+                  borderRadius: radius.full,
+                  borderWidth: 1,
+                  backgroundColor:
+                    lotType === type.id
+                      ? palette.primary.main
+                      : palette.background.elevated,
+                  borderColor:
+                    lotType === type.id
+                      ? palette.primary.main
+                      : palette.divider.main,
+                }}
                 onPress={() => setLotType(type.id)}
               >
                 <Text
-                  style={[
-                    styles.typeLabel,
-                    { color: lotType === type.id ? "#FFF" : theme.text },
-                  ]}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: "600",
+                    color: lotType === type.id ? "#FFF" : palette.text.primary,
+                  }}
                 >
                   {type.label}
                 </Text>
@@ -410,74 +511,141 @@ export default function AddLotScreen() {
         </Animated.View>
 
         {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: theme.border }]} />
+        <View
+          style={{
+            height: 1,
+            marginVertical: spacing.xl,
+            backgroundColor: palette.divider.main,
+          }}
+        />
 
         {/* Section: Finances */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <View style={styles.sectionHeader}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing.md,
+              marginBottom: spacing.lg,
+            }}
+          >
             <View
-              style={[
-                styles.sectionIcon,
-                { backgroundColor: theme.successMuted },
-              ]}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: radius.md,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: palette.accent.greenGlow,
+              }}
             >
               <AppIcon
                 name="account-balance-wallet"
                 size={18}
-                color={theme.success}
+                color={palette.semantic.success}
               />
             </View>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                color: palette.text.primary,
+              }}
+            >
               Finances
             </Text>
           </View>
 
-          <View style={styles.financialsRow}>
+          <View style={{ flexDirection: "row", gap: spacing.md }}>
             {/* Total Cost */}
-            <View style={styles.financialField}>
-              <Text style={[styles.fieldLabel, { color: theme.textMuted }]}>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "600",
+                  letterSpacing: 0.5,
+                  marginBottom: spacing.sm,
+                  marginTop: spacing.md,
+                  color: palette.text.muted,
+                }}
+              >
                 COÛT TOTAL
               </Text>
               <View
-                style={[
-                  styles.currencyInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
-                ]}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: spacing.lg,
+                  paddingVertical: spacing.md,
+                  borderRadius: radius.lg,
+                  borderWidth: 1,
+                  gap: spacing.sm,
+                  backgroundColor: palette.background.elevated,
+                  borderColor: palette.divider.main,
+                }}
               >
-                <Text style={[styles.currencySymbol, { color: theme.primary }]}>
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "600",
+                    color: palette.primary.main,
+                  }}
+                >
                   €
                 </Text>
                 <TextInput
-                  style={[styles.currencyValue, { color: theme.text }]}
+                  style={{ flex: 1, fontSize: 16, color: palette.text.primary }}
                   value={totalCost}
                   onChangeText={setTotalCost}
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={palette.text.muted}
                   keyboardType="decimal-pad"
                 />
               </View>
             </View>
 
             {/* Shipping */}
-            <View style={styles.financialField}>
-              <Text style={[styles.fieldLabel, { color: theme.textMuted }]}>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "600",
+                  letterSpacing: 0.5,
+                  marginBottom: spacing.sm,
+                  marginTop: spacing.md,
+                  color: palette.text.muted,
+                }}
+              >
                 FRAIS DE PORT
               </Text>
               <View
-                style={[
-                  styles.currencyInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
-                ]}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: spacing.lg,
+                  paddingVertical: spacing.md,
+                  borderRadius: radius.lg,
+                  borderWidth: 1,
+                  gap: spacing.sm,
+                  backgroundColor: palette.background.elevated,
+                  borderColor: palette.divider.main,
+                }}
               >
-                <Text style={[styles.currencySymbol, { color: theme.primary }]}>
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "600",
+                    color: palette.primary.main,
+                  }}
+                >
                   €
                 </Text>
                 <TextInput
-                  style={[styles.currencyValue, { color: theme.text }]}
+                  style={{ flex: 1, fontSize: 16, color: palette.text.primary }}
                   value={shippingCost}
                   onChangeText={setShippingCost}
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={palette.text.muted}
                   keyboardType="decimal-pad"
                 />
               </View>
@@ -485,27 +653,50 @@ export default function AddLotScreen() {
           </View>
 
           {/* Item Count with +/- buttons */}
-          <Text style={[styles.fieldLabel, { color: theme.textMuted }]}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "600",
+              letterSpacing: 0.5,
+              marginBottom: spacing.sm,
+              marginTop: spacing.md,
+              color: palette.text.muted,
+            }}
+          >
             NOMBRE D'ARTICLES
           </Text>
           <View
-            style={[
-              styles.quantityContainer,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              borderRadius: radius.lg,
+              borderWidth: 1,
+              overflow: "hidden",
+              backgroundColor: palette.background.elevated,
+              borderColor: palette.divider.main,
+            }}
           >
             <Pressable
-              style={[
-                styles.quantityButton,
-                { backgroundColor: theme.primaryMuted },
-              ]}
+              style={{
+                width: 48,
+                height: 48,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: palette.primary.subtle,
+              }}
               onPress={decrementQuantity}
             >
-              <AppIcon name="remove" size={24} color={theme.primary} />
+              <AppIcon name="remove" size={24} color={palette.primary.main} />
             </Pressable>
 
             <TextInput
-              style={[styles.quantityInput, { color: theme.text }]}
+              style={{
+                flex: 1,
+                fontSize: 18,
+                fontWeight: "600",
+                paddingVertical: spacing.md,
+                color: palette.text.primary,
+              }}
               value={quantity.toString()}
               onChangeText={(t) => setQuantity(parseInt(t) || 0)}
               keyboardType="number-pad"
@@ -513,99 +704,180 @@ export default function AddLotScreen() {
             />
 
             <Pressable
-              style={[
-                styles.quantityButton,
-                { backgroundColor: theme.primaryMuted },
-              ]}
+              style={{
+                width: 48,
+                height: 48,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: palette.primary.subtle,
+              }}
               onPress={incrementQuantity}
             >
-              <AppIcon name="add" size={24} color={theme.primary} />
+              <AppIcon name="add" size={24} color={palette.primary.main} />
             </Pressable>
           </View>
 
           {/* Estimated Cost Card */}
           <View
-            style={[
-              styles.estimatedCard,
-              { backgroundColor: theme.primaryMuted },
-            ]}
+            style={{
+              padding: spacing.lg,
+              borderRadius: radius.lg,
+              marginTop: spacing.lg,
+              flexDirection: "row",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              backgroundColor: palette.primary.subtle,
+            }}
           >
-            <Text style={[styles.estimatedLabel, { color: theme.primary }]}>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: "600",
+                letterSpacing: 0.5,
+                color: palette.primary.main,
+              }}
+            >
               COÛT ESTIMÉ
             </Text>
             <Text
-              style={[styles.estimatedSubLabel, { color: theme.textMuted }]}
+              style={{
+                fontSize: 13,
+                width: "60%",
+                color: palette.text.muted,
+              }}
             >
               Par article
             </Text>
-            <Text style={[styles.estimatedValue, { color: theme.text }]}>
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: "700",
+                color: palette.text.primary,
+              }}
+            >
               €{unitCost}
             </Text>
           </View>
         </Animated.View>
 
         {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: theme.border }]} />
+        <View
+          style={{
+            height: 1,
+            marginVertical: spacing.xl,
+            backgroundColor: palette.divider.main,
+          }}
+        />
 
         {/* Section: Configuration des articles */}
         <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <View style={styles.sectionHeader}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing.md,
+              marginBottom: spacing.lg,
+            }}
+          >
             <View
-              style={[
-                styles.sectionIcon,
-                { backgroundColor: theme.primaryMuted },
-              ]}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: radius.md,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: palette.primary.subtle,
+              }}
             >
-              <AppIcon name="inventory-2" size={18} color={theme.warning} />
+              <AppIcon
+                name="inventory-2"
+                size={18}
+                color={palette.semantic.warning}
+              />
             </View>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                color: palette.text.primary,
+              }}
+            >
               Configuration des articles
             </Text>
           </View>
 
           {/* Bulk Generate Option */}
           <Pressable
-            style={[
-              styles.setupOption,
-              {
-                backgroundColor: theme.surface,
-                borderColor:
-                  itemSetupMode === "bulk" ? theme.primary : theme.border,
-              },
-            ]}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: spacing.lg,
+              borderRadius: radius.lg,
+              borderWidth: 1,
+              marginBottom: spacing.md,
+              gap: spacing.md,
+              backgroundColor: palette.background.elevated,
+              borderColor:
+                itemSetupMode === "bulk"
+                  ? palette.primary.main
+                  : palette.divider.main,
+            }}
             onPress={() => setItemSetupMode("bulk")}
           >
             <View
-              style={[
-                styles.setupIcon,
-                { backgroundColor: theme.primaryMuted },
-              ]}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: radius.md,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: palette.primary.subtle,
+              }}
             >
-              <AppIcon name="auto-awesome" size={20} color={theme.primary} />
+              <AppIcon
+                name="auto-awesome"
+                size={20}
+                color={palette.primary.main}
+              />
             </View>
-            <View style={styles.setupText}>
-              <Text style={[styles.setupTitle, { color: theme.text }]}>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  marginBottom: 2,
+                  color: palette.text.primary,
+                }}
+              >
                 Génération automatique
               </Text>
-              <Text style={[styles.setupDesc, { color: theme.textMuted }]}>
+              <Text style={{ fontSize: 12, color: palette.text.muted }}>
                 Créer des IDs anonymes automatiquement (ex: Lot-001)
               </Text>
             </View>
             <View
-              style={[
-                styles.radioOuter,
-                {
-                  borderColor:
-                    itemSetupMode === "bulk" ? theme.primary : theme.border,
-                },
-              ]}
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                borderWidth: 2,
+                alignItems: "center",
+                justifyContent: "center",
+                borderColor:
+                  itemSetupMode === "bulk"
+                    ? palette.primary.main
+                    : palette.divider.main,
+              }}
             >
               {itemSetupMode === "bulk" && (
                 <View
-                  style={[
-                    styles.radioInner,
-                    { backgroundColor: theme.primary },
-                  ]}
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: palette.primary.main,
+                  }}
                 />
               )}
             </View>
@@ -613,47 +885,75 @@ export default function AddLotScreen() {
 
           {/* Manual Entry Option */}
           <Pressable
-            style={[
-              styles.setupOption,
-              {
-                backgroundColor: theme.surface,
-                borderColor:
-                  itemSetupMode === "manual" ? theme.primary : theme.border,
-              },
-            ]}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: spacing.lg,
+              borderRadius: radius.lg,
+              borderWidth: 1,
+              marginBottom: spacing.md,
+              gap: spacing.md,
+              backgroundColor: palette.background.elevated,
+              borderColor:
+                itemSetupMode === "manual"
+                  ? palette.primary.main
+                  : palette.divider.main,
+            }}
             onPress={() => setItemSetupMode("manual")}
           >
             <View
-              style={[
-                styles.setupIcon,
-                { backgroundColor: theme.primaryMuted },
-              ]}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: radius.md,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: palette.primary.subtle,
+              }}
             >
-              <AppIcon name="edit-note" size={20} color={theme.primary} />
+              <AppIcon
+                name="edit-note"
+                size={20}
+                color={palette.primary.main}
+              />
             </View>
-            <View style={styles.setupText}>
-              <Text style={[styles.setupTitle, { color: theme.text }]}>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  marginBottom: 2,
+                  color: palette.text.primary,
+                }}
+              >
                 Saisie manuelle
               </Text>
-              <Text style={[styles.setupDesc, { color: theme.textMuted }]}>
+              <Text style={{ fontSize: 12, color: palette.text.muted }}>
                 Saisir les détails de chaque article individuellement
               </Text>
             </View>
             <View
-              style={[
-                styles.radioOuter,
-                {
-                  borderColor:
-                    itemSetupMode === "manual" ? theme.primary : theme.border,
-                },
-              ]}
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                borderWidth: 2,
+                alignItems: "center",
+                justifyContent: "center",
+                borderColor:
+                  itemSetupMode === "manual"
+                    ? palette.primary.main
+                    : palette.divider.main,
+              }}
             >
               {itemSetupMode === "manual" && (
                 <View
-                  style={[
-                    styles.radioInner,
-                    { backgroundColor: theme.primary },
-                  ]}
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: palette.primary.main,
+                  }}
                 />
               )}
             </View>
@@ -663,35 +963,68 @@ export default function AddLotScreen() {
 
       {/* Footer */}
       <View
-        style={[
-          styles.footer,
-          {
-            backgroundColor: theme.background,
-            paddingBottom: insets.bottom + Spacing.md,
-          },
-        ]}
+        style={{
+          paddingHorizontal: spacing.xl,
+          paddingTop: spacing.lg,
+          borderTopWidth: 1,
+          borderTopColor: "rgba(0,0,0,0.05)",
+          backgroundColor: palette.background.main,
+          paddingBottom: insets.bottom + spacing.md,
+        }}
       >
         {/* Summary info */}
-        <View style={styles.footerSummary}>
-          <View style={styles.footerSummaryItem}>
-            <Text style={[styles.footerSummaryValue, { color: theme.text }]}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: spacing.md,
+            gap: spacing.lg,
+          }}
+        >
+          <View style={{ alignItems: "center" }}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "700",
+                color: palette.text.primary,
+              }}
+            >
               {quantity > 0 ? quantity : "-"}
             </Text>
             <Text
-              style={[styles.footerSummaryLabel, { color: theme.textMuted }]}
+              style={{
+                fontSize: 11,
+                fontWeight: "500",
+                color: palette.text.muted,
+              }}
             >
               articles
             </Text>
           </View>
           <View
-            style={[styles.footerDivider, { backgroundColor: theme.border }]}
+            style={{
+              width: 1,
+              height: 32,
+              backgroundColor: palette.divider.main,
+            }}
           />
-          <View style={styles.footerSummaryItem}>
-            <Text style={[styles.footerSummaryValue, { color: theme.primary }]}>
+          <View style={{ alignItems: "center" }}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "700",
+                color: palette.primary.main,
+              }}
+            >
               €{unitCost}
             </Text>
             <Text
-              style={[styles.footerSummaryLabel, { color: theme.textMuted }]}
+              style={{
+                fontSize: 11,
+                fontWeight: "500",
+                color: palette.text.muted,
+              }}
             >
               /article
             </Text>
@@ -703,7 +1036,7 @@ export default function AddLotScreen() {
           onPress={handleCreate}
           disabled={isSubmitting || !provider || !totalCost || quantity === 0}
           icon={<AppIcon name="check-circle" size={20} color="#FFF" />}
-          style={styles.continueButton}
+          style={{ width: "100%" }}
         >
           {isSubmitting ? "Création..." : "Créer le lot"}
         </Button>
@@ -713,348 +1046,3 @@ export default function AddLotScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  progressContainer: {
-    flexDirection: "column",
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-  },
-  progressTrackFull: {
-    width: "100%",
-    height: 4,
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressLabel: {
-    fontSize: 12,
-    fontWeight: "500",
-    textAlign: "center",
-    marginTop: Spacing.xs,
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 2,
-  },
-  content: {
-    padding: Spacing.xl,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  sectionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  fieldLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-    marginBottom: Spacing.sm,
-    marginTop: Spacing.md,
-  },
-  dropdown: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  dropdownText: {
-    fontSize: 16,
-  },
-  dateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  dateText: {
-    fontSize: 16,
-  },
-  dateModalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  dateModalContent: {
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    padding: Spacing.xl,
-  },
-  dateModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  typeSelector: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    flexWrap: "wrap",
-  },
-  typeOption: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-  },
-  typeLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  providerChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-  },
-  inlineDatePicker: {
-    marginTop: Spacing.sm,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  dateChipsContainer: {
-    paddingHorizontal: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  dateChip: {
-    width: 56,
-    height: 72,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  dateChipDay: {
-    fontSize: 11,
-    fontWeight: "500",
-    marginBottom: 4,
-  },
-  dateChipNumber: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  todayDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    marginTop: 4,
-  },
-  divider: {
-    height: 1,
-    marginVertical: Spacing.xl,
-  },
-  financialsRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  financialField: {
-    flex: 1,
-  },
-  currencyInput: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    gap: Spacing.sm,
-  },
-  currencySymbol: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  currencyValue: {
-    flex: 1,
-    fontSize: 16,
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  quantityButton: {
-    width: 48,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quantityInput: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "600",
-    paddingVertical: Spacing.md,
-  },
-  estimatedCard: {
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-    marginTop: Spacing.lg,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  estimatedLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-  },
-  estimatedSubLabel: {
-    fontSize: 13,
-    width: "60%",
-  },
-  estimatedValue: {
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  setupOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    marginBottom: Spacing.md,
-    gap: Spacing.md,
-  },
-  setupIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  setupText: {
-    flex: 1,
-  },
-  setupTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  setupDesc: {
-    fontSize: 12,
-  },
-  radioOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  radioInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  footer: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.05)",
-  },
-  footerSummary: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.md,
-    gap: Spacing.lg,
-  },
-  footerSummaryItem: {
-    alignItems: "center",
-  },
-  footerSummaryValue: {
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  footerSummaryLabel: {
-    fontSize: 11,
-    fontWeight: "500",
-  },
-  footerDivider: {
-    width: 1,
-    height: 32,
-  },
-  continueButton: {
-    width: "100%",
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: Spacing.xl,
-  },
-  modalContent: {
-    width: "100%",
-    borderRadius: Radius.xl,
-    padding: Spacing.xl,
-  },
-  providerOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-  },
-  providerLabel: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  dateScrollView: {
-    maxHeight: 300,
-  },
-  dateOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-  },
-  dateOptionLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  dateOptionText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  todayBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: Radius.sm,
-  },
-  todayBadgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#FFF",
-  },
-});

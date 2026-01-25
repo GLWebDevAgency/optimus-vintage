@@ -1,510 +1,377 @@
 /**
- * 📦 LOTS SCREEN - Ultra Premium Edition
- * Premium lot management with world-class animations
+ * 📦 LOTS SCREEN - Neumorphic Dark Edition
+ *
+ * Design fidèle 100% au mockup mes_lots_neumorphic_redesign
+ * Style: Soft UI, Dark Neumorphic, Progress bars, Stats
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import {
-    PremiumButton,
-    PremiumColors,
-    PremiumScreen,
-} from "@/components/ui/PremiumUI";
+    NeuBadge,
+    NeuProgressBar,
+    NeuScreen,
+    NeuSearchBar,
+    NeuStatGrid,
+    useNeuColors,
+} from "@/components/ui/Neumorphic";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Palette, Radius, Spacing, Typography } from "@/constants/Theme";
 import { LotSummary, LotsRepository } from "@/db/repositories";
 import { Haptic } from "@/utils/haptics";
 import { useQuery } from "@tanstack/react-query";
-import { BlurView } from "expo-blur";
 import { router, useFocusEffect } from "expo-router";
-import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
     FlatList,
-    Keyboard,
-    LayoutAnimation,
+    Platform,
     Pressable,
     RefreshControl,
-    StyleSheet,
     Text,
-    TextInput,
-    UIManager,
     View,
 } from "react-native";
 import Animated, {
     FadeIn,
-    FadeOut,
+    FadeInDown,
     SlideInRight,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const isAndroid = process.env.EXPO_OS === "android";
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📦 TYPES & CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// Enable LayoutAnimation for Android
-if (isAndroid && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+type SortOption = "newest" | "oldest" | "investment" | "delta";
 
-// ============ TYPES ============
-
-type SortOption =
-  | "newest"
-  | "oldest"
-  | "investment_high"
-  | "investment_low"
-  | "revenue"
-  | "delta";
-
-interface LotsStats {
-  totalLots: number;
-  totalInvestment: number;
-  totalRevenue: number;
-  totalDelta: number;
-  totalItems: number;
-  totalSold: number;
-}
-
-// ============ CONSTANTS ============
-
-const ANIMATION_STAGGER = 50;
-const MAX_ANIMATED_ITEMS = 8;
-
-const SORT_OPTIONS: { key: SortOption; label: string; icon: string }[] = [
-  { key: "newest", label: "Plus récent", icon: "schedule" },
-  { key: "oldest", label: "Plus ancien", icon: "history" },
-  { key: "investment_high", label: "Invest ↓", icon: "trending-down" },
-  { key: "investment_low", label: "Invest ↑", icon: "trending-up" },
-  { key: "revenue", label: "Revenue", icon: "attach-money" },
-  { key: "delta", label: "Delta", icon: "warning" },
+const SORT_OPTIONS: { key: SortOption; label: string }[] = [
+  { key: "newest", label: "Récent" },
+  { key: "oldest", label: "Ancien" },
+  { key: "investment", label: "Invest." },
+  { key: "delta", label: "Delta" },
 ];
 
-// ============ LOT CARD COMPONENT ============
+function formatCurrency(value: number): string {
+  const prefix = value < 0 ? "-" : "";
+  const absValue = Math.abs(value);
+  return `€${prefix}${absValue.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎴 LOT CARD COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface LotCardProps {
   lot: LotSummary;
   index: number;
-  shouldAnimate: boolean;
 }
 
-const LotCard = React.memo(function LotCard({
-  lot,
-  index,
-  shouldAnimate,
-}: LotCardProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
-
-  // Premium theme mapping
-  const theme = {
-    surfaceCard: isDark ? PremiumColors.dark.surface : PremiumColors.surface,
-    border: isDark ? PremiumColors.dark.border : PremiumColors.border,
-    primary: PremiumColors.accent,
-    primarySubtle: PremiumColors.accentLight,
-    text: isDark ? PremiumColors.dark.textPrimary : PremiumColors.textPrimary,
-    textMuted: isDark ? PremiumColors.dark.textMuted : PremiumColors.textMuted,
-    success: PremiumColors.success,
-    successSubtle: PremiumColors.successLight,
-    danger: PremiumColors.danger,
-    surfaceHover: isDark ? Palette.navy[700] : Palette.neutral[100],
-  };
+const LotCard = React.memo(function LotCard({ lot, index }: LotCardProps) {
+  const { palette, shadows, spacing, radius } = useNeuColors();
+  const scale = useSharedValue(1);
 
   const investment = parseFloat(String(lot.totalInvestment)) || 0;
-  const revenue = parseFloat(String(lot.totalRevenue)) || 0;
   const delta = parseFloat(String(lot.delta)) || 0;
+  const revenue = investment - delta; // totalRevenue = investment - delta (car delta = invest - revenue)
   const soldCount = parseInt(String(lot.soldCount)) || 0;
   const initialQty = lot.initialQuantity || 0;
-
-  const isProfitable = revenue >= investment;
   const progressPercent = initialQty > 0 ? (soldCount / initialQty) * 100 : 0;
+  const isProfitable = delta >= 0;
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.97, { damping: 20, stiffness: 300 });
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, { damping: 18, stiffness: 220 });
+  }, [scale]);
 
   const handlePress = useCallback(() => {
     Haptic.selection();
     router.push(`/lots/${lot.id}`);
   }, [lot.id]);
 
+  // Status badge
+  const getStatusBadge = () => {
+    if (soldCount === initialQty && initialQty > 0) {
+      return { label: "TERMINÉ", color: palette.accent.green };
+    }
+    if (soldCount > 0) {
+      return { label: "EN COURS", color: palette.primary.main };
+    }
+    return { label: "NOUVEAU", color: palette.accent.blue };
+  };
+  const status = getStatusBadge();
+
   return (
-    <Animated.View
-      entering={
-        shouldAnimate
-          ? SlideInRight.delay(index * ANIMATION_STAGGER).duration(300)
-          : undefined
-      }
-    >
-      <Pressable
-        onPress={handlePress}
-        style={({ pressed }) => [
-          styles.lotCard,
-          {
-            backgroundColor: theme.surfaceCard,
-            borderColor: theme.border,
-            opacity: pressed ? 0.95 : 1,
-            transform: [{ scale: pressed ? 0.98 : 1 }],
-          },
-        ]}
-      >
-        {/* Header Row */}
-        <View style={styles.cardHeader}>
+    <Animated.View entering={SlideInRight.delay(index * 60).duration(350)}>
+      <Animated.View style={animatedStyle}>
+        <Pressable
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          style={[
+            {
+              backgroundColor: palette.background.main,
+              borderRadius: radius["2xl"],
+              padding: spacing.lg,
+              borderCurve: "continuous",
+            },
+            Platform.OS === "web" && { boxShadow: shadows.flat.css as any },
+          ]}
+        >
+          {/* Header Row */}
           <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: theme.primarySubtle },
-            ]}
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              marginBottom: spacing.lg,
+            }}
           >
-            <AppIcon name="inventory-2" size={22} color={theme.primary} />
-          </View>
-          <View style={styles.cardTitleContainer}>
-            <Text
-              style={[Typography.heading.sm, { color: theme.text }]}
-              numberOfLines={1}
-            >
-              {lot.name || `Lot #${lot.id}`}
-            </Text>
-            <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-              {lot.provider || "N/A"} • {lot.buyDate}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                backgroundColor: isProfitable
-                  ? theme.successSubtle
-                  : theme.primarySubtle,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                Typography.label.xs,
-                { color: isProfitable ? theme.success : theme.primary },
-              ]}
-            >
-              {isProfitable ? "Profit" : "En cours"}
-            </Text>
-          </View>
-        </View>
-
-        {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: theme.border }]} />
-
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <View style={styles.statItem}>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              ARTICLES
-            </Text>
-            <Text style={[Typography.number.md, { color: theme.text }]}>
-              {initialQty}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              INVESTI
-            </Text>
-            <Text style={[Typography.number.md, { color: theme.text }]}>
-              €{investment.toFixed(0)}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              REVENU
-            </Text>
-            <Text style={[Typography.number.md, { color: theme.text }]}>
-              €{revenue.toFixed(0)}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              DELTA
-            </Text>
-            <Text
-              style={[
-                Typography.number.md,
-                { color: isProfitable ? theme.success : theme.danger },
-              ]}
-            >
-              {isProfitable ? "+" : "-"}€
-              {Math.abs(revenue - investment).toFixed(0)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Progress Bar */}
-        <View style={{ marginTop: Spacing.lg }}>
-          <View style={styles.progressContainer}>
             <View
-              style={[
-                styles.progressTrack,
-                { backgroundColor: theme.surfaceHover },
-              ]}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: spacing.md,
+              }}
             >
+              {/* Icon (Pressed style) */}
               <View
                 style={[
-                  styles.progressFill,
                   {
-                    backgroundColor: theme.primary,
-                    width: `${Math.min(progressPercent, 100)}%`,
+                    width: 48,
+                    height: 48,
+                    borderRadius: radius.lg,
+                    backgroundColor: palette.background.main,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: shadows.pressed.borderColor,
+                  },
+                  Platform.OS === "web" && {
+                    boxShadow: shadows.pressed.css as any,
                   },
                 ]}
-              />
+              >
+                <AppIcon
+                  name="inventory-2"
+                  size={22}
+                  color={palette.primary.main}
+                />
+              </View>
+              <View>
+                <Text
+                  style={{
+                    color: palette.text.primary,
+                    fontSize: 17,
+                    fontWeight: "700",
+                  }}
+                >
+                  {lot.name || `Lot #${lot.id}`}
+                </Text>
+                <Text
+                  style={{
+                    color: palette.text.muted,
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  {lot.provider || "Fournisseur"} •{" "}
+                  {lot.createdAt?.split("T")[0] || ""}
+                </Text>
+              </View>
             </View>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              {soldCount}/{initialQty} vendus
+            <NeuBadge label={status.label} color={status.color} />
+          </View>
+
+          {/* Stats Grid */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginBottom: spacing.lg,
+            }}
+          >
+            <View style={{ alignItems: "center" }}>
+              <Text
+                style={{
+                  color: palette.text.muted,
+                  fontSize: 9,
+                  fontWeight: "700",
+                  letterSpacing: 0.5,
+                  marginBottom: 4,
+                }}
+              >
+                ARTICLES
+              </Text>
+              <Text
+                style={{
+                  color: palette.text.primary,
+                  fontSize: 16,
+                  fontWeight: "800",
+                }}
+              >
+                {initialQty}
+              </Text>
+            </View>
+            <View style={{ alignItems: "center" }}>
+              <Text
+                style={{
+                  color: palette.text.muted,
+                  fontSize: 9,
+                  fontWeight: "700",
+                  letterSpacing: 0.5,
+                  marginBottom: 4,
+                }}
+              >
+                INVESTI
+              </Text>
+              <Text
+                style={{
+                  color: palette.text.primary,
+                  fontSize: 16,
+                  fontWeight: "800",
+                }}
+              >
+                {formatCurrency(investment)}
+              </Text>
+            </View>
+            <View style={{ alignItems: "center" }}>
+              <Text
+                style={{
+                  color: palette.text.muted,
+                  fontSize: 9,
+                  fontWeight: "700",
+                  letterSpacing: 0.5,
+                  marginBottom: 4,
+                }}
+              >
+                REVENU
+              </Text>
+              <Text
+                style={{
+                  color: palette.text.primary,
+                  fontSize: 16,
+                  fontWeight: "800",
+                }}
+              >
+                {formatCurrency(revenue)}
+              </Text>
+            </View>
+            <View style={{ alignItems: "center" }}>
+              <Text
+                style={{
+                  color: palette.text.muted,
+                  fontSize: 9,
+                  fontWeight: "700",
+                  letterSpacing: 0.5,
+                  marginBottom: 4,
+                }}
+              >
+                DELTA
+              </Text>
+              <Text
+                style={{
+                  color: isProfitable
+                    ? palette.accent.green
+                    : palette.accent.red,
+                  fontSize: 16,
+                  fontWeight: "800",
+                }}
+              >
+                {formatCurrency(delta)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Progress Bar */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing.sm,
+            }}
+          >
+            <NeuProgressBar
+              progress={progressPercent}
+              height={10}
+              color={palette.primary.main}
+            />
+            <Text
+              style={{
+                color: palette.text.muted,
+                fontSize: 10,
+                fontWeight: "600",
+                minWidth: 70,
+              }}
+            >
+              {soldCount}/{initialQty} VENDUS
             </Text>
           </View>
-        </View>
-      </Pressable>
+        </Pressable>
+      </Animated.View>
     </Animated.View>
   );
 });
 
-// ============ STATS BAR COMPONENT ============
-
-interface PremiumTheme {
-  surface: string;
-  border: string;
-  primary: string;
-  text: string;
-  textMuted: string;
-  textSecondary: string;
-  success: string;
-  danger: string;
-  warning: string;
-  surfaceCard: string;
-  primarySubtle: string;
-  successSubtle: string;
-  surfaceHover: string;
-  background: string;
-}
-
-function StatsBar({ stats, theme }: { stats: LotsStats; theme: PremiumTheme }) {
-  const profit = stats.totalRevenue - stats.totalInvestment;
-
-  return (
-    <Animated.View entering={FadeIn.duration(400)} style={styles.statsBar}>
-      <View
-        style={[
-          styles.statsBarItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
-      >
-        <AppIcon name="folder" size={16} color={theme.primary} />
-        <View>
-          <Text style={[Typography.number.sm, { color: theme.text }]}>
-            {stats.totalLots}
-          </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Lots
-          </Text>
-        </View>
-      </View>
-
-      <View
-        style={[
-          styles.statsBarItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
-      >
-        <AppIcon
-          name="account-balance-wallet"
-          size={16}
-          color={theme.warning}
-        />
-        <View>
-          <Text style={[Typography.number.sm, { color: theme.text }]}>
-            €{stats.totalInvestment.toFixed(0)}
-          </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Investi
-          </Text>
-        </View>
-      </View>
-
-      <View
-        style={[
-          styles.statsBarItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
-      >
-        <AppIcon
-          name="trending-up"
-          size={16}
-          color={profit >= 0 ? theme.success : theme.danger}
-        />
-        <View>
-          <Text
-            style={[
-              Typography.number.sm,
-              { color: profit >= 0 ? theme.success : theme.danger },
-            ]}
-          >
-            {profit >= 0 ? "+" : ""}€{profit.toFixed(0)}
-          </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Profit
-          </Text>
-        </View>
-      </View>
-    </Animated.View>
-  );
-}
-
-// ============ SEARCH BAR COMPONENT ============
-
-function SearchBar({
-  value,
-  onChangeText,
-  onClear,
-  theme,
-}: {
-  value: string;
-  onChangeText: (text: string) => void;
-  onClear: () => void;
-  theme: PremiumTheme;
-}) {
-  return (
-    <View
-      style={[
-        styles.searchContainer,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-      ]}
-    >
-      <AppIcon name="search" size={20} color={theme.textMuted} />
-      <TextInput
-        style={[styles.searchInput, { color: theme.text }]}
-        placeholder="Rechercher lot, fournisseur..."
-        placeholderTextColor={theme.textMuted}
-        value={value}
-        onChangeText={onChangeText}
-        returnKeyType="search"
-        autoCorrect={false}
-        autoCapitalize="none"
-      />
-      {value.length > 0 && (
-        <Pressable onPress={onClear} hitSlop={8}>
-          <AppIcon name="close" size={18} color={theme.textMuted} />
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
-// ============ MAIN SCREEN ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📦 LOTS SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export default function LotsScreen() {
+  const { palette, shadows, spacing, radius } = useNeuColors();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
-  const flatListRef = useRef<FlatList>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
-  // Premium theme
-  const theme: PremiumTheme = {
-    surface: isDark ? PremiumColors.dark.surface : PremiumColors.surface,
-    surfaceCard: isDark ? PremiumColors.dark.surface : PremiumColors.surface,
-    surfaceHover: isDark ? Palette.navy[700] : Palette.neutral[100],
-    background: isDark
-      ? PremiumColors.dark.background
-      : PremiumColors.background,
-    border: isDark ? PremiumColors.dark.border : PremiumColors.border,
-    primary: PremiumColors.accent,
-    primarySubtle: PremiumColors.accentLight,
-    text: isDark ? PremiumColors.dark.textPrimary : PremiumColors.textPrimary,
-    textMuted: isDark ? PremiumColors.dark.textMuted : PremiumColors.textMuted,
-    textSecondary: isDark
-      ? PremiumColors.dark.textSecondary
-      : PremiumColors.textSecondary,
-    success: PremiumColors.success,
-    successSubtle: PremiumColors.successLight,
-    danger: PremiumColors.danger,
-    warning: PremiumColors.warning,
-  };
-
-  // Data state
+  // ─── Data Query ──────────────────────────────────────────────────────
   const lotsQuery = useQuery({
     queryKey: ["lots-summary"],
     queryFn: () => LotsRepository.getSummary(),
   });
-  const { refetch } = lotsQuery;
+
   const loading = lotsQuery.isLoading;
   const refreshing = lotsQuery.isFetching && !loading;
   const lots = lotsQuery.data ?? [];
 
-  // UI state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [showSortMenu, setShowSortMenu] = useState(false);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
   useFocusEffect(
     useCallback(() => {
-      refetch();
-    }, [refetch]),
+      lotsQuery.refetch();
+    }, []),
   );
 
-  useEffect(() => {
-    if (!loading) {
-      const timer = setTimeout(() => setHasAnimated(true), 400);
-      return () => clearTimeout(timer);
-    }
-
-    return undefined;
-  }, [loading, lots]);
-
-  // ============ FILTERING & SORTING ============
-
-  const processedLots = useMemo(() => {
+  // ─── Filtered & Sorted Lots ──────────────────────────────────────────
+  const filteredLots = useMemo(() => {
     let result = [...lots];
 
     // Search filter
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
+      const query = searchQuery.toLowerCase();
       result = result.filter(
         (lot) =>
           lot.name?.toLowerCase().includes(query) ||
-          lot.provider?.toLowerCase().includes(query) ||
-          `lot #${lot.id}`.toLowerCase().includes(query) ||
-          `#${lot.id}`.includes(query),
+          lot.provider?.toLowerCase().includes(query),
       );
     }
 
     // Sort
     switch (sortBy) {
       case "newest":
-        result.sort(
-          (a, b) =>
-            new Date(b.buyDate).getTime() - new Date(a.buyDate).getTime(),
-        );
+        result.sort((a, b) => b.id - a.id);
         break;
       case "oldest":
-        result.sort(
-          (a, b) =>
-            new Date(a.buyDate).getTime() - new Date(b.buyDate).getTime(),
-        );
+        result.sort((a, b) => a.id - b.id);
         break;
-      case "investment_high":
+      case "investment":
         result.sort(
           (a, b) =>
             parseFloat(String(b.totalInvestment)) -
             parseFloat(String(a.totalInvestment)),
-        );
-        break;
-      case "investment_low":
-        result.sort(
-          (a, b) =>
-            parseFloat(String(a.totalInvestment)) -
-            parseFloat(String(b.totalInvestment)),
-        );
-        break;
-      case "revenue":
-        result.sort(
-          (a, b) =>
-            parseFloat(String(b.totalRevenue)) -
-            parseFloat(String(a.totalRevenue)),
         );
         break;
       case "delta":
@@ -517,477 +384,339 @@ export default function LotsScreen() {
     return result;
   }, [lots, searchQuery, sortBy]);
 
-  // Stats
-  const stats = useMemo<LotsStats>(() => {
-    return lots.reduce(
-      (acc, lot) => {
-        const investment = parseFloat(String(lot.totalInvestment)) || 0;
-        const revenue = parseFloat(String(lot.totalRevenue)) || 0;
-        const delta = parseFloat(String(lot.delta)) || 0;
-        const soldCount = parseInt(String(lot.soldCount)) || 0;
-        const initialQty = lot.initialQuantity || 0;
+  // ─── Stats ───────────────────────────────────────────────────────────
+  const stats = useMemo(() => {
+    let totalInvest = 0;
+    let totalProfit = 0;
+    let totalItems = 0;
 
-        return {
-          totalLots: acc.totalLots + 1,
-          totalInvestment: acc.totalInvestment + investment,
-          totalRevenue: acc.totalRevenue + revenue,
-          totalDelta: acc.totalDelta + delta,
-          totalItems: acc.totalItems + initialQty,
-          totalSold: acc.totalSold + soldCount,
-        };
-      },
-      {
-        totalLots: 0,
-        totalInvestment: 0,
-        totalRevenue: 0,
-        totalDelta: 0,
-        totalItems: 0,
-        totalSold: 0,
-      },
-    );
-  }, [lots]);
-
-  // ============ HANDLERS ============
-
-  const handleRefresh = useCallback(() => {
-    setHasAnimated(false);
-    refetch();
-  }, [refetch]);
-
-  const handleSearch = useCallback((text: string) => {
-    setSearchQuery(text);
-  }, []);
-
-  const handleClearSearch = useCallback(() => {
-    setSearchQuery("");
-    Keyboard.dismiss();
-  }, []);
-
-  const handleSortChange = useCallback((option: SortOption) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setSortBy(option);
-    setShowSortMenu(false);
-  }, []);
-
-  // ============ RENDER ============
-
-  const renderItem = useCallback(
-    ({ item, index }: { item: LotSummary; index: number }) => (
-      <LotCard
-        lot={item}
-        index={index}
-        shouldAnimate={!hasAnimated && index < MAX_ANIMATED_ITEMS}
-      />
-    ),
-    [hasAnimated],
-  );
-
-  const renderEmpty = useCallback(() => {
-    if (loading) return null;
-
-    if (searchQuery) {
-      return (
-        <View style={styles.empty}>
-          <View
-            style={[styles.emptyIcon, { backgroundColor: theme.surfaceCard }]}
-          >
-            <AppIcon name="search-off" size={48} color={theme.textMuted} />
-          </View>
-          <Text
-            style={[
-              Typography.heading.md,
-              { color: theme.text, marginTop: Spacing.lg },
-            ]}
-          >
-            Aucun résultat
-          </Text>
-          <Text
-            style={[
-              Typography.body.sm,
-              {
-                color: theme.textMuted,
-                textAlign: "center",
-                marginTop: Spacing.xs,
-              },
-            ]}
-          >
-            Aucun lot ne correspond à "{searchQuery}"
-          </Text>
-          <Pressable
-            onPress={handleClearSearch}
-            style={{
-              marginTop: Spacing.lg,
-              paddingVertical: Spacing.sm,
-              paddingHorizontal: Spacing.lg,
-            }}
-          >
-            <Text style={[Typography.body.md, { color: theme.primary }]}>
-              Effacer la recherche
-            </Text>
-          </Pressable>
-        </View>
-      );
+    for (const lot of lots) {
+      totalInvest += parseFloat(String(lot.totalInvestment)) || 0;
+      totalProfit += parseFloat(String(lot.delta)) || 0;
+      totalItems += lot.initialQuantity || 0;
     }
 
-    return (
-      <View style={styles.empty}>
-        <View
-          style={[styles.emptyIcon, { backgroundColor: theme.primarySubtle }]}
-        >
-          <AppIcon name="inventory-2" size={48} color={theme.primary} />
-        </View>
-        <Text
-          style={[
-            Typography.heading.md,
-            { color: theme.text, marginTop: Spacing.lg },
-          ]}
-        >
-          Aucun lot
-        </Text>
-        <Text
-          style={[
-            Typography.body.sm,
-            {
-              color: theme.textMuted,
-              textAlign: "center",
-              marginTop: Spacing.xs,
-            },
-          ]}
-        >
-          Commencez à suivre vos achats{"\n"}en créant votre premier lot
-        </Text>
-        <PremiumButton
-          icon="add"
-          variant="primary"
-          onPress={() => router.push("/lots/new")}
-          style={{ marginTop: Spacing.xl }}
-        >
-          Créer un lot
-        </PremiumButton>
-      </View>
-    );
-  }, [loading, searchQuery, theme, handleClearSearch]);
+    return { lotsCount: lots.length, totalInvest, totalProfit, totalItems };
+  }, [lots]);
 
-  const keyExtractor = useCallback(
-    (item: LotSummary) => item.id.toString(),
-    [],
-  );
+  // ─── Handlers ────────────────────────────────────────────────────────
+  const handleRefresh = useCallback(() => {
+    Haptic.selection();
+    lotsQuery.refetch();
+  }, [lotsQuery]);
+
+  const handleAddLot = useCallback(() => {
+    Haptic.selection();
+    router.push("/lots/new");
+  }, []);
+
+  // ─── Render ──────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <NeuScreen style={{ paddingTop: insets.top }}>
+        <SkeletonList />
+      </NeuScreen>
+    );
+  }
 
   return (
-    <PremiumScreen>
-      {/* Floating Header with Blur */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <BlurView
-          intensity={80}
-          tint={colorScheme === "dark" ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: theme.surface + "E6" },
-          ]}
-        />
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={[Typography.display.sm, { color: theme.text }]}>
-              Mes Lots
-            </Text>
-            <Text style={[Typography.body.sm, { color: theme.textSecondary }]}>
-              {processedLots.length} lot{processedLots.length !== 1 ? "s" : ""}{" "}
-              • {stats.totalItems} pièces
-            </Text>
-          </View>
-          <Pressable
-            style={[styles.addButton, { backgroundColor: theme.primary }]}
-            onPress={() => {
-              Haptic.impactMedium();
-              router.push("/lots/new");
-            }}
-          >
-            <AppIcon name="add" size={24} color={PremiumColors.textWhite} />
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={{ flex: 1, paddingTop: insets.top + 90 }}>
-        {/* Search Bar */}
-        <View style={styles.searchSection}>
-          <SearchBar
-            value={searchQuery}
-            onChangeText={handleSearch}
-            onClear={handleClearSearch}
-            theme={theme}
+    <NeuScreen>
+      <FlatList
+        data={filteredLots}
+        keyExtractor={(lot) => String(lot.id)}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.lg,
+          paddingTop: insets.top + spacing.md,
+          paddingBottom: insets.bottom + 100,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={palette.primary.main}
+            colors={[palette.primary.main]}
           />
+        }
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <Animated.View
+              entering={FadeInDown.delay(100).duration(400)}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: spacing.lg,
+              }}
+            >
+              <View>
+                <Text
+                  style={{
+                    color: palette.text.primary,
+                    fontSize: 28,
+                    fontWeight: "800",
+                    letterSpacing: -0.5,
+                  }}
+                >
+                  Mes Lots
+                </Text>
+                <Text
+                  style={{
+                    color: palette.text.muted,
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                >
+                  {stats.lotsCount} lots • {stats.totalItems} pièces
+                </Text>
+              </View>
 
-          {/* Sort Button */}
-          <Pressable
-            style={[
-              styles.sortButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
-            onPress={() => {
-              Haptic.selection();
-              setShowSortMenu(!showSortMenu);
-            }}
-          >
-            <AppIcon
-              name={
-                (SORT_OPTIONS.find((o) => o.key === sortBy)?.icon as any) ||
-                "sort"
-              }
-              size={18}
-              color={theme.primary}
-            />
-          </Pressable>
-        </View>
-
-        {/* Sort Menu Dropdown */}
-        {showSortMenu && (
-          <Animated.View
-            entering={FadeIn.duration(150)}
-            exiting={FadeOut.duration(100)}
-            style={[
-              styles.sortMenu,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
-          >
-            {SORT_OPTIONS.map((option) => (
+              {/* Add Button */}
               <Pressable
-                key={option.key}
+                onPress={handleAddLot}
                 style={[
-                  styles.sortOption,
-                  sortBy === option.key && {
-                    backgroundColor: theme.primarySubtle,
+                  {
+                    width: 48,
+                    height: 48,
+                    borderRadius: radius.lg,
+                    backgroundColor: palette.primary.main,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  },
+                  Platform.OS === "web" && {
+                    boxShadow: `0 0 15px ${palette.primary.main}50`,
                   },
                 ]}
-                onPress={() => handleSortChange(option.key)}
+              >
+                <AppIcon name="add" size={24} color={palette.text.white} />
+              </Pressable>
+            </Animated.View>
+
+            {/* Search Bar */}
+            <Animated.View
+              entering={FadeInDown.delay(200).duration(400)}
+              style={{
+                flexDirection: "row",
+                gap: spacing.sm,
+                marginBottom: spacing.lg,
+              }}
+            >
+              <NeuSearchBar
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onClear={() => setSearchQuery("")}
+                placeholder="Rechercher lot, fournisseur..."
+                style={{ flex: 1 }}
+              />
+              <Pressable
+                onPress={() => Haptic.selection()}
+                style={[
+                  {
+                    width: 48,
+                    height: 48,
+                    backgroundColor: palette.background.main,
+                    borderRadius: radius.xl,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  },
+                  Platform.OS === "web" && {
+                    boxShadow: shadows.flat.css as any,
+                  },
+                ]}
               >
                 <AppIcon
-                  name={option.icon as any}
-                  size={16}
-                  color={
-                    sortBy === option.key ? theme.primary : theme.textSecondary
-                  }
+                  name="history"
+                  size={20}
+                  color={palette.primary.main}
                 />
+              </Pressable>
+            </Animated.View>
+
+            {/* Stats Grid */}
+            <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+              <NeuStatGrid
+                items={[
+                  {
+                    icon: "folder-open",
+                    iconColor: palette.primary.main,
+                    value: String(stats.lotsCount),
+                    label: "Lots",
+                  },
+                  {
+                    icon: "assignment",
+                    iconColor: palette.accent.yellow,
+                    value: formatCurrency(stats.totalInvest),
+                    label: "Investi",
+                  },
+                  {
+                    icon: "trending-up",
+                    iconColor:
+                      stats.totalProfit >= 0
+                        ? palette.accent.green
+                        : palette.accent.red,
+                    value: formatCurrency(stats.totalProfit),
+                    valueColor:
+                      stats.totalProfit >= 0
+                        ? palette.accent.green
+                        : palette.accent.red,
+                    label: "Profit",
+                  },
+                ]}
+                style={{ marginBottom: spacing.lg }}
+              />
+            </Animated.View>
+
+            {/* Sort Chips - Section title */}
+            <Animated.View
+              entering={FadeInDown.delay(400).duration(400)}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  color: palette.text.primary,
+                  fontSize: 16,
+                  fontWeight: "700",
+                }}
+              >
+                Tous les lots
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: spacing.xs,
+                }}
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <Pressable
+                    key={option.key}
+                    onPress={() => {
+                      Haptic.selection();
+                      setSortBy(option.key);
+                    }}
+                    style={{
+                      paddingVertical: 6,
+                      paddingHorizontal: 12,
+                      borderRadius: radius.md,
+                      backgroundColor:
+                        sortBy === option.key
+                          ? palette.primary.main + "20"
+                          : palette.background.main,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color:
+                          sortBy === option.key
+                            ? palette.primary.main
+                            : palette.text.muted,
+                        fontSize: 11,
+                        fontWeight: "600",
+                      }}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Animated.View>
+          </>
+        }
+        ListEmptyComponent={
+          <Animated.View
+            entering={FadeIn.duration(400)}
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: spacing["3xl"],
+            }}
+          >
+            <View
+              style={[
+                {
+                  width: 80,
+                  height: 80,
+                  borderRadius: 40,
+                  backgroundColor: palette.background.main,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: spacing.lg,
+                  borderWidth: 1,
+                  borderColor: shadows.pressed.borderColor,
+                },
+                Platform.OS === "web" && {
+                  boxShadow: shadows.pressed.css as any,
+                },
+              ]}
+            >
+              <AppIcon
+                name="inventory-2"
+                size={48}
+                color={palette.text.muted}
+              />
+            </View>
+            <Text
+              style={{
+                color: palette.text.primary,
+                fontSize: 18,
+                fontWeight: "700",
+                marginBottom: spacing.xs,
+              }}
+            >
+              Aucun lot
+            </Text>
+            <Text
+              style={{
+                color: palette.text.muted,
+                fontSize: 14,
+                textAlign: "center",
+                marginBottom: spacing.lg,
+              }}
+            >
+              {searchQuery
+                ? "Aucun résultat pour cette recherche"
+                : "Créez votre premier lot pour commencer"}
+            </Text>
+            {!searchQuery && (
+              <Pressable
+                onPress={handleAddLot}
+                style={[
+                  {
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: spacing.xs,
+                    backgroundColor: palette.primary.main,
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: radius.xl,
+                  },
+                  Platform.OS === "web" && {
+                    boxShadow: shadows.glow.cssMd as any,
+                  },
+                ]}
+              >
+                <AppIcon name="add" size={18} color={palette.text.white} />
                 <Text
-                  style={[
-                    Typography.body.sm,
-                    {
-                      color: sortBy === option.key ? theme.primary : theme.text,
-                    },
-                  ]}
+                  style={{
+                    color: palette.text.white,
+                    fontSize: 14,
+                    fontWeight: "700",
+                  }}
                 >
-                  {option.label}
+                  Créer un lot
                 </Text>
               </Pressable>
-            ))}
+            )}
           </Animated.View>
-        )}
-
-        {/* Stats Bar */}
-        {lots.length > 0 && <StatsBar stats={stats} theme={theme} />}
-
-        {/* Lots List */}
-        {loading && !refreshing ? (
-          <View style={styles.loaderContainer}>
-            <SkeletonList count={5} />
-          </View>
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={processedLots}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            contentInsetAdjustmentBehavior="automatic"
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor={theme.primary}
-                colors={[theme.primary]}
-              />
-            }
-            contentContainerStyle={[
-              styles.listContent,
-              processedLots.length === 0 && styles.emptyList,
-            ]}
-            ListEmptyComponent={renderEmpty}
-            showsVerticalScrollIndicator={false}
-            // Performance optimizations
-            removeClippedSubviews={isAndroid}
-            maxToRenderPerBatch={8}
-            windowSize={8}
-            initialNumToRender={6}
-          />
-        )}
-      </View>
-    </PremiumScreen>
+        }
+        renderItem={({ item, index }) => <LotCard lot={item} index={index} />}
+        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+      />
+    </NeuScreen>
   );
 }
-
-// ============ STYLES ============
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    overflow: "hidden",
-  },
-  headerContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-  },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  searchSection: {
-    flexDirection: "row",
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    height: 44,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    gap: Spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: "Manrope_400Regular",
-  },
-  sortButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sortMenu: {
-    position: "absolute",
-    top: 130,
-    right: Spacing.xl,
-    zIndex: 100,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-  },
-  sortOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  statsBar: {
-    flexDirection: "row",
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  statsBarItem: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  listContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: 120,
-  },
-  emptyList: {
-    flexGrow: 1,
-  },
-  loaderContainer: {
-    flex: 1,
-    paddingTop: Spacing["2xl"],
-  },
-  lotCard: {
-    borderRadius: Radius["2xl"],
-    padding: Spacing.xl,
-    marginBottom: Spacing.lg,
-    borderWidth: 1,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardTitleContainer: {
-    flex: 1,
-  },
-  statusBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-  },
-  divider: {
-    height: 1,
-    marginVertical: Spacing.lg,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  statItem: {
-    alignItems: "center",
-  },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  progressTrack: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  empty: {
-    alignItems: "center",
-    paddingVertical: Spacing["4xl"],
-    paddingHorizontal: Spacing.xl,
-  },
-  emptyIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: Radius["2xl"],
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

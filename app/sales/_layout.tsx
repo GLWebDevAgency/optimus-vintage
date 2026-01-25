@@ -2,22 +2,20 @@
  * 💰 SALES LAYOUT - Stack navigation for sales screens
  */
 
-import { useColorScheme } from "@/components/useColorScheme";
-import { Theme, Typography } from "@/constants/Theme";
+import { useNeuColors } from "@/components/ui/Neumorphic";
 import { Stack } from "expo-router";
 
 export default function SalesLayout() {
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
+  const { palette, typography } = useNeuColors();
 
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: theme.surface },
-        headerTintColor: theme.text,
-        headerTitleStyle: Typography.heading.sm,
+        headerStyle: { backgroundColor: palette.background.elevated },
+        headerTintColor: palette.text.primary,
+        headerTitleStyle: typography.heading.sm,
         headerShadowVisible: false,
-        contentStyle: { backgroundColor: theme.background },
+        contentStyle: { backgroundColor: palette.background.main },
       }}
     >
       <Stack.Screen

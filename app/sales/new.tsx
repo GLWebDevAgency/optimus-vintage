@@ -9,8 +9,7 @@ import {
     Card,
     ShimmerSkeleton,
 } from "@/components/ui/Components";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { useNeuColors } from "@/components/ui/Neumorphic";
 import { Item, ItemsRepository, SalesRepository } from "@/db/repositories";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -19,7 +18,6 @@ import React, { useMemo, useState } from "react";
 import {
     Alert,
     KeyboardAvoidingView,
-    StyleSheet,
     Text,
     TextInput,
     View,
@@ -30,8 +28,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function NewSaleScreen() {
   const params = useLocalSearchParams<{ itemId?: string; lotId?: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
+  const { palette, shadows, spacing, radius, typography, colorScheme } =
+    useNeuColors();
 
   const [price, setPrice] = useState("");
   const [platformFees, setPlatformFees] = useState("");
@@ -135,13 +133,19 @@ export default function NewSaleScreen() {
   if (itemId && itemQuery.isLoading) {
     return (
       <View
-        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: spacing.xl,
+          backgroundColor: palette.background.main,
+        }}
       >
-        <ShimmerSkeleton width={200} height={100} borderRadius={Radius.xl} />
+        <ShimmerSkeleton width={200} height={100} borderRadius={radius.xl} />
         <Text
           style={[
-            Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.md },
+            typography.body.sm,
+            { color: palette.text.muted, marginTop: spacing.md },
           ]}
         >
           Chargement de l'article...
@@ -153,20 +157,34 @@ export default function NewSaleScreen() {
   if (itemId && !item) {
     return (
       <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: spacing.xl,
+          backgroundColor: palette.background.main,
+        }}
       >
         <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: radius["2xl"],
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: spacing.lg,
+            backgroundColor: palette.accent.redGlow,
+          }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
+          <AppIcon name="error-outline" size={40} color={palette.accent.red} />
         </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
+        <Text style={[typography.heading.md, { color: palette.text.primary }]}>
           Item Not Found
         </Text>
         <Text
           style={[
-            Typography.body.sm,
-            { color: theme.textMuted, textAlign: "center" },
+            typography.body.sm,
+            { color: palette.text.muted, textAlign: "center" },
           ]}
         >
           The selected item could not be loaded. Please try again.
@@ -175,7 +193,7 @@ export default function NewSaleScreen() {
           variant="ghost"
           size="md"
           onPress={() => router.back()}
-          style={{ marginTop: Spacing.xl }}
+          style={{ marginTop: spacing.xl }}
         >
           Go Back
         </Button>
@@ -186,20 +204,34 @@ export default function NewSaleScreen() {
   if (!params.itemId && !item) {
     return (
       <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: spacing.xl,
+          backgroundColor: palette.background.main,
+        }}
       >
         <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: radius["2xl"],
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: spacing.lg,
+            backgroundColor: palette.accent.redGlow,
+          }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
+          <AppIcon name="error-outline" size={40} color={palette.accent.red} />
         </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
+        <Text style={[typography.heading.md, { color: palette.text.primary }]}>
           No Item Selected
         </Text>
         <Text
           style={[
-            Typography.body.sm,
-            { color: theme.textMuted, textAlign: "center" },
+            typography.body.sm,
+            { color: palette.text.muted, textAlign: "center" },
           ]}
         >
           Please select an item from the Stock screen to record a sale.
@@ -212,7 +244,7 @@ export default function NewSaleScreen() {
             router.dismissAll();
             router.replace("/(tabs)/stock");
           }}
-          style={{ marginTop: Spacing.xl }}
+          style={{ marginTop: spacing.xl }}
         >
           Go to Stock
         </Button>
@@ -223,7 +255,7 @@ export default function NewSaleScreen() {
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={{ flex: 1, backgroundColor: palette.background.main }}
     >
       {/* ═══ Animated Premium Background ═══ */}
       <AnimatedPremiumBackground variant="light" />
@@ -232,27 +264,55 @@ export default function NewSaleScreen() {
         options={{
           title: "New Sale",
           presentation: "formSheet",
-          headerStyle: { backgroundColor: theme.surface },
-          headerTintColor: theme.text,
+          headerStyle: { backgroundColor: palette.background.main },
+          headerTintColor: palette.text.primary,
         }}
       />
 
-      <View style={[styles.content, { paddingBottom: insets.bottom + 100 }]}>
+      <View
+        style={{
+          flex: 1,
+          padding: spacing.xl,
+          paddingBottom: insets.bottom + 100,
+        }}
+      >
         {/* Item Header */}
         <Animated.View entering={FadeInUp.delay(100).duration(400)}>
-          <Card variant="elevated" style={styles.itemHeader}>
+          <Card
+            variant="elevated"
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: spacing.lg,
+              marginBottom: spacing.lg,
+            }}
+          >
             <View
-              style={[styles.itemIcon, { backgroundColor: theme.primaryMuted }]}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: radius.lg,
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: spacing.md,
+                backgroundColor: palette.primary.subtle,
+              }}
             >
-              <AppIcon name="checkroom" size={24} color={theme.primary} />
+              <AppIcon
+                name="checkroom"
+                size={24}
+                color={palette.primary.main}
+              />
             </View>
-            <View style={styles.itemInfo}>
-              <Text style={[Typography.heading.sm, { color: theme.text }]}>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={[typography.heading.sm, { color: palette.text.primary }]}
+              >
                 {item
                   ? `${item.type || "Item"} ${item.brand || ""}`
                   : "Loading..."}
               </Text>
-              <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
+              <Text style={[typography.body.xs, { color: palette.text.muted }]}>
                 Lot #{item?.lotId} • ID: {item?.id} • Cost: €
                 {item ? parseFloat(String(item.unitCost)).toFixed(2) : "0.00"}
               </Text>
@@ -262,11 +322,11 @@ export default function NewSaleScreen() {
 
         {/* Sale Form */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <Card variant="elevated" style={styles.formCard}>
+          <Card variant="elevated" style={{ padding: spacing.xl }}>
             <Text
               style={[
-                Typography.heading.sm,
-                { color: theme.text, marginBottom: Spacing.lg },
+                typography.heading.sm,
+                { color: palette.text.primary, marginBottom: spacing.lg },
               ]}
             >
               Sale Details
@@ -274,8 +334,8 @@ export default function NewSaleScreen() {
 
             <Text
               style={[
-                Typography.body.sm,
-                { color: theme.textMuted, marginBottom: Spacing.xs },
+                typography.body.sm,
+                { color: palette.text.muted, marginBottom: spacing.xs },
               ]}
             >
               Prix de vente brut (€) *
@@ -284,24 +344,27 @@ export default function NewSaleScreen() {
               value={price}
               onChangeText={setPrice}
               placeholder="0.00"
-              placeholderTextColor={theme.textMuted}
+              placeholderTextColor={palette.text.muted}
               keyboardType="numeric"
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.surfaceCard,
-                  color: theme.text,
-                  borderColor: theme.border,
-                },
-              ]}
+              style={{
+                fontSize: 16,
+                fontFamily: "Manrope_600SemiBold",
+                paddingVertical: spacing.md,
+                paddingHorizontal: spacing.lg,
+                borderRadius: radius.lg,
+                borderWidth: 1,
+                backgroundColor: palette.background.elevated,
+                color: palette.text.primary,
+                borderColor: palette.divider.main,
+              }}
             />
 
-            <View style={styles.row}>
-              <View style={styles.halfInput}>
+            <View style={{ flexDirection: "row", gap: spacing.md }}>
+              <View style={{ flex: 1 }}>
                 <Text
                   style={[
-                    Typography.body.sm,
-                    { color: theme.textMuted, marginBottom: Spacing.xs },
+                    typography.body.sm,
+                    { color: palette.text.muted, marginBottom: spacing.xs },
                   ]}
                 >
                   Frais plateforme
@@ -310,23 +373,26 @@ export default function NewSaleScreen() {
                   value={platformFees}
                   onChangeText={setPlatformFees}
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={palette.text.muted}
                   keyboardType="numeric"
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: theme.surfaceCard,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    },
-                  ]}
+                  style={{
+                    fontSize: 16,
+                    fontFamily: "Manrope_600SemiBold",
+                    paddingVertical: spacing.md,
+                    paddingHorizontal: spacing.lg,
+                    borderRadius: radius.lg,
+                    borderWidth: 1,
+                    backgroundColor: palette.background.elevated,
+                    color: palette.text.primary,
+                    borderColor: palette.divider.main,
+                  }}
                 />
               </View>
-              <View style={styles.halfInput}>
+              <View style={{ flex: 1 }}>
                 <Text
                   style={[
-                    Typography.body.sm,
-                    { color: theme.textMuted, marginBottom: Spacing.xs },
+                    typography.body.sm,
+                    { color: palette.text.muted, marginBottom: spacing.xs },
                   ]}
                 >
                   Expédition
@@ -335,45 +401,80 @@ export default function NewSaleScreen() {
                   value={shippingFees}
                   onChangeText={setShippingFees}
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={palette.text.muted}
                   keyboardType="numeric"
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: theme.surfaceCard,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    },
-                  ]}
+                  style={{
+                    fontSize: 16,
+                    fontFamily: "Manrope_600SemiBold",
+                    paddingVertical: spacing.md,
+                    paddingHorizontal: spacing.lg,
+                    borderRadius: radius.lg,
+                    borderWidth: 1,
+                    backgroundColor: palette.background.elevated,
+                    color: palette.text.primary,
+                    borderColor: palette.divider.main,
+                  }}
                 />
               </View>
             </View>
 
             {/* Net Calculation */}
             <View
-              style={[styles.calcCard, { backgroundColor: theme.surfaceCard }]}
+              style={{
+                borderRadius: radius.lg,
+                padding: spacing.lg,
+                marginTop: spacing.lg,
+                backgroundColor: palette.background.elevated,
+              }}
             >
-              <View style={styles.calcRow}>
-                <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={[typography.body.sm, { color: palette.text.muted }]}
+                >
                   Montant net
                 </Text>
-                <Text style={[Typography.number.md, { color: theme.text }]}>
+                <Text
+                  style={[
+                    typography.number.md,
+                    { color: palette.text.primary },
+                  ]}
+                >
                   €{netAmount}
                 </Text>
               </View>
               <View
-                style={[styles.calcDivider, { backgroundColor: theme.border }]}
+                style={{
+                  height: 1,
+                  marginVertical: spacing.md,
+                  backgroundColor: palette.divider.main,
+                }}
               />
-              <View style={styles.calcRow}>
-                <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={[typography.body.sm, { color: palette.text.muted }]}
+                >
                   Bénéfice
                 </Text>
                 <Text
                   style={[
-                    Typography.number.lg,
+                    typography.number.lg,
                     {
                       color:
-                        parseFloat(profit) >= 0 ? theme.success : theme.danger,
+                        parseFloat(profit) >= 0
+                          ? palette.accent.green
+                          : palette.accent.red,
                     },
                   ]}
                 >
@@ -387,13 +488,25 @@ export default function NewSaleScreen() {
 
       {/* Sticky CTA */}
       <View
-        style={[
-          styles.ctaContainer,
-          { paddingBottom: insets.bottom + Spacing.lg },
-        ]}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          paddingHorizontal: spacing.xl,
+          paddingBottom: insets.bottom + spacing.lg,
+        }}
       >
         <View
-          style={[styles.ctaGradient, { backgroundColor: theme.background }]}
+          style={{
+            position: "absolute",
+            top: -40,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 80,
+            backgroundColor: palette.background.main,
+          }}
         />
         <Button
           variant="success"
@@ -401,7 +514,7 @@ export default function NewSaleScreen() {
           onPress={handleSave}
           disabled={isSubmitting || !price}
           icon={<AppIcon name="check-circle" size={20} color="#FFF" />}
-          style={styles.ctaButton}
+          style={{ width: "100%" }}
         >
           {isSubmitting ? "Recording..." : "Record Sale"}
         </Button>
@@ -411,97 +524,3 @@ export default function NewSaleScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: Spacing.xl,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: Spacing.xl,
-  },
-  errorIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: Radius["2xl"],
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.lg,
-  },
-  content: {
-    flex: 1,
-    padding: Spacing.xl,
-  },
-  itemHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-  },
-  itemIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.md,
-  },
-  itemInfo: {
-    flex: 1,
-  },
-  formCard: {
-    padding: Spacing.xl,
-  },
-  row: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  calcCard: {
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    marginTop: Spacing.lg,
-  },
-  calcRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  calcDivider: {
-    height: 1,
-    marginVertical: Spacing.md,
-  },
-  ctaContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: Spacing.xl,
-  },
-  ctaGradient: {
-    ...StyleSheet.absoluteFillObject,
-    height: 80,
-    top: -40,
-  },
-  ctaButton: {
-    width: "100%",
-  },
-  input: {
-    fontSize: 16,
-    fontFamily: "Manrope_600SemiBold",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-});
