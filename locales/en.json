@@ -1,0 +1,234 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "empty": "No items",
+    "noResults": "No results"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "lots": "Lots",
+    "stock": "Stock",
+    "sales": "Sales",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "revenue": "Revenue",
+    "profit": "Profit",
+    "loss": "Loss",
+    "stockValue": "Stock Value",
+    "salesVelocity": "Sales Velocity",
+    "roi": "ROI",
+    "period": {
+      "7d": "7 days",
+      "30d": "30 days",
+      "3m": "3 months",
+      "1y": "1 year",
+      "all": "All time"
+    },
+    "stats": {
+      "totalLots": "Total Lots",
+      "totalItems": "Total Items",
+      "soldItems": "Sold Items",
+      "remainingItems": "Remaining Items",
+      "avgMargin": "Avg Margin",
+      "topPlatform": "Top Platform"
+    }
+  },
+  "lots": {
+    "title": "My Lots",
+    "newLot": "New Lot",
+    "editLot": "Edit Lot",
+    "deleteLot": "Delete Lot",
+    "lotDetails": "Lot Details",
+    "provider": "Provider",
+    "buyDate": "Purchase Date",
+    "type": "Type",
+    "totalCost": "Total Cost",
+    "additionalFees": "Additional Fees",
+    "initialQuantity": "Initial Quantity",
+    "investment": "Investment",
+    "revenue": "Revenue",
+    "delta": "Delta",
+    "profit": "Profit",
+    "status": {
+      "inProgress": "In Progress",
+      "breakEven": "Break Even",
+      "profitable": "Profitable"
+    },
+    "types": {
+      "bulk": "Bulk",
+      "piecewise": "Piecewise"
+    },
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "investmentHigh": "Investment ↓",
+      "investmentLow": "Investment ↑",
+      "revenue": "Revenue",
+      "delta": "Delta"
+    },
+    "empty": {
+      "title": "No lots",
+      "description": "Create your first lot to start tracking your purchases"
+    },
+    "confirmDelete": "Are you sure you want to delete this lot? This action cannot be undone."
+  },
+  "items": {
+    "title": "Items",
+    "newItem": "New Item",
+    "editItem": "Edit Item",
+    "deleteItem": "Delete Item",
+    "itemDetails": "Item Details",
+    "brand": "Brand",
+    "unknownBrand": "Unknown brand",
+    "type": "Type",
+    "defaultType": "Item",
+    "size": "Size",
+    "defaultSize": "OS",
+    "color": "Color",
+    "condition": "Condition",
+    "unitCost": "Cost",
+    "photos": "Photos",
+    "addPhoto": "Add Photo",
+    "status": {
+      "available": "Available",
+      "sold": "Sold",
+      "reserved": "Reserved"
+    },
+    "conditions": {
+      "new": "New",
+      "likeNew": "Like New",
+      "veryGood": "Very Good",
+      "good": "Good",
+      "fair": "Fair",
+      "used": "Used"
+    },
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "costHigh": "Price ↓",
+      "costLow": "Price ↑",
+      "byLot": "By Lot"
+    },
+    "empty": {
+      "title": "No items",
+      "description": "Add items to your lots"
+    },
+    "confirmDelete": "Are you sure you want to delete this item?"
+  },
+  "sales": {
+    "title": "Sales",
+    "newSale": "New Sale",
+    "saleDetails": "Sale Details",
+    "platform": "Platform",
+    "saleDate": "Sale Date",
+    "priceGross": "Gross Price",
+    "platformFees": "Platform Fees",
+    "shippingFees": "Shipping Fees",
+    "priceNet": "Net Price",
+    "profit": "Profit",
+    "margin": "Margin",
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
+    },
+    "platforms": {
+      "vinted": "Vinted",
+      "depop": "Depop",
+      "leboncoin": "Leboncoin",
+      "vestiaire": "Vestiaire Collective",
+      "ebay": "eBay",
+      "other": "Other"
+    },
+    "period": {
+      "today": "Today",
+      "week": "This week",
+      "month": "This month",
+      "year": "This year",
+      "all": "All time"
+    },
+    "empty": {
+      "title": "No sales",
+      "description": "Record your first sale"
+    },
+    "confirmSale": "Confirm sale"
+  },
+  "settings": {
+    "title": "Settings",
+    "currency": "Currency",
+    "targetMargin": "Target Margin (%)",
+    "language": "Language",
+    "theme": "Theme",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "notifications": "Notifications",
+    "exportData": "Export Data",
+    "importData": "Import Data",
+    "resetData": "Reset Data",
+    "about": "About",
+    "version": "Version",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "contact": "Contact Us",
+    "rateApp": "Rate App"
+  },
+  "onboarding": {
+    "welcome": "Welcome to",
+    "appName": "Optimus Vintage",
+    "tagline": "Manage your vintage resales with elegance",
+    "description": "Premium inventory management for resellers",
+    "quickSetup": "Quick Setup",
+    "currency": "Currency",
+    "targetMargin": "Target Margin (%)",
+    "start": "Get Started"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "network": "Network error",
+    "notFound": "Not found",
+    "unauthorized": "Unauthorized",
+    "serverError": "Server error",
+    "validation": "Invalid data",
+    "loadFailed": "Failed to load",
+    "saveFailed": "Failed to save",
+    "deleteFailed": "Failed to delete"
+  },
+  "accessibility": {
+    "back": "Go back",
+    "close": "Close",
+    "menu": "Menu",
+    "loading": "Loading",
+    "search": "Search",
+    "openDetails": "Open details",
+    "sellItem": "Sell this item",
+    "deleteItem": "Delete this item",
+    "editItem": "Edit this item"
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "refresh": "Actualiser",
+    "retry": "Réessayer",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "all": "Tous",
+    "none": "Aucun",
+    "empty": "Aucun élément",
+    "noResults": "Aucun résultat"
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "lots": "Lots",
+    "stock": "Stock",
+    "sales": "Ventes",
+    "settings": "Paramètres"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "revenue": "Revenus",
+    "profit": "Bénéfice",
+    "loss": "Perte",
+    "stockValue": "Valeur Stock",
+    "salesVelocity": "Vélocité Ventes",
+    "roi": "ROI",
+    "period": {
+      "7d": "7 jours",
+      "30d": "30 jours",
+      "3m": "3 mois",
+      "1y": "1 an",
+      "all": "Tout"
+    },
+    "stats": {
+      "totalLots": "Total Lots",
+      "totalItems": "Total Articles",
+      "soldItems": "Articles Vendus",
+      "remainingItems": "Articles Restants",
+      "avgMargin": "Marge Moyenne",
+      "topPlatform": "Plateforme #1"
+    }
+  },
+  "lots": {
+    "title": "Mes Lots",
+    "newLot": "Nouveau Lot",
+    "editLot": "Modifier Lot",
+    "deleteLot": "Supprimer Lot",
+    "lotDetails": "Détails du Lot",
+    "provider": "Fournisseur",
+    "buyDate": "Date d'achat",
+    "type": "Type",
+    "totalCost": "Coût Total",
+    "additionalFees": "Frais Additionnels",
+    "initialQuantity": "Quantité Initiale",
+    "investment": "Investissement",
+    "revenue": "Revenue",
+    "delta": "Delta",
+    "profit": "Profit",
+    "status": {
+      "inProgress": "En cours",
+      "breakEven": "Rentable",
+      "profitable": "Profit"
+    },
+    "types": {
+      "bulk": "En gros",
+      "piecewise": "À la pièce"
+    },
+    "sort": {
+      "newest": "Plus récent",
+      "oldest": "Plus ancien",
+      "investmentHigh": "Invest ↓",
+      "investmentLow": "Invest ↑",
+      "revenue": "Revenue",
+      "delta": "Delta"
+    },
+    "empty": {
+      "title": "Aucun lot",
+      "description": "Créez votre premier lot pour commencer à suivre vos achats"
+    },
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce lot ? Cette action est irréversible."
+  },
+  "items": {
+    "title": "Articles",
+    "newItem": "Nouvel Article",
+    "editItem": "Modifier Article",
+    "deleteItem": "Supprimer Article",
+    "itemDetails": "Détails de l'Article",
+    "brand": "Marque",
+    "unknownBrand": "Marque inconnue",
+    "type": "Type",
+    "defaultType": "Article",
+    "size": "Taille",
+    "defaultSize": "TU",
+    "color": "Couleur",
+    "condition": "État",
+    "unitCost": "Coût",
+    "photos": "Photos",
+    "addPhoto": "Ajouter Photo",
+    "status": {
+      "available": "Disponible",
+      "sold": "Vendu",
+      "reserved": "Réservé"
+    },
+    "conditions": {
+      "new": "Neuf",
+      "likeNew": "Comme neuf",
+      "veryGood": "Très bon",
+      "good": "Bon",
+      "fair": "Correct",
+      "used": "Usé"
+    },
+    "sort": {
+      "newest": "Récent",
+      "oldest": "Ancien",
+      "costHigh": "Prix ↓",
+      "costLow": "Prix ↑",
+      "byLot": "Par Lot"
+    },
+    "empty": {
+      "title": "Aucun article",
+      "description": "Ajoutez des articles à vos lots"
+    },
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet article ?"
+  },
+  "sales": {
+    "title": "Ventes",
+    "newSale": "Nouvelle Vente",
+    "saleDetails": "Détails de la Vente",
+    "platform": "Plateforme",
+    "saleDate": "Date de vente",
+    "priceGross": "Prix Brut",
+    "platformFees": "Frais Plateforme",
+    "shippingFees": "Frais d'envoi",
+    "priceNet": "Prix Net",
+    "profit": "Profit",
+    "margin": "Marge",
+    "status": {
+      "completed": "Terminée",
+      "pending": "En attente",
+      "cancelled": "Annulée",
+      "refunded": "Remboursée"
+    },
+    "platforms": {
+      "vinted": "Vinted",
+      "depop": "Depop",
+      "leboncoin": "Leboncoin",
+      "vestiaire": "Vestiaire Collective",
+      "ebay": "eBay",
+      "other": "Autre"
+    },
+    "period": {
+      "today": "Aujourd'hui",
+      "week": "Cette semaine",
+      "month": "Ce mois",
+      "year": "Cette année",
+      "all": "Tout"
+    },
+    "empty": {
+      "title": "Aucune vente",
+      "description": "Enregistrez votre première vente"
+    },
+    "confirmSale": "Confirmer la vente"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "currency": "Devise",
+    "targetMargin": "Marge Cible (%)",
+    "language": "Langue",
+    "theme": "Thème",
+    "themes": {
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
+    "notifications": "Notifications",
+    "exportData": "Exporter les données",
+    "importData": "Importer des données",
+    "resetData": "Réinitialiser les données",
+    "about": "À propos",
+    "version": "Version",
+    "privacyPolicy": "Politique de confidentialité",
+    "termsOfService": "Conditions d'utilisation",
+    "contact": "Nous contacter",
+    "rateApp": "Noter l'application"
+  },
+  "onboarding": {
+    "welcome": "Bienvenue sur",
+    "appName": "Optimus Vintage",
+    "tagline": "Gérez vos reventes vintage avec élégance",
+    "description": "Gestion d'inventaire premium pour revendeurs",
+    "quickSetup": "Configuration Rapide",
+    "currency": "Devise",
+    "targetMargin": "Marge Cible (%)",
+    "start": "Commencer"
+  },
+  "errors": {
+    "generic": "Une erreur s'est produite",
+    "network": "Erreur de connexion",
+    "notFound": "Non trouvé",
+    "unauthorized": "Non autorisé",
+    "serverError": "Erreur serveur",
+    "validation": "Données invalides",
+    "loadFailed": "Échec du chargement",
+    "saveFailed": "Échec de la sauvegarde",
+    "deleteFailed": "Échec de la suppression"
+  },
+  "accessibility": {
+    "back": "Retour",
+    "close": "Fermer",
+    "menu": "Menu",
+    "loading": "Chargement en cours",
+    "search": "Rechercher",
+    "openDetails": "Ouvrir les détails",
+    "sellItem": "Vendre cet article",
+    "deleteItem": "Supprimer cet article",
+    "editItem": "Modifier cet article"
+  }
+}

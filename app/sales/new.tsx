@@ -1,13 +1,16 @@
 /**
- * 💰 NEW SALE SCREEN - Ultra Premium Edition
+ * 💰 NEW SALE SCREEN - Ultra Premium Edition with Animations
  */
 
+import {
+    AnimatedButton,
+    AnimatedSkeleton,
+} from "@/components/ui/AnimatedComponents";
 import { AppIcon } from "@/components/ui/AppIcon";
 import {
     AnimatedPremiumBackground,
     Button,
     Card,
-    ShimmerSkeleton,
 } from "@/components/ui/Components";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
@@ -15,6 +18,7 @@ import { Item, ItemsRepository, SalesRepository } from "@/db/repositories";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { MotiView } from "moti";
 import React, { useMemo, useState } from "react";
 import {
     Alert,
@@ -137,11 +141,67 @@ export default function NewSaleScreen() {
       <View
         style={[styles.loadingContainer, { backgroundColor: theme.background }]}
       >
-        <ShimmerSkeleton width={200} height={100} borderRadius={Radius.xl} />
+        <MotiView
+          from={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "timing", duration: 400 }}
+          style={{ width: "100%", maxWidth: 360 }}
+        >
+          {/* Item card skeleton */}
+          <AnimatedSkeleton
+            width="100%"
+            height={100}
+            borderRadius={Radius.xl}
+            delay={0}
+          />
+
+          {/* Price inputs skeleton */}
+          <View style={{ marginTop: Spacing.xl }}>
+            <AnimatedSkeleton
+              width={100}
+              height={14}
+              borderRadius={4}
+              delay={100}
+            />
+            <AnimatedSkeleton
+              width="100%"
+              height={56}
+              borderRadius={Radius.md}
+              delay={150}
+              style={{ marginTop: Spacing.sm }}
+            />
+          </View>
+
+          <View style={{ marginTop: Spacing.lg }}>
+            <AnimatedSkeleton
+              width={80}
+              height={14}
+              borderRadius={4}
+              delay={200}
+            />
+            <AnimatedSkeleton
+              width="100%"
+              height={56}
+              borderRadius={Radius.md}
+              delay={250}
+              style={{ marginTop: Spacing.sm }}
+            />
+          </View>
+
+          {/* Summary skeleton */}
+          <AnimatedSkeleton
+            width="100%"
+            height={80}
+            borderRadius={Radius.lg}
+            delay={300}
+            style={{ marginTop: Spacing.xl }}
+          />
+        </MotiView>
+
         <Text
           style={[
             Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.md },
+            { color: theme.textMuted, marginTop: Spacing.xl },
           ]}
         >
           Chargement de l'article...
@@ -155,30 +215,52 @@ export default function NewSaleScreen() {
       <View
         style={[styles.errorContainer, { backgroundColor: theme.background }]}
       >
-        <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+        <MotiView
+          from={{ opacity: 0, scale: 0.8, translateY: 20 }}
+          animate={{ opacity: 1, scale: 1, translateY: 0 }}
+          transition={{ type: "spring", damping: 15 }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
-        </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
-          Item Not Found
-        </Text>
-        <Text
-          style={[
-            Typography.body.sm,
-            { color: theme.textMuted, textAlign: "center" },
-          ]}
+          <View
+            style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          >
+            <AppIcon name="error-outline" size={40} color={theme.danger} />
+          </View>
+        </MotiView>
+        <MotiView
+          from={{ opacity: 0, translateY: 10 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 400, delay: 200 }}
         >
-          The selected item could not be loaded. Please try again.
-        </Text>
-        <Button
+          <Text
+            style={[
+              Typography.heading.md,
+              { color: theme.text, textAlign: "center" },
+            ]}
+          >
+            Item Not Found
+          </Text>
+          <Text
+            style={[
+              Typography.body.sm,
+              {
+                color: theme.textMuted,
+                textAlign: "center",
+                marginTop: Spacing.sm,
+              },
+            ]}
+          >
+            The selected item could not be loaded. Please try again.
+          </Text>
+        </MotiView>
+        <AnimatedButton
           variant="ghost"
           size="md"
           onPress={() => router.back()}
+          delay={400}
           style={{ marginTop: Spacing.xl }}
         >
           Go Back
-        </Button>
+        </AnimatedButton>
       </View>
     );
   }
@@ -188,34 +270,55 @@ export default function NewSaleScreen() {
       <View
         style={[styles.errorContainer, { backgroundColor: theme.background }]}
       >
-        <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+        <MotiView
+          from={{ opacity: 0, scale: 0.8, translateY: 20 }}
+          animate={{ opacity: 1, scale: 1, translateY: 0 }}
+          transition={{ type: "spring", damping: 15 }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
-        </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
-          No Item Selected
-        </Text>
-        <Text
-          style={[
-            Typography.body.sm,
-            { color: theme.textMuted, textAlign: "center" },
-          ]}
+          <View
+            style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          >
+            <AppIcon name="error-outline" size={40} color={theme.danger} />
+          </View>
+        </MotiView>
+        <MotiView
+          from={{ opacity: 0, translateY: 10 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 400, delay: 200 }}
         >
-          Please select an item from the Stock screen to record a sale.
-        </Text>
-        <Button
+          <Text
+            style={[
+              Typography.heading.md,
+              { color: theme.text, textAlign: "center" },
+            ]}
+          >
+            No Item Selected
+          </Text>
+          <Text
+            style={[
+              Typography.body.sm,
+              {
+                color: theme.textMuted,
+                textAlign: "center",
+                marginTop: Spacing.sm,
+              },
+            ]}
+          >
+            Please select an item from the Stock screen to record a sale.
+          </Text>
+        </MotiView>
+        <AnimatedButton
           variant="primary"
-          size="md"
+          size="lg"
           onPress={() => {
-            // Dismiss modal stack first, then navigate to stock tab
             router.dismissAll();
             router.replace("/(tabs)/stock");
           }}
+          delay={400}
           style={{ marginTop: Spacing.xl }}
         >
           Go to Stock
-        </Button>
+        </AnimatedButton>
       </View>
     );
   }
@@ -429,12 +532,15 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
   errorIcon: {
-    width: 80,
-    height: 80,
+    width: 88,
+    height: 88,
     borderRadius: Radius["2xl"],
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.lg,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.02), 0 16px 32px rgba(239,68,68,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   content: {
     flex: 1,
@@ -447,18 +553,25 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   itemIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.lg,
+    width: 56,
+    height: 56,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.md,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.04), 0 8px 16px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   itemInfo: {
     flex: 1,
   },
   formCard: {
     padding: Spacing.xl,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.03), 0 4px 8px rgba(0,0,0,0.02), 0 8px 16px rgba(0,0,0,0.01), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   row: {
     flexDirection: "row",
@@ -468,9 +581,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   calcCard: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
     marginTop: Spacing.lg,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   calcRow: {
     flexDirection: "row",
@@ -495,13 +611,20 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     width: "100%",
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(16,185,129,0.3), 0 4px 8px rgba(16,185,129,0.25), 0 8px 16px rgba(16,185,129,0.2), 0 16px 32px rgba(16,185,129,0.15), inset 0 1px 0 rgba(255,255,255,0.3)",
   },
   input: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: "Manrope_600SemiBold",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
+    borderCurve: "continuous",
+    boxShadow:
+      "inset 0 2px 4px rgba(0,0,0,0.04), inset 0 4px 8px rgba(0,0,0,0.03), inset 0 1px 2px rgba(0,0,0,0.05)",
   },
 });

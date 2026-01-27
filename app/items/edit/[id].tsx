@@ -1,29 +1,43 @@
 /**
- * ✏️ EDIT ITEM SCREEN - Luxury Edition
+ * ✏️ EDIT ITEM SCREEN - Luxury Edition with Premium Animations
  * Edit existing item with pre-filled data
  */
 
+import {
+  AnimatedButton,
+  AnimatedSkeleton,
+} from "@/components/ui/AnimatedComponents";
 import { AppIcon } from "@/components/ui/AppIcon";
-import { Button, ShimmerSkeleton } from "@/components/ui/Components";
+import { Button } from "@/components/ui/Components";
 import { ItemPhotoPicker } from "@/components/ui/ItemPhotoPicker";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
 import { ItemsRepository, NewItem } from "@/db/repositories";
+import { ReanimatedSpring } from "@/utils/animations-reanimated";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { MotiView } from "moti";
+import { MotiPressable } from "moti/interactions";
 import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  interpolateColor,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Common options
@@ -42,6 +56,155 @@ const STATUS_OPTIONS = [
   { id: "SOLD", label: "Vendu", color: "primary" },
   { id: "RESERVED", label: "Réservé", color: "warning" },
 ] as const;
+
+/**
+ * 🎨 Animated Chip Component - Premium Selection
+ */
+function AnimatedChip({
+  label,
+  isSelected,
+  onPress,
+  theme,
+  small = false,
+}: {
+  label: string;
+  isSelected: boolean;
+  onPress: () => void;
+  theme: typeof Theme.dark;
+  small?: boolean;
+}) {
+  const scale = useSharedValue(1);
+  const progress = useSharedValue(isSelected ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withSpring(
+      isSelected ? 1 : 0,
+      ReanimatedSpring.responsive,
+    );
+  }, [isSelected]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [theme.surface, theme.primary],
+    ),
+    borderColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [theme.border, theme.primary],
+    ),
+  }));
+
+  const textStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(progress.value, [0, 1], [theme.textMuted, "#FFF"]),
+  }));
+
+  return (
+    <MotiPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.92, ReanimatedSpring.responsive);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, ReanimatedSpring.bouncy);
+      }}
+    >
+      <Animated.View
+        style={[styles.chip, small && styles.chipSmall, animatedStyle]}
+      >
+        <Animated.Text style={[styles.chipText, textStyle]}>
+          {label}
+        </Animated.Text>
+      </Animated.View>
+    </MotiPressable>
+  );
+}
+
+/**
+ * 🎨 Animated Status Button - Premium Selection
+ */
+function AnimatedStatusButton({
+  id,
+  label,
+  colorType,
+  isSelected,
+  onPress,
+  theme,
+}: {
+  id: string;
+  label: string;
+  colorType: "success" | "primary" | "warning";
+  isSelected: boolean;
+  onPress: () => void;
+  theme: typeof Theme.dark;
+}) {
+  const scale = useSharedValue(1);
+  const progress = useSharedValue(isSelected ? 1 : 0);
+
+  const statusColor =
+    colorType === "success"
+      ? theme.success
+      : colorType === "warning"
+        ? theme.warning
+        : theme.primary;
+
+  useEffect(() => {
+    progress.value = withSpring(
+      isSelected ? 1 : 0,
+      ReanimatedSpring.responsive,
+    );
+  }, [isSelected]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [theme.surface, statusColor + "20"],
+    ),
+    borderColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [theme.border, statusColor],
+    ),
+  }));
+
+  const dotStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: progress.value * 0.4 + 0.6 }],
+  }));
+
+  const textStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(
+      progress.value,
+      [0, 1],
+      [theme.textMuted, statusColor],
+    ),
+  }));
+
+  return (
+    <MotiPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.95, ReanimatedSpring.responsive);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, ReanimatedSpring.bouncy);
+      }}
+      style={{ flex: 1 }}
+    >
+      <Animated.View style={[styles.statusButton, animatedStyle]}>
+        <Animated.View
+          style={[styles.statusDot, { backgroundColor: statusColor }, dotStyle]}
+        />
+        <Animated.Text style={[styles.statusText, textStyle]}>
+          {label}
+        </Animated.Text>
+      </Animated.View>
+    </MotiPressable>
+  );
+}
 
 export default function EditItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -180,17 +343,87 @@ export default function EditItemScreen() {
     );
   };
 
-  // Loading state
+  // Loading state - Premium animated skeletons
   if (itemQuery.isLoading) {
     return (
       <View
         style={[styles.loadingContainer, { backgroundColor: theme.background }]}
       >
-        <ShimmerSkeleton width={200} height={100} borderRadius={Radius.xl} />
+        <MotiView
+          from={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "timing", duration: 400 }}
+          style={styles.loadingContent}
+        >
+          {/* Header skeleton */}
+          <View style={styles.skeletonHeader}>
+            <AnimatedSkeleton
+              width={56}
+              height={56}
+              borderRadius={Radius.md}
+              delay={0}
+            />
+            <View style={{ gap: Spacing.xs }}>
+              <AnimatedSkeleton
+                width={80}
+                height={14}
+                borderRadius={4}
+                delay={50}
+              />
+              <AnimatedSkeleton
+                width={120}
+                height={20}
+                borderRadius={4}
+                delay={100}
+              />
+            </View>
+          </View>
+
+          {/* Photos skeleton */}
+          <View style={{ marginTop: Spacing.xl }}>
+            <AnimatedSkeleton
+              width={60}
+              height={14}
+              borderRadius={4}
+              delay={150}
+            />
+            <View style={[styles.skeletonPhotos, { marginTop: Spacing.sm }]}>
+              {[0, 1, 2].map((i) => (
+                <AnimatedSkeleton
+                  key={i}
+                  width={80}
+                  height={80}
+                  borderRadius={Radius.md}
+                  delay={200 + i * 50}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Fields skeleton */}
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={{ marginTop: Spacing.xl }}>
+              <AnimatedSkeleton
+                width={80}
+                height={14}
+                borderRadius={4}
+                delay={350 + i * 100}
+              />
+              <AnimatedSkeleton
+                width="100%"
+                height={48}
+                borderRadius={Radius.md}
+                delay={400 + i * 100}
+                style={{ marginTop: Spacing.sm }}
+              />
+            </View>
+          ))}
+        </MotiView>
+
         <Text
           style={[
             Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.md },
+            { color: theme.textMuted, marginTop: Spacing.xl },
           ]}
         >
           Chargement de l'article...
@@ -199,28 +432,46 @@ export default function EditItemScreen() {
     );
   }
 
-  // Error state
+  // Error state - Animated
   if (!itemQuery.data) {
     return (
       <View
         style={[styles.errorContainer, { backgroundColor: theme.background }]}
       >
-        <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+        <MotiView
+          from={{ opacity: 0, scale: 0.8, translateY: 20 }}
+          animate={{ opacity: 1, scale: 1, translateY: 0 }}
+          transition={{ type: "spring", damping: 15 }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
-        </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
-          Item Not Found
-        </Text>
-        <Button
+          <View
+            style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          >
+            <AppIcon name="error-outline" size={40} color={theme.danger} />
+          </View>
+        </MotiView>
+        <MotiView
+          from={{ opacity: 0, translateY: 10 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 400, delay: 200 }}
+        >
+          <Text
+            style={[
+              Typography.heading.md,
+              { color: theme.text, textAlign: "center" },
+            ]}
+          >
+            Item Not Found
+          </Text>
+        </MotiView>
+        <AnimatedButton
           variant="ghost"
           size="md"
           onPress={() => router.back()}
+          delay={400}
           style={{ marginTop: Spacing.xl }}
         >
           Go Back
-        </Button>
+        </AnimatedButton>
       </View>
     );
   }
@@ -322,6 +573,7 @@ export default function EditItemScreen() {
         {/* Type */}
         <Animated.View
           entering={FadeInDown.delay(150).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.section}
         >
           <Text style={[styles.label, { color: theme.textMuted }]}>Type</Text>
@@ -331,26 +583,13 @@ export default function EditItemScreen() {
             contentContainerStyle={styles.chipContainer}
           >
             {ITEM_TYPES.map((t) => (
-              <Pressable
+              <AnimatedChip
                 key={t}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: type === t ? theme.primary : theme.surface,
-                    borderColor: type === t ? theme.primary : theme.border,
-                  },
-                ]}
+                label={t}
+                isSelected={type === t}
                 onPress={() => setType(t)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    { color: type === t ? "#FFF" : theme.textMuted },
-                  ]}
-                >
-                  {t}
-                </Text>
-              </Pressable>
+                theme={theme}
+              />
             ))}
           </ScrollView>
         </Animated.View>
@@ -380,6 +619,7 @@ export default function EditItemScreen() {
         {/* Size */}
         <Animated.View
           entering={FadeInDown.delay(250).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.section}
         >
           <Text style={[styles.label, { color: theme.textMuted }]}>Size</Text>
@@ -389,27 +629,14 @@ export default function EditItemScreen() {
             contentContainerStyle={styles.chipContainer}
           >
             {SIZES.map((s) => (
-              <Pressable
+              <AnimatedChip
                 key={s}
-                style={[
-                  styles.chip,
-                  styles.chipSmall,
-                  {
-                    backgroundColor: size === s ? theme.primary : theme.surface,
-                    borderColor: size === s ? theme.primary : theme.border,
-                  },
-                ]}
+                label={s}
+                isSelected={size === s}
                 onPress={() => setSize(s)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    { color: size === s ? "#FFF" : theme.textMuted },
-                  ]}
-                >
-                  {s}
-                </Text>
-              </Pressable>
+                theme={theme}
+                small
+              />
             ))}
           </ScrollView>
         </Animated.View>
@@ -417,6 +644,7 @@ export default function EditItemScreen() {
         {/* Condition */}
         <Animated.View
           entering={FadeInDown.delay(300).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.section}
         >
           <Text style={[styles.label, { color: theme.textMuted }]}>
@@ -428,27 +656,13 @@ export default function EditItemScreen() {
             contentContainerStyle={styles.chipContainer}
           >
             {CONDITIONS.map((c) => (
-              <Pressable
+              <AnimatedChip
                 key={c}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor:
-                      condition === c ? theme.primary : theme.surface,
-                    borderColor: condition === c ? theme.primary : theme.border,
-                  },
-                ]}
+                label={c}
+                isSelected={condition === c}
                 onPress={() => setCondition(c)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    { color: condition === c ? "#FFF" : theme.textMuted },
-                  ]}
-                >
-                  {c}
-                </Text>
-              </Pressable>
+                theme={theme}
+              />
             ))}
           </ScrollView>
         </Animated.View>
@@ -484,46 +698,22 @@ export default function EditItemScreen() {
         {/* Status */}
         <Animated.View
           entering={FadeInDown.delay(400).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.section}
         >
           <Text style={[styles.label, { color: theme.textMuted }]}>Status</Text>
           <View style={styles.statusContainer}>
-            {STATUS_OPTIONS.map((s) => {
-              const statusColor =
-                s.color === "success"
-                  ? theme.success
-                  : s.color === "warning"
-                    ? theme.warning
-                    : theme.primary;
-              return (
-                <Pressable
-                  key={s.id}
-                  style={[
-                    styles.statusButton,
-                    {
-                      backgroundColor:
-                        status === s.id ? statusColor + "20" : theme.surface,
-                      borderColor: status === s.id ? statusColor : theme.border,
-                    },
-                  ]}
-                  onPress={() => setStatus(s.id)}
-                >
-                  <View
-                    style={[styles.statusDot, { backgroundColor: statusColor }]}
-                  />
-                  <Text
-                    style={[
-                      styles.statusText,
-                      {
-                        color: status === s.id ? statusColor : theme.textMuted,
-                      },
-                    ]}
-                  >
-                    {s.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            {STATUS_OPTIONS.map((s) => (
+              <AnimatedStatusButton
+                key={s.id}
+                id={s.id}
+                label={s.label}
+                colorType={s.color}
+                isSelected={status === s.id}
+                onPress={() => setStatus(s.id)}
+                theme={theme}
+              />
+            ))}
           </View>
         </Animated.View>
       </ScrollView>
@@ -560,6 +750,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: Spacing.xl,
   },
+  loadingContent: {
+    width: "100%",
+    maxWidth: 360,
+  },
+  skeletonHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  skeletonPhotos: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
@@ -567,12 +770,15 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
   errorIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: Spacing.lg,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.02), 0 16px 32px rgba(239,68,68,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   content: {
     padding: Spacing.xl,
@@ -584,11 +790,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   itemIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: Radius.md,
+    width: 64,
+    height: 64,
+    borderRadius: Radius.xl,
     justifyContent: "center",
     alignItems: "center",
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.04), 0 8px 16px rgba(16,185,129,0.15), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   itemInfo: {
     flex: 1,
@@ -604,70 +813,90 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   textInput: {
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    fontSize: 16,
+    borderWidth: 1.5,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    fontSize: 17,
+    borderCurve: "continuous",
+    // Premium multi-layer inset shadow
+    boxShadow:
+      "inset 0 2px 4px rgba(0,0,0,0.03), inset 0 4px 8px rgba(0,0,0,0.02), inset 0 1px 2px rgba(0,0,0,0.05)",
   },
   chipContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.sm,
   },
   chip: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
+    borderCurve: "continuous",
+    // Premium glassmorphic convex effect
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   chipSmall: {
     paddingHorizontal: Spacing.sm,
-    minWidth: 44,
+    minWidth: 48,
     alignItems: "center",
   },
   chipText: {
     fontSize: 14,
     fontWeight: "600",
+    letterSpacing: 0.3,
   },
   currencyInput: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
+    borderWidth: 1.5,
+    borderRadius: Radius.xl,
+    paddingHorizontal: Spacing.lg,
+    borderCurve: "continuous",
+    // Ultra-premium multi-layer inset shadow
+    boxShadow:
+      "inset 0 2px 4px rgba(0,0,0,0.03), inset 0 4px 8px rgba(0,0,0,0.02), inset 0 1px 2px rgba(0,0,0,0.05)",
   },
   currencySymbol: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
-    marginRight: Spacing.xs,
+    marginRight: Spacing.sm,
   },
   currencyValue: {
     flex: 1,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "600",
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
   },
   statusContainer: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   statusButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.xs,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
+    gap: Spacing.sm,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
+    borderCurve: "continuous",
+    minHeight: 56,
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.15)",
   },
   statusText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
+    letterSpacing: 0.3,
   },
   ctaContainer: {
     position: "absolute",

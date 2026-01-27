@@ -273,12 +273,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["3xl"],
   },
   iconCircle: {
-    width: 80,
-    height: 80,
+    width: 88,
+    height: 88,
     borderRadius: Radius["2xl"],
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.lg,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.02), 0 16px 32px rgba(245,158,11,0.15), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   emoji: {
     fontSize: 40,
@@ -294,22 +297,28 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   stepBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.md,
+    width: 36,
+    height: 36,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.06), 0 4px 8px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   inputGroup: {
     marginBottom: Spacing.lg,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: "Manrope_600SemiBold",
     marginTop: Spacing.sm,
+    borderCurve: "continuous",
+    boxShadow:
+      "inset 0 2px 4px rgba(0,0,0,0.03), inset 0 4px 8px rgba(0,0,0,0.02), inset 0 1px 2px rgba(0,0,0,0.04)",
   },
   features: {
     marginBottom: Spacing["2xl"],
@@ -321,11 +330,13 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   featureIcon: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: Radius.full,
     alignItems: "center",
     justifyContent: "center",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.05), 0 4px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.4)",
   },
   footer: {
     alignItems: "center",
@@ -333,5 +344,9 @@ const styles = StyleSheet.create({
   },
   button: {
     width: "100%",
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(16,185,129,0.25), 0 4px 8px rgba(16,185,129,0.2), 0 8px 16px rgba(16,185,129,0.15), 0 16px 32px rgba(16,185,129,0.1), inset 0 1px 0 rgba(255,255,255,0.25)",
   },
 });

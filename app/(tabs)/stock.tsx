@@ -14,7 +14,10 @@ import { SkeletonList } from "@/components/ui/Skeleton";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Radius, Spacing, Typography } from "@/constants/Theme";
 import { Item, ItemsRepository, LotsRepository } from "@/db/repositories";
+import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
+import { useLocale } from "@/utils/i18n";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
@@ -28,7 +31,6 @@ import React, {
 } from "react";
 import {
     ActivityIndicator,
-    FlatList,
     Keyboard,
     LayoutAnimation,
     Pressable,
@@ -87,6 +89,28 @@ function getItemFirstPhoto(item: Item): string | null {
   }
 }
 
+// Helper to normalize brand name (handle "Unknown" or empty)
+function normalizeBrand(
+  brand: string | null | undefined,
+  fallback: string,
+): string {
+  if (!brand || brand.toLowerCase() === "unknown" || brand.trim() === "") {
+    return fallback;
+  }
+  return brand;
+}
+
+// Helper to normalize type name (handle "Clothing" or empty)
+function normalizeType(
+  type: string | null | undefined,
+  fallback: string,
+): string {
+  if (!type || type.toLowerCase() === "clothing" || type.trim() === "") {
+    return fallback;
+  }
+  return type;
+}
+
 // ============ ITEM CARD COMPONENT ============
 
 interface ItemCardProps {
@@ -96,6 +120,16 @@ interface ItemCardProps {
   onPress?: () => void;
   viewMode: ViewMode;
   shouldAnimate: boolean;
+  translations: {
+    unknownBrand: string;
+    defaultType: string;
+    defaultSize: string;
+    conditionNew: string;
+    conditionGood: string;
+    conditionUsed: string;
+    sellLabel: string;
+    costLabel: string;
+  };
 }
 
 const ItemCard = React.memo(function ItemCard({
@@ -105,10 +139,16 @@ const ItemCard = React.memo(function ItemCard({
   onPress,
   viewMode,
   shouldAnimate,
+  translations,
 }: ItemCardProps) {
   const theme = usePremiumTheme();
   const unitCost = parseFloat(String(item.unitCost));
   const photoUri = getItemFirstPhoto(item);
+
+  // Normalize values
+  const displayBrand = normalizeBrand(item.brand, translations.unknownBrand);
+  const displayType = normalizeType(item.type, translations.defaultType);
+  const displaySize = item.size || translations.defaultSize;
 
   // Grid view for 2-column card layout
   if (viewMode === "grid") {
@@ -167,13 +207,13 @@ const ItemCard = React.memo(function ItemCard({
               ]}
               numberOfLines={1}
             >
-              {item.brand || "Marque inconnue"}
+              {displayBrand}
             </Text>
             <Text
               style={[Typography.body.xs, { color: theme.textMuted }]}
               numberOfLines={1}
             >
-              {item.type || "Article"} • {item.size || "TU"}
+              {displayType} • {displaySize}
             </Text>
 
             <View style={styles.gridFooter}>
@@ -245,10 +285,10 @@ const ItemCard = React.memo(function ItemCard({
               ]}
               numberOfLines={1}
             >
-              {item.brand || "Marque"} • {item.type || "Article"}
+              {displayBrand} • {displayType}
             </Text>
             <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-              Lot #{item.lotId} • {item.size || "TU"}
+              Lot #{item.lotId} • {displaySize}
             </Text>
           </View>
 
@@ -317,13 +357,13 @@ const ItemCard = React.memo(function ItemCard({
                 style={[Typography.heading.xs, { color: theme.text }]}
                 numberOfLines={1}
               >
-                {item.brand || "Marque inconnue"}
+                {displayBrand}
               </Text>
               <Text
                 style={[Typography.body.xs, { color: theme.textMuted }]}
                 numberOfLines={1}
               >
-                {item.type || "Vêtement"} {item.color ? `• ${item.color}` : ""}
+                {displayType} {item.color ? `• ${item.color}` : ""}
               </Text>
               <View style={styles.metaRow}>
                 <View
@@ -338,7 +378,7 @@ const ItemCard = React.memo(function ItemCard({
                       { color: theme.textSecondary },
                     ]}
                   >
-                    {item.size || "TU"}
+                    {displaySize}
                   </Text>
                 </View>
                 <View
@@ -356,10 +396,10 @@ const ItemCard = React.memo(function ItemCard({
                 />
                 <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
                   {item.condition === "New"
-                    ? "Neuf"
+                    ? translations.conditionNew
                     : item.condition === "Good"
-                      ? "Bon"
-                      : "Usé"}
+                      ? translations.conditionGood
+                      : translations.conditionUsed}
                 </Text>
               </View>
               <View
@@ -369,7 +409,7 @@ const ItemCard = React.memo(function ItemCard({
                 ]}
               >
                 <Text style={[Typography.label.xs, { color: theme.primary }]}>
-                  Coût: €{unitCost.toFixed(2)}
+                  {translations.costLabel}: €{unitCost.toFixed(2)}
                 </Text>
               </View>
             </View>
@@ -387,7 +427,7 @@ const ItemCard = React.memo(function ItemCard({
                 <Text
                   style={[styles.sellButtonText, { color: theme.textOnAccent }]}
                 >
-                  Vendre
+                  {translations.sellLabel}
                 </Text>
               </View>
             </Pressable>
@@ -515,7 +555,11 @@ function SearchBar({
 export default function StockScreen() {
   const insets = useSafeAreaInsets();
   const theme = usePremiumTheme();
-  const flatListRef = useRef<FlatList>(null);
+  const flashListRef = useRef<FlashListRef<Item>>(null);
+  const { t } = useLocale();
+
+  // Screen tracking
+  useTrackScreen("stock");
 
   // Data state
   const itemsQuery = useQuery({
@@ -543,6 +587,21 @@ export default function StockScreen() {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [page, setPage] = useState(1);
   const [hasAnimated, setHasAnimated] = useState(false);
+
+  // Translations for ItemCard (memoized to avoid re-renders)
+  const itemCardTranslations = useMemo(
+    () => ({
+      unknownBrand: t("items.unknownBrand", "Marque inconnue"),
+      defaultType: t("items.defaultType", "Article"),
+      defaultSize: t("items.defaultSize", "TU"),
+      conditionNew: t("items.conditions.new", "Neuf"),
+      conditionGood: t("items.conditions.good", "Bon"),
+      conditionUsed: t("items.conditions.used", "Usé"),
+      sellLabel: t("sales.confirmSale", "Vendre"),
+      costLabel: t("items.unitCost", "Coût"),
+    }),
+    [t],
+  );
 
   // ============ DATA LOADING ============
 
@@ -730,9 +789,23 @@ export default function StockScreen() {
         onPress={() => router.push(`/items/edit/${item.id}`)}
         viewMode={viewMode}
         shouldAnimate={!hasAnimated && index < MAX_ANIMATED_ITEMS}
+        translations={itemCardTranslations}
       />
     ),
-    [viewMode, hasAnimated, handleSell],
+    [viewMode, hasAnimated, handleSell, itemCardTranslations],
+  );
+
+  const renderSeparator = useCallback(
+    () => (
+      <View
+        style={
+          viewMode === "compact"
+            ? styles.itemSeparatorCompact
+            : styles.itemSeparator
+        }
+      />
+    ),
+    [viewMode],
   );
 
   const renderFooter = useCallback(() => {
@@ -1014,23 +1087,23 @@ export default function StockScreen() {
           </ScrollView>
         </Animated.View>
 
-        {/* Items List */}
+        {/* Items List - FlashList for performance */}
         {loading && !refreshing ? (
           <View style={styles.loaderContainer}>
             <SkeletonList count={6} />
           </View>
         ) : (
-          <FlatList
-            key={viewMode === "grid" ? "grid" : "list"}
-            ref={flatListRef}
+          <FlashList
+            key={`flashlist-${viewMode}`}
+            ref={flashListRef}
             data={paginatedItems}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
             numColumns={viewMode === "grid" ? 2 : 1}
-            columnWrapperStyle={
-              viewMode === "grid" ? styles.gridRow : undefined
+            getItemType={() => viewMode}
+            ItemSeparatorComponent={
+              viewMode !== "grid" ? renderSeparator : undefined
             }
-            contentInsetAdjustmentBehavior="automatic"
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -1040,28 +1113,12 @@ export default function StockScreen() {
               />
             }
             onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.3}
-            contentContainerStyle={[
-              styles.listContent,
-              paginatedItems.length === 0 && styles.emptyList,
-            ]}
+            onEndReachedThreshold={0.5}
+            contentContainerStyle={styles.listContent}
             ListEmptyComponent={renderEmpty}
             ListFooterComponent={renderFooter}
             showsVerticalScrollIndicator={false}
-            // Performance optimizations
-            removeClippedSubviews={isAndroid}
-            maxToRenderPerBatch={10}
-            windowSize={10}
-            initialNumToRender={10}
-            getItemLayout={
-              viewMode === "compact"
-                ? (_, index) => ({
-                    length: 56,
-                    offset: 56 * index,
-                    index,
-                  })
-                : undefined
-            }
+            drawDistance={250}
           />
         )}
       </View>
@@ -1095,11 +1152,18 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.lg,
+    width: 44,
+    height: 44,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    // Premium neumorphic shadow
+    boxShadow: `
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      0 4px 12px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5)
+    `,
   },
   searchSection: {
     flexDirection: "row",
@@ -1112,10 +1176,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
-    height: 44,
-    borderRadius: Radius.lg,
+    height: 48,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     gap: Spacing.sm,
+    borderCurve: "continuous",
+    // Subtle premium shadow
+    boxShadow: `
+      0 2px 8px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5)
+    `,
   },
   searchInput: {
     flex: 1,
@@ -1123,12 +1193,18 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_400Regular",
   },
   sortButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
+    width: 48,
+    height: 48,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    // Neumorphic shadow
+    boxShadow: `
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5)
+    `,
   },
   sortMenu: {
     position: "absolute",
@@ -1159,19 +1235,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.sm,
     padding: Spacing.md,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     borderWidth: 1,
+    borderCurve: "continuous",
+    // Premium glassmorphic shadow
+    boxShadow: `
+      0 2px 8px rgba(0, 0, 0, 0.03),
+      0 4px 16px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6)
+    `,
   },
   filterBar: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   filterScroll: {
     paddingHorizontal: Spacing.xl,
     gap: Spacing.sm,
   },
   listContent: {
-    padding: Spacing.xl,
+    paddingHorizontal: Spacing.md,
     paddingBottom: 120,
+    backgroundColor: "transparent",
   },
   emptyList: {
     flexGrow: 1,
@@ -1180,33 +1264,47 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Spacing["2xl"],
   },
+  itemSeparator: {
+    height: Spacing.sm,
+  },
+  itemSeparatorCompact: {
+    height: 4,
+  },
   footerLoader: {
     paddingVertical: Spacing.lg,
     alignItems: "center",
   },
 
-  // Full Card Styles
+  // Full Card Styles - Premium Glassmorphic
   itemCard: {
     flexDirection: "row",
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
+    padding: Spacing.lg,
+    borderCurve: "continuous",
   },
   imageContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: Radius.lg,
+    width: 76,
+    height: 76,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.md,
     position: "relative",
+    borderCurve: "continuous",
+    // Subtle depth shadow
+    boxShadow: `
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      inset 0 1px 2px rgba(255, 255, 255, 0.2)
+    `,
   },
   lotIndicator: {
     position: "absolute",
     bottom: -4,
     right: -4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     borderRadius: Radius.full,
+    // Premium glow effect
+    boxShadow: `0 2px 8px rgba(16, 185, 129, 0.4)`,
   },
   lotIndicatorText: {
     fontSize: 9,
@@ -1254,40 +1352,55 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
+    borderCurve: "continuous",
+    // Premium button glow
+    boxShadow: `
+      0 4px 12px rgba(16, 185, 129, 0.35),
+      0 2px 6px rgba(16, 185, 129, 0.25)
+    `,
   },
   sellButtonText: {
     fontFamily: "Manrope_700Bold",
     fontSize: 13,
   },
 
-  // Compact Card Styles
+  // Compact Card Styles - Premium
   compactCard: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.xs,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     borderWidth: 1,
+    borderCurve: "continuous",
+    // Subtle premium shadow
+    boxShadow: `
+      0 1px 4px rgba(0, 0, 0, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5)
+    `,
   },
   compactIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
+    width: 40,
+    height: 40,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.sm,
+    borderCurve: "continuous",
   },
   compactInfo: {
     flex: 1,
   },
   compactSellBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.md,
+    width: 36,
+    height: 36,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    // Premium glow effect
+    boxShadow: `0 3px 10px rgba(16, 185, 129, 0.35)`,
   },
 
   // Grid Card Styles
@@ -1297,13 +1410,19 @@ const styles = StyleSheet.create({
   },
   gridCardWrapper: {
     flex: 1,
-    maxWidth: "48%",
+    padding: Spacing.xs,
   },
   gridCard: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     overflow: "hidden",
-    marginBottom: Spacing.md,
+    borderCurve: "continuous",
+    // Premium glassmorphic shadow
+    boxShadow: `
+      0 4px 12px rgba(0, 0, 0, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6)
+    `,
   },
   gridImageContainer: {
     aspectRatio: 1,
@@ -1340,11 +1459,14 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   gridSellBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.md,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    // Premium glow
+    boxShadow: `0 3px 10px rgba(16, 185, 129, 0.35)`,
   },
 
   // Empty State

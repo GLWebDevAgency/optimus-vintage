@@ -4,16 +4,15 @@
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import {
-    PremiumButton,
-    PremiumColors,
-    PremiumScreen,
-} from "@/components/ui/PremiumUI";
+import { PremiumButton, PremiumScreen } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { useColorScheme } from "@/components/useColorScheme";
-import { Palette, Radius, Spacing, Typography } from "@/constants/Theme";
+import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
 import { LotSummary, LotsRepository } from "@/db/repositories";
+import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
+import { useLocale } from "@/utils/i18n";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
 import { router, useFocusEffect } from "expo-router";
@@ -25,7 +24,6 @@ import React, {
     useState,
 } from "react";
 import {
-    FlatList,
     Keyboard,
     LayoutAnimation,
     Pressable,
@@ -99,18 +97,18 @@ const LotCard = React.memo(function LotCard({
   const colorScheme = useColorScheme() ?? "light";
   const isDark = colorScheme === "dark";
 
-  // Premium theme mapping
+  // Theme mapping
   const theme = {
-    surfaceCard: isDark ? PremiumColors.dark.surface : PremiumColors.surface,
-    border: isDark ? PremiumColors.dark.border : PremiumColors.border,
-    primary: PremiumColors.accent,
-    primarySubtle: PremiumColors.accentLight,
-    text: isDark ? PremiumColors.dark.textPrimary : PremiumColors.textPrimary,
-    textMuted: isDark ? PremiumColors.dark.textMuted : PremiumColors.textMuted,
-    success: PremiumColors.success,
-    successSubtle: PremiumColors.successLight,
-    danger: PremiumColors.danger,
-    surfaceHover: isDark ? Palette.navy[700] : Palette.neutral[100],
+    surfaceCard: isDark ? Theme.dark.surface : Theme.light.surface,
+    border: isDark ? Theme.dark.border : Theme.light.border,
+    primary: Theme.light.primary,
+    primarySubtle: Theme.light.primarySubtle,
+    text: isDark ? Theme.dark.text : Theme.light.text,
+    textMuted: isDark ? Theme.dark.textMuted : Theme.light.textMuted,
+    success: Theme.light.success,
+    successSubtle: Theme.light.successSubtle,
+    danger: Theme.light.danger,
+    surfaceHover: isDark ? Palette.neutral[800] : Palette.neutral[100],
   };
 
   const investment = parseFloat(String(lot.totalInvestment)) || 0;
@@ -141,9 +139,11 @@ const LotCard = React.memo(function LotCard({
           styles.lotCard,
           {
             backgroundColor: theme.surfaceCard,
-            borderColor: theme.border,
-            opacity: pressed ? 0.95 : 1,
-            transform: [{ scale: pressed ? 0.98 : 1 }],
+            borderColor: pressed ? theme.primary : theme.border,
+            transform: [{ scale: pressed ? 0.97 : 1 }],
+            boxShadow: pressed
+              ? `0 2px 8px rgba(0,0,0,0.1)`
+              : `0 4px 16px rgba(0,0,0,0.06), 0 8px 24px ${theme.primary}10`,
           },
         ]}
       >
@@ -152,10 +152,13 @@ const LotCard = React.memo(function LotCard({
           <View
             style={[
               styles.iconContainer,
-              { backgroundColor: theme.primarySubtle },
+              {
+                backgroundColor: theme.primarySubtle,
+                boxShadow: `0 4px 12px ${theme.primary}25`,
+              },
             ]}
           >
-            <AppIcon name="inventory-2" size={22} color={theme.primary} />
+            <AppIcon name="inventory-2" size={24} color={theme.primary} />
           </View>
           <View style={styles.cardTitleContainer}>
             <Text
@@ -243,18 +246,30 @@ const LotCard = React.memo(function LotCard({
                 { backgroundColor: theme.surfaceHover },
               ]}
             >
-              <View
+              <Animated.View
                 style={[
                   styles.progressFill,
                   {
                     backgroundColor: theme.primary,
                     width: `${Math.min(progressPercent, 100)}%`,
+                    boxShadow:
+                      progressPercent > 0
+                        ? `0 0 10px ${theme.primary}60, 0 0 4px ${theme.primary}40`
+                        : "none",
                   },
                 ]}
               />
             </View>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              {soldCount}/{initialQty} vendus
+            <Text
+              style={[
+                Typography.label.xs,
+                {
+                  color: theme.textMuted,
+                  fontWeight: "600",
+                },
+              ]}
+            >
+              {soldCount}/{initialQty}
             </Text>
           </View>
         </View>
@@ -400,28 +415,30 @@ export default function LotsScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme() ?? "light";
   const isDark = colorScheme === "dark";
-  const flatListRef = useRef<FlatList>(null);
+  const flashListRef = useRef<FlashListRef<LotSummary>>(null);
+  const { t } = useLocale();
+
+  // Screen tracking
+  useTrackScreen("lots");
 
   // Premium theme
   const theme: PremiumTheme = {
-    surface: isDark ? PremiumColors.dark.surface : PremiumColors.surface,
-    surfaceCard: isDark ? PremiumColors.dark.surface : PremiumColors.surface,
-    surfaceHover: isDark ? Palette.navy[700] : Palette.neutral[100],
-    background: isDark
-      ? PremiumColors.dark.background
-      : PremiumColors.background,
-    border: isDark ? PremiumColors.dark.border : PremiumColors.border,
-    primary: PremiumColors.accent,
-    primarySubtle: PremiumColors.accentLight,
-    text: isDark ? PremiumColors.dark.textPrimary : PremiumColors.textPrimary,
-    textMuted: isDark ? PremiumColors.dark.textMuted : PremiumColors.textMuted,
+    surface: isDark ? Theme.dark.surface : Theme.light.surface,
+    surfaceCard: isDark ? Theme.dark.surface : Theme.light.surface,
+    surfaceHover: isDark ? Palette.neutral[800] : Palette.neutral[100],
+    background: isDark ? Theme.dark.background : Theme.light.background,
+    border: isDark ? Theme.dark.border : Theme.light.border,
+    primary: Theme.light.primary,
+    primarySubtle: Theme.light.primarySubtle,
+    text: isDark ? Theme.dark.text : Theme.light.text,
+    textMuted: isDark ? Theme.dark.textMuted : Theme.light.textMuted,
     textSecondary: isDark
-      ? PremiumColors.dark.textSecondary
-      : PremiumColors.textSecondary,
-    success: PremiumColors.success,
-    successSubtle: PremiumColors.successLight,
-    danger: PremiumColors.danger,
-    warning: PremiumColors.warning,
+      ? Theme.dark.textSecondary
+      : Theme.light.textSecondary,
+    success: Theme.light.success,
+    successSubtle: Theme.light.successSubtle,
+    danger: Theme.light.danger,
+    warning: Theme.light.warning,
   };
 
   // Data state
@@ -705,7 +722,7 @@ export default function LotsScreen() {
               router.push("/lots/new");
             }}
           >
-            <AppIcon name="add" size={24} color={PremiumColors.textWhite} />
+            <AppIcon name="add" size={24} color={Palette.neutral.white} />
           </Pressable>
         </View>
       </View>
@@ -788,18 +805,17 @@ export default function LotsScreen() {
         {/* Stats Bar */}
         {lots.length > 0 && <StatsBar stats={stats} theme={theme} />}
 
-        {/* Lots List */}
+        {/* Lots List - FlashList for performance */}
         {loading && !refreshing ? (
           <View style={styles.loaderContainer}>
             <SkeletonList count={5} />
           </View>
         ) : (
-          <FlatList
-            ref={flatListRef}
+          <FlashList
+            ref={flashListRef}
             data={processedLots}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
-            contentInsetAdjustmentBehavior="automatic"
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -808,17 +824,9 @@ export default function LotsScreen() {
                 colors={[theme.primary]}
               />
             }
-            contentContainerStyle={[
-              styles.listContent,
-              processedLots.length === 0 && styles.emptyList,
-            ]}
+            contentContainerStyle={styles.listContent}
             ListEmptyComponent={renderEmpty}
             showsVerticalScrollIndicator={false}
-            // Performance optimizations
-            removeClippedSubviews={isAndroid}
-            maxToRenderPerBatch={8}
-            windowSize={8}
-            initialNumToRender={6}
           />
         )}
       </View>
@@ -848,11 +856,17 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
   },
   addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
+    width: 48,
+    height: 48,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    // Premium glow
+    boxShadow: `
+      0 4px 16px rgba(16, 185, 129, 0.4),
+      0 2px 8px rgba(16, 185, 129, 0.3)
+    `,
   },
   searchSection: {
     flexDirection: "row",
@@ -865,10 +879,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
-    height: 44,
-    borderRadius: Radius.lg,
+    height: 48,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     gap: Spacing.sm,
+    borderCurve: "continuous",
+    boxShadow: `
+      0 2px 8px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5)
+    `,
   },
   searchInput: {
     flex: 1,
@@ -876,12 +895,17 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_400Regular",
   },
   sortButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
+    width: 48,
+    height: 48,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    boxShadow: `
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5)
+    `,
   },
   sortMenu: {
     position: "absolute",
@@ -931,6 +955,16 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     marginBottom: Spacing.lg,
     borderWidth: 1,
+    borderCurve: "continuous",
+    // Ultra premium multi-layer shadow
+    boxShadow: `
+      0 1px 2px rgba(0, 0, 0, 0.02),
+      0 2px 4px rgba(0, 0, 0, 0.02),
+      0 4px 8px rgba(0, 0, 0, 0.03),
+      0 8px 16px rgba(0, 0, 0, 0.04),
+      0 16px 32px rgba(16, 185, 129, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7)
+    `,
   },
   cardHeader: {
     flexDirection: "row",
@@ -938,11 +972,18 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.lg,
+    width: 56,
+    height: 56,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    // Premium glow effect
+    boxShadow: `
+      0 4px 12px rgba(16, 185, 129, 0.25),
+      0 2px 6px rgba(16, 185, 129, 0.15),
+      inset 0 1px 2px rgba(255,255,255,0.2)
+    `,
   },
   cardTitleContainer: {
     flex: 1,
@@ -951,10 +992,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
+    borderCurve: "continuous",
   },
   divider: {
     height: 1,
     marginVertical: Spacing.lg,
+    opacity: 0.6,
   },
   statsGrid: {
     flexDirection: "row",
@@ -962,6 +1005,7 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: "center",
+    minWidth: 60,
   },
   progressContainer: {
     flexDirection: "row",
@@ -970,13 +1014,21 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     flex: 1,
-    height: 6,
-    borderRadius: 3,
+    height: 10,
+    borderRadius: 5,
     overflow: "hidden",
+    // Inset shadow for depth
+    boxShadow: `inset 0 2px 4px rgba(0, 0, 0, 0.08)`,
   },
   progressFill: {
     height: "100%",
-    borderRadius: 3,
+    borderRadius: 5,
+    // Premium gradient-like glow on progress
+    boxShadow: `
+      0 0 12px rgba(16, 185, 129, 0.5),
+      0 2px 8px rgba(16, 185, 129, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3)
+    `,
   },
   empty: {
     alignItems: "center",

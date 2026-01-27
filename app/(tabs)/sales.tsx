@@ -10,15 +10,12 @@ import {
     LuxuryListItem,
     SectionHeader,
 } from "@/components/ui/Components";
-import {
-    PremiumColors,
-    PremiumScreen,
-    usePremiumTheme,
-} from "@/components/ui/PremiumUI";
+import { PremiumScreen, usePremiumTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Typography } from "@/constants/Theme";
+import { Palette, Radius, Spacing, Typography } from "@/constants/Theme";
 import { Sale, SalesRepository } from "@/db/repositories";
+import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
@@ -84,6 +81,9 @@ export default function SalesScreen() {
   const insets = useSafeAreaInsets();
   const theme = usePremiumTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>("30d");
+
+  // Screen tracking
+  useTrackScreen("sales");
 
   const salesQuery = useQuery({
     queryKey: ["sales"],
@@ -233,7 +233,7 @@ export default function SalesScreen() {
               router.push("/sales/new");
             }}
           >
-            <AppIcon name="add" size={24} color={PremiumColors.textWhite} />
+            <AppIcon name="add" size={24} color={Palette.neutral.white} />
           </Pressable>
         </View>
       </View>

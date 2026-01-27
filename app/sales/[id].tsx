@@ -457,12 +457,15 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
   errorIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: Spacing.lg,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.02), 0 16px 32px rgba(239,68,68,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   content: {
     padding: Spacing.xl,
@@ -472,12 +475,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   statusIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: Spacing.md,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.02), 0 16px 32px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   amountCard: {
     alignItems: "center",
@@ -489,9 +495,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.xs,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
     borderRadius: Radius.full,
     marginTop: Spacing.md,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 1px 3px rgba(0,0,0,0.05), 0 2px 6px rgba(16,185,129,0.1), inset 0 1px 0 rgba(255,255,255,0.4)",
   },
   section: {
     marginBottom: Spacing.xl,
@@ -519,19 +528,24 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   itemIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.md,
+    width: 56,
+    height: 56,
+    borderRadius: Radius.xl,
     justifyContent: "center",
     alignItems: "center",
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.05), 0 4px 8px rgba(0,0,0,0.04), 0 8px 16px rgba(16,185,129,0.1), inset 0 1px 0 rgba(255,255,255,0.4)",
   },
   itemInfo: {
     flex: 1,
   },
   itemStatus: {
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    borderRadius: Radius.sm,
+    borderRadius: Radius.md,
+    borderCurve: "continuous",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
   },
   referenceRow: {
     flexDirection: "row",
@@ -543,8 +557,11 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    borderWidth: 1,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   ctaContainer: {
     position: "absolute",
@@ -555,5 +572,9 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     width: "100%",
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(239,68,68,0.25), 0 4px 8px rgba(239,68,68,0.2), 0 8px 16px rgba(239,68,68,0.15), inset 0 1px 0 rgba(255,255,255,0.2)",
   },
 });

@@ -900,8 +900,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   quantityButton: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -913,12 +913,15 @@ const styles = StyleSheet.create({
   },
   estimatedCard: {
     padding: Spacing.lg,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     marginTop: Spacing.lg,
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "space-between",
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(16,185,129,0.1), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   estimatedLabel: {
     fontSize: 11,
@@ -937,17 +940,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: Spacing.lg,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
     marginBottom: Spacing.md,
     gap: Spacing.md,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.03), 0 4px 8px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   setupIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
+    width: 44,
+    height: 44,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    boxShadow:
+      "0 1px 3px rgba(0,0,0,0.05), 0 2px 6px rgba(16,185,129,0.1), inset 0 1px 0 rgba(255,255,255,0.4)",
   },
   setupText: {
     flex: 1,
@@ -961,17 +970,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   radioOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
+    boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
   },
   radioInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    boxShadow: "0 1px 3px rgba(16,185,129,0.4)",
   },
   footer: {
     paddingHorizontal: Spacing.xl,
@@ -1013,15 +1024,19 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "100%",
-    borderRadius: Radius.xl,
+    borderRadius: Radius["2xl"],
     padding: Spacing.xl,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 4px 8px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.06), 0 16px 32px rgba(0,0,0,0.04), 0 32px 64px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.7)",
   },
   providerOption: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.md,
     padding: Spacing.lg,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
   },
   providerLabel: {
     flex: 1,
@@ -1036,7 +1051,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: Spacing.lg,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
   },
   dateOptionLeft: {
     flexDirection: "row",
@@ -1049,8 +1065,11 @@ const styles = StyleSheet.create({
   },
   todayBadge: {
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: Radius.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.md,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 1px 3px rgba(16,185,129,0.4), 0 2px 6px rgba(16,185,129,0.25)",
   },
   todayBadgeText: {
     fontSize: 11,

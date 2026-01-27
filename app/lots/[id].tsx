@@ -3,13 +3,16 @@
  * Enterprise-grade lot management with real-time insights
  */
 
+import {
+    AnimatedButton,
+    AnimatedSkeleton,
+} from "@/components/ui/AnimatedComponents";
 import { AppIcon } from "@/components/ui/AppIcon";
 import {
     AnimatedPremiumBackground,
     Button,
     Card,
 } from "@/components/ui/Components";
-import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
 import {
@@ -19,6 +22,7 @@ import {
     Sale,
     SalesRepository,
 } from "@/db/repositories";
+import { ReanimatedSpring } from "@/utils/animations-reanimated";
 import {
     computeLotSummary,
     computeProtection,
@@ -29,12 +33,19 @@ import { Haptic } from "@/utils/haptics";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { MotiView } from "moti";
+import { MotiPressable } from "moti/interactions";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, {
     FadeIn,
     FadeInDown,
+    interpolateColor,
+    LinearTransition,
     SlideInRight,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -45,6 +56,101 @@ type SegmentOption = "top" | "losses" | "all";
 interface ItemWithSale extends Item {
   sale?: Sale;
   profit?: number;
+}
+
+/**
+ * 🎨 Animated Segment Control - Premium Selection
+ */
+function AnimatedSegmentControl({
+  options,
+  activeKey,
+  onSelect,
+  theme,
+}: {
+  options: { key: string; label: string }[];
+  activeKey: string;
+  onSelect: (key: string) => void;
+  theme: typeof Theme.dark;
+}) {
+  return (
+    <View
+      style={[styles.segmentedControl, { backgroundColor: theme.surfaceCard }]}
+    >
+      {options.map((seg, index) => {
+        const isActive = activeKey === seg.key;
+        return (
+          <AnimatedSegmentButton
+            key={seg.key}
+            label={seg.label}
+            isActive={isActive}
+            onPress={() => onSelect(seg.key)}
+            theme={theme}
+            index={index}
+          />
+        );
+      })}
+    </View>
+  );
+}
+
+function AnimatedSegmentButton({
+  label,
+  isActive,
+  onPress,
+  theme,
+  index,
+}: {
+  label: string;
+  isActive: boolean;
+  onPress: () => void;
+  theme: typeof Theme.dark;
+  index: number;
+}) {
+  const scale = useSharedValue(1);
+  const progress = useSharedValue(isActive ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withSpring(isActive ? 1 : 0, ReanimatedSpring.responsive);
+  }, [isActive]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      ["transparent", theme.surface],
+    ),
+  }));
+
+  const textStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(
+      progress.value,
+      [0, 1],
+      [theme.textMuted, theme.primary],
+    ),
+  }));
+
+  return (
+    <MotiPressable
+      onPress={() => {
+        Haptic.selection();
+        onPress();
+      }}
+      onPressIn={() => {
+        scale.value = withSpring(0.95, ReanimatedSpring.responsive);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, ReanimatedSpring.bouncy);
+      }}
+      style={{ flex: 1 }}
+    >
+      <Animated.View style={[styles.segmentButton, animatedStyle]}>
+        <Animated.Text style={[styles.segmentText, textStyle]}>
+          {label}
+        </Animated.Text>
+      </Animated.View>
+    </MotiPressable>
+  );
 }
 
 export default function LotDetailScreen() {
@@ -145,15 +251,55 @@ export default function LotDetailScreen() {
       <View
         style={[styles.loadingContainer, { backgroundColor: theme.background }]}
       >
-        <View style={{ padding: Spacing.lg, gap: Spacing.md }}>
-          <Skeleton width="100%" height={120} borderRadius={Radius.xl} />
+        <MotiView
+          from={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "timing", duration: 400 }}
+          style={{ padding: Spacing.lg, gap: Spacing.md, width: "100%" }}
+        >
+          {/* Header skeleton */}
+          <AnimatedSkeleton
+            width="100%"
+            height={120}
+            borderRadius={Radius.xl}
+            delay={0}
+          />
+
+          {/* Stats row skeleton */}
           <View style={{ flexDirection: "row", gap: Spacing.sm }}>
-            <Skeleton width="48%" height={80} borderRadius={Radius.lg} />
-            <Skeleton width="48%" height={80} borderRadius={Radius.lg} />
+            <AnimatedSkeleton
+              width="48%"
+              height={80}
+              borderRadius={Radius.lg}
+              delay={100}
+            />
+            <AnimatedSkeleton
+              width="48%"
+              height={80}
+              borderRadius={Radius.lg}
+              delay={150}
+            />
           </View>
-          <Skeleton width="100%" height={60} borderRadius={Radius.lg} />
-          <SkeletonList count={3} />
-        </View>
+
+          {/* ROI card skeleton */}
+          <AnimatedSkeleton
+            width="100%"
+            height={60}
+            borderRadius={Radius.lg}
+            delay={200}
+          />
+
+          {/* Items list skeleton */}
+          {[0, 1, 2].map((i) => (
+            <AnimatedSkeleton
+              key={i}
+              width="100%"
+              height={80}
+              borderRadius={Radius.lg}
+              delay={300 + i * 100}
+            />
+          ))}
+        </MotiView>
       </View>
     );
   }
@@ -163,21 +309,39 @@ export default function LotDetailScreen() {
       <View
         style={[styles.errorContainer, { backgroundColor: theme.background }]}
       >
-        <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+        <MotiView
+          from={{ opacity: 0, scale: 0.8, translateY: 20 }}
+          animate={{ opacity: 1, scale: 1, translateY: 0 }}
+          transition={{ type: "spring", damping: 15 }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
-        </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
-          Lot introuvable
-        </Text>
-        <Button
+          <View
+            style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          >
+            <AppIcon name="error-outline" size={40} color={theme.danger} />
+          </View>
+        </MotiView>
+        <MotiView
+          from={{ opacity: 0, translateY: 10 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 400, delay: 200 }}
+        >
+          <Text
+            style={[
+              Typography.heading.md,
+              { color: theme.text, textAlign: "center" },
+            ]}
+          >
+            Lot introuvable
+          </Text>
+        </MotiView>
+        <AnimatedButton
           variant="ghost"
           onPress={() => router.back()}
+          delay={400}
           style={{ marginTop: Spacing.lg }}
         >
           Retour
-        </Button>
+        </AnimatedButton>
       </View>
     );
   }
@@ -399,53 +563,26 @@ export default function LotDetailScreen() {
         )}
 
         {/* Segmented Control */}
-        <Animated.View entering={FadeInDown.delay(350).duration(400)}>
-          <View
-            style={[
-              styles.segmentedControl,
-              { backgroundColor: theme.surfaceCard },
-            ]}
-          >
-            {[
+        <Animated.View
+          entering={FadeInDown.delay(350).duration(400)}
+          layout={LinearTransition.springify()}
+        >
+          <AnimatedSegmentControl
+            options={[
               { key: "top", label: "Meilleures ventes" },
               { key: "losses", label: "Pertes" },
               { key: "all", label: "Tous" },
-            ].map((seg) => (
-              <Pressable
-                key={seg.key}
-                style={[
-                  styles.segmentButton,
-                  activeSegment === seg.key && [
-                    styles.segmentButtonActive,
-                    { backgroundColor: theme.surface },
-                  ],
-                ]}
-                onPress={() => {
-                  Haptic.selection();
-                  setActiveSegment(seg.key as SegmentOption);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.segmentText,
-                    {
-                      color:
-                        activeSegment === seg.key
-                          ? theme.primary
-                          : theme.textMuted,
-                    },
-                  ]}
-                >
-                  {seg.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+            ]}
+            activeKey={activeSegment}
+            onSelect={(key) => setActiveSegment(key as SegmentOption)}
+            theme={theme}
+          />
         </Animated.View>
 
         {/* Items List */}
         <Animated.View
           entering={FadeInDown.delay(400).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.itemsList}
         >
           {filteredItems.length === 0 ? (
@@ -714,9 +851,13 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_700Bold",
   },
 
-  // Recovery Card
+  // Recovery Card - Premium Glassmorphic
   recoveryCard: {
     padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.03), 0 4px 8px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   recoveryHeader: {
     flexDirection: "row",
@@ -733,14 +874,20 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_500Medium",
   },
   progressTrack: {
-    height: 12,
-    borderRadius: 6,
+    height: 14,
+    borderRadius: 7,
     overflow: "hidden",
     marginBottom: Spacing.sm,
+    borderCurve: "continuous",
+    boxShadow:
+      "inset 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 2px rgba(0,0,0,0.1)",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 6,
+    borderRadius: 7,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 1px 3px rgba(16,185,129,0.4), 0 2px 6px rgba(16,185,129,0.3), inset 0 1px 0 rgba(255,255,255,0.4)",
   },
   progressLabels: {
     flexDirection: "row",
@@ -762,11 +909,14 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   protectionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
+    width: 48,
+    height: 48,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.04), 0 8px 16px rgba(16,185,129,0.15), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   protectionInfo: {
     flex: 1,
@@ -785,20 +935,25 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
 
-  // Segmented Control
+  // Segmented Control - Premium Glassmorphic
   segmentedControl: {
     flexDirection: "row",
     padding: 4,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
+    boxShadow:
+      "inset 0 2px 4px rgba(0,0,0,0.05), inset 0 1px 2px rgba(0,0,0,0.08)",
   },
   segmentButton: {
     flex: 1,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     alignItems: "center",
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
+    borderCurve: "continuous",
   },
   segmentButtonActive: {
-    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.06), 0 8px 16px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.7)",
   },
   segmentText: {
     fontSize: 13,
@@ -820,27 +975,36 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     flexDirection: "row",
-    padding: Spacing.sm,
+    padding: Spacing.md,
     gap: Spacing.md,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
+    boxShadow:
+      "0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.03), 0 4px 8px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   itemImageContainer: {
     position: "relative",
   },
   itemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: Radius.lg,
+    width: 84,
+    height: 84,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.06), 0 8px 16px rgba(0,0,0,0.04)",
   },
   statusBadge: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    top: 6,
+    right: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.md,
+    borderCurve: "continuous",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.15)",
   },
   statusBadgeText: {
     color: "#FFF",

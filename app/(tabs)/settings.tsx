@@ -4,15 +4,18 @@
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { Card, SectionHeader } from "@/components/ui/Components";
-import {
-    PremiumScreen,
-    usePremiumTheme
-} from "@/components/ui/PremiumUI";
+import { PremiumScreen, usePremiumTheme } from "@/components/ui/PremiumUI";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Radius, Spacing, Typography } from "@/constants/Theme";
 import { useSettingsStore } from "@/store/settings";
+import { useTrackScreen } from "@/utils/analytics";
 import { exportDataToCSV } from "@/utils/data/export";
 import { Haptic } from "@/utils/haptics";
+import {
+    SUPPORTED_LOCALES,
+    useLocale,
+    type SupportedLocale,
+} from "@/utils/i18n";
 import React from "react";
 import {
     Alert,
@@ -88,6 +91,86 @@ function SettingsRow({
   );
 }
 
+// Language Selector Row Component
+function LanguageRow({
+  currentLocale,
+  onChangeLocale,
+  isLast = false,
+}: {
+  currentLocale: SupportedLocale;
+  onChangeLocale: (locale: SupportedLocale) => void;
+  isLast?: boolean;
+}) {
+  const theme = usePremiumTheme();
+  const currentLanguage = SUPPORTED_LOCALES.find(
+    (l) => l.code === currentLocale,
+  );
+
+  return (
+    <View
+      style={[
+        styles.row,
+        { borderBottomColor: theme.border },
+        isLast && { borderBottomWidth: 0 },
+      ]}
+    >
+      <View style={styles.rowLabel}>
+        <Text
+          style={[
+            Typography.body.md,
+            { color: theme.text, fontFamily: "Manrope_600SemiBold" },
+          ]}
+        >
+          Langue
+        </Text>
+        <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
+          Changer la langue de l'app
+        </Text>
+      </View>
+      <View style={styles.languageButtons}>
+        {SUPPORTED_LOCALES.map((lang) => (
+          <Pressable
+            key={lang.code}
+            onPress={() => {
+              Haptic.selection();
+              onChangeLocale(lang.code);
+            }}
+            style={({ pressed }) => [
+              styles.langButton,
+              {
+                backgroundColor:
+                  lang.code === currentLocale
+                    ? theme.primary
+                    : theme.surfaceCard,
+                borderColor:
+                  lang.code === currentLocale ? theme.primary : theme.border,
+                transform: [{ scale: pressed ? 0.92 : 1 }],
+                boxShadow:
+                  lang.code === currentLocale
+                    ? `0 4px 12px ${theme.primary}40`
+                    : "0 2px 6px rgba(0,0,0,0.04)",
+              },
+            ]}
+          >
+            <Text style={styles.langFlag}>{lang.flag}</Text>
+            <Text
+              style={[
+                Typography.label.xs,
+                {
+                  color:
+                    lang.code === currentLocale ? "#FFFFFF" : theme.textMuted,
+                },
+              ]}
+            >
+              {lang.code.toUpperCase()}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // Action Row Component
 function ActionRow({
   icon,
@@ -113,7 +196,8 @@ function ActionRow({
         styles.actionRow,
         {
           borderBottomColor: theme.border,
-          opacity: pressed ? 0.7 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+          backgroundColor: pressed ? `${theme.surface}80` : "transparent",
         },
         isLast && { borderBottomWidth: 0 },
       ]}
@@ -128,6 +212,9 @@ function ActionRow({
           styles.actionIcon,
           {
             backgroundColor: isDanger ? theme.dangerSubtle : theme.surfaceCard,
+            boxShadow: isDanger
+              ? `0 4px 12px ${theme.danger}20`
+              : "0 2px 8px rgba(0,0,0,0.06)",
           },
         ]}
       >
@@ -157,6 +244,13 @@ function ActionRow({
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const theme = usePremiumTheme();
+
+  // Screen tracking
+  useTrackScreen("settings");
+
+  // i18n
+  const { t, locale, changeLocale } = useLocale();
+
   const {
     currency,
     setCurrency,
@@ -245,6 +339,10 @@ export default function SettingsScreen() {
               onChangeText={setMarginInput}
               onBlur={handleSave}
               keyboardType="numeric"
+            />
+            <LanguageRow
+              currentLocale={locale}
+              onChangeLocale={changeLocale}
               isLast
             />
           </Card>
@@ -362,26 +460,40 @@ const styles = StyleSheet.create({
   },
   input: {
     textAlign: "right",
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: "Manrope_700Bold",
-    minWidth: 100,
+    minWidth: 110,
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
+    // Premium neumorphic inset effect
+    boxShadow: `
+      inset 0 2px 6px rgba(0,0,0,0.05),
+      inset 0 1px 2px rgba(0,0,0,0.03),
+      0 1px 0 rgba(255,255,255,0.5)
+    `,
   },
   actionRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
     gap: Spacing.md,
   },
   actionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
+    width: 48,
+    height: 48,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
+    // Premium convex shadow with glow
+    boxShadow: `
+      0 4px 12px rgba(0,0,0,0.08),
+      0 2px 4px rgba(0,0,0,0.04),
+      inset 0 1px 0 rgba(255,255,255,0.3)
+    `,
   },
   infoCard: {
     overflow: "hidden",
@@ -392,18 +504,47 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: Spacing["3xl"],
     paddingHorizontal: Spacing.xl,
-    borderRadius: Radius.xl,
+    borderRadius: Radius["2xl"],
+    borderCurve: "continuous",
   },
   appIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: Radius.xl,
+    width: 88,
+    height: 88,
+    borderRadius: Radius["2xl"],
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.md,
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+    marginBottom: Spacing.lg,
+    borderCurve: "continuous",
+    // Ultra premium multi-layer shadow with glow
+    boxShadow: `
+      0 2px 8px rgba(0, 0, 0, 0.15),
+      0 6px 16px rgba(0, 0, 0, 0.2),
+      0 12px 32px rgba(16, 185, 129, 0.25),
+      0 24px 48px rgba(16, 185, 129, 0.15),
+      0 0 0 4px rgba(255, 255, 255, 0.15),
+      inset 0 2px 4px rgba(255, 255, 255, 0.2)
+    `,
   },
   appIconText: {
-    fontSize: 32,
+    fontSize: 40,
+    fontWeight: "900",
+  },
+  languageButtons: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  langButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
+    borderCurve: "continuous",
+    minHeight: 44,
+  },
+  langFlag: {
+    fontSize: 20,
   },
 });
