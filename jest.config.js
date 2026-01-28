@@ -1,14 +1,6 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
+/** @type {import('jest').Config} */
 module.exports = {
   preset: "jest-expo",
-  transform: {
-    "^.+\\.tsx?$": [
-      "ts-jest",
-      {
-        tsconfig: "tsconfig.json",
-      },
-    ],
-  },
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
@@ -34,9 +26,4 @@ module.exports = {
     },
   },
   testEnvironment: "jsdom",
-  globals: {
-    "ts-jest": {
-      isolatedModules: true,
-    },
-  },
 };

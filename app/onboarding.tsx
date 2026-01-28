@@ -1,11 +1,10 @@
 /**
- * 🌿 ONBOARDING SCREEN - Luxury Edition
+ * 🌿 ONBOARDING SCREEN - Vanta-Aether Edition
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { Button, Card } from "@/components/ui/Components";
 import { useColorScheme } from "@/components/useColorScheme";
-import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { Radius, Spacing } from "@/constants/Theme";
 import { useSettingsStore } from "@/store/settings";
 import { Haptic } from "@/utils/haptics";
 import { router } from "expo-router";
@@ -13,6 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 import {
     KeyboardAvoidingView,
+    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -22,10 +22,59 @@ import {
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+const VANTA = {
+  black: "#000000",
+  obsidian: "#0a0a0a",
+  obsidianLight: "#1a1a1a",
+  titanium: "#111111",
+  carbon: "#1c1c1c",
+  gold: "#f4c025",
+  goldGlow: "rgba(244, 192, 37, 0.6)",
+  goldSubtle: "rgba(244, 192, 37, 0.15)",
+  success: "#22c55e",
+  successSubtle: "rgba(34, 197, 94, 0.15)",
+  danger: "#ef4444",
+  dangerSubtle: "rgba(239, 68, 68, 0.15)",
+  warning: "#f59e0b",
+  warningSubtle: "rgba(245, 158, 11, 0.15)",
+  textPrimary: "#ffffff",
+  textSecondary: "rgba(255, 255, 255, 0.6)",
+  textMuted: "rgba(255, 255, 255, 0.4)",
+  light: {
+    background: "#fafafa",
+    surface: "#ffffff",
+    gold: "#d4a017",
+    text: "#1a1a1a",
+    textSecondary: "rgba(0, 0, 0, 0.6)",
+    textMuted: "rgba(0, 0, 0, 0.4)",
+    border: "rgba(0, 0, 0, 0.08)",
+  },
+};
+
+function getColors(isDark: boolean) {
+  return {
+    background: isDark ? VANTA.black : VANTA.light.background,
+    surface: isDark ? VANTA.obsidianLight : VANTA.light.surface,
+    surfaceCard: isDark ? VANTA.titanium : VANTA.light.surface,
+    gold: isDark ? VANTA.gold : VANTA.light.gold,
+    text: isDark ? VANTA.textPrimary : VANTA.light.text,
+    textSecondary: isDark ? VANTA.textSecondary : VANTA.light.textSecondary,
+    textMuted: isDark ? VANTA.textMuted : VANTA.light.textMuted,
+    border: isDark ? "rgba(255, 255, 255, 0.08)" : VANTA.light.border,
+    success: VANTA.success,
+    successSubtle: VANTA.successSubtle,
+    danger: VANTA.danger,
+    dangerSubtle: VANTA.dangerSubtle,
+    warning: VANTA.warning,
+    warningSubtle: VANTA.warningSubtle,
+  };
+}
+
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = getColors(isDark);
   const { setCurrency, setTargetMargin, completeOnboarding } =
     useSettingsStore();
   const [currencyInput, setCurrencyInput] = React.useState("EUR");
@@ -42,13 +91,13 @@ export default function OnboardingScreen() {
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View
         style={[
           styles.gradient,
           {
-            backgroundColor: Palette.gold[600] + "10",
+            backgroundColor: VANTA.goldSubtle,
           },
         ]}
       />
@@ -70,42 +119,39 @@ export default function OnboardingScreen() {
           style={styles.hero}
         >
           <View
-            style={[
-              styles.iconCircle,
-              { backgroundColor: theme.primarySubtle },
-            ]}
+            style={[styles.iconCircle, { backgroundColor: VANTA.goldSubtle }]}
           >
             <Text style={styles.emoji}>✨</Text>
           </View>
           <Text
-            style={[
-              Typography.body.sm,
-              {
-                color: theme.textMuted,
-                textTransform: "uppercase",
-                letterSpacing: 2,
-              },
-            ]}
+            style={{
+              fontFamily: "Manrope_500Medium",
+              fontSize: 13,
+              color: colors.textMuted,
+              textTransform: "uppercase",
+              letterSpacing: 2,
+            }}
           >
             Bienvenue sur
           </Text>
           <Text
-            style={[
-              Typography.display.lg,
-              { color: theme.text, marginTop: Spacing.xs },
-            ]}
+            style={{
+              fontFamily: "Manrope_700Bold",
+              fontSize: 32,
+              color: colors.text,
+              marginTop: Spacing.xs,
+            }}
           >
             Optimus Vintage
           </Text>
           <Text
-            style={[
-              Typography.body.md,
-              {
-                color: theme.textMuted,
-                textAlign: "center",
-                marginTop: Spacing.md,
-              },
-            ]}
+            style={{
+              fontFamily: "Manrope_400Regular",
+              fontSize: 16,
+              color: colors.textMuted,
+              textAlign: "center",
+              marginTop: Spacing.md,
+            }}
           >
             Gérez vos reventes vintage avec élégance.{"\n"}Gestion d'inventaire
             premium pour revendeurs.
@@ -114,63 +160,95 @@ export default function OnboardingScreen() {
 
         {/* Setup Card */}
         <Animated.View entering={FadeInDown.delay(300).duration(500)}>
-          <Card variant="elevated" style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surface,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <View style={styles.cardHeader}>
               <View
                 style={[
                   styles.stepBadge,
-                  { backgroundColor: theme.primarySubtle },
+                  { backgroundColor: VANTA.goldSubtle },
                 ]}
               >
-                <AppIcon name="tune" size={16} color={theme.primary} />
+                <AppIcon name="tune" size={16} color={colors.gold} />
               </View>
-              <Text style={[Typography.heading.md, { color: theme.text }]}>
+              <Text
+                style={{
+                  fontFamily: "Manrope_600SemiBold",
+                  fontSize: 18,
+                  color: colors.text,
+                }}
+              >
                 Quick Setup
               </Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[Typography.label.sm, { color: theme.textMuted }]}>
+              <Text
+                style={{
+                  fontFamily: "Manrope_500Medium",
+                  fontSize: 11,
+                  color: colors.textMuted,
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                }}
+              >
                 CURRENCY
               </Text>
               <TextInput
                 style={[
                   styles.input,
                   {
-                    backgroundColor: theme.surfaceGlass,
-                    borderColor: theme.border,
-                    color: theme.text,
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.text,
                   },
                 ]}
                 value={currencyInput}
                 onChangeText={setCurrencyInput}
                 placeholder="EUR"
-                placeholderTextColor={theme.textMuted}
+                placeholderTextColor={colors.textMuted}
                 maxLength={3}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[Typography.label.sm, { color: theme.textMuted }]}>
+              <Text
+                style={{
+                  fontFamily: "Manrope_500Medium",
+                  fontSize: 11,
+                  color: colors.textMuted,
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                }}
+              >
                 TARGET MARGIN / ITEM
               </Text>
               <TextInput
                 style={[
                   styles.input,
                   {
-                    backgroundColor: theme.surfaceGlass,
-                    borderColor: theme.border,
-                    color: theme.text,
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.text,
                   },
                 ]}
                 value={marginInput}
                 onChangeText={setMarginInput}
                 placeholder="10"
-                placeholderTextColor={theme.textMuted}
+                placeholderTextColor={colors.textMuted}
                 keyboardType="numeric"
               />
             </View>
-          </Card>
+          </View>
         </Animated.View>
 
         {/* Features Preview */}
@@ -182,16 +260,18 @@ export default function OnboardingScreen() {
             <View
               style={[
                 styles.featureIcon,
-                { backgroundColor: Palette.forest[500] + "20" },
+                { backgroundColor: VANTA.successSubtle },
               ]}
             >
-              <AppIcon
-                name="trending-up"
-                size={18}
-                color={Palette.forest[500]}
-              />
+              <AppIcon name="trending-up" size={18} color={VANTA.success} />
             </View>
-            <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+            <Text
+              style={{
+                fontFamily: "Manrope_400Regular",
+                fontSize: 14,
+                color: colors.textMuted,
+              }}
+            >
               Real-time profit tracking
             </Text>
           </View>
@@ -199,12 +279,18 @@ export default function OnboardingScreen() {
             <View
               style={[
                 styles.featureIcon,
-                { backgroundColor: Palette.cyan[500] + "20" },
+                { backgroundColor: VANTA.goldSubtle },
               ]}
             >
-              <AppIcon name="inventory-2" size={18} color={Palette.cyan[500]} />
+              <AppIcon name="inventory-2" size={18} color={VANTA.gold} />
             </View>
-            <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+            <Text
+              style={{
+                fontFamily: "Manrope_400Regular",
+                fontSize: 14,
+                color: colors.textMuted,
+              }}
+            >
               Smart lot management
             </Text>
           </View>
@@ -212,16 +298,18 @@ export default function OnboardingScreen() {
             <View
               style={[
                 styles.featureIcon,
-                { backgroundColor: Palette.gold[500] + "20" },
+                { backgroundColor: VANTA.warningSubtle },
               ]}
             >
-              <AppIcon
-                name="offline-bolt"
-                size={18}
-                color={Palette.gold[500]}
-              />
+              <AppIcon name="offline-bolt" size={18} color={VANTA.warning} />
             </View>
-            <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+            <Text
+              style={{
+                fontFamily: "Manrope_400Regular",
+                fontSize: 14,
+                color: colors.textMuted,
+              }}
+            >
               Offline-first storage
             </Text>
           </View>
@@ -232,26 +320,41 @@ export default function OnboardingScreen() {
           entering={FadeInDown.delay(600).duration(500)}
           style={styles.footer}
         >
-          <Button
-            variant="primary"
-            size="lg"
+          <Pressable
             onPress={handleFinish}
-            icon={<AppIcon name="arrow-forward" size={20} color="#FFF" />}
-            style={styles.button}
-          >
-            Get Started
-          </Button>
-          <Text
-            style={[
-              Typography.body.xs,
-              { color: theme.textMuted, marginTop: Spacing.lg },
+            style={({ pressed }) => [
+              styles.button,
+              {
+                backgroundColor: pressed ? VANTA.light.gold : VANTA.gold,
+                opacity: pressed ? 0.9 : 1,
+              },
             ]}
+          >
+            <Text
+              style={{
+                fontFamily: "Manrope_600SemiBold",
+                fontSize: 16,
+                color: VANTA.black,
+                marginRight: Spacing.sm,
+              }}
+            >
+              Get Started
+            </Text>
+            <AppIcon name="arrow-forward" size={20} color={VANTA.black} />
+          </Pressable>
+          <Text
+            style={{
+              fontFamily: "Manrope_400Regular",
+              fontSize: 12,
+              color: colors.textMuted,
+              marginTop: Spacing.lg,
+            }}
           >
             Your data stays on your device
           </Text>
         </Animated.View>
       </ScrollView>
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <StatusBar style={isDark ? "light" : "dark"} />
     </KeyboardAvoidingView>
   );
 }
@@ -280,8 +383,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: Spacing.lg,
     borderCurve: "continuous",
-    boxShadow:
-      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.02), 0 16px 32px rgba(245,158,11,0.15), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   emoji: {
     fontSize: 40,
@@ -303,8 +404,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderCurve: "continuous",
-    boxShadow:
-      "0 2px 4px rgba(0,0,0,0.06), 0 4px 8px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   inputGroup: {
     marginBottom: Spacing.lg,
@@ -317,8 +416,6 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_600SemiBold",
     marginTop: Spacing.sm,
     borderCurve: "continuous",
-    boxShadow:
-      "inset 0 2px 4px rgba(0,0,0,0.03), inset 0 4px 8px rgba(0,0,0,0.02), inset 0 1px 2px rgba(0,0,0,0.04)",
   },
   features: {
     marginBottom: Spacing["2xl"],
@@ -335,8 +432,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     alignItems: "center",
     justifyContent: "center",
-    boxShadow:
-      "0 2px 4px rgba(0,0,0,0.05), 0 4px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.4)",
   },
   footer: {
     alignItems: "center",
@@ -346,7 +441,10 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: Radius.xl,
     borderCurve: "continuous",
-    boxShadow:
-      "0 2px 4px rgba(16,185,129,0.25), 0 4px 8px rgba(16,185,129,0.2), 0 8px 16px rgba(16,185,129,0.15), 0 16px 32px rgba(16,185,129,0.1), inset 0 1px 0 rgba(255,255,255,0.25)",
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

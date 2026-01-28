@@ -1,20 +1,20 @@
 /**
- * 📦 LOTS SCREEN - Ultra Premium Edition
- * Premium lot management with world-class animations
+ * 📦 LOTS SCREEN - Vanta-Aether Architecture
+ * "Digital Architecture evolving in infinite spatial void"
+ *
+ * v2.0 - The Vanta-Aether Era
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { PremiumButton, PremiumScreen } from "@/components/ui/PremiumUI";
+import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
 import { LotSummary, LotsRepository } from "@/db/repositories";
+import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
 import { useLocale } from "@/utils/i18n";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
-import { BlurView } from "expo-blur";
 import { router, useFocusEffect } from "expo-router";
 import React, {
     useCallback,
@@ -38,6 +38,9 @@ import Animated, {
     FadeIn,
     FadeOut,
     SlideInRight,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -47,6 +50,13 @@ const isAndroid = process.env.EXPO_OS === "android";
 if (isAndroid && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+// Gravity-based spring physics
+const SPRING_GRAVITY = {
+  damping: 22,
+  stiffness: 180,
+  mass: 1.2,
+};
 
 // ============ TYPES ============
 
@@ -72,16 +82,57 @@ interface LotsStats {
 const ANIMATION_STAGGER = 50;
 const MAX_ANIMATED_ITEMS = 8;
 
-const SORT_OPTIONS: { key: SortOption; label: string; icon: string }[] = [
-  { key: "newest", label: "Plus récent", icon: "schedule" },
-  { key: "oldest", label: "Plus ancien", icon: "history" },
-  { key: "investment_high", label: "Invest ↓", icon: "trending-down" },
-  { key: "investment_low", label: "Invest ↑", icon: "trending-up" },
-  { key: "revenue", label: "Revenue", icon: "attach-money" },
-  { key: "delta", label: "Delta", icon: "warning" },
+const SORT_OPTIONS: { key: SortOption; labelKey: string; icon: string }[] = [
+  { key: "newest", labelKey: "lots.sort.newest", icon: "schedule" },
+  { key: "oldest", labelKey: "lots.sort.oldest", icon: "history" },
+  {
+    key: "investment_high",
+    labelKey: "lots.sort.investmentHigh",
+    icon: "trending-down",
+  },
+  {
+    key: "investment_low",
+    labelKey: "lots.sort.investmentLow",
+    icon: "trending-up",
+  },
+  { key: "revenue", labelKey: "lots.sort.revenue", icon: "attach-money" },
+  { key: "delta", labelKey: "lots.sort.delta", icon: "warning" },
 ];
 
-// ============ LOT CARD COMPONENT ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🌌 OBSIDIAN BLOCK - Base Component
+// "Polished Obsidian with surgical reflections"
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function ObsidianBlock({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: any;
+}) {
+  const theme = useVantaTheme();
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: theme.surface,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: theme.borderGlass,
+          borderCurve: "continuous",
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📦 VANTA LOT CARD - Kinetic Card Component
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface LotCardProps {
   lot: LotSummary;
@@ -94,26 +145,23 @@ const LotCard = React.memo(function LotCard({
   index,
   shouldAnimate,
 }: LotCardProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
+  const theme = useVantaTheme();
+  const scale = useSharedValue(1);
+  const { t } = useLocale();
 
-  // Theme mapping
-  const theme = {
-    surfaceCard: isDark ? Theme.dark.surface : Theme.light.surface,
-    border: isDark ? Theme.dark.border : Theme.light.border,
-    primary: Theme.light.primary,
-    primarySubtle: Theme.light.primarySubtle,
-    text: isDark ? Theme.dark.text : Theme.light.text,
-    textMuted: isDark ? Theme.dark.textMuted : Theme.light.textMuted,
-    success: Theme.light.success,
-    successSubtle: Theme.light.successSubtle,
-    danger: Theme.light.danger,
-    surfaceHover: isDark ? Palette.neutral[800] : Palette.neutral[100],
+  // Theme tokens
+  const colors = {
+    background: theme.surface,
+    border: theme.borderGlass,
+    text: theme.text,
+    textSecondary: theme.textSecondary,
+    textMuted: theme.textMuted,
+    gold: theme.primary,
+    goldSubtle: theme.primarySubtle,
   };
 
   const investment = parseFloat(String(lot.totalInvestment)) || 0;
   const revenue = parseFloat(String(lot.totalRevenue)) || 0;
-  const delta = parseFloat(String(lot.delta)) || 0;
   const soldCount = parseInt(String(lot.soldCount)) || 0;
   const initialQty = lot.initialQuantity || 0;
 
@@ -125,6 +173,10 @@ const LotCard = React.memo(function LotCard({
     router.push(`/lots/${lot.id}`);
   }, [lot.id]);
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
     <Animated.View
       entering={
@@ -132,189 +184,279 @@ const LotCard = React.memo(function LotCard({
           ? SlideInRight.delay(index * ANIMATION_STAGGER).duration(300)
           : undefined
       }
+      style={animatedStyle}
     >
       <Pressable
         onPress={handlePress}
-        style={({ pressed }) => [
-          styles.lotCard,
-          {
-            backgroundColor: theme.surfaceCard,
-            borderColor: pressed ? theme.primary : theme.border,
-            transform: [{ scale: pressed ? 0.97 : 1 }],
-            boxShadow: pressed
-              ? `0 2px 8px rgba(0,0,0,0.1)`
-              : `0 4px 16px rgba(0,0,0,0.06), 0 8px 24px ${theme.primary}10`,
-          },
-        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`${lot.name || `Lot #${lot.id}`}. ${t("lots.investment")}: €${investment.toFixed(0)}. ${t("lots.revenue")}: €${revenue.toFixed(0)}.`}
+        accessibilityHint={t("accessibility.openDetails")}
+        onPressIn={() => {
+          scale.value = withSpring(0.98, SPRING_GRAVITY);
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, SPRING_GRAVITY);
+        }}
       >
-        {/* Header Row */}
-        <View style={styles.cardHeader}>
+        <ObsidianBlock
+          style={{
+            padding: 20,
+            marginBottom: 16,
+            overflow: "hidden",
+          }}
+        >
+          {/* Left accent line - Vanta signature */}
           <View
+            pointerEvents="none"
             style={[
-              styles.iconContainer,
+              styles.cardAccent,
               {
-                backgroundColor: theme.primarySubtle,
-                boxShadow: `0 4px 12px ${theme.primary}25`,
+                backgroundColor: isProfitable ? theme.success : theme.primary,
               },
             ]}
-          >
-            <AppIcon name="inventory-2" size={24} color={theme.primary} />
-          </View>
-          <View style={styles.cardTitleContainer}>
-            <Text
-              style={[Typography.heading.sm, { color: theme.text }]}
-              numberOfLines={1}
-            >
-              {lot.name || `Lot #${lot.id}`}
-            </Text>
-            <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-              {lot.provider || "N/A"} • {lot.buyDate}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                backgroundColor: isProfitable
-                  ? theme.successSubtle
-                  : theme.primarySubtle,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                Typography.label.xs,
-                { color: isProfitable ? theme.success : theme.primary },
-              ]}
-            >
-              {isProfitable ? "Profit" : "En cours"}
-            </Text>
-          </View>
-        </View>
-
-        {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: theme.border }]} />
-
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <View style={styles.statItem}>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              ARTICLES
-            </Text>
-            <Text style={[Typography.number.md, { color: theme.text }]}>
-              {initialQty}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              INVESTI
-            </Text>
-            <Text style={[Typography.number.md, { color: theme.text }]}>
-              €{investment.toFixed(0)}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              REVENU
-            </Text>
-            <Text style={[Typography.number.md, { color: theme.text }]}>
-              €{revenue.toFixed(0)}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[Typography.label.xs, { color: theme.textMuted }]}>
-              DELTA
-            </Text>
-            <Text
-              style={[
-                Typography.number.md,
-                { color: isProfitable ? theme.success : theme.danger },
-              ]}
-            >
-              {isProfitable ? "+" : "-"}€
-              {Math.abs(revenue - investment).toFixed(0)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Progress Bar */}
-        <View style={{ marginTop: Spacing.lg }}>
-          <View style={styles.progressContainer}>
+          />
+          {/* Header Row */}
+          <View style={styles.cardHeader}>
             <View
               style={[
-                styles.progressTrack,
-                { backgroundColor: theme.surfaceHover },
+                styles.iconContainer,
+                { backgroundColor: colors.goldSubtle },
               ]}
             >
-              <Animated.View
-                style={[
-                  styles.progressFill,
-                  {
-                    backgroundColor: theme.primary,
-                    width: `${Math.min(progressPercent, 100)}%`,
-                    boxShadow:
-                      progressPercent > 0
-                        ? `0 0 10px ${theme.primary}60, 0 0 4px ${theme.primary}40`
-                        : "none",
-                  },
-                ]}
-              />
+              <AppIcon name="inventory-2" size={24} color={colors.gold} />
             </View>
-            <Text
+            <View style={styles.cardTitleContainer}>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontFamily: "Manrope_700Bold",
+                  color: colors.text,
+                }}
+                numberOfLines={1}
+              >
+                {lot.name || `Lot #${lot.id}`}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontFamily: "Manrope_400Regular",
+                  color: colors.textMuted,
+                }}
+              >
+                {lot.provider || "N/A"} • {lot.buyDate}
+              </Text>
+            </View>
+            <View
               style={[
-                Typography.label.xs,
+                styles.statusBadge,
                 {
-                  color: theme.textMuted,
-                  fontWeight: "600",
+                  backgroundColor: isProfitable
+                    ? theme.successSubtle
+                    : colors.goldSubtle,
                 },
               ]}
             >
-              {soldCount}/{initialQty}
-            </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontFamily: "Manrope_700Bold",
+                  color: isProfitable ? theme.success : colors.gold,
+                }}
+              >
+                {isProfitable
+                  ? t("lots.status.profitable")
+                  : t("lots.status.inProgress")}
+              </Text>
+            </View>
           </View>
-        </View>
+
+          {/* Divider */}
+          <View
+            style={[
+              styles.divider,
+              {
+                backgroundColor: theme.borderGlass,
+              },
+            ]}
+          />
+
+          {/* Stats Grid */}
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: "Manrope_600SemiBold",
+                  color: colors.textMuted,
+                  letterSpacing: 1,
+                }}
+              >
+                {t("items.title").toUpperCase()}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontFamily: "Manrope_700Bold",
+                  color: colors.text,
+                  marginTop: 4,
+                }}
+              >
+                {initialQty}
+              </Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: "Manrope_600SemiBold",
+                  color: colors.textMuted,
+                  letterSpacing: 1,
+                }}
+              >
+                {t("lots.investment").toUpperCase()}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontFamily: "Manrope_700Bold",
+                  color: colors.text,
+                  marginTop: 4,
+                }}
+              >
+                €{investment.toFixed(0)}
+              </Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: "Manrope_600SemiBold",
+                  color: colors.textMuted,
+                  letterSpacing: 1,
+                }}
+              >
+                {t("lots.revenue").toUpperCase()}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontFamily: "Manrope_700Bold",
+                  color: colors.text,
+                  marginTop: 4,
+                }}
+              >
+                €{revenue.toFixed(0)}
+              </Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: "Manrope_600SemiBold",
+                  color: colors.textMuted,
+                  letterSpacing: 1,
+                }}
+              >
+                {t("lots.delta").toUpperCase()}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontFamily: "Manrope_700Bold",
+                  color: isProfitable ? theme.success : theme.danger,
+                  marginTop: 4,
+                }}
+              >
+                {isProfitable ? "+" : "-"}€
+                {Math.abs(revenue - investment).toFixed(0)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Progress Bar */}
+          <View style={{ marginTop: 20 }}>
+            <View style={styles.progressContainer}>
+              <View
+                style={[
+                  styles.progressTrack,
+                  {
+                    backgroundColor: theme.borderGlass,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      backgroundColor: colors.gold,
+                      width: `${Math.min(progressPercent, 100)}%`,
+                    },
+                  ]}
+                />
+              </View>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: "Manrope_600SemiBold",
+                  color: colors.textMuted,
+                  minWidth: 45,
+                  textAlign: "right",
+                }}
+              >
+                {soldCount}/{initialQty}
+              </Text>
+            </View>
+          </View>
+        </ObsidianBlock>
       </Pressable>
     </Animated.View>
   );
 });
 
-// ============ STATS BAR COMPONENT ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📊 VANTA STATS BAR
+// ═══════════════════════════════════════════════════════════════════════════════
 
-interface PremiumTheme {
-  surface: string;
-  border: string;
-  primary: string;
-  text: string;
-  textMuted: string;
-  textSecondary: string;
-  success: string;
-  danger: string;
-  warning: string;
-  surfaceCard: string;
-  primarySubtle: string;
-  successSubtle: string;
-  surfaceHover: string;
-  background: string;
-}
-
-function StatsBar({ stats, theme }: { stats: LotsStats; theme: PremiumTheme }) {
+function StatsBar({ stats }: { stats: LotsStats }) {
+  const theme = useVantaTheme();
+  const { t } = useLocale();
   const profit = stats.totalRevenue - stats.totalInvestment;
+
+  const colors = {
+    background: theme.surface,
+    border: theme.borderGlass,
+    text: theme.text,
+    textMuted: theme.textMuted,
+    gold: theme.primary,
+  };
 
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.statsBar}>
       <View
         style={[
           styles.statsBarItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
+          { backgroundColor: colors.background, borderColor: colors.border },
         ]}
       >
-        <AppIcon name="folder" size={16} color={theme.primary} />
+        <AppIcon name="folder" size={16} color={colors.gold} />
         <View>
-          <Text style={[Typography.number.sm, { color: theme.text }]}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Manrope_700Bold",
+              color: colors.text,
+            }}
+          >
             {stats.totalLots}
           </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Lots
+          <Text
+            style={{
+              fontSize: 11,
+              fontFamily: "Manrope_400Regular",
+              color: colors.textMuted,
+            }}
+          >
+            {t("navigation.lots")}
           </Text>
         </View>
       </View>
@@ -322,20 +464,28 @@ function StatsBar({ stats, theme }: { stats: LotsStats; theme: PremiumTheme }) {
       <View
         style={[
           styles.statsBarItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
+          { backgroundColor: colors.background, borderColor: colors.border },
         ]}
       >
-        <AppIcon
-          name="account-balance-wallet"
-          size={16}
-          color={theme.warning}
-        />
+        <AppIcon name="account-balance-wallet" size={16} color={theme.warning} />
         <View>
-          <Text style={[Typography.number.sm, { color: theme.text }]}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Manrope_700Bold",
+              color: colors.text,
+            }}
+          >
             €{stats.totalInvestment.toFixed(0)}
           </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Investi
+          <Text
+            style={{
+              fontSize: 11,
+              fontFamily: "Manrope_400Regular",
+              color: colors.textMuted,
+            }}
+          >
+            {t("lots.investment")}
           </Text>
         </View>
       </View>
@@ -343,7 +493,7 @@ function StatsBar({ stats, theme }: { stats: LotsStats; theme: PremiumTheme }) {
       <View
         style={[
           styles.statsBarItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
+          { backgroundColor: colors.background, borderColor: colors.border },
         ]}
       >
         <AppIcon
@@ -353,15 +503,22 @@ function StatsBar({ stats, theme }: { stats: LotsStats; theme: PremiumTheme }) {
         />
         <View>
           <Text
-            style={[
-              Typography.number.sm,
-              { color: profit >= 0 ? theme.success : theme.danger },
-            ]}
+            style={{
+              fontSize: 16,
+              fontFamily: "Manrope_700Bold",
+              color: profit >= 0 ? theme.success : theme.danger,
+            }}
           >
             {profit >= 0 ? "+" : ""}€{profit.toFixed(0)}
           </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Profit
+          <Text
+            style={{
+              fontSize: 11,
+              fontFamily: "Manrope_400Regular",
+              color: colors.textMuted,
+            }}
+          >
+            {t("lots.profit")}
           </Text>
         </View>
       </View>
@@ -369,31 +526,41 @@ function StatsBar({ stats, theme }: { stats: LotsStats; theme: PremiumTheme }) {
   );
 }
 
-// ============ SEARCH BAR COMPONENT ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔍 VANTA SEARCH BAR
+// ═══════════════════════════════════════════════════════════════════════════════
 
 function SearchBar({
   value,
   onChangeText,
   onClear,
-  theme,
 }: {
   value: string;
   onChangeText: (text: string) => void;
   onClear: () => void;
-  theme: PremiumTheme;
 }) {
+  const theme = useVantaTheme();
+  const { t } = useLocale();
+  const colors = {
+    background: theme.surface,
+    border: theme.borderGlass,
+    text: theme.text,
+    textMuted: theme.textMuted,
+  };
+
   return (
     <View
       style={[
         styles.searchContainer,
-        { backgroundColor: theme.surface, borderColor: theme.border },
+        { backgroundColor: colors.background, borderColor: colors.border },
       ]}
     >
-      <AppIcon name="search" size={20} color={theme.textMuted} />
+      <AppIcon name="search" size={20} color={colors.textMuted} />
       <TextInput
-        style={[styles.searchInput, { color: theme.text }]}
-        placeholder="Rechercher lot, fournisseur..."
-        placeholderTextColor={theme.textMuted}
+        style={[styles.searchInput, { color: colors.text }]}
+        placeholder={t("common.search")}
+        placeholderTextColor={colors.textMuted}
+        accessibilityLabel={t("accessibility.search")}
         value={value}
         onChangeText={onChangeText}
         returnKeyType="search"
@@ -401,44 +568,44 @@ function SearchBar({
         autoCapitalize="none"
       />
       {value.length > 0 && (
-        <Pressable onPress={onClear} hitSlop={8}>
-          <AppIcon name="close" size={18} color={theme.textMuted} />
+        <Pressable
+          onPress={onClear}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.cancel")}
+          accessibilityHint={t("common.search")}
+        >
+          <AppIcon name="close" size={18} color={colors.textMuted} />
         </Pressable>
       )}
     </View>
   );
 }
 
-// ============ MAIN SCREEN ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📦 MAIN SCREEN - VANTA LOTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export default function LotsScreen() {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
+  const theme = useVantaTheme();
   const flashListRef = useRef<FlashListRef<LotSummary>>(null);
+  const { isReduceMotionEnabled } = useAccessibility();
   const { t } = useLocale();
 
   // Screen tracking
   useTrackScreen("lots");
 
-  // Premium theme
-  const theme: PremiumTheme = {
-    surface: isDark ? Theme.dark.surface : Theme.light.surface,
-    surfaceCard: isDark ? Theme.dark.surface : Theme.light.surface,
-    surfaceHover: isDark ? Palette.neutral[800] : Palette.neutral[100],
-    background: isDark ? Theme.dark.background : Theme.light.background,
-    border: isDark ? Theme.dark.border : Theme.light.border,
-    primary: Theme.light.primary,
-    primarySubtle: Theme.light.primarySubtle,
-    text: isDark ? Theme.dark.text : Theme.light.text,
-    textMuted: isDark ? Theme.dark.textMuted : Theme.light.textMuted,
-    textSecondary: isDark
-      ? Theme.dark.textSecondary
-      : Theme.light.textSecondary,
-    success: Theme.light.success,
-    successSubtle: Theme.light.successSubtle,
-    danger: Theme.light.danger,
-    warning: Theme.light.warning,
+  // Vanta theme colors
+  const colors = {
+    background: theme.background,
+    surface: theme.surface,
+    border: theme.borderGlass,
+    text: theme.text,
+    textSecondary: theme.textSecondary,
+    textMuted: theme.textMuted,
+    gold: theme.primary,
+    goldSubtle: theme.primarySubtle,
   };
 
   // Data state
@@ -593,10 +760,12 @@ export default function LotsScreen() {
       <LotCard
         lot={item}
         index={index}
-        shouldAnimate={!hasAnimated && index < MAX_ANIMATED_ITEMS}
+        shouldAnimate={
+          !isReduceMotionEnabled && !hasAnimated && index < MAX_ANIMATED_ITEMS
+        }
       />
     ),
-    [hasAnimated],
+    [hasAnimated, isReduceMotionEnabled],
   );
 
   const renderEmpty = useCallback(() => {
@@ -606,40 +775,47 @@ export default function LotsScreen() {
       return (
         <View style={styles.empty}>
           <View
-            style={[styles.emptyIcon, { backgroundColor: theme.surfaceCard }]}
+            style={[styles.emptyIcon, { backgroundColor: colors.goldSubtle }]}
           >
-            <AppIcon name="search-off" size={48} color={theme.textMuted} />
+            <AppIcon name="search-off" size={48} color={colors.textMuted} />
           </View>
           <Text
-            style={[
-              Typography.heading.md,
-              { color: theme.text, marginTop: Spacing.lg },
-            ]}
+            style={{
+              fontSize: 20,
+              fontFamily: "Manrope_700Bold",
+              color: colors.text,
+              marginTop: 20,
+            }}
           >
-            Aucun résultat
+            {t("common.noResults")}
           </Text>
           <Text
-            style={[
-              Typography.body.sm,
-              {
-                color: theme.textMuted,
-                textAlign: "center",
-                marginTop: Spacing.xs,
-              },
-            ]}
+            style={{
+              fontSize: 14,
+              fontFamily: "Manrope_400Regular",
+              color: colors.textMuted,
+              textAlign: "center",
+              marginTop: 8,
+            }}
           >
-            Aucun lot ne correspond à "{searchQuery}"
+            {`${t("common.noResults")}: "${searchQuery}"`}
           </Text>
           <Pressable
             onPress={handleClearSearch}
             style={{
-              marginTop: Spacing.lg,
-              paddingVertical: Spacing.sm,
-              paddingHorizontal: Spacing.lg,
+              marginTop: 20,
+              paddingVertical: 12,
+              paddingHorizontal: 24,
             }}
           >
-            <Text style={[Typography.body.md, { color: theme.primary }]}>
-              Effacer la recherche
+            <Text
+              style={{
+                fontSize: 15,
+                fontFamily: "Manrope_600SemiBold",
+                color: colors.gold,
+              }}
+            >
+              {t("common.cancel")}
             </Text>
           </Pressable>
         </View>
@@ -649,41 +825,58 @@ export default function LotsScreen() {
     return (
       <View style={styles.empty}>
         <View
-          style={[styles.emptyIcon, { backgroundColor: theme.primarySubtle }]}
+          style={[styles.emptyIcon, { backgroundColor: colors.goldSubtle }]}
         >
-          <AppIcon name="inventory-2" size={48} color={theme.primary} />
+          <AppIcon name="inventory-2" size={48} color={colors.gold} />
         </View>
         <Text
-          style={[
-            Typography.heading.md,
-            { color: theme.text, marginTop: Spacing.lg },
-          ]}
+          style={{
+            fontSize: 20,
+            fontFamily: "Manrope_700Bold",
+            color: colors.text,
+            marginTop: 20,
+          }}
         >
-          Aucun lot
+          {t("lots.empty.title")}
         </Text>
         <Text
-          style={[
-            Typography.body.sm,
-            {
-              color: theme.textMuted,
-              textAlign: "center",
-              marginTop: Spacing.xs,
-            },
-          ]}
+          style={{
+            fontSize: 14,
+            fontFamily: "Manrope_400Regular",
+            color: colors.textMuted,
+            textAlign: "center",
+            marginTop: 8,
+          }}
         >
-          Commencez à suivre vos achats{"\n"}en créant votre premier lot
+          {t("lots.empty.description")}
         </Text>
-        <PremiumButton
-          icon="add"
-          variant="primary"
+        <Pressable
           onPress={() => router.push("/lots/new")}
-          style={{ marginTop: Spacing.xl }}
+          style={{
+            marginTop: 24,
+            backgroundColor: colors.gold,
+            paddingVertical: 14,
+            paddingHorizontal: 28,
+            borderRadius: 14,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+          }}
         >
-          Créer un lot
-        </PremiumButton>
+          <AppIcon name="add" size={20} color={theme.textOnAccent} />
+          <Text
+            style={{
+              fontSize: 15,
+              fontFamily: "Manrope_700Bold",
+              color: theme.textOnAccent,
+            }}
+          >
+            {t("lots.newLot")}
+          </Text>
+        </Pressable>
       </View>
     );
-  }, [loading, searchQuery, theme, handleClearSearch]);
+  }, [loading, searchQuery, colors, handleClearSearch, t, theme]);
 
   const keyExtractor = useCallback(
     (item: LotSummary) => item.id.toString(),
@@ -691,62 +884,82 @@ export default function LotsScreen() {
   );
 
   return (
-    <PremiumScreen>
-      {/* Floating Header with Blur */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <BlurView
-          intensity={80}
-          tint={colorScheme === "dark" ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: theme.surface + "E6" },
-          ]}
-        />
+    <VantaScreen style={styles.container}>
+      {/* Vanta Header */}
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top,
+            backgroundColor: colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
         <View style={styles.headerContent}>
           <View>
-            <Text style={[Typography.display.sm, { color: theme.text }]}>
-              Mes Lots
+            <Text
+              style={{
+                fontSize: 28,
+                fontFamily: "Manrope_800ExtraBold",
+                color: colors.text,
+                letterSpacing: -0.5,
+              }}
+            >
+              {t("lots.title")}
             </Text>
-            <Text style={[Typography.body.sm, { color: theme.textSecondary }]}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontFamily: "Manrope_400Regular",
+                color: colors.textSecondary,
+                marginTop: 4,
+              }}
+            >
               {processedLots.length} lot{processedLots.length !== 1 ? "s" : ""}{" "}
               • {stats.totalItems} pièces
             </Text>
           </View>
           <Pressable
-            style={[styles.addButton, { backgroundColor: theme.primary }]}
+            style={[styles.addButton, { backgroundColor: colors.gold }]}
             onPress={() => {
               Haptic.impactMedium();
               router.push("/lots/new");
             }}
+            accessibilityRole="button"
+            accessibilityLabel={t("lots.newLot")}
           >
-            <AppIcon name="add" size={24} color={Palette.neutral.white} />
+            <AppIcon
+              name="add"
+              size={24}
+              color={theme.textOnAccent}
+            />
           </Pressable>
         </View>
       </View>
 
-      <View style={{ flex: 1, paddingTop: insets.top + 90 }}>
+      <View style={{ flex: 1, paddingTop: 16 }}>
         {/* Search Bar */}
         <View style={styles.searchSection}>
           <SearchBar
             value={searchQuery}
             onChangeText={handleSearch}
             onClear={handleClearSearch}
-            theme={theme}
           />
 
           {/* Sort Button */}
           <Pressable
             style={[
               styles.sortButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
+              { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
             onPress={() => {
               Haptic.selection();
               setShowSortMenu(!showSortMenu);
             }}
+            accessibilityRole="button"
+            accessibilityLabel={t("common.sort")}
           >
             <AppIcon
               name={
@@ -754,7 +967,7 @@ export default function LotsScreen() {
                 "sort"
               }
               size={18}
-              color={theme.primary}
+              color={colors.gold}
             />
           </Pressable>
         </View>
@@ -766,7 +979,7 @@ export default function LotsScreen() {
             exiting={FadeOut.duration(100)}
             style={[
               styles.sortMenu,
-              { backgroundColor: theme.surface, borderColor: theme.border },
+              { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
             {SORT_OPTIONS.map((option) => (
@@ -775,27 +988,29 @@ export default function LotsScreen() {
                 style={[
                   styles.sortOption,
                   sortBy === option.key && {
-                    backgroundColor: theme.primarySubtle,
+                    backgroundColor: colors.goldSubtle,
                   },
                 ]}
                 onPress={() => handleSortChange(option.key)}
+                accessibilityRole="button"
+                accessibilityLabel={t(option.labelKey)}
+                accessibilityState={{ selected: sortBy === option.key }}
               >
                 <AppIcon
                   name={option.icon as any}
                   size={16}
                   color={
-                    sortBy === option.key ? theme.primary : theme.textSecondary
+                    sortBy === option.key ? colors.gold : colors.textSecondary
                   }
                 />
                 <Text
-                  style={[
-                    Typography.body.sm,
-                    {
-                      color: sortBy === option.key ? theme.primary : theme.text,
-                    },
-                  ]}
+                  style={{
+                    fontSize: 14,
+                    fontFamily: "Manrope_500Medium",
+                    color: sortBy === option.key ? colors.gold : colors.text,
+                  }}
                 >
-                  {option.label}
+                  {t(option.labelKey)}
                 </Text>
               </Pressable>
             ))}
@@ -803,7 +1018,7 @@ export default function LotsScreen() {
         )}
 
         {/* Stats Bar */}
-        {lots.length > 0 && <StatsBar stats={stats} theme={theme} />}
+        {lots.length > 0 && <StatsBar stats={stats} />}
 
         {/* Lots List - FlashList for performance */}
         {loading && !refreshing ? (
@@ -820,8 +1035,8 @@ export default function LotsScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
-                tintColor={theme.primary}
-                colors={[theme.primary]}
+                tintColor={colors.gold}
+                colors={[colors.gold]}
               />
             }
             contentContainerStyle={styles.listContent}
@@ -830,64 +1045,52 @@ export default function LotsScreen() {
           />
         )}
       </View>
-    </PremiumScreen>
+    </VantaScreen>
   );
 }
 
-// ============ STYLES ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎨 STYLES - VANTA AETHER
+// ═══════════════════════════════════════════════════════════════════════════════
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    overflow: "hidden",
+    paddingBottom: 16,
   },
   headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
   addButton: {
     width: 48,
     height: 48,
-    borderRadius: Radius.xl,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     borderCurve: "continuous",
-    // Premium glow
-    boxShadow: `
-      0 4px 16px rgba(16, 185, 129, 0.4),
-      0 2px 8px rgba(16, 185, 129, 0.3)
-    `,
   },
   searchSection: {
     flexDirection: "row",
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
+    paddingHorizontal: 24,
+    gap: 12,
+    marginBottom: 12,
   },
   searchContainer: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 16,
     height: 48,
-    borderRadius: Radius.xl,
+    borderRadius: 16,
     borderWidth: 1,
-    gap: Spacing.sm,
+    gap: 12,
     borderCurve: "continuous",
-    boxShadow: `
-      0 2px 8px rgba(0, 0, 0, 0.04),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5)
-    `,
   },
   searchInput: {
     flex: 1,
@@ -897,50 +1100,46 @@ const styles = StyleSheet.create({
   sortButton: {
     width: 48,
     height: 48,
-    borderRadius: Radius.xl,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     borderCurve: "continuous",
-    boxShadow: `
-      0 2px 8px rgba(0, 0, 0, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5)
-    `,
   },
   sortMenu: {
     position: "absolute",
-    top: 130,
-    right: Spacing.xl,
+    top: 70,
+    right: 24,
     zIndex: 100,
-    borderRadius: Radius.lg,
+    borderRadius: 16,
     borderWidth: 1,
     overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
   },
   sortOption: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
   },
   statsBar: {
     flexDirection: "row",
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    paddingHorizontal: 24,
+    gap: 12,
+    marginBottom: 16,
   },
   statsBarItem: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: Radius.lg,
+    gap: 10,
+    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
+    borderCurve: "continuous",
   },
   listContent: {
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: 24,
     paddingBottom: 120,
   },
   emptyList: {
@@ -948,56 +1147,41 @@ const styles = StyleSheet.create({
   },
   loaderContainer: {
     flex: 1,
-    paddingTop: Spacing["2xl"],
-  },
-  lotCard: {
-    borderRadius: Radius["2xl"],
-    padding: Spacing.xl,
-    marginBottom: Spacing.lg,
-    borderWidth: 1,
-    borderCurve: "continuous",
-    // Ultra premium multi-layer shadow
-    boxShadow: `
-      0 1px 2px rgba(0, 0, 0, 0.02),
-      0 2px 4px rgba(0, 0, 0, 0.02),
-      0 4px 8px rgba(0, 0, 0, 0.03),
-      0 8px 16px rgba(0, 0, 0, 0.04),
-      0 16px 32px rgba(16, 185, 129, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.7)
-    `,
+    paddingTop: 32,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
+    gap: 14,
+  },
+  cardAccent: {
+    position: "absolute",
+    left: 0,
+    top: 12,
+    bottom: 12,
+    width: 2,
+    borderRadius: 999,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: Radius.xl,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     borderCurve: "continuous",
-    // Premium glow effect
-    boxShadow: `
-      0 4px 12px rgba(16, 185, 129, 0.25),
-      0 2px 6px rgba(16, 185, 129, 0.15),
-      inset 0 1px 2px rgba(255,255,255,0.2)
-    `,
   },
   cardTitleContainer: {
     flex: 1,
   },
   statusBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderCurve: "continuous",
   },
   divider: {
     height: 1,
-    marginVertical: Spacing.lg,
-    opacity: 0.6,
+    marginVertical: 16,
   },
   statsGrid: {
     flexDirection: "row",
@@ -1010,36 +1194,29 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
+    gap: 14,
   },
   progressTrack: {
     flex: 1,
-    height: 10,
-    borderRadius: 5,
+    height: 8,
+    borderRadius: 4,
     overflow: "hidden",
-    // Inset shadow for depth
-    boxShadow: `inset 0 2px 4px rgba(0, 0, 0, 0.08)`,
   },
   progressFill: {
     height: "100%",
-    borderRadius: 5,
-    // Premium gradient-like glow on progress
-    boxShadow: `
-      0 0 12px rgba(16, 185, 129, 0.5),
-      0 2px 8px rgba(16, 185, 129, 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3)
-    `,
+    borderRadius: 4,
   },
   empty: {
     alignItems: "center",
-    paddingVertical: Spacing["4xl"],
-    paddingHorizontal: Spacing.xl,
+    paddingVertical: 64,
+    paddingHorizontal: 24,
   },
   emptyIcon: {
     width: 96,
     height: 96,
-    borderRadius: Radius["2xl"],
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
   },
 });

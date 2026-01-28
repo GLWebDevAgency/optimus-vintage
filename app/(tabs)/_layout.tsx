@@ -29,7 +29,7 @@ import Animated, {
     useSharedValue,
     withSequence,
     withSpring,
-    withTiming
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -254,12 +254,13 @@ function VantaDock({ state, descriptors, navigation }: VantaDockProps) {
     activeIndex.value = withSpring(state.index, SPRING_GRAVITY);
   }, [state.index]);
 
-  // Route configuration with abstract labels
+  // Route configuration with SHORT universal labels (no i18n needed for tabs)
+  // Using short English/universal words that fit well in tab bar
   const routeConfigMap: Record<string, { name: AppIconName; label: string }> = {
-    index: { name: "home", label: "Accueil" },
+    index: { name: "home", label: "Home" },
     lots: { name: "inventory-2", label: "Lots" },
     stock: { name: "checkroom", label: "Stock" },
-    sales: { name: "point-of-sale", label: "Ventes" },
+    sales: { name: "point-of-sale", label: "Sales" },
     settings: { name: "settings", label: "Config" },
   };
 

@@ -1,14 +1,15 @@
 /**
  * 🌌 VANTA DASHBOARD - The Singularity
  *
- * "Each data point is a gravitational singularity"
- * Obsidian Slabs floating in the spatial void
+ * "Rejeter le concept de 'pages' au profit d'une Architecture Digitale
+ *  évoluant dans un vide spatial infini."
  *
- * Architecture:
- * - AETHER (Dark): Absolute Zero void, Gold emanations
- * - IVORY (Light): Organic warmth, Champagne refractions
+ * Design Principles:
+ * - FOND: Noir 'Vanta' absolu (#000000), néant profond
+ * - MATIÈRE: Obsidienne polie, Titane noir, Verre de carbone
+ * - ACCENTS: Or Pur uniquement, traités comme phénomènes physiques
  *
- * v6.0 - The "Vanta" Era
+ * v6.0 - The "Vanta-Aether" Era
  */
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
@@ -18,7 +19,7 @@ import {
   useVantaTheme,
 } from "@/components/ui/PremiumUI";
 import { SkeletonDashboard } from "@/components/ui/Skeleton";
-import { Palette, Radius, Spacing, Typography } from "@/constants/Theme";
+import { Palette, Spacing } from "@/constants/Theme";
 import { LotsRepository, SalesRepository } from "@/db/repositories";
 import { useTrackScreen } from "@/utils/analytics";
 import { computeLotSummary } from "@/utils/engine/calculations";
@@ -32,7 +33,7 @@ import {
   RefreshControl,
   ScrollView,
   Text,
-  View
+  View,
 } from "react-native";
 import Animated, {
   Easing,
@@ -42,14 +43,42 @@ import Animated, {
   useSharedValue,
   withRepeat,
   withSpring,
-  withTiming
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle } from "react-native-svg";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🌌 VANTA PHYSICS - Gravity-Based Springs
+// 🎨 VANTA-AETHER DESIGN TOKENS
+// "Digital Architecture evolving in infinite spatial void"
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const VANTA = {
+  // Absolute Zero - The Void
+  black: "#000000",
+  obsidian: "#0a0a0a",
+  obsidianLight: "#1a1a1a",
+  titanium: "#111111",
+  carbon: "#1c1c1c",
+
+  // Pure Gold - Photon Emanations
+  gold: "#f4c025",
+  goldGlow: "rgba(244, 192, 37, 0.6)",
+  goldSubtle: "rgba(244, 192, 37, 0.15)",
+  goldMicro: "rgba(244, 192, 37, 0.08)",
+
+  // Mercury - Secondary Accent
+  mercury: "#e8e8e8",
+  mercuryGlow: "rgba(232, 232, 232, 0.4)",
+
+  // Text
+  textPrimary: "#ffffff",
+  textSecondary: "rgba(255, 255, 255, 0.6)",
+  textMuted: "rgba(255, 255, 255, 0.4)",
+  textGhost: "rgba(255, 255, 255, 0.2)",
+} as const;
+
+// Gravity-based spring physics
 const SPRING_GRAVITY = {
   damping: 22,
   stiffness: 180,
@@ -115,10 +144,103 @@ function formatPercent(value: number): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🌌 VANTA COMPONENTS - Digital Sculptures
+// 🌌 OBSIDIAN BLOCK - Base Component (like template's obsidian-block)
+// "Polished Obsidian with surgical reflections"
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── Status Pulse - Animated connection indicator ────────────────────────────
+interface ObsidianBlockProps {
+  children: React.ReactNode;
+  style?: any;
+  glowPosition?: "bottom-right" | "top-left" | "center";
+  hasTopShine?: boolean;
+}
+
+function ObsidianBlock({
+  children,
+  style,
+  glowPosition = "bottom-right",
+  hasTopShine = true,
+}: ObsidianBlockProps) {
+  const isDark = useIsDarkMode();
+
+  // Position for internal light leak
+  const glowStyles = {
+    "bottom-right": { bottom: -20, right: -20 },
+    "top-left": { top: -20, left: -20 },
+    center: {
+      top: "50%",
+      left: "50%",
+      transform: [{ translateX: -40 }, { translateY: -40 }],
+    },
+  };
+
+  if (!isDark) {
+    // Light mode: use Ivory styling
+    return (
+      <View
+        style={[
+          {
+            backgroundColor: Palette.ivory.pearl,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: `${Palette.metal.champagne}15`,
+            overflow: "hidden",
+          },
+          style,
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: VANTA.obsidian,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: "rgba(255, 255, 255, 0.06)",
+          overflow: "hidden",
+        },
+        style,
+      ]}
+    >
+      {/* Top shine line (surgical reflection) */}
+      {hasTopShine && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 1,
+          }}
+        >
+          <LinearGradient
+            colors={[
+              "rgba(255,255,255,0)",
+              "rgba(255,255,255,0.08)",
+              "rgba(255,255,255,0)",
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ flex: 1 }}
+          />
+        </View>
+      )}
+
+      {children}
+    </View>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🌌 VANTA COMPONENTS - Digital Architecture
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Status Pulse - Gold photon emanation indicator ─────────────────────────
 function StatusPulse() {
   const isDark = useIsDarkMode();
   const pulseScale = useSharedValue(1);
@@ -126,12 +248,12 @@ function StatusPulse() {
 
   useEffect(() => {
     pulseScale.value = withRepeat(
-      withTiming(1.4, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      withTiming(1.8, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
       -1,
       true,
     );
     pulseOpacity.value = withRepeat(
-      withTiming(0.2, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
       -1,
       true,
     );
@@ -142,36 +264,186 @@ function StatusPulse() {
     opacity: pulseOpacity.value,
   }));
 
-  const goldColor = isDark ? Palette.metal.gold : Palette.metal.champagne;
+  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
+  const goldGlow = isDark ? VANTA.goldGlow : Palette.metal.champagneGlow;
 
   return (
-    <View style={{ width: 10, height: 10, justifyContent: "center", alignItems: "center" }}>
+    <View
+      style={{
+        width: 12,
+        height: 12,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      {/* Pulsing glow ring */}
       <Animated.View
         style={[
           {
             position: "absolute",
-            width: 10,
-            height: 10,
-            borderRadius: 5,
+            width: 12,
+            height: 12,
+            borderRadius: 6,
             backgroundColor: goldColor,
           },
           pulseStyle,
         ]}
       />
+      {/* Solid core */}
       <View
         style={{
           width: 8,
           height: 8,
           borderRadius: 4,
           backgroundColor: goldColor,
-          boxShadow: `0 0 12px ${isDark ? Palette.metal.goldGlow : Palette.metal.champagneGlow}`,
         }}
       />
     </View>
   );
 }
 
-// ─── Vanta Period Selector - Floating Obsidian Pills ─────────────────────────
+// ─── Gravity Disk - Hero KPI with Mercury Ring (like template) ───────────────
+interface GravityDiskProps {
+  percentage: number;
+  value: string;
+  label: string;
+  sublabel?: string;
+}
+
+function GravityDisk({ percentage, value, label, sublabel }: GravityDiskProps) {
+  const isDark = useIsDarkMode();
+
+  // Floating animation
+  const floatY = useSharedValue(0);
+
+  useEffect(() => {
+    floatY.value = withRepeat(
+      withTiming(-5, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true,
+    );
+  }, []);
+
+  const floatStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: floatY.value }],
+  }));
+
+  // Calculate stroke dashoffset for percentage
+  const circumference = 2 * Math.PI * 110; // radius = 110
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
+  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
+  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
+
+  return (
+    <View style={{ alignItems: "center", paddingVertical: Spacing.xl }}>
+      {/* Title */}
+      <Text
+        style={{
+          fontSize: 11,
+          fontWeight: "300",
+          letterSpacing: 4,
+          textTransform: "uppercase",
+          color: mutedColor,
+          marginBottom: Spacing.lg,
+        }}
+      >
+        {label}
+      </Text>
+
+      {/* Mercury Ring Container */}
+      <Animated.View
+        style={[{ position: "relative", width: 256, height: 256 }, floatStyle]}
+      >
+        {/* Outer faint ring */}
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: 128,
+            borderWidth: 1,
+            borderColor: isDark
+              ? "rgba(255, 255, 255, 0.05)"
+              : Palette.ivory.linen,
+          }}
+        />
+
+        {/* SVG Mercury Ring */}
+        <Svg
+          width={256}
+          height={256}
+          style={{ transform: [{ rotate: "-90deg" }] }}
+        >
+          {/* Background ring */}
+          <Circle
+            cx={128}
+            cy={128}
+            r={110}
+            stroke={isDark ? VANTA.obsidianLight : Palette.ivory.linen}
+            strokeWidth={2}
+            fill="none"
+          />
+          {/* Gold progress ring */}
+          <Circle
+            cx={128}
+            cy={128}
+            r={110}
+            stroke={goldColor}
+            strokeWidth={4}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+          />
+        </Svg>
+
+        {/* Inner Content */}
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+            <Text
+              style={{
+                fontSize: 64,
+                fontWeight: "700",
+                color: textColor,
+                letterSpacing: -3,
+              }}
+            >
+              {value}
+            </Text>
+            {sublabel && (
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: "700",
+                  color: `${goldColor}CC`,
+                  marginTop: 12,
+                }}
+              >
+                {sublabel}
+              </Text>
+            )}
+          </View>
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
+// ─── Vanta Period Selector - Minimal Obsidian Pills ──────────────────────────
 interface VantaPeriodSelectorProps {
   options: PeriodOption[];
   selectedKey: PeriodFilter;
@@ -183,7 +455,6 @@ function VantaPeriodSelector({
   selectedKey,
   onChange,
 }: VantaPeriodSelectorProps) {
-  const theme = useVantaTheme();
   const isDark = useIsDarkMode();
   const selectedIndex = options.findIndex((o) => o.key === selectedKey);
   const segmentWidth = 100 / options.length;
@@ -202,97 +473,51 @@ function VantaPeriodSelector({
     width: `${segmentWidth}%` as unknown as number,
   }));
 
-  // Pulsing glow for active indicator
-  const glowOpacity = useSharedValue(0.6);
-  useEffect(() => {
-    glowOpacity.value = withRepeat(
-      withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
-    );
-  }, []);
-
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-  }));
+  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
+  const goldGlow = isDark ? VANTA.goldGlow : Palette.metal.champagneGlow;
 
   return (
-    <View
-      style={{
-        paddingHorizontal: Spacing.lg,
-        marginVertical: Spacing.sm,
-      }}
-    >
+    <View style={{ paddingHorizontal: Spacing.lg, marginVertical: Spacing.md }}>
       <View
         style={{
-          height: 48,
-          borderRadius: 16,
-          backgroundColor: isDark ? Palette.vanta.titanium : Palette.ivory.sand,
+          height: 44,
+          borderRadius: 14,
+          backgroundColor: isDark ? VANTA.obsidian : Palette.ivory.sand,
           borderWidth: 1,
           borderColor: isDark
-            ? `${Palette.metal.gold}15`
+            ? "rgba(255,255,255,0.03)"
             : `${Palette.metal.champagne}20`,
           padding: 4,
           position: "relative",
-          boxShadow: isDark
-            ? `inset 0 2px 8px ${Palette.vanta.black}80`
-            : `inset 0 2px 6px rgba(0, 0, 0, 0.06)`,
         }}
       >
-        {/* Gold/Champagne Indicator */}
+        {/* Gold Indicator with glow */}
         <Animated.View
           style={[
             {
               position: "absolute",
               top: 4,
               bottom: 4,
-              borderRadius: 12,
+              borderRadius: 10,
             },
             indicatorStyle,
           ]}
         >
-          <Animated.View
-            style={[
-              {
-                position: "absolute",
-                top: -2,
-                left: -2,
-                right: -2,
-                bottom: -2,
-                borderRadius: 14,
-                backgroundColor: isDark
-                  ? Palette.metal.goldGlow
-                  : Palette.metal.champagneGlow,
-              },
-              glowStyle,
-            ]}
-          />
           <View
             style={{
               flex: 1,
-              borderRadius: 12,
+              borderRadius: 10,
               backgroundColor: isDark
-                ? Palette.vanta.graphite
+                ? VANTA.obsidianLight
                 : Palette.ivory.pearl,
               borderWidth: 1,
-              borderColor: isDark
-                ? Palette.metal.gold
-                : Palette.metal.champagne,
-              boxShadow: isDark
-                ? `0 4px 16px ${Palette.metal.goldGlow}`
-                : `0 4px 16px ${Palette.metal.champagneGlow}`,
+              borderColor: goldColor,
             }}
           />
         </Animated.View>
 
         {/* Segment Buttons */}
-        <View
-          style={{
-            flex: 1,
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
           {options.map((option) => {
             const isSelected = option.key === selectedKey;
 
@@ -313,15 +538,15 @@ function VantaPeriodSelector({
               >
                 <Text
                   style={{
-                    fontSize: 13,
+                    fontSize: 12,
                     fontFamily: "Manrope_700Bold",
                     fontWeight: "700",
-                    letterSpacing: 0.5,
+                    letterSpacing: 1,
                     color: isSelected
-                      ? isDark
-                        ? Palette.metal.gold
-                        : Palette.metal.champagneDark
-                      : theme.textMuted,
+                      ? goldColor
+                      : isDark
+                        ? VANTA.textMuted
+                        : Palette.neutral[400],
                   }}
                 >
                   {option.shortLabel}
@@ -335,7 +560,7 @@ function VantaPeriodSelector({
   );
 }
 
-// ─── Vanta Slab Button - Obsidian/Pearl Interactive ──────────────────────────
+// ─── Vanta Slab Button - Obsidian Interactive ────────────────────────────────
 interface VantaSlabButtonProps {
   icon: AppIconName;
   onPress: () => void;
@@ -343,7 +568,6 @@ interface VantaSlabButtonProps {
 }
 
 function VantaSlabButton({ icon, onPress, size = 20 }: VantaSlabButtonProps) {
-  const theme = useVantaTheme();
   const isDark = useIsDarkMode();
   const scale = useSharedValue(1);
 
@@ -359,6 +583,8 @@ function VantaSlabButton({ icon, onPress, size = 20 }: VantaSlabButtonProps) {
     transform: [{ scale: scale.value }],
   }));
 
+  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
+
   return (
     <Pressable
       onPress={() => {
@@ -371,36 +597,187 @@ function VantaSlabButton({ icon, onPress, size = 20 }: VantaSlabButtonProps) {
       <Animated.View
         style={[
           {
-            width: 48,
-            height: 48,
-            borderRadius: Radius.lg,
+            width: 44,
+            height: 44,
+            borderRadius: 14,
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: isDark
-              ? Palette.vanta.titanium
-              : Palette.ivory.pearl,
+            backgroundColor: isDark ? VANTA.obsidian : Palette.ivory.pearl,
             borderWidth: 1,
             borderColor: isDark
-              ? `${Palette.metal.gold}20`
-              : `${Palette.metal.champagne}30`,
-            boxShadow: isDark
-              ? `0 4px 16px ${Palette.vanta.black}80, inset 0 1px 0 ${Palette.vanta.steel}40`
-              : `0 4px 20px rgba(0, 0, 0, 0.08), inset 0 1px 0 ${Palette.ivory.pearl}`,
+              ? "rgba(255,255,255,0.08)"
+              : `${Palette.metal.champagne}20`,
           },
           animatedStyle,
         ]}
       >
-        <AppIcon
-          name={icon}
-          size={size}
-          color={isDark ? Palette.metal.gold : Palette.metal.champagneDark}
-        />
+        <AppIcon name={icon} size={size} color={goldColor} />
       </Animated.View>
     </Pressable>
   );
 }
 
-// ─── Vanta Singularity - Hero KPI Card ───────────────────────────────────────
+// ─── Monolith Card - Tier 1 Data Block (like template) ───────────────────────
+interface MonolithCardProps {
+  icon: AppIconName;
+  label: string;
+  value: string;
+  unit?: string;
+  badge?: string;
+  badgeVariant?: "gold" | "success" | "info";
+  children?: React.ReactNode;
+  onPress?: () => void;
+}
+
+function MonolithCard({
+  icon,
+  label,
+  value,
+  unit,
+  badge,
+  badgeVariant = "gold",
+  children,
+  onPress,
+}: MonolithCardProps) {
+  const isDark = useIsDarkMode();
+  const scale = useSharedValue(1);
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.97, SPRING_SNAP);
+  }, []);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, SPRING_GRAVITY);
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
+  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
+  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
+
+  const badgeColors = {
+    gold: {
+      text: goldColor,
+      bg: isDark ? VANTA.goldMicro : `${Palette.metal.champagne}15`,
+    },
+    success: {
+      text: Palette.semantic.success,
+      bg: `${Palette.semantic.success}15`,
+    },
+    info: { text: Palette.semantic.info, bg: `${Palette.semantic.info}15` },
+  };
+
+  const content = (
+    <Animated.View style={animatedStyle}>
+      <ObsidianBlock
+        style={{
+          padding: Spacing.lg,
+          height: 140,
+          justifyContent: "space-between",
+        }}
+        glowPosition="bottom-right"
+      >
+        {/* Header */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            zIndex: 1,
+          }}
+        >
+          <AppIcon
+            name={icon}
+            size={18}
+            color={isDark ? VANTA.textGhost : Palette.neutral[400]}
+          />
+          {badge && (
+            <View
+              style={{
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: 4,
+                backgroundColor: badgeColors[badgeVariant].bg,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 9,
+                  fontWeight: "700",
+                  letterSpacing: 1.5,
+                  color: badgeColors[badgeVariant].text,
+                }}
+              >
+                {badge}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Content */}
+        <View style={{ gap: 4, zIndex: 1 }}>
+          <Text
+            style={{
+              fontSize: 9,
+              fontWeight: "600",
+              letterSpacing: 2,
+              textTransform: "uppercase",
+              color: mutedColor,
+            }}
+          >
+            {label}
+          </Text>
+          <View
+            style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}
+          >
+            <Text
+              style={{
+                fontSize: 28,
+                fontWeight: "500",
+                color: textColor,
+              }}
+            >
+              {value}
+            </Text>
+            {unit && (
+              <Text
+                style={{ fontSize: 14, fontWeight: "400", color: mutedColor }}
+              >
+                {unit}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Optional visual element */}
+        {children && <View style={{ zIndex: 1 }}>{children}</View>}
+      </ObsidianBlock>
+    </Animated.View>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={() => {
+          Haptic.impactLight();
+          onPress();
+        }}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={{ flex: 1 }}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return <View style={{ flex: 1 }}>{content}</View>;
+}
+
+// ─── Vanta Singularity - Hero Section with Gravity Disk ──────────────────────
 interface VantaSingularityProps {
   revenue: number;
   profit: number;
@@ -416,311 +793,146 @@ function VantaSingularity({
   roi,
   onDetailPress,
 }: VantaSingularityProps) {
-  const theme = useVantaTheme();
   const isDark = useIsDarkMode();
-
-  // Pulsing core animation
-  const coreScale = useSharedValue(1);
-  const coreGlow = useSharedValue(0.5);
-
-  useEffect(() => {
-    coreScale.value = withRepeat(
-      withTiming(1.02, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
-    );
-    coreGlow.value = withRepeat(
-      withTiming(0.8, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
-    );
-  }, []);
-
-  const coreAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: coreScale.value }],
-    opacity: coreGlow.value,
-  }));
 
   const isProfitable = profit >= 0;
   const isPositiveROI = roi >= 0;
 
-  return (
-    <View
-      style={{
-        marginHorizontal: Spacing.lg,
-        borderRadius: 28,
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: isDark
-          ? `${Palette.metal.gold}30`
-          : `${Palette.metal.champagne}40`,
-        boxShadow: isDark
-          ? `0 8px 40px ${Palette.vanta.black}, 0 0 60px ${Palette.metal.goldSubtle}`
-          : `0 8px 40px rgba(0, 0, 0, 0.08), 0 0 40px ${Palette.metal.champagneSubtle}`,
-      }}
-    >
-      <LinearGradient
-        colors={
-          isDark
-            ? [Palette.vanta.titanium, Palette.vanta.carbon]
-            : [Palette.ivory.pearl, Palette.ivory.cream]
-        }
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ padding: Spacing.xl }}
-      >
-        {/* Floating Glow Core */}
-        <Animated.View
-          style={[
-            {
-              position: "absolute",
-              top: -50,
-              right: -50,
-              width: 200,
-              height: 200,
-              borderRadius: 100,
-              backgroundColor: isDark
-                ? Palette.metal.goldGlow
-                : Palette.metal.champagneGlow,
-            },
-            coreAnimatedStyle,
-          ]}
-        />
+  // Calculate percentage for the ring (ROI capped at 100%)
+  const roiPercentage = Math.min(Math.max(roi, 0), 100);
 
-        {/* Header */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: Spacing.sm,
-          }}
+  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
+  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
+  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
+
+  return (
+    <View style={{ paddingHorizontal: Spacing.lg }}>
+      {/* Gravity Disk with Revenue */}
+      <GravityDisk
+        percentage={roiPercentage}
+        value={formatCurrency(revenue, true).replace("€", "")}
+        label="Chiffre d'Affaires"
+        sublabel="€"
+      />
+
+      {/* Sub-label */}
+      <Text
+        style={{
+          fontSize: 10,
+          fontWeight: "600",
+          letterSpacing: 2,
+          textTransform: "uppercase",
+          color: `${goldColor}99`,
+          textAlign: "center",
+          marginTop: -Spacing.md,
+          marginBottom: Spacing.lg,
+        }}
+      >
+        Optimal Flow
+      </Text>
+
+      {/* Metrics Row - Obsidian Monoliths */}
+      <View style={{ flexDirection: "row", gap: Spacing.md }}>
+        {/* Profit Monolith */}
+        <MonolithCard
+          icon="trending-up"
+          label="Profit"
+          value={formatCurrency(profit, true).replace("€", "")}
+          unit="€"
+          badge={isProfitable ? formatPercent(roi) : "DÉFICIT"}
+          badgeVariant={isProfitable ? "success" : "gold"}
+          onPress={onDetailPress}
         >
-          <Text
-            style={{
-              ...Typography.label.sm,
-              color: isDark ? Palette.metal.gold : Palette.metal.champagneDark,
-              letterSpacing: 2,
-              fontWeight: "600",
-            }}
-          >
-            CHIFFRE D'AFFAIRES
-          </Text>
-          <Pressable
-            onPress={() => {
-              Haptic.impactLight();
-              onDetailPress();
-            }}
+          {/* Visual bars like template */}
+          <View
             style={{
               flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: Spacing.sm,
-              paddingVertical: Spacing.xs,
-              borderRadius: Radius.full,
-              backgroundColor: isDark
-                ? `${Palette.metal.gold}15`
-                : `${Palette.metal.champagne}20`,
-              gap: 4,
+              alignItems: "flex-end",
+              gap: 2,
+              height: 24,
+              opacity: 0.6,
             }}
           >
-            <Text
-              style={{
-                ...Typography.label.xs,
-                color: isDark
-                  ? Palette.metal.gold
-                  : Palette.metal.champagneDark,
-              }}
-            >
-              Détails
-            </Text>
-            <AppIcon
-              name="chevron-right"
-              size={14}
-              color={isDark ? Palette.metal.gold : Palette.metal.champagneDark}
-            />
-          </Pressable>
-        </View>
+            {[40, 70, 100, 60, 30].map((h, i) => (
+              <View
+                key={i}
+                style={{
+                  width: 3,
+                  height: `${h}%`,
+                  borderRadius: 1,
+                  backgroundColor: isProfitable
+                    ? i === 2
+                      ? Palette.semantic.success
+                      : `${Palette.semantic.success}${Math.round((h / 100) * 99)
+                          .toString(16)
+                          .padStart(2, "0")}`
+                    : Palette.semantic.danger,
+                }}
+              />
+            ))}
+          </View>
+        </MonolithCard>
 
-        {/* Hero Number */}
-        <View style={{ marginBottom: Spacing.xl }}>
-          <Text
-            style={{
-              fontSize: 60,
-              fontFamily: "Manrope_700Bold",
-              letterSpacing: -3,
-              lineHeight: 64,
-              color: theme.text,
-            }}
-          >
-            {formatNumber(revenue)}
-            <Text
-              style={{
-                fontSize: 32,
-                color: isDark ? Palette.metal.gold : Palette.metal.champagne,
-              }}
-            >
-              €
-            </Text>
-          </Text>
-        </View>
-
-        {/* Singularity Metrics Row */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "stretch",
-            backgroundColor: isDark
-              ? `${Palette.vanta.black}60`
-              : `${Palette.ivory.sand}80`,
-            borderRadius: 16,
-            padding: Spacing.sm,
-          }}
+        {/* Investment Monolith */}
+        <MonolithCard
+          icon="account-balance-wallet"
+          label="Investissement"
+          value={formatCurrency(investment, true).replace("€", "")}
+          unit="€"
+          badge="CAPITAL"
+          badgeVariant="info"
         >
-          {/* Profit */}
-          <View
-            style={{
-              flex: 1,
-              alignItems: "center",
-              gap: 4,
-              padding: Spacing.xs,
-            }}
-          >
+          {/* Cryptic hash lines like template */}
+          <View style={{ gap: 4 }}>
             <View
               style={{
-                width: 10,
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: isProfitable
-                  ? Palette.semantic.success
-                  : Palette.semantic.danger,
-                boxShadow: isProfitable
-                  ? `0 0 16px ${Palette.semantic.success}80`
-                  : `0 0 16px ${Palette.semantic.danger}80`,
+                height: 1,
+                backgroundColor: isDark
+                  ? `${VANTA.gold}40`
+                  : `${Palette.metal.champagne}40`,
               }}
             />
-            <Text style={{ ...Typography.body.xs, color: theme.textMuted }}>
-              Profit
-            </Text>
-            <Text
-              style={{
-                ...Typography.number.sm,
-                fontWeight: "700",
-                color: isProfitable
-                  ? Palette.semantic.success
-                  : Palette.semantic.danger,
-              }}
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
             >
-              {isProfitable ? "+" : ""}
-              {formatCurrency(profit)}
-            </Text>
-          </View>
-
-          {/* Divider */}
-          <View
-            style={{
-              width: 1,
-              alignSelf: "stretch",
-              marginVertical: Spacing.xs,
-              backgroundColor: isDark
-                ? Palette.vanta.steel
-                : Palette.ivory.linen,
-            }}
-          />
-
-          {/* Investment */}
-          <View
-            style={{
-              flex: 1,
-              alignItems: "center",
-              gap: 4,
-              padding: Spacing.xs,
-            }}
-          >
+              <Text
+                style={{
+                  fontSize: 7,
+                  fontFamily: "SpaceMono",
+                  color: VANTA.textGhost,
+                  letterSpacing: 2,
+                }}
+              >
+                {Math.floor(investment).toString(16).toUpperCase().slice(0, 4)}
+              </Text>
+              <Text style={{ fontSize: 7, color: VANTA.textGhost }}>∷</Text>
+              <Text
+                style={{
+                  fontSize: 7,
+                  fontFamily: "SpaceMono",
+                  color: VANTA.textGhost,
+                  letterSpacing: 2,
+                }}
+              >
+                {Math.floor(profit).toString(16).toUpperCase().slice(0, 4)}
+              </Text>
+            </View>
             <View
               style={{
-                width: 10,
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: Palette.semantic.info,
-                boxShadow: `0 0 16px ${Palette.semantic.info}80`,
+                height: 1,
+                backgroundColor: isDark
+                  ? `${VANTA.gold}20`
+                  : `${Palette.metal.champagne}20`,
               }}
             />
-            <Text style={{ ...Typography.body.xs, color: theme.textMuted }}>
-              Invest.
-            </Text>
-            <Text
-              style={{
-                ...Typography.number.sm,
-                fontWeight: "700",
-                color: Palette.semantic.info,
-              }}
-            >
-              {formatCurrency(investment, true)}
-            </Text>
           </View>
-
-          {/* Divider */}
-          <View
-            style={{
-              width: 1,
-              alignSelf: "stretch",
-              marginVertical: Spacing.xs,
-              backgroundColor: isDark
-                ? Palette.vanta.steel
-                : Palette.ivory.linen,
-            }}
-          />
-
-          {/* ROI / Marge */}
-          <View
-            style={{
-              flex: 1,
-              alignItems: "center",
-              gap: 4,
-              padding: Spacing.xs,
-            }}
-          >
-            <View
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: isPositiveROI
-                  ? isDark
-                    ? Palette.metal.gold
-                    : Palette.metal.champagne
-                  : Palette.semantic.danger,
-                boxShadow: isPositiveROI
-                  ? isDark
-                    ? `0 0 16px ${Palette.metal.goldGlow}`
-                    : `0 0 16px ${Palette.metal.champagneGlow}`
-                  : `0 0 16px ${Palette.semantic.danger}80`,
-              }}
-            />
-            <Text style={{ ...Typography.body.xs, color: theme.textMuted }}>
-              Marge
-            </Text>
-            <Text
-              style={{
-                ...Typography.number.sm,
-                fontWeight: "700",
-                color: isPositiveROI
-                  ? isDark
-                    ? Palette.metal.gold
-                    : Palette.metal.champagneDark
-                  : Palette.semantic.danger,
-              }}
-            >
-              {formatPercent(roi)}
-            </Text>
-          </View>
-        </View>
-      </LinearGradient>
+        </MonolithCard>
+      </View>
     </View>
   );
 }
 
-// ─── Vanta Metric Orb - Floating Data Point ──────────────────────────────────
+// ─── Vanta Metric Orb - Mini Obsidian Block ──────────────────────────────────
 interface VantaMetricOrbProps {
   icon: AppIconName;
   label: string;
@@ -738,7 +950,6 @@ function VantaMetricOrb({
   accentGlow,
   onPress,
 }: VantaMetricOrbProps) {
-  const theme = useVantaTheme();
   const isDark = useIsDarkMode();
   const scale = useSharedValue(1);
 
@@ -754,6 +965,9 @@ function VantaMetricOrb({
     transform: [{ scale: scale.value }],
   }));
 
+  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
+  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
+
   return (
     <Pressable
       onPress={() => {
@@ -766,79 +980,70 @@ function VantaMetricOrb({
       onPressOut={handlePressOut}
       style={{ flex: 1 }}
     >
-      <Animated.View
-        style={[
-          {
-            flex: 1,
-            borderRadius: 20,
+      <Animated.View style={animatedStyle}>
+        <ObsidianBlock
+          style={{
             padding: Spacing.md,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: isDark
-              ? Palette.vanta.titanium
-              : Palette.ivory.pearl,
-            borderWidth: 1,
-            borderColor: isDark ? `${accentColor}25` : `${accentColor}20`,
-            boxShadow: isDark
-              ? `0 4px 24px ${Palette.vanta.black}80, 0 0 30px ${accentGlow}`
-              : `0 4px 24px rgba(0, 0, 0, 0.06), 0 0 20px ${accentGlow}`,
-          },
-          animatedStyle,
-        ]}
-      >
-        {/* Icon Container with Glow */}
-        <View
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 16,
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: Spacing.sm,
-            backgroundColor: isDark ? `${accentColor}20` : `${accentColor}15`,
-            boxShadow: `0 4px 16px ${accentGlow}`,
+            minHeight: 110,
           }}
+          glowPosition="center"
         >
-          <AppIcon name={icon} size={22} color={accentColor} />
-        </View>
+          {/* Icon Container */}
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: Spacing.sm,
+              backgroundColor: `${accentColor}20`,
+              zIndex: 1,
+            }}
+          >
+            <AppIcon name={icon} size={20} color={accentColor} />
+          </View>
 
-        {/* Value */}
-        <Text
-          style={{
-            ...Typography.number.lg,
-            fontSize: 26,
-            fontWeight: "800",
-            letterSpacing: -0.5,
-            color: theme.text,
-          }}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.7}
-        >
-          {value}
-        </Text>
+          {/* Value */}
+          <Text
+            style={{
+              fontSize: 24,
+              fontWeight: "700",
+              letterSpacing: -0.5,
+              color: textColor,
+              zIndex: 1,
+            }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {value}
+          </Text>
 
-        {/* Label */}
-        <Text
-          style={{
-            ...Typography.label.xs,
-            color: theme.textMuted,
-            letterSpacing: 0.8,
-            textTransform: "uppercase",
-            fontWeight: "600",
-            fontSize: 10,
-            marginTop: 2,
-          }}
-          numberOfLines={1}
-        >
-          {label}
-        </Text>
+          {/* Label */}
+          <Text
+            style={{
+              fontSize: 9,
+              fontWeight: "600",
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              color: mutedColor,
+              marginTop: 4,
+              zIndex: 1,
+            }}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+        </ObsidianBlock>
       </Animated.View>
     </Pressable>
   );
 }
 
-// ─── Vanta Action Slab - Quick Action Button ─────────────────────────────────
+// ─── Vanta Action Slab - Obsidian Quick Action ───────────────────────────────
 interface VantaActionSlabProps {
   icon: AppIconName;
   label: string;
@@ -854,24 +1059,22 @@ function VantaActionSlab({
   accentGlow,
   onPress,
 }: VantaActionSlabProps) {
-  const theme = useVantaTheme();
   const isDark = useIsDarkMode();
   const scale = useSharedValue(1);
-  const glowIntensity = useSharedValue(0.3);
 
   const handlePressIn = useCallback(() => {
     scale.value = withSpring(0.95, SPRING_SNAP);
-    glowIntensity.value = withTiming(0.8, { duration: 100 });
   }, []);
 
   const handlePressOut = useCallback(() => {
     scale.value = withSpring(1, SPRING_GRAVITY);
-    glowIntensity.value = withTiming(0.3, { duration: 200 });
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
 
   return (
     <Pressable
@@ -883,59 +1086,51 @@ function VantaActionSlab({
       onPressOut={handlePressOut}
       style={{ flex: 1 }}
     >
-      <Animated.View
-        style={[
-          {
-            flex: 1,
+      <Animated.View style={animatedStyle}>
+        <ObsidianBlock
+          style={{
             alignItems: "center",
             justifyContent: "center",
             paddingVertical: Spacing.xl,
-            borderRadius: 24,
-            backgroundColor: isDark
-              ? Palette.vanta.titanium
-              : Palette.ivory.pearl,
-            borderWidth: 1,
-            borderColor: isDark ? `${accentColor}30` : `${accentColor}25`,
-            boxShadow: isDark
-              ? `0 8px 32px ${Palette.vanta.black}, 0 0 40px ${accentGlow}`
-              : `0 8px 32px rgba(0, 0, 0, 0.08), 0 0 30px ${accentGlow}`,
-          },
-          animatedStyle,
-        ]}
-      >
-        {/* Glowing Icon */}
-        <View
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 18,
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: Spacing.sm,
-            backgroundColor: isDark ? `${accentColor}20` : `${accentColor}12`,
-            boxShadow: `0 6px 24px ${accentGlow}`,
           }}
+          glowPosition="center"
         >
-          <AppIcon name={icon} size={26} color={accentColor} />
-        </View>
+          {/* Icon */}
+          <View
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 18,
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: Spacing.sm,
+              backgroundColor: isDark ? `${accentColor}20` : `${accentColor}12`,
+              borderCurve: "continuous",
+              zIndex: 1,
+            }}
+          >
+            <AppIcon name={icon} size={26} color={accentColor} />
+          </View>
 
-        <Text
-          style={{
-            ...Typography.label.sm,
-            color: theme.text,
-            fontWeight: "700",
-            letterSpacing: 0.3,
-          }}
-          numberOfLines={1}
-        >
-          {label}
-        </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              fontWeight: "700",
+              letterSpacing: 0.3,
+              color: textColor,
+              zIndex: 1,
+            }}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+        </ObsidianBlock>
       </Animated.View>
     </Pressable>
   );
 }
 
-// ─── Vanta Top Lot Card - Ranked Performers ──────────────────────────────────
+// ─── Vanta Top Lot Card - Obsidian Ranked Block ──────────────────────────────
 interface VantaTopLotProps {
   rank: number;
   name: string;
@@ -953,7 +1148,6 @@ function VantaTopLotCard({
   soldCount,
   onPress,
 }: VantaTopLotProps) {
-  const theme = useVantaTheme();
   const isDark = useIsDarkMode();
   const isProfitable = profit >= 0;
   const scale = useSharedValue(1);
@@ -975,31 +1169,34 @@ function VantaTopLotCard({
     switch (r) {
       case 1:
         return {
-          bg: isDark ? Palette.metal.gold : Palette.metal.champagne,
-          glow: isDark ? Palette.metal.goldGlow : Palette.metal.champagneGlow,
-          text: isDark ? Palette.vanta.black : Palette.ivory.pearl,
+          bg: VANTA.gold,
+          glow: VANTA.goldGlow,
+          text: VANTA.black,
         };
       case 2:
         return {
-          bg: Palette.metal.mercury,
-          glow: "rgba(200, 200, 200, 0.4)",
-          text: Palette.vanta.graphite,
+          bg: "#a0a0a0", // Silver
+          glow: "rgba(160, 160, 160, 0.4)",
+          text: VANTA.black,
         };
       case 3:
         return {
-          bg: Palette.metal.bronze,
+          bg: "#cd7f32", // Bronze
           glow: "rgba(205, 127, 50, 0.4)",
-          text: Palette.ivory.pearl,
+          text: VANTA.black,
         };
       default:
         return {
-          bg: theme.surfaceCard,
+          bg: VANTA.obsidian,
           glow: "transparent",
-          text: theme.textSecondary,
+          text: VANTA.textSecondary,
         };
     }
   };
   const rankStyle = getRankStyle(rank);
+
+  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
+  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
 
   return (
     <Pressable
@@ -1010,116 +1207,111 @@ function VantaTopLotCard({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     >
-      <Animated.View
-        style={[
-          {
+      <Animated.View style={animatedStyle}>
+        <ObsidianBlock
+          style={{
             flexDirection: "row",
             alignItems: "center",
             padding: Spacing.md,
-            borderRadius: 20,
             gap: Spacing.md,
-            backgroundColor: isDark
-              ? Palette.vanta.titanium
-              : Palette.ivory.pearl,
-            borderWidth: 1,
-            borderColor: isDark
-              ? `${Palette.metal.gold}15`
-              : `${Palette.metal.champagne}20`,
-            boxShadow: isDark
-              ? `0 4px 20px ${Palette.vanta.black}80, 0 0 30px ${rankStyle.glow}`
-              : `0 4px 20px rgba(0, 0, 0, 0.06), 0 0 20px ${rankStyle.glow}`,
-          },
-          animatedStyle,
-        ]}
-      >
-        {/* Rank Badge */}
-        <View
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 14,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: rankStyle.bg,
-            boxShadow: `0 4px 16px ${rankStyle.glow}`,
           }}
+          glowPosition={rank === 1 ? "center" : "top-left"}
         >
-          <Text
-            style={{
-              ...Typography.label.md,
-              color: rankStyle.text,
-              fontWeight: "900",
-              letterSpacing: -0.5,
-            }}
-          >
-            #{rank}
-          </Text>
-        </View>
-
-        {/* Lot Info */}
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text
-            style={{
-              ...Typography.body.md,
-              color: theme.text,
-              fontWeight: "700",
-            }}
-            numberOfLines={1}
-          >
-            {name}
-          </Text>
-          <Text style={{ ...Typography.body.xs, color: theme.textMuted }}>
-            {soldCount} vente{soldCount > 1 ? "s" : ""}
-          </Text>
-        </View>
-
-        {/* Stats */}
-        <View style={{ alignItems: "flex-end", gap: 2 }}>
-          <Text
-            style={{
-              ...Typography.number.md,
-              color: theme.text,
-              fontWeight: "700",
-            }}
-          >
-            {formatCurrency(revenue)}
-          </Text>
+          {/* Rank Badge */}
           <View
             style={{
-              flexDirection: "row",
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              justifyContent: "center",
               alignItems: "center",
-              gap: 2,
-              paddingHorizontal: Spacing.xs,
-              paddingVertical: 2,
-              borderRadius: Radius.full,
-              backgroundColor: isProfitable
-                ? `${Palette.semantic.success}20`
-                : `${Palette.semantic.danger}20`,
+              backgroundColor: rankStyle.bg,
+              borderCurve: "continuous",
+              zIndex: 1,
             }}
           >
-            <AppIcon
-              name={isProfitable ? "trending-up" : "trending-down"}
-              size={10}
-              color={
-                isProfitable
-                  ? Palette.semantic.success
-                  : Palette.semantic.danger
-              }
-            />
             <Text
               style={{
-                ...Typography.label.xs,
-                color: isProfitable
-                  ? Palette.semantic.success
-                  : Palette.semantic.danger,
-                fontWeight: "700",
+                fontSize: 15,
+                fontWeight: "900",
+                letterSpacing: -0.5,
+                color: rankStyle.text,
               }}
             >
-              {isProfitable ? "+" : ""}
-              {formatCurrency(profit)}
+              #{rank}
             </Text>
           </View>
-        </View>
+
+          {/* Lot Info */}
+          <View style={{ flex: 1, gap: 2, zIndex: 1 }}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: "700",
+                color: textColor,
+              }}
+              numberOfLines={1}
+            >
+              {name}
+            </Text>
+            <Text
+              style={{
+                fontSize: 11,
+                color: mutedColor,
+              }}
+            >
+              {soldCount} vente{soldCount > 1 ? "s" : ""}
+            </Text>
+          </View>
+
+          {/* Stats */}
+          <View style={{ alignItems: "flex-end", gap: 4, zIndex: 1 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "700",
+                color: textColor,
+              }}
+            >
+              {formatCurrency(revenue)}
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderRadius: 20,
+                backgroundColor: isProfitable
+                  ? `${Palette.semantic.success}20`
+                  : `${Palette.semantic.danger}20`,
+              }}
+            >
+              <AppIcon
+                name={isProfitable ? "trending-up" : "trending-down"}
+                size={10}
+                color={
+                  isProfitable
+                    ? Palette.semantic.success
+                    : Palette.semantic.danger
+                }
+              />
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "700",
+                  color: isProfitable
+                    ? Palette.semantic.success
+                    : Palette.semantic.danger,
+                }}
+              >
+                {isProfitable ? "+" : ""}
+                {formatCurrency(profit)}
+              </Text>
+            </View>
+          </View>
+        </ObsidianBlock>
       </Animated.View>
     </Pressable>
   );
@@ -1298,36 +1490,35 @@ export default function VantaDashboard() {
             alignItems: "center",
             paddingHorizontal: Spacing.lg,
             paddingBottom: Spacing.sm,
-            opacity: 0.8,
           }}
         >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <AppIcon
               name="grid-view"
               size={14}
-              color={isDark ? Palette.metal.gold : Palette.metal.champagne}
+              color={isDark ? VANTA.gold : Palette.metal.champagne}
             />
             <Text
               style={{
                 fontSize: 10,
-                fontWeight: "700",
+                fontWeight: "600",
                 letterSpacing: 3,
                 textTransform: "uppercase",
-                color: isDark ? `${Palette.neutral.white}60` : Palette.neutral[400],
+                color: isDark ? VANTA.textGhost : Palette.neutral[400],
               }}
             >
               NEXUS-01
             </Text>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <StatusPulse />
             <Text
               style={{
                 fontSize: 9,
-                fontWeight: "600",
+                fontWeight: "500",
                 letterSpacing: 2,
                 textTransform: "uppercase",
-                color: isDark ? `${Palette.neutral.white}40` : Palette.neutral[400],
+                color: isDark ? VANTA.textGhost : Palette.neutral[400],
               }}
             >
               CONNECTED
@@ -1353,7 +1544,7 @@ export default function VantaDashboard() {
               flex: 1,
             }}
           >
-            {/* Avatar with Gold/Champagne Glow */}
+            {/* Avatar - Matching template */}
             <View
               style={{
                 width: 48,
@@ -1361,15 +1552,15 @@ export default function VantaDashboard() {
                 borderRadius: 16,
                 justifyContent: "center",
                 alignItems: "center",
-                backgroundColor: accentGold,
-                boxShadow: `0 6px 24px ${accentGoldGlow}`,
+                backgroundColor: isDark ? VANTA.gold : Palette.metal.champagne,
+                borderCurve: "continuous",
               }}
             >
               <Text
                 style={{
-                  ...Typography.heading.md,
-                  color: isDark ? Palette.vanta.black : Palette.ivory.pearl,
+                  fontSize: 18,
                   fontWeight: "800",
+                  color: VANTA.black,
                 }}
               >
                 OV
@@ -1378,16 +1569,20 @@ export default function VantaDashboard() {
             <View>
               <Text
                 style={{
-                  ...Typography.heading.lg,
-                  color: theme.text,
+                  fontSize: 22,
+                  fontWeight: "700",
+                  letterSpacing: -0.5,
+                  color: isDark
+                    ? VANTA.textPrimary
+                    : Palette.neutral.anthracite,
                 }}
               >
                 Optimus Vintage
               </Text>
               <Text
                 style={{
-                  ...Typography.body.sm,
-                  color: theme.textMuted,
+                  fontSize: 13,
+                  color: isDark ? VANTA.textMuted : Palette.neutral[400],
                 }}
               >
                 {lots.length} lots • {stats.stockCount} articles
@@ -1463,32 +1658,34 @@ export default function VantaDashboard() {
           <View style={{ marginBottom: Spacing.md }}>
             <Text
               style={{
-                fontSize: 10,
-                fontWeight: "600",
+                fontSize: 9,
+                fontWeight: "500",
                 letterSpacing: 3,
                 textTransform: "uppercase",
-                color: isDark ? `${Palette.neutral.white}40` : Palette.neutral[400],
-                marginBottom: 6,
+                color: isDark ? VANTA.textGhost : Palette.neutral[400],
+                marginBottom: 8,
               }}
             >
-              COMMANDES
+              TIER 2 // COMMANDES
             </Text>
             <Text
               style={{
-                ...Typography.heading.md,
-                color: theme.text,
+                fontSize: 20,
+                fontWeight: "600",
+                letterSpacing: -0.5,
+                color: isDark ? VANTA.textPrimary : Palette.neutral.anthracite,
               }}
             >
               Actions Rapides
             </Text>
+            {/* Gold accent line */}
             <View
               style={{
-                width: 32,
+                width: 40,
                 height: 2,
-                backgroundColor: accentGold,
-                marginTop: 8,
+                backgroundColor: isDark ? VANTA.gold : Palette.metal.champagne,
+                marginTop: 10,
                 borderRadius: 1,
-                opacity: 0.6,
               }}
             />
           </View>
@@ -1508,8 +1705,8 @@ export default function VantaDashboard() {
             <VantaActionSlab
               icon="sell"
               label="Vendre"
-              accentColor={accentGold}
-              accentGlow={accentGoldGlow}
+              accentColor={isDark ? VANTA.gold : Palette.metal.champagne}
+              accentGlow={isDark ? VANTA.goldGlow : Palette.metal.champagneGlow}
               onPress={() => router.push("/sales/new")}
             />
           </View>
@@ -1532,31 +1729,42 @@ export default function VantaDashboard() {
               <View>
                 <Text
                   style={{
-                    fontSize: 10,
-                    fontWeight: "600",
+                    fontSize: 9,
+                    fontWeight: "500",
                     letterSpacing: 3,
                     textTransform: "uppercase",
-                    color: isDark ? `${Palette.neutral.white}40` : Palette.neutral[400],
-                    marginBottom: 6,
+                    color: isDark ? VANTA.textGhost : Palette.neutral[400],
+                    marginBottom: 8,
                   }}
                 >
-                  PERFORMANCE
+                  TIER 3 // PERFORMANCE
                 </Text>
-                <Text style={{ ...Typography.heading.md, color: theme.text }}>
+                <Text
+                  style={{
+                    fontSize: 20,
+                    fontWeight: "600",
+                    letterSpacing: -0.5,
+                    color: isDark
+                      ? VANTA.textPrimary
+                      : Palette.neutral.anthracite,
+                  }}
+                >
                   Top Performers
                 </Text>
+                {/* Gold accent line */}
                 <View
                   style={{
-                    width: 32,
+                    width: 40,
                     height: 2,
-                    backgroundColor: accentGold,
-                    marginTop: 8,
+                    backgroundColor: isDark
+                      ? VANTA.gold
+                      : Palette.metal.champagne,
+                    marginTop: 10,
                     borderRadius: 1,
-                    opacity: 0.6,
                   }}
                 />
               </View>
-              <Pressable 
+              <Pressable
                 onPress={() => router.push("/(tabs)/lots")}
                 style={{
                   paddingHorizontal: Spacing.sm,
@@ -1568,7 +1776,7 @@ export default function VantaDashboard() {
                     fontSize: 10,
                     fontWeight: "600",
                     letterSpacing: 1,
-                    color: accentGold,
+                    color: isDark ? VANTA.gold : Palette.metal.champagne,
                     textDecorationLine: "underline",
                   }}
                 >

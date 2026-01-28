@@ -96,6 +96,20 @@ const ICON_MAP = {
   "arrow-upward": { symbol: "arrow.up", material: "arrow-upward" },
   "arrow-downward": { symbol: "arrow.down", material: "arrow-downward" },
   "receipt-long": { symbol: "doc.text.fill", material: "receipt-long" },
+  // Theme mode icons
+  "dark-mode": { symbol: "moon.fill", material: "dark-mode" },
+  "light-mode": { symbol: "sun.max.fill", material: "light-mode" },
+  smartphone: { symbol: "iphone", material: "smartphone" },
+  // Settings icons
+  language: { symbol: "globe", material: "language" },
+  euro: { symbol: "eurosign.circle.fill", material: "euro-symbol" },
+  "currency-exchange": {
+    symbol: "arrow.triangle.2.circlepath",
+    material: "currency-exchange",
+  },
+  vibration: { symbol: "waveform", material: "vibration" },
+  lock: { symbol: "lock.fill", material: "lock" },
+  fingerprint: { symbol: "touchid", material: "fingerprint" },
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;

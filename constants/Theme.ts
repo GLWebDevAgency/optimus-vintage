@@ -29,9 +29,9 @@ export const Palette = {
   // "The interface floats in an infinite void"
   vanta: {
     black: "#000000", // Absolute Zero - The Void
-    obsidian: "#050505", // Polished Obsidian
-    titanium: "#0A0A0A", // Brushed Black Titanium
-    carbon: "#111111", // Carbon Glass Surface
+    obsidian: "#0A0A0A", // Polished Obsidian
+    titanium: "#111111", // Brushed Black Titanium
+    carbon: "#1C1C1C", // Carbon Glass Surface
     graphite: "#1A1A1A", // Elevated Surface
     steel: "#222222", // Lighter Surface
   },
@@ -51,11 +51,12 @@ export const Palette = {
   // "Treated as physical phenomena - photon emanations"
   metal: {
     // Pure Gold (Aether Primary)
-    gold: "#FFD700",
-    goldLight: "#FFE44D",
-    goldDark: "#E5C100",
-    goldGlow: "rgba(255, 215, 0, 0.6)",
-    goldSubtle: "rgba(255, 215, 0, 0.15)",
+    // Calibrated to match Vanta visual references (warm, slightly amber)
+    gold: "#F4C025",
+    goldLight: "#FFD35A",
+    goldDark: "#D4A017",
+    goldGlow: "rgba(244, 192, 37, 0.6)",
+    goldSubtle: "rgba(244, 192, 37, 0.15)",
 
     // Champagne Gold (Ivory Primary)
     champagne: "#C9A961",
@@ -156,12 +157,12 @@ export const Palette = {
     200: "#FDE68A",
     300: "#FCD34D",
     400: "#FBBF24",
-    500: "#FFD700", // metal.gold
-    600: "#E5C100", // metal.goldDark
+    500: "#F4C025", // metal.gold
+    600: "#D4A017", // metal.goldDark
     700: "#B8860B",
     800: "#92400E",
     900: "#78350F",
-    glow: "rgba(255, 215, 0, 0.6)",
+    glow: "rgba(244, 192, 37, 0.6)",
   },
 
   // Forest → Success darker
@@ -249,12 +250,12 @@ export const Palette = {
     200: "#FDE68A",
     300: "#FCD34D",
     400: "#FBBF24",
-    500: "#FFD700",
-    600: "#E5C100",
+    500: "#F4C025",
+    600: "#D4A017",
     700: "#B8860B",
     800: "#92400E",
     900: "#78350F",
-    glow: "rgba(255, 215, 0, 0.4)",
+    glow: "rgba(244, 192, 37, 0.4)",
   },
 
   // Glass (legacy)
@@ -405,7 +406,7 @@ export const Theme = {
     primary: Palette.metal.gold,
     primaryHover: Palette.metal.goldLight,
     primarySubtle: Palette.metal.goldSubtle,
-    primaryMuted: "rgba(255, 215, 0, 0.08)",
+    primaryMuted: "rgba(244, 192, 37, 0.08)",
     primaryGlow: Palette.metal.goldGlow,
     primaryLight: Palette.metal.goldLight,
 

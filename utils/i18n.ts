@@ -13,9 +13,10 @@
  * }
  */
 
+import { useSettingsStore, type SupportedLocale } from "@/store/settings";
 import * as Localization from "expo-localization";
 import i18n from "i18next";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { initReactI18next, useTranslation } from "react-i18next";
 
 // Import translations
@@ -27,7 +28,8 @@ import fr from "@/locales/fr.json";
 // 🔧 CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type SupportedLocale = "fr" | "en" | "de";
+// Re-export SupportedLocale from store for convenience
+export type { SupportedLocale } from "@/store/settings";
 
 export const SUPPORTED_LOCALES: {
   code: SupportedLocale;
@@ -108,26 +110,25 @@ export default i18n;
  */
 export function useLocale() {
   const { t, i18n: i18nInstance } = useTranslation();
-  const [locale, setLocale] = useState<SupportedLocale>(
-    i18nInstance.language as SupportedLocale,
-  );
 
+  // Use Zustand store for persisted locale
+  const locale = useSettingsStore((state) => state.locale);
+  const setLocale = useSettingsStore((state) => state.setLocale);
+
+  // Sync i18next with store on mount and when locale changes
   useEffect(() => {
-    const handleLanguageChanged = (lng: string) => {
-      setLocale(lng as SupportedLocale);
-    };
-
-    i18nInstance.on("languageChanged", handleLanguageChanged);
-    return () => {
-      i18nInstance.off("languageChanged", handleLanguageChanged);
-    };
-  }, [i18nInstance]);
+    if (i18nInstance.language !== locale) {
+      i18nInstance.changeLanguage(locale);
+    }
+  }, [locale, i18nInstance]);
 
   const changeLocale = useCallback(
     async (newLocale: SupportedLocale) => {
+      // Update store (persisted) and i18next
+      setLocale(newLocale);
       await i18nInstance.changeLanguage(newLocale);
     },
-    [i18nInstance],
+    [i18nInstance, setLocale],
   );
 
   return {

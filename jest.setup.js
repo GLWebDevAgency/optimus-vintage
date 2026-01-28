@@ -4,8 +4,6 @@
  * Configuration globale des tests pour Optimus Vintage
  */
 
-import "@testing-library/react-native/extend-expect";
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📱 REACT NATIVE MOCKS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -80,6 +78,9 @@ jest.mock("expo-localization", () => ({
   getLocales: () => [{ languageCode: "fr", languageTag: "fr-FR" }],
   getCalendars: () => [{ calendar: "gregory" }],
 }));
+
+// Mock Expo SQLite localStorage shim (use jsdom localStorage in tests)
+jest.mock("expo-sqlite/localStorage/install", () => ({}));
 
 // Mock FlashList
 jest.mock("@shopify/flash-list", () => {

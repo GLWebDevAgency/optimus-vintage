@@ -13,6 +13,7 @@ import { useFonts } from "expo-font";
 import { router } from "expo-router";
 import { Stack } from "expo-router/stack";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 
@@ -130,6 +131,8 @@ function RootLayoutNav() {
         colorScheme === "dark" ? NavigationTheme.dark : NavigationTheme.light
       }
     >
+      {/* Status bar: light text on dark mode, dark text on light mode */}
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen

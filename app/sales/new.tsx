@@ -1,5 +1,5 @@
 /**
- * 💰 NEW SALE SCREEN - Ultra Premium Edition with Animations
+ * 💰 NEW SALE SCREEN - Vanta-Aether Edition
  */
 
 import {
@@ -7,14 +7,11 @@ import {
     AnimatedSkeleton,
 } from "@/components/ui/AnimatedComponents";
 import { AppIcon } from "@/components/ui/AppIcon";
-import {
-    AnimatedPremiumBackground,
-    Button,
-    Card,
-} from "@/components/ui/Components";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { Card } from "@/components/ui/Components";
+import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
+import { Radius, Spacing } from "@/constants/Theme";
 import { Item, ItemsRepository, SalesRepository } from "@/db/repositories";
+import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -23,6 +20,7 @@ import React, { useMemo, useState } from "react";
 import {
     Alert,
     KeyboardAvoidingView,
+    Pressable,
     StyleSheet,
     Text,
     TextInput,
@@ -34,8 +32,25 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function NewSaleScreen() {
   const params = useLocalSearchParams<{ itemId?: string; lotId?: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
+  const theme = useVantaTheme();
+  const colors = {
+    background: theme.background,
+    surface: theme.surface,
+    surfaceCard: theme.surfaceCard,
+    gold: theme.primary,
+    goldSubtle: theme.primarySubtle,
+    text: theme.text,
+    textSecondary: theme.textSecondary,
+    textMuted: theme.textMuted,
+    border: theme.borderGlass,
+    success: theme.success,
+    successSubtle: theme.successSubtle,
+    danger: theme.danger,
+    dangerSubtle: theme.dangerSubtle,
+    warning: theme.warning,
+    warningSubtle: theme.warningSubtle,
+  };
+  const { t } = useLocale();
 
   const [price, setPrice] = useState("");
   const [platformFees, setPlatformFees] = useState("");
@@ -138,9 +153,7 @@ export default function NewSaleScreen() {
 
   if (itemId && itemQuery.isLoading) {
     return (
-      <View
-        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
-      >
+      <VantaScreen style={styles.loadingContainer}>
         <MotiView
           from={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -199,31 +212,31 @@ export default function NewSaleScreen() {
         </MotiView>
 
         <Text
-          style={[
-            Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.xl },
-          ]}
+          style={{
+            fontFamily: "Manrope_400Regular",
+            fontSize: 14,
+            color: colors.textMuted,
+            marginTop: Spacing.xl,
+          }}
         >
-          Chargement de l'article...
+          {t("common.loading")}
         </Text>
-      </View>
+      </VantaScreen>
     );
   }
 
   if (itemId && !item) {
     return (
-      <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
-      >
+      <VantaScreen style={styles.errorContainer}>
         <MotiView
           from={{ opacity: 0, scale: 0.8, translateY: 20 }}
           animate={{ opacity: 1, scale: 1, translateY: 0 }}
           transition={{ type: "spring", damping: 15 }}
         >
           <View
-            style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+            style={[styles.errorIcon, { backgroundColor: colors.dangerSubtle }]}
           >
-            <AppIcon name="error-outline" size={40} color={theme.danger} />
+            <AppIcon name="error-outline" size={40} color={colors.danger} />
           </View>
         </MotiView>
         <MotiView
@@ -232,24 +245,25 @@ export default function NewSaleScreen() {
           transition={{ type: "timing", duration: 400, delay: 200 }}
         >
           <Text
-            style={[
-              Typography.heading.md,
-              { color: theme.text, textAlign: "center" },
-            ]}
+            style={{
+              fontFamily: "Manrope_700Bold",
+              fontSize: 20,
+              color: colors.text,
+              textAlign: "center",
+            }}
           >
-            Item Not Found
+            {t("errors.notFound")}
           </Text>
           <Text
-            style={[
-              Typography.body.sm,
-              {
-                color: theme.textMuted,
-                textAlign: "center",
-                marginTop: Spacing.sm,
-              },
-            ]}
+            style={{
+              fontFamily: "Manrope_400Regular",
+              fontSize: 14,
+              color: colors.textMuted,
+              textAlign: "center",
+              marginTop: Spacing.sm,
+            }}
           >
-            The selected item could not be loaded. Please try again.
+            {t("errors.loadFailed")}
           </Text>
         </MotiView>
         <AnimatedButton
@@ -259,26 +273,24 @@ export default function NewSaleScreen() {
           delay={400}
           style={{ marginTop: Spacing.xl }}
         >
-          Go Back
+          {t("common.back")}
         </AnimatedButton>
-      </View>
+      </VantaScreen>
     );
   }
 
   if (!params.itemId && !item) {
     return (
-      <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
-      >
+      <VantaScreen style={styles.errorContainer}>
         <MotiView
           from={{ opacity: 0, scale: 0.8, translateY: 20 }}
           animate={{ opacity: 1, scale: 1, translateY: 0 }}
           transition={{ type: "spring", damping: 15 }}
         >
           <View
-            style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+            style={[styles.errorIcon, { backgroundColor: colors.dangerSubtle }]}
           >
-            <AppIcon name="error-outline" size={40} color={theme.danger} />
+            <AppIcon name="error-outline" size={40} color={colors.danger} />
           </View>
         </MotiView>
         <MotiView
@@ -287,24 +299,25 @@ export default function NewSaleScreen() {
           transition={{ type: "timing", duration: 400, delay: 200 }}
         >
           <Text
-            style={[
-              Typography.heading.md,
-              { color: theme.text, textAlign: "center" },
-            ]}
+            style={{
+              fontFamily: "Manrope_700Bold",
+              fontSize: 20,
+              color: colors.text,
+              textAlign: "center",
+            }}
           >
-            No Item Selected
+            {t("sales.empty.title")}
           </Text>
           <Text
-            style={[
-              Typography.body.sm,
-              {
-                color: theme.textMuted,
-                textAlign: "center",
-                marginTop: Spacing.sm,
-              },
-            ]}
+            style={{
+              fontFamily: "Manrope_400Regular",
+              fontSize: 14,
+              color: colors.textMuted,
+              textAlign: "center",
+              marginTop: Spacing.sm,
+            }}
           >
-            Please select an item from the Stock screen to record a sale.
+            {t("sales.empty.description")}
           </Text>
         </MotiView>
         <AnimatedButton
@@ -317,26 +330,24 @@ export default function NewSaleScreen() {
           delay={400}
           style={{ marginTop: Spacing.xl }}
         >
-          Go to Stock
+          {t("navigation.stock")}
         </AnimatedButton>
-      </View>
+      </VantaScreen>
     );
   }
 
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={styles.container}
     >
-      {/* ═══ Animated Premium Background ═══ */}
-      <AnimatedPremiumBackground variant="light" />
-
+      <VantaScreen style={{ flex: 1 }}>
       <Stack.Screen
         options={{
-          title: "New Sale",
+          title: t("sales.newSale"),
           presentation: "formSheet",
-          headerStyle: { backgroundColor: theme.surface },
-          headerTintColor: theme.text,
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.text,
         }}
       />
 
@@ -345,17 +356,29 @@ export default function NewSaleScreen() {
         <Animated.View entering={FadeInUp.delay(100).duration(400)}>
           <Card variant="elevated" style={styles.itemHeader}>
             <View
-              style={[styles.itemIcon, { backgroundColor: theme.primaryMuted }]}
+              style={[styles.itemIcon, { backgroundColor: colors.goldSubtle }]}
             >
-              <AppIcon name="checkroom" size={24} color={theme.primary} />
+              <AppIcon name="checkroom" size={24} color={colors.gold} />
             </View>
             <View style={styles.itemInfo}>
-              <Text style={[Typography.heading.sm, { color: theme.text }]}>
+              <Text
+                style={{
+                  fontFamily: "Manrope_700Bold",
+                  fontSize: 16,
+                  color: colors.text,
+                }}
+              >
                 {item
                   ? `${item.type || "Item"} ${item.brand || ""}`
                   : "Loading..."}
               </Text>
-              <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
+              <Text
+                style={{
+                  fontFamily: "Manrope_400Regular",
+                  fontSize: 12,
+                  color: colors.textMuted,
+                }}
+              >
                 Lot #{item?.lotId} • ID: {item?.id} • Cost: €
                 {item ? parseFloat(String(item.unitCost)).toFixed(2) : "0.00"}
               </Text>
@@ -367,34 +390,38 @@ export default function NewSaleScreen() {
         <Animated.View entering={FadeInDown.delay(200).duration(400)}>
           <Card variant="elevated" style={styles.formCard}>
             <Text
-              style={[
-                Typography.heading.sm,
-                { color: theme.text, marginBottom: Spacing.lg },
-              ]}
+              style={{
+                fontFamily: "Manrope_700Bold",
+                fontSize: 16,
+                color: colors.text,
+                marginBottom: Spacing.lg,
+              }}
             >
-              Sale Details
+              {t("sales.saleDetails")}
             </Text>
 
             <Text
-              style={[
-                Typography.body.sm,
-                { color: theme.textMuted, marginBottom: Spacing.xs },
-              ]}
+              style={{
+                fontFamily: "Manrope_400Regular",
+                fontSize: 14,
+                color: colors.textMuted,
+                marginBottom: Spacing.xs,
+              }}
             >
-              Prix de vente brut (€) *
+              {t("sales.priceGross")} (€) *
             </Text>
             <TextInput
               value={price}
               onChangeText={setPrice}
               placeholder="0.00"
-              placeholderTextColor={theme.textMuted}
+              placeholderTextColor={colors.textMuted}
               keyboardType="numeric"
               style={[
                 styles.input,
                 {
-                  backgroundColor: theme.surfaceCard,
-                  color: theme.text,
-                  borderColor: theme.border,
+                  backgroundColor: colors.surfaceCard,
+                  color: colors.text,
+                  borderColor: colors.border,
                 },
               ]}
             />
@@ -402,50 +429,54 @@ export default function NewSaleScreen() {
             <View style={styles.row}>
               <View style={styles.halfInput}>
                 <Text
-                  style={[
-                    Typography.body.sm,
-                    { color: theme.textMuted, marginBottom: Spacing.xs },
-                  ]}
+                  style={{
+                    fontFamily: "Manrope_400Regular",
+                    fontSize: 14,
+                    color: colors.textMuted,
+                    marginBottom: Spacing.xs,
+                  }}
                 >
-                  Frais plateforme
+                  {t("sales.platformFees")}
                 </Text>
                 <TextInput
                   value={platformFees}
                   onChangeText={setPlatformFees}
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="numeric"
                   style={[
                     styles.input,
                     {
-                      backgroundColor: theme.surfaceCard,
-                      color: theme.text,
-                      borderColor: theme.border,
+                      backgroundColor: colors.surfaceCard,
+                      color: colors.text,
+                      borderColor: colors.border,
                     },
                   ]}
                 />
               </View>
               <View style={styles.halfInput}>
                 <Text
-                  style={[
-                    Typography.body.sm,
-                    { color: theme.textMuted, marginBottom: Spacing.xs },
-                  ]}
+                  style={{
+                    fontFamily: "Manrope_400Regular",
+                    fontSize: 14,
+                    color: colors.textMuted,
+                    marginBottom: Spacing.xs,
+                  }}
                 >
-                  Expédition
+                  {t("sales.shippingFees")}
                 </Text>
                 <TextInput
                   value={shippingFees}
                   onChangeText={setShippingFees}
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="numeric"
                   style={[
                     styles.input,
                     {
-                      backgroundColor: theme.surfaceCard,
-                      color: theme.text,
-                      borderColor: theme.border,
+                      backgroundColor: colors.surfaceCard,
+                      color: colors.text,
+                      borderColor: colors.border,
                     },
                   ]}
                 />
@@ -454,31 +485,48 @@ export default function NewSaleScreen() {
 
             {/* Net Calculation */}
             <View
-              style={[styles.calcCard, { backgroundColor: theme.surfaceCard }]}
+              style={[styles.calcCard, { backgroundColor: colors.surfaceCard }]}
             >
               <View style={styles.calcRow}>
-                <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
-                  Montant net
+                <Text
+                  style={{
+                    fontFamily: "Manrope_400Regular",
+                    fontSize: 14,
+                    color: colors.textMuted,
+                  }}
+                >
+                  {t("sales.priceNet")}
                 </Text>
-                <Text style={[Typography.number.md, { color: theme.text }]}>
+                <Text
+                  style={{
+                    fontFamily: "Manrope_600SemiBold",
+                    fontSize: 18,
+                    color: colors.text,
+                  }}
+                >
                   €{netAmount}
                 </Text>
               </View>
               <View
-                style={[styles.calcDivider, { backgroundColor: theme.border }]}
+                style={[styles.calcDivider, { backgroundColor: colors.border }]}
               />
               <View style={styles.calcRow}>
-                <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
-                  Bénéfice
+                <Text
+                  style={{
+                    fontFamily: "Manrope_400Regular",
+                    fontSize: 14,
+                    color: colors.textMuted,
+                  }}
+                >
+                  {t("sales.profit")}
                 </Text>
                 <Text
-                  style={[
-                    Typography.number.lg,
-                    {
-                      color:
-                        parseFloat(profit) >= 0 ? theme.success : theme.danger,
-                    },
-                  ]}
+                  style={{
+                    fontFamily: "Manrope_700Bold",
+                    fontSize: 22,
+                    color:
+                      parseFloat(profit) >= 0 ? colors.success : colors.danger,
+                  }}
                 >
                   {parseFloat(profit) >= 0 ? "+" : ""}€{profit}
                 </Text>
@@ -496,21 +544,47 @@ export default function NewSaleScreen() {
         ]}
       >
         <View
-          style={[styles.ctaGradient, { backgroundColor: theme.background }]}
+          style={[styles.ctaGradient, { backgroundColor: colors.background }]}
         />
-        <Button
-          variant="success"
-          size="lg"
+        <Pressable
           onPress={handleSave}
           disabled={isSubmitting || !price}
-          icon={<AppIcon name="check-circle" size={20} color="#FFF" />}
-          style={styles.ctaButton}
+          accessibilityRole="button"
+          accessibilityLabel={t("sales.confirmSale")}
+          accessibilityState={{ disabled: isSubmitting || !price, busy: isSubmitting }}
+          style={({ pressed }) => [
+            styles.ctaButton,
+            {
+              backgroundColor:
+                isSubmitting || !price ? colors.textMuted : colors.success,
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}
         >
-          {isSubmitting ? "Recording..." : "Record Sale"}
-        </Button>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <AppIcon name="check-circle" size={20} color="#FFF" />
+            <Text
+              style={{
+                fontFamily: "Manrope_700Bold",
+                fontSize: 16,
+                color: "#FFF",
+              }}
+            >
+              {isSubmitting ? t("common.loading") : t("sales.confirmSale")}
+            </Text>
+          </View>
+        </Pressable>
       </View>
 
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <StatusBar style={theme.dark ? "light" : "dark"} />
+      </VantaScreen>
     </KeyboardAvoidingView>
   );
 }
@@ -539,8 +613,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: Spacing.lg,
     borderCurve: "continuous",
-    boxShadow:
-      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.02), 0 16px 32px rgba(239,68,68,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   content: {
     flex: 1,
@@ -560,8 +632,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: Spacing.md,
     borderCurve: "continuous",
-    boxShadow:
-      "0 2px 4px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.04), 0 8px 16px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   itemInfo: {
     flex: 1,
@@ -570,8 +640,6 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     borderRadius: Radius.xl,
     borderCurve: "continuous",
-    boxShadow:
-      "0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.03), 0 4px 8px rgba(0,0,0,0.02), 0 8px 16px rgba(0,0,0,0.01), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   row: {
     flexDirection: "row",
@@ -585,8 +653,6 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     marginTop: Spacing.lg,
     borderCurve: "continuous",
-    boxShadow:
-      "0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.03), 0 8px 16px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   calcRow: {
     flexDirection: "row",
@@ -613,8 +679,8 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: Radius.xl,
     borderCurve: "continuous",
-    boxShadow:
-      "0 2px 4px rgba(16,185,129,0.3), 0 4px 8px rgba(16,185,129,0.25), 0 8px 16px rgba(16,185,129,0.2), 0 16px 32px rgba(16,185,129,0.15), inset 0 1px 0 rgba(255,255,255,0.3)",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
   },
   input: {
     fontSize: 18,
@@ -624,7 +690,5 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     borderWidth: 1.5,
     borderCurve: "continuous",
-    boxShadow:
-      "inset 0 2px 4px rgba(0,0,0,0.04), inset 0 4px 8px rgba(0,0,0,0.03), inset 0 1px 2px rgba(0,0,0,0.05)",
   },
 });
