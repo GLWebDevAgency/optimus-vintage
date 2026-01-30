@@ -1,6 +1,8 @@
 /**
  * 📦 LOT DETAIL SCREEN - Vanta-Aether Edition
  * Enterprise-grade lot management with real-time insights
+ *
+ * v2.0 - Enhanced with Vanta Monolith components
  */
 
 import {
@@ -9,7 +11,11 @@ import {
 } from "@/components/ui/AnimatedComponents";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { Card } from "@/components/ui/Components";
-import { type VantaTheme, VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
+import {
+    type VantaTheme,
+    useVantaTheme,
+    VantaScreen,
+} from "@/components/ui/PremiumUI";
 import { Palette, Radius, Spacing } from "@/constants/Theme";
 import {
     Item,
@@ -96,40 +102,126 @@ interface ItemWithSale extends Item {
 }
 
 /**
- * 🎨 Animated Segment Control - Premium Selection
+ * 🎨 Animated Segment Control - Vanta Premium Selection
+ * Matching dashboard VantaPeriodSelector design
  */
 function AnimatedSegmentControl({
   options,
   activeKey,
   onSelect,
   colors,
+  isDark,
 }: {
   options: { key: string; label: string }[];
   activeKey: string;
   onSelect: (key: string) => void;
   colors: LotColors;
+  isDark: boolean;
 }) {
+  const selectedIndex = options.findIndex((o) => o.key === activeKey);
+  const indicatorPosition = useSharedValue(selectedIndex);
+  const [containerWidth, setContainerWidth] = React.useState(0);
+  const segmentWidth =
+    containerWidth > 0 ? (containerWidth - 8) / options.length : 0;
+
+  useEffect(() => {
+    indicatorPosition.value = withSpring(selectedIndex, {
+      damping: 22,
+      stiffness: 180,
+      mass: 1.2,
+    });
+  }, [selectedIndex]);
+
+  const indicatorStyle = useAnimatedStyle(() => {
+    if (segmentWidth === 0) return { opacity: 0 };
+    return {
+      opacity: 1,
+      transform: [{ translateX: indicatorPosition.value * segmentWidth }],
+      width: segmentWidth,
+    };
+  }, [segmentWidth]);
+
   return (
     <View
-      style={[styles.segmentedControl, { backgroundColor: colors.surfaceCard }]}
+      onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+      style={[
+        styles.segmentedControl,
+        {
+          backgroundColor: isDark ? colors.surface : Palette.ivory.sand,
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,255,255,0.03)" : `${colors.gold}20`,
+        },
+      ]}
     >
-      {options.map((seg, index) => {
-        const isActive = activeKey === seg.key;
-        return (
-          <AnimatedSegmentButton
-            key={seg.key}
-            label={seg.label}
-            isActive={isActive}
-            onPress={() => onSelect(seg.key)}
-            colors={colors}
-            index={index}
-          />
-        );
-      })}
+      {/* Gold Indicator */}
+      <Animated.View
+        style={[
+          {
+            position: "absolute",
+            top: 4,
+            left: 4,
+            bottom: 4,
+            borderRadius: 10,
+          },
+          indicatorStyle,
+        ]}
+      >
+        <View
+          style={{
+            flex: 1,
+            borderRadius: 10,
+            backgroundColor: isDark ? colors.surfaceCard : Palette.ivory.pearl,
+            borderWidth: 1,
+            borderColor: colors.gold,
+          }}
+        />
+      </Animated.View>
+
+      {/* Segment Buttons */}
+      <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
+        {options.map((seg) => {
+          const isActive = activeKey === seg.key;
+          return (
+            <Pressable
+              key={seg.key}
+              onPress={() => {
+                Haptic.selection();
+                onSelect(seg.key);
+              }}
+              style={{
+                flex: 1,
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1,
+              }}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: "Manrope_700Bold",
+                  fontWeight: "700",
+                  letterSpacing: 1,
+                  color: isActive
+                    ? colors.gold
+                    : isDark
+                      ? colors.textSecondary
+                      : Palette.neutral[500],
+                }}
+              >
+                {seg.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
+// Legacy AnimatedSegmentButton kept for compatibility but no longer used
 function AnimatedSegmentButton({
   label,
   isActive,
@@ -163,7 +255,7 @@ function AnimatedSegmentButton({
     color: interpolateColor(
       progress.value,
       [0, 1],
-      [colors.textMuted, colors.gold],
+      [colors.textSecondary, colors.gold],
     ),
   }));
 
@@ -445,7 +537,12 @@ export default function LotDetailScreen() {
         >
           {/* Total Invested */}
           <Card style={styles.statCard}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            <Text
+              style={[
+                styles.statLabel,
+                { color: isDark ? colors.textSecondary : Palette.neutral[600] },
+              ]}
+            >
               {t("lots.totalInvested")}
             </Text>
             <Text style={[styles.statValue, { color: colors.text }]}>
@@ -455,7 +552,12 @@ export default function LotDetailScreen() {
 
           {/* Total Returned */}
           <Card style={styles.statCard}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            <Text
+              style={[
+                styles.statLabel,
+                { color: isDark ? colors.textSecondary : Palette.neutral[600] },
+              ]}
+            >
               {t("lots.totalRecovered")}
             </Text>
             <Text style={[styles.statValue, { color: colors.text }]}>
@@ -466,7 +568,14 @@ export default function LotDetailScreen() {
           {/* ROI Full Width */}
           <Card variant="elevated" style={styles.statCardFull}>
             <View style={styles.roiLeft}>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+              <Text
+                style={[
+                  styles.statLabel,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[600],
+                  },
+                ]}
+              >
                 {t("lots.returnOnInvestment")}
               </Text>
               <Text style={[styles.roiValue, { color: colors.text }]}>
@@ -500,7 +609,12 @@ export default function LotDetailScreen() {
                 {t("lots.revenueRecovery")}
               </Text>
               <Text
-                style={[styles.recoveryProfit, { color: colors.textMuted }]}
+                style={[
+                  styles.recoveryProfit,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[600],
+                  },
+                ]}
               >
                 {formatCurrency(summary.profit)} {t("lots.netProfit")}
               </Text>
@@ -523,7 +637,14 @@ export default function LotDetailScreen() {
             </View>
 
             <View style={styles.progressLabels}>
-              <Text style={[styles.progressLabel, { color: colors.textMuted }]}>
+              <Text
+                style={[
+                  styles.progressLabel,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[500],
+                  },
+                ]}
+              >
                 €0
               </Text>
               <Text
@@ -531,7 +652,11 @@ export default function LotDetailScreen() {
                   styles.progressLabel,
                   {
                     color:
-                      recoveryPercent >= 100 ? colors.gold : colors.textMuted,
+                      recoveryPercent >= 100
+                        ? colors.gold
+                        : isDark
+                          ? colors.textSecondary
+                          : Palette.neutral[600],
                     fontWeight: "600",
                   },
                 ]}
@@ -540,7 +665,14 @@ export default function LotDetailScreen() {
                   ? t("lots.breakEvenReached")
                   : `${recoveryPercent.toFixed(0)}% ${t("lots.recovered")}`}
               </Text>
-              <Text style={[styles.progressLabel, { color: colors.textMuted }]}>
+              <Text
+                style={[
+                  styles.progressLabel,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[500],
+                  },
+                ]}
+              >
                 {formatCurrency(summary.totalInvestment)}
               </Text>
             </View>
@@ -554,10 +686,18 @@ export default function LotDetailScreen() {
               style={[
                 styles.protectionCard,
                 {
-                  backgroundColor: colors.goldSubtle,
+                  backgroundColor: isDark
+                    ? colors.surface
+                    : Palette.ivory.cream,
                   borderRadius: Radius.xl,
                   borderWidth: 1,
-                  borderColor: colors.gold + "30",
+                  borderColor: colors.gold,
+                  // Ajout d'une ombre pour plus de profondeur
+                  shadowColor: colors.gold,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDark ? 0.3 : 0.15,
+                  shadowRadius: 8,
+                  elevation: 4,
                 },
               ]}
             >
@@ -565,7 +705,7 @@ export default function LotDetailScreen() {
                 <View
                   style={[
                     styles.protectionIcon,
-                    { backgroundColor: colors.gold + "30" },
+                    { backgroundColor: colors.goldSubtle },
                   ]}
                 >
                   <AppIcon name="shield" size={24} color={colors.gold} />
@@ -577,7 +717,15 @@ export default function LotDetailScreen() {
                     {t("lots.floorPriceProtection")}
                   </Text>
                   <Text
-                    style={[styles.protectionDesc, { color: colors.textMuted }]}
+                    style={[
+                      styles.protectionDesc,
+                      {
+                        color: isDark
+                          ? colors.textSecondary
+                          : Palette.neutral[600],
+                        lineHeight: 22,
+                      },
+                    ]}
                   >
                     Vendez les{" "}
                     <Text style={{ fontWeight: "700", color: colors.text }}>
@@ -595,12 +743,14 @@ export default function LotDetailScreen() {
                 onPress={() => {}}
                 style={{
                   backgroundColor: colors.gold,
-                  paddingVertical: Spacing.sm,
-                  paddingHorizontal: Spacing.md,
+                  paddingVertical: Spacing.md,
+                  paddingHorizontal: Spacing.lg,
                   borderRadius: Radius.lg,
                   alignItems: "center",
-                  marginTop: Spacing.xs,
+                  marginTop: Spacing.sm,
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={t("lots.adjustStrategy")}
               >
                 <Text
                   style={{
@@ -630,6 +780,7 @@ export default function LotDetailScreen() {
             activeKey={activeSegment}
             onSelect={(key) => setActiveSegment(key as SegmentOption)}
             colors={colors}
+            isDark={isDark}
           />
         </Animated.View>
 
@@ -640,12 +791,44 @@ export default function LotDetailScreen() {
           style={styles.itemsList}
         >
           {filteredItems.length === 0 ? (
-            <Card style={styles.emptyState}>
-              <AppIcon name="inventory-2" size={40} color={colors.textMuted} />
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+            <View
+              style={[
+                styles.emptyState,
+                {
+                  backgroundColor: isDark
+                    ? colors.surface
+                    : Palette.ivory.cream,
+                  borderRadius: Radius.xl,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  backgroundColor: colors.goldSubtle,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: Spacing.md,
+                }}
+              >
+                <AppIcon name="inventory-2" size={32} color={colors.gold} />
+              </View>
+              <Text
+                style={[
+                  styles.emptyText,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[600],
+                    fontSize: 15,
+                  },
+                ]}
+              >
                 {t("lots.noItemsInCategory")}
               </Text>
-            </Card>
+            </View>
           ) : (
             filteredItems.slice(0, 10).map((item, index) => (
               <Animated.View
@@ -678,7 +861,9 @@ export default function LotDetailScreen() {
                       <AppIcon
                         name="checkroom"
                         size={24}
-                        color={colors.textMuted}
+                        color={
+                          isDark ? colors.textSecondary : Palette.neutral[500]
+                        }
                       />
                     </View>
                     {/* Status Badge */}
@@ -691,7 +876,9 @@ export default function LotDetailScreen() {
                               ? colors.success
                               : item.status === "ONLINE"
                                 ? colors.warning
-                                : colors.textMuted,
+                                : isDark
+                                  ? colors.textSecondary
+                                  : Palette.neutral[500],
                         },
                       ]}
                     >
@@ -718,7 +905,11 @@ export default function LotDetailScreen() {
                       <Text
                         style={[
                           styles.itemSubtitle,
-                          { color: colors.textMuted },
+                          {
+                            color: isDark
+                              ? colors.textSecondary
+                              : Palette.neutral[600],
+                          },
                         ]}
                       >
                         {item.sale
@@ -734,7 +925,11 @@ export default function LotDetailScreen() {
                         <Text
                           style={[
                             styles.profitLabel,
-                            { color: colors.textMuted },
+                            {
+                              color: isDark
+                                ? colors.textSecondary
+                                : Palette.neutral[600],
+                            },
                           ]}
                         >
                           {item.sale ? "BÉNÉFICE NET" : "BÉNÉFICE EST."}
@@ -759,7 +954,11 @@ export default function LotDetailScreen() {
                         <Text
                           style={[
                             styles.salePrice,
-                            { color: colors.textMuted },
+                            {
+                              color: isDark
+                                ? colors.textSecondary
+                                : Palette.neutral[500],
+                            },
                           ]}
                         >
                           {formatCurrency(
@@ -775,7 +974,12 @@ export default function LotDetailScreen() {
           )}
 
           {filteredItems.length > 10 && (
-            <Text style={[styles.moreItems, { color: colors.textMuted }]}>
+            <Text
+              style={[
+                styles.moreItems,
+                { color: isDark ? colors.textSecondary : Palette.neutral[600] },
+              ]}
+            >
               + {filteredItems.length - 10} autres articles
             </Text>
           )}
@@ -981,11 +1185,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Segmented Control - Premium
+  // Segmented Control - Premium Vanta Style
   segmentedControl: {
-    flexDirection: "row",
+    height: 44,
+    borderRadius: 14,
     padding: 4,
-    borderRadius: Radius.xl,
+    position: "relative",
     borderCurve: "continuous",
   },
   segmentButton: {
@@ -997,8 +1202,9 @@ const styles = StyleSheet.create({
   },
   segmentButtonActive: {},
   segmentText: {
-    fontSize: 13,
-    fontFamily: "Manrope_600SemiBold",
+    fontSize: 12,
+    fontFamily: "Manrope_700Bold",
+    letterSpacing: 1,
   },
 
   // Items List

@@ -110,6 +110,9 @@ const ICON_MAP = {
   vibration: { symbol: "waveform", material: "vibration" },
   lock: { symbol: "lock.fill", material: "lock" },
   fingerprint: { symbol: "touchid", material: "fingerprint" },
+  // Visibility icons for lot controller
+  visibility: { symbol: "eye.fill", material: "visibility" },
+  "visibility-off": { symbol: "eye.slash.fill", material: "visibility-off" },
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;

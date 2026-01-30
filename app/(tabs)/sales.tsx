@@ -2,47 +2,48 @@
  * 💰 SALES SCREEN - Vanta-Aether Architecture
  * "Revenue flowing through the infinite void"
  *
- * v3.0 - Vanta UI refactor (tokens + accessibility + FlashList)
+ * v4.0 - Enhanced Vanta UI with Monolith KPIs
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { Chip } from "@/components/ui/Components";
 import {
-  PremiumCard,
-  PremiumHeader,
-  PremiumStatCard,
-  VantaScreen,
-  useVantaTheme,
+    PremiumCard,
+    PremiumHeader,
+    PremiumStatCard,
+    useVantaTheme,
+    VantaScreen,
 } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { Radius, Spacing } from "@/constants/Theme";
+import { useColorScheme } from "@/components/useColorScheme";
+import { Palette, Radius, Spacing } from "@/constants/Theme";
 import { Sale, SalesRepository } from "@/db/repositories";
 import { useSettingsStore } from "@/store/settings";
 import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
 import {
-  formatCurrency,
-  formatCurrencyCompact,
-  formatDateShort,
-  useLocale,
+    formatCurrency,
+    formatCurrencyCompact,
+    formatDateShort,
+    useLocale,
 } from "@/utils/i18n";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    Pressable,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import Animated, {
-  FadeInDown,
-  SlideInRight,
-  ZoomIn,
+    FadeInDown,
+    SlideInRight,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -84,9 +85,145 @@ function filterSalesByPeriod(sales: Sale[], period: PeriodFilter): Sale[] {
   return sales.filter((sale) => new Date(sale.saleDate) >= threshold);
 }
 
+// Animated Period Selector - Vanta Design
+function AnimatedPeriodSelector({
+  options,
+  activeKey,
+  onSelect,
+  isDark,
+  colors,
+}: {
+  options: PeriodOption[];
+  activeKey: PeriodFilter;
+  onSelect: (key: PeriodFilter) => void;
+  isDark: boolean;
+  colors: ReturnType<typeof useVantaTheme>;
+}) {
+  const activeIndex = options.findIndex((o) => o.key === activeKey);
+  const indicatorPosition = useSharedValue(activeIndex);
+  const [trackWidth, setTrackWidth] = React.useState(0);
+  const segmentWidth = trackWidth > 0 ? (trackWidth - 8) / options.length : 0;
+
+  React.useEffect(() => {
+    indicatorPosition.value = withSpring(activeIndex, {
+      damping: 20,
+      stiffness: 200,
+      mass: 0.8,
+    });
+  }, [activeIndex, indicatorPosition]);
+
+  const indicatorStyle = useAnimatedStyle(() => {
+    if (segmentWidth === 0) return { opacity: 0 };
+    return {
+      opacity: 1,
+      transform: [{ translateX: indicatorPosition.value * segmentWidth }],
+      width: segmentWidth,
+    };
+  }, [segmentWidth]);
+
+  return (
+    <View style={periodStyles.container}>
+      <View
+        onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
+        style={[
+          periodStyles.track,
+          {
+            backgroundColor: isDark ? colors.surface : Palette.ivory.sand,
+            borderColor: isDark ? colors.border : Palette.ivory.cream,
+          },
+        ]}
+      >
+        {/* Animated Indicator */}
+        <Animated.View
+          style={[
+            periodStyles.indicator,
+            {
+              backgroundColor: isDark ? colors.surfaceCard : "#FFFFFF",
+              borderColor: colors.primary,
+              borderWidth: 1.5,
+              shadowColor: colors.primary,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: isDark ? 0.4 : 0.2,
+              shadowRadius: 6,
+              elevation: 4,
+            },
+            indicatorStyle,
+          ]}
+        />
+
+        {/* Labels */}
+        {options.map((option, index) => {
+          const isActive = option.key === activeKey;
+          return (
+            <Pressable
+              key={option.key}
+              onPress={() => {
+                Haptic.selection();
+                onSelect(option.key);
+              }}
+              style={periodStyles.segment}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={option.label}
+            >
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontFamily: "Manrope_700Bold",
+                  fontWeight: "700",
+                  letterSpacing: 0.5,
+                  color: isActive
+                    ? colors.primary
+                    : isDark
+                      ? colors.textSecondary
+                      : Palette.neutral[500],
+                }}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const periodStyles = StyleSheet.create({
+  container: {
+    paddingHorizontal: Spacing.xl,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  track: {
+    flexDirection: "row",
+    borderRadius: Radius.xl,
+    padding: 4,
+    borderWidth: 1,
+    position: "relative",
+    height: 44,
+  },
+  indicator: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    bottom: 4,
+    borderRadius: Radius.lg,
+    borderCurve: "continuous",
+  },
+  segment: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+});
+
 export default function SalesScreen() {
   const insets = useSafeAreaInsets();
   const theme = useVantaTheme();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
   const currency = useSettingsStore((s) => s.currency) as any;
   const { t, locale } = useLocale();
   const { isReduceMotionEnabled } = useAccessibility();
@@ -127,7 +264,9 @@ export default function SalesScreen() {
       );
       const avg = completed.length > 0 ? total / completed.length : 0;
 
-      const option = PERIOD_OPTIONS_CONFIG.find((p) => p.key === selectedPeriod);
+      const option = PERIOD_OPTIONS_CONFIG.find(
+        (p) => p.key === selectedPeriod,
+      );
       let comparison = 0;
 
       if (option?.days) {
@@ -180,7 +319,9 @@ export default function SalesScreen() {
     ({ item, index }: { item: Sale; index: number }) => {
       const isCompleted = item.status === "COMPLETED";
       const accentColor = isCompleted ? theme.success : theme.danger;
-      const accentSubtle = isCompleted ? theme.successSubtle : theme.dangerSubtle;
+      const accentSubtle = isCompleted
+        ? theme.successSubtle
+        : theme.dangerSubtle;
       const net = parseFloat(String(item.priceNet)) || 0;
       const dateLabel = formatDateShort(item.saleDate, locale);
 
@@ -209,10 +350,17 @@ export default function SalesScreen() {
             style={styles.salePressable}
           >
             <PremiumCard variant="default" padding="md" style={styles.saleCard}>
-              <View style={[styles.saleAccent, { backgroundColor: accentColor }]} />
+              <View
+                style={[styles.saleAccent, { backgroundColor: accentColor }]}
+              />
               <View style={styles.saleMain}>
                 <View style={styles.saleTitleRow}>
-                  <View style={[styles.statusIcon, { backgroundColor: accentSubtle }]}>
+                  <View
+                    style={[
+                      styles.statusIcon,
+                      { backgroundColor: accentSubtle },
+                    ]}
+                  >
                     <AppIcon
                       name={isCompleted ? "check-circle" : "cancel"}
                       size={18}
@@ -220,7 +368,10 @@ export default function SalesScreen() {
                     />
                   </View>
                   <View style={styles.saleInfo}>
-                    <Text style={[styles.saleTitle, { color: theme.text }]} numberOfLines={1}>
+                    <Text
+                      style={[styles.saleTitle, { color: theme.text }]}
+                      numberOfLines={1}
+                    >
                       Lot #{item.lotId} • Article #{item.itemId}
                     </Text>
                     <Text style={[styles.saleMeta, { color: theme.textMuted }]}>
@@ -239,8 +390,18 @@ export default function SalesScreen() {
                     {formatCurrency(net, currency, locale)}
                   </Text>
                   {!isCompleted && (
-                    <View style={[styles.statusBadge, { backgroundColor: theme.dangerSubtle }]}>
-                      <Text style={[styles.statusBadgeText, { color: theme.danger }]}>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        { backgroundColor: theme.dangerSubtle },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.statusBadgeText,
+                          { color: theme.danger },
+                        ]}
+                      >
                         {statusLabel}
                       </Text>
                     </View>
@@ -248,7 +409,11 @@ export default function SalesScreen() {
                 </View>
 
                 <View style={styles.chevron}>
-                  <AppIcon name="chevron-right" size={18} color={theme.textMuted} />
+                  <AppIcon
+                    name="chevron-right"
+                    size={18}
+                    color={theme.textMuted}
+                  />
                 </View>
               </View>
             </PremiumCard>
@@ -288,7 +453,10 @@ export default function SalesScreen() {
                       Haptic.impactMedium();
                       router.push("/sales/new");
                     }}
-                    style={[styles.addButton, { backgroundColor: theme.primary }]}
+                    style={[
+                      styles.addButton,
+                      { backgroundColor: theme.primary },
+                    ]}
                   >
                     <AppIcon name="add" size={22} color={theme.textOnAccent} />
                   </Pressable>
@@ -302,39 +470,24 @@ export default function SalesScreen() {
                   ? undefined
                   : FadeInDown.delay(100).duration(350)
               }
-              style={styles.filterSection}
             >
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterScroll}
-              >
-                {PERIOD_OPTIONS.map((option, index) => (
-                  <Animated.View
-                    key={option.key}
-                    entering={
-                      isReduceMotionEnabled
-                        ? undefined
-                        : ZoomIn.delay(120 + index * 40).duration(260)
-                    }
-                  >
-                    <Chip
-                      label={option.label}
-                      selected={selectedPeriod === option.key}
-                      onPress={() => handlePeriodChange(option.key)}
-                      accessibilityLabel={option.label}
-                      accessibilityHint={t("common.filter")}
-                    />
-                  </Animated.View>
-                ))}
-              </ScrollView>
+              <AnimatedPeriodSelector
+                options={PERIOD_OPTIONS}
+                activeKey={selectedPeriod}
+                onSelect={handlePeriodChange}
+                isDark={isDark}
+                colors={theme}
+              />
             </Animated.View>
 
             <View style={styles.statsGrid}>
               <PremiumStatCard
                 label={t("dashboard.revenue").toUpperCase()}
                 value={formatCurrencyCompact(totalRevenue, currency, locale)}
-                subtitle={t(PERIOD_OPTIONS_CONFIG.find((p) => p.key === selectedPeriod)?.translationKey ?? "dashboard.period.30d")}
+                subtitle={t(
+                  PERIOD_OPTIONS_CONFIG.find((p) => p.key === selectedPeriod)
+                    ?.translationKey ?? "dashboard.period.30d",
+                )}
                 icon="payments"
                 variant="accent"
                 trend={
@@ -365,7 +518,11 @@ export default function SalesScreen() {
                 label={t("sales.stats.deltaPrev").toUpperCase()}
                 value={`${previousPeriodComparison >= 0 ? "+" : ""}${previousPeriodComparison.toFixed(0)}%`}
                 subtitle={t("common.previous")}
-                icon={previousPeriodComparison >= 0 ? "trending-up" : "trending-down"}
+                icon={
+                  previousPeriodComparison >= 0
+                    ? "trending-up"
+                    : "trending-down"
+                }
               />
             </View>
 
@@ -384,7 +541,12 @@ export default function SalesScreen() {
             </View>
           ) : (
             <View style={styles.empty}>
-              <View style={[styles.emptyIcon, { backgroundColor: theme.primarySubtle }]}>
+              <View
+                style={[
+                  styles.emptyIcon,
+                  { backgroundColor: theme.primarySubtle },
+                ]}
+              >
                 <AppIcon name="point-of-sale" size={40} color={theme.primary} />
               </View>
               <Text style={[styles.emptyTitle, { color: theme.text }]}>
@@ -413,14 +575,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderCurve: "continuous",
-  },
-  filterSection: {
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  filterScroll: {
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
   },
   statsGrid: {
     flexDirection: "row",

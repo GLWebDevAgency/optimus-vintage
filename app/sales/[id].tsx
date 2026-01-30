@@ -1,10 +1,15 @@
 /**
- * 📜 SALE DETAIL SCREEN - View and manage sale
+ * 📜 SALE DETAIL SCREEN - Vanta-Aether Edition
  * Shows sale details with cancel/refund option
+ *
+ * v2.0 - Enhanced with Vanta premium components
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
+import {
+    useVantaTheme,
+    VantaScreen
+} from "@/components/ui/PremiumUI";
 import { ItemsRepository, SalesRepository } from "@/db/repositories";
 import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

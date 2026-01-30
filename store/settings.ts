@@ -52,6 +52,7 @@ interface SettingsState {
   isOnboardingDone: boolean;
   themeMode: ThemeMode; // Theme preference
   locale: SupportedLocale; // Language preference
+  hapticsEnabled: boolean; // Haptics preference
 
   setCurrency: (c: string) => void;
   setTargetMargin: (m: number) => void;
@@ -59,6 +60,7 @@ interface SettingsState {
   resetOnboarding: () => void; // For dev/testing
   setThemeMode: (mode: ThemeMode) => void;
   setLocale: (locale: SupportedLocale) => void;
+  setHapticsEnabled: (enabled: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -69,6 +71,7 @@ export const useSettingsStore = create<SettingsState>()(
       isOnboardingDone: false,
       themeMode: "system", // Default: follow system
       locale: "fr", // Default: French (primary market)
+      hapticsEnabled: true,
 
       setCurrency: (currency) => set({ currency }),
       setTargetMargin: (targetMargin) => set({ targetMargin }),
@@ -76,6 +79,7 @@ export const useSettingsStore = create<SettingsState>()(
       resetOnboarding: () => set({ isOnboardingDone: false }),
       setThemeMode: (themeMode) => set({ themeMode }),
       setLocale: (locale) => set({ locale }),
+      setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
     }),
     {
       name: "optimus-vintage-settings",

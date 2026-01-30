@@ -1,81 +1,58 @@
 /**
- * ⚙️ SETTINGS SCREEN - Vanta-Aether Sanctuary
+ * ⚙️ SETTINGS SCREEN — Vanta Sanctuary
+ * "Configuration as an obsidian control panel"
  *
- * Design inspiré des maquettes Vanta:
- * - Labels en MAJUSCULES avec letter-spacing
- * - Icônes dans carrés obsidian
- * - Section headers style "ARTIFACT ORCHESTRATION"
- * - Identity Node pour l'app info
- * - Toggle doré pour les options
+ * Priorities:
+ * - Vanta tokens only (no per-screen hex)
+ * - Premium UI primitives (VantaScreen + PremiumCard)
+ * - WCAG 2.2: labels, roles, target sizes, reduce motion
  */
 
+import appConfig from "@/app.json";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Palette, Spacing } from "@/constants/Theme";
 import {
-    THEME_MODE_OPTIONS,
-    useSettingsStore
-} from "@/store/settings";
+  PremiumCard,
+  PremiumHeader,
+  VantaScreen,
+  useVantaTheme,
+  type VantaTheme,
+} from "@/components/ui/PremiumUI";
+import { Radius, Spacing } from "@/constants/Theme";
+import { THEME_MODE_OPTIONS, useSettingsStore } from "@/store/settings";
+import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { exportDataToCSV } from "@/utils/data/export";
 import { Haptic } from "@/utils/haptics";
+import { SUPPORTED_LOCALES, useLocale } from "@/utils/i18n";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    SUPPORTED_LOCALES,
-    useLocale
-} from "@/utils/i18n";
-import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useState } from "react";
-import {
-    ActionSheetIOS,
-    Alert,
-    Platform,
-    Pressable,
-    ScrollView,
-    Switch,
-    Text,
-    TextInput,
-    View,
+  ActionSheetIOS,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import Animated, {
-    FadeInDown,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎨 VANTA DESIGN TOKENS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const VANTA = {
-  black: "#000000",
-  obsidian: "#0a0a0a",
-  obsidianLight: "#1a1a1a",
-  titanium: "#111111",
-  carbon: "#1c1c1c",
-  gold: "#f4c025",
-  goldSubtle: "rgba(244, 192, 37, 0.15)",
-  goldMicro: "rgba(244, 192, 37, 0.08)",
-  goldBorder: "rgba(244, 192, 37, 0.3)",
-  textPrimary: "#ffffff",
-  textSecondary: "rgba(255, 255, 255, 0.6)",
-  textMuted: "rgba(255, 255, 255, 0.4)",
-  textGhost: "rgba(255, 255, 255, 0.2)",
-} as const;
-
 const SPRING_CONFIG = { damping: 20, stiffness: 300 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 💰 SUPPORTED CURRENCIES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface CurrencyOption {
+type CurrencyOption = {
   code: string;
   symbol: string;
   name: string;
   flag: string;
-}
+};
 
 const SUPPORTED_CURRENCIES: CurrencyOption[] = [
   { code: "EUR", symbol: "€", name: "Euro", flag: "🇪🇺" },
@@ -87,111 +64,42 @@ const SUPPORTED_CURRENCIES: CurrencyOption[] = [
   { code: "AUD", symbol: "A$", name: "Australian Dollar", flag: "🇦🇺" },
 ];
 
-function getColors(isDark: boolean) {
-  return {
-    background: isDark ? VANTA.black : Palette.ivory.base,
-    surface: isDark ? VANTA.obsidian : Palette.ivory.pearl,
-    surfaceRow: isDark ? VANTA.titanium : Palette.ivory.pearl,
-    gold: isDark ? VANTA.gold : Palette.metal.champagne,
-    goldSubtle: isDark ? VANTA.goldSubtle : `${Palette.metal.champagne}15`,
-    goldMicro: isDark ? VANTA.goldMicro : `${Palette.metal.champagne}08`,
-    goldBorder: isDark ? VANTA.goldBorder : `${Palette.metal.champagne}30`,
-    text: isDark ? VANTA.textPrimary : Palette.neutral.anthracite,
-    textSecondary: isDark ? VANTA.textSecondary : Palette.neutral[500],
-    textMuted: isDark ? VANTA.textMuted : Palette.neutral[400],
-    textGhost: isDark ? VANTA.textGhost : Palette.neutral[300],
-    border: isDark
-      ? "rgba(255, 255, 255, 0.06)"
-      : `${Palette.metal.champagne}15`,
-    danger: Palette.semantic.danger,
-    dangerSubtle: `${Palette.semantic.danger}15`,
-    success: Palette.semantic.success,
-    successSubtle: `${Palette.semantic.success}15`,
-  };
+function getEnter(isReduceMotionEnabled: boolean, delayMs: number) {
+  return isReduceMotionEnabled
+    ? undefined
+    : FadeInDown.delay(delayMs).duration(420);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🏛️ SECTION HEADER - Style "ARTIFACT ORCHESTRATION"
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function SectionHeader({
-  title,
-  colors,
-}: {
-  title: string;
-  colors: ReturnType<typeof getColors>;
-}) {
+function SectionHeader({ title, theme }: { title: string; theme: VantaTheme }) {
   return (
-    <Text
-      style={{
-        fontSize: 11,
-        fontWeight: "600",
-        letterSpacing: 3,
-        color: colors.textMuted,
-        marginTop: Spacing.xl,
-        marginBottom: Spacing.md,
-        marginLeft: Spacing.xs,
-      }}
-    >
-      {title}
-    </Text>
+    <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>{title}</Text>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🌌 OBSIDIAN CARD - Carte avec bordure subtile
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function ObsidianCard({
-  children,
-  style,
-}: {
-  children: React.ReactNode;
-  style?: any;
-}) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-
+function RowIcon({ icon, theme }: { icon: AppIconName; theme: VantaTheme }) {
   return (
     <View
       style={[
-        {
-          backgroundColor: isDark ? VANTA.obsidian : Palette.ivory.pearl,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: isDark
-            ? "rgba(255, 255, 255, 0.06)"
-            : `${Palette.metal.champagne}15`,
-          overflow: "hidden",
-        },
-        style,
+        styles.iconBox,
+        { backgroundColor: theme.surfaceHighlight, borderColor: theme.border },
       ]}
     >
-      {/* Top shine */}
-      {isDark && (
-        <View
-          style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1 }}
-        >
-          <LinearGradient
-            colors={[
-              "rgba(255,255,255,0)",
-              "rgba(255,255,255,0.06)",
-              "rgba(255,255,255,0)",
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{ flex: 1 }}
-          />
-        </View>
-      )}
-      {children}
+      <AppIcon name={icon} size={20} color={theme.textMuted} />
     </View>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎯 VANTA ROW - Style maquette avec icône carrée et label majuscule
-// ═══════════════════════════════════════════════════════════════════════════════
+type VantaRowProps = {
+  icon: AppIconName;
+  label: string;
+  sublabel?: string;
+  value?: React.ReactNode;
+  onPress?: () => void;
+  theme: VantaTheme;
+  isReduceMotionEnabled: boolean;
+  accessibilityLabel: string;
+  accessibilityHint?: string;
+};
 
 function VantaRow({
   icon,
@@ -199,26 +107,22 @@ function VantaRow({
   sublabel,
   value,
   onPress,
-  showChevron = true,
-  colors,
-}: {
-  icon: AppIconName;
-  label: string;
-  sublabel?: string;
-  value?: React.ReactNode;
-  onPress?: () => void;
-  showChevron?: boolean;
-  colors: ReturnType<typeof getColors>;
-}) {
+  theme,
+  isReduceMotionEnabled,
+  accessibilityLabel,
+  accessibilityHint,
+}: VantaRowProps) {
   const scale = useSharedValue(1);
 
   const handlePressIn = useCallback(() => {
-    if (onPress) scale.value = withSpring(0.98, SPRING_CONFIG);
-  }, [onPress]);
+    if (!onPress || isReduceMotionEnabled) return;
+    scale.value = withSpring(0.98, SPRING_CONFIG);
+  }, [isReduceMotionEnabled, onPress]);
 
   const handlePressOut = useCallback(() => {
+    if (isReduceMotionEnabled) return;
     scale.value = withSpring(1, SPRING_CONFIG);
-  }, []);
+  }, [isReduceMotionEnabled]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -227,90 +131,54 @@ function VantaRow({
   return (
     <Pressable
       onPress={() => {
-        if (onPress) {
-          Haptic.impactLight();
-          onPress();
-        }
+        if (!onPress) return;
+        Haptic.impactLight();
+        onPress();
       }}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={!onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={onPress ? accessibilityLabel : undefined}
+      accessibilityHint={onPress ? accessibilityHint : undefined}
     >
       <Animated.View style={animatedStyle}>
-        <ObsidianCard style={{ marginBottom: Spacing.sm }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              padding: Spacing.lg,
-              gap: Spacing.md,
-            }}
-          >
-            {/* Icône carrée style maquette */}
-            <View
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                backgroundColor: colors.surfaceRow,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}
-            >
-              <AppIcon name={icon} size={20} color={colors.textGhost} />
-            </View>
+        <PremiumCard padding="none" style={styles.card}>
+          <View style={styles.row}>
+            <RowIcon icon={icon} theme={theme} />
 
-            {/* Label en majuscules */}
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: "600",
-                  letterSpacing: 1.5,
-                  color: colors.text,
-                  textTransform: "uppercase",
-                }}
-              >
-                {label}
-              </Text>
-              {sublabel && (
-                <Text
-                  style={{
-                    fontSize: 11,
-                    fontWeight: "400",
-                    color: colors.textMuted,
-                    marginTop: 2,
-                    letterSpacing: 0.5,
-                  }}
-                >
+            <View style={styles.rowText}>
+              <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
+              {sublabel ? (
+                <Text style={[styles.rowSublabel, { color: theme.textMuted }]}>
                   {sublabel}
                 </Text>
-              )}
+              ) : null}
             </View>
 
-            {/* Value */}
-            {value}
+            {value ? <View style={styles.rowValue}>{value}</View> : null}
 
-            {/* Chevron doré */}
-            {showChevron && onPress && (
-              <AppIcon
-                name="chevron-right"
-                size={18}
-                color={colors.textGhost}
-              />
-            )}
+            {onPress ? (
+              <AppIcon name="chevron-right" size={18} color={theme.textMuted} />
+            ) : null}
           </View>
-        </ObsidianCard>
+        </PremiumCard>
       </Animated.View>
     </Pressable>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🔘 VANTA TOGGLE ROW - Avec Switch doré
-// ═══════════════════════════════════════════════════════════════════════════════
+type VantaToggleRowProps = {
+  icon: AppIconName;
+  label: string;
+  sublabel?: string;
+  value: boolean;
+  onValueChange: (val: boolean) => void;
+  theme: VantaTheme;
+  isReduceMotionEnabled: boolean;
+  accessibilityLabel: string;
+  accessibilityHint?: string;
+};
 
 function VantaToggleRow({
   icon,
@@ -318,98 +186,72 @@ function VantaToggleRow({
   sublabel,
   value,
   onValueChange,
-  colors,
-}: {
-  icon: AppIconName;
-  label: string;
-  sublabel?: string;
-  value: boolean;
-  onValueChange: (val: boolean) => void;
-  colors: ReturnType<typeof getColors>;
-}) {
+  theme,
+  isReduceMotionEnabled,
+  accessibilityLabel,
+  accessibilityHint,
+}: VantaToggleRowProps) {
+  const scale = useSharedValue(1);
+
+  const handlePressIn = useCallback(() => {
+    if (isReduceMotionEnabled) return;
+    scale.value = withSpring(0.99, SPRING_CONFIG);
+  }, [isReduceMotionEnabled]);
+
+  const handlePressOut = useCallback(() => {
+    if (isReduceMotionEnabled) return;
+    scale.value = withSpring(1, SPRING_CONFIG);
+  }, [isReduceMotionEnabled]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <ObsidianCard style={{ marginBottom: Spacing.sm }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          padding: Spacing.lg,
-          gap: Spacing.md,
-        }}
-      >
-        <View
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            backgroundColor: colors.surfaceRow,
-            alignItems: "center",
-            justifyContent: "center",
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}
-        >
-          <AppIcon name={icon} size={20} color={colors.textGhost} />
-        </View>
+    <Pressable
+      onPress={() => {
+        Haptic.selection();
+        onValueChange(!value);
+      }}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ checked: value }}
+    >
+      <Animated.View style={animatedStyle}>
+        <PremiumCard padding="none" style={styles.card}>
+          <View style={styles.row}>
+            <RowIcon icon={icon} theme={theme} />
 
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: "600",
-              letterSpacing: 1.5,
-              color: colors.text,
-              textTransform: "uppercase",
-            }}
-          >
-            {label}
-          </Text>
-          {sublabel && (
-            <Text
-              style={{
-                fontSize: 11,
-                fontWeight: "400",
-                color: colors.textMuted,
-                marginTop: 2,
-                letterSpacing: 0.5,
-              }}
-            >
-              {sublabel}
-            </Text>
-          )}
-        </View>
+            <View style={styles.rowText}>
+              <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
+              {sublabel ? (
+                <Text style={[styles.rowSublabel, { color: theme.textMuted }]}>
+                  {sublabel}
+                </Text>
+              ) : null}
+            </View>
 
-        <Switch
-          value={value}
-          onValueChange={(val) => {
-            Haptic.impactLight();
-            onValueChange(val);
-          }}
-          trackColor={{ false: colors.surfaceRow, true: colors.gold }}
-          thumbColor="#FFFFFF"
-          ios_backgroundColor={colors.surfaceRow}
-        />
-      </View>
-    </ObsidianCard>
+            <Switch
+              value={value}
+              onValueChange={onValueChange}
+              trackColor={{ false: theme.surfaceHighlight, true: theme.primary }}
+              thumbColor={Platform.OS === "android" ? theme.textOnAccent : undefined}
+              ios_backgroundColor={theme.surfaceHighlight}
+              style={styles.switch}
+              pointerEvents="none"
+              accessible={false}
+            />
+          </View>
+        </PremiumCard>
+      </Animated.View>
+    </Pressable>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎚️ STEPPER ROW - Pour la marge en %
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function StepperRow({
-  icon,
-  label,
-  sublabel,
-  value,
-  onChange,
-  min = 0,
-  max = 100,
-  step = 5,
-  suffix = "%",
-  colors,
-}: {
+type VantaStepperRowProps = {
   icon: AppIconName;
   label: string;
   sublabel?: string;
@@ -419,310 +261,224 @@ function StepperRow({
   max?: number;
   step?: number;
   suffix?: string;
-  colors: ReturnType<typeof getColors>;
-}) {
+  theme: VantaTheme;
+  accessibilityLabel: string;
+};
+
+function VantaStepperRow({
+  icon,
+  label,
+  sublabel,
+  value,
+  onChange,
+  min = 0,
+  max = 500,
+  step = 5,
+  suffix = "",
+  theme,
+  accessibilityLabel,
+}: VantaStepperRowProps) {
   const [inputValue, setInputValue] = useState(String(value));
 
-  const handleStep = (delta: number) => {
-    const newValue = Math.max(min, Math.min(max, value + delta));
-    Haptic.impactLight();
-    onChange(newValue);
-    setInputValue(String(newValue));
-  };
+  useEffect(() => {
+    setInputValue(String(value));
+  }, [value]);
 
-  const handleInputBlur = () => {
-    const num = parseInt(inputValue, 10) || min;
-    const clamped = Math.max(min, Math.min(max, num));
-    onChange(clamped);
-    setInputValue(String(clamped));
-  };
+  const clamp = useCallback(
+    (n: number) => Math.max(min, Math.min(max, n)),
+    [max, min],
+  );
+
+  const apply = useCallback(
+    (n: number) => {
+      const clamped = clamp(n);
+      onChange(clamped);
+      setInputValue(String(clamped));
+    },
+    [clamp, onChange],
+  );
 
   return (
-    <ObsidianCard style={{ marginBottom: Spacing.sm }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          padding: Spacing.lg,
-          gap: Spacing.md,
-        }}
-      >
-        <View
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            backgroundColor: colors.surfaceRow,
-            alignItems: "center",
-            justifyContent: "center",
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}
-        >
-          <AppIcon name={icon} size={20} color={colors.textGhost} />
-        </View>
+    <PremiumCard padding="none" style={styles.card}>
+      <View style={styles.row}>
+        <RowIcon icon={icon} theme={theme} />
 
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: "600",
-              letterSpacing: 1.5,
-              color: colors.text,
-              textTransform: "uppercase",
-            }}
-          >
-            {label}
-          </Text>
-          {sublabel && (
-            <Text
-              style={{
-                fontSize: 11,
-                fontWeight: "400",
-                color: colors.textMuted,
-                marginTop: 2,
-                letterSpacing: 0.5,
-              }}
-            >
+        <View style={styles.rowText}>
+          <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
+          {sublabel ? (
+            <Text style={[styles.rowSublabel, { color: theme.textMuted }]}>
               {sublabel}
             </Text>
-          )}
+          ) : null}
         </View>
 
-        {/* Stepper controls */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View style={styles.stepper}>
           <Pressable
-            onPress={() => handleStep(-step)}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              backgroundColor: colors.surfaceRow,
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 1,
-              borderColor: colors.border,
-              opacity: value <= min ? 0.4 : 1,
+            onPress={() => {
+              Haptic.impactLight();
+              apply(value - step);
             }}
             disabled={value <= min}
+            accessibilityRole="button"
+            accessibilityLabel={`${accessibilityLabel}: -${step}`}
+            accessibilityState={{ disabled: value <= min }}
+            style={[
+              styles.stepButton,
+              {
+                backgroundColor: theme.surfaceHighlight,
+                borderColor: theme.border,
+                opacity: value <= min ? 0.4 : 1,
+              },
+            ]}
           >
-            <AppIcon name="remove" size={16} color={colors.gold} />
+            <AppIcon name="remove" size={18} color={theme.primary} />
           </Pressable>
 
           <View
-            style={{
-              minWidth: 56,
-              height: 32,
-              borderRadius: 8,
-              backgroundColor: colors.surfaceRow,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              paddingHorizontal: 8,
-              borderWidth: 1,
-              borderColor: colors.goldBorder,
-            }}
+            style={[
+              styles.stepperValue,
+              {
+                backgroundColor: theme.surfaceHighlight,
+                borderColor: theme.borderGold,
+              },
+            ]}
           >
-            <TextInput
-              style={{
-                fontSize: 16,
-                fontWeight: "700",
-                color: colors.gold,
-                textAlign: "center",
-                minWidth: 24,
-                padding: 0,
-              }}
+          <TextInput
               value={inputValue}
-              onChangeText={(t) => setInputValue(t.replace(/[^0-9]/g, ""))}
-              onBlur={handleInputBlur}
-              keyboardType="number-pad"
-              maxLength={3}
-              selectTextOnFocus
-            />
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: "600",
-                color: colors.textMuted,
+              onChangeText={(text) => setInputValue(text.replace(/[^0-9]/g, ""))}
+              onBlur={() => {
+                const num = parseInt(inputValue, 10);
+                Haptic.impactLight();
+                apply(Number.isFinite(num) ? num : min);
               }}
-            >
-              {suffix}
-            </Text>
+              keyboardType="number-pad"
+              maxLength={4}
+              selectTextOnFocus
+              accessibilityLabel={accessibilityLabel}
+              style={[styles.stepperInput, { color: theme.primary }]}
+            />
+            {suffix ? (
+              <Text style={[styles.stepperSuffix, { color: theme.textMuted }]}>
+                {suffix}
+              </Text>
+            ) : null}
           </View>
 
           <Pressable
-            onPress={() => handleStep(step)}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              backgroundColor: colors.surfaceRow,
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 1,
-              borderColor: colors.border,
-              opacity: value >= max ? 0.4 : 1,
+            onPress={() => {
+              Haptic.impactLight();
+              apply(value + step);
             }}
             disabled={value >= max}
+            accessibilityRole="button"
+            accessibilityLabel={`${accessibilityLabel}: +${step}`}
+            accessibilityState={{ disabled: value >= max }}
+            style={[
+              styles.stepButton,
+              {
+                backgroundColor: theme.surfaceHighlight,
+                borderColor: theme.border,
+                opacity: value >= max ? 0.4 : 1,
+              },
+            ]}
           >
-            <AppIcon name="add" size={16} color={colors.gold} />
+            <AppIcon name="add" size={18} color={theme.primary} />
           </Pressable>
         </View>
       </View>
-    </ObsidianCard>
+    </PremiumCard>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🏷️ AETHER BADGE - Style "AETHER TIER IV"
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function AetherBadge({
-  text,
-  colors,
-}: {
-  text: string;
-  colors: ReturnType<typeof getColors>;
-}) {
+function AetherBadge({ text, theme }: { text: string; theme: VantaTheme }) {
   return (
     <View
-      style={{
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: colors.goldBorder,
-        backgroundColor: "transparent",
-      }}
+      style={[
+        styles.badge,
+        { borderColor: theme.borderGold, backgroundColor: "transparent" },
+      ]}
     >
-      <Text
-        style={{
-          fontSize: 12,
-          fontWeight: "700",
-          letterSpacing: 2,
-          color: colors.gold,
-          textTransform: "uppercase",
-        }}
-      >
-        {text}
-      </Text>
+      <Text style={[styles.badgeText, { color: theme.primary }]}>{text}</Text>
     </View>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 👤 IDENTITY NODE - Style Avatar Card
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function IdentityNode({ colors }: { colors: ReturnType<typeof getColors> }) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-
+function IdentityNode({
+  theme,
+  appName,
+  version,
+}: {
+  theme: VantaTheme;
+  appName: string;
+  version: string;
+}) {
   return (
-    <ObsidianCard style={{ padding: Spacing.xl }}>
-      <View
-        style={{ flexDirection: "row", alignItems: "center", gap: Spacing.lg }}
-      >
-        {/* App Icon / Avatar */}
+    <PremiumCard padding="lg" style={styles.identityCard}>
+      <View style={styles.identityHeader}>
         <View
-          style={{
-            width: 72,
-            height: 72,
-            borderRadius: 36,
-            backgroundColor: colors.gold,
-            alignItems: "center",
-            justifyContent: "center",
-            borderWidth: 2,
-            borderColor: colors.goldBorder,
-          }}
+          style={[
+            styles.identityAvatar,
+            { backgroundColor: theme.primary, borderColor: theme.borderGold },
+          ]}
+          accessibilityRole="image"
+          accessibilityLabel={appName}
         >
-          <Text style={{ fontSize: 32 }}>✨</Text>
+          <Text style={styles.identityAvatarEmoji}>✦</Text>
         </View>
 
-        {/* Info */}
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              fontSize: 10,
-              fontWeight: "600",
-              letterSpacing: 2,
-              color: colors.gold,
-              textTransform: "uppercase",
-              marginBottom: 4,
-            }}
-          >
+        <View style={styles.identityText}>
+          <Text style={[styles.identityLabel, { color: theme.primary }]}>
             IDENTITY NODE
           </Text>
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: "700",
-              color: colors.text,
-              marginBottom: 4,
-            }}
-          >
-            Optimus Vintage
+          <Text style={[styles.identityTitle, { color: theme.text }]}>
+            {appName}
           </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <View
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: colors.gold,
-              }}
-            />
-            <Text
-              style={{
-                fontSize: 11,
-                fontWeight: "500",
-                color: colors.textMuted,
-                letterSpacing: 1,
-              }}
-            >
-              VER: 1.0.0
-            </Text>
-          </View>
+          <Text style={[styles.identityMeta, { color: theme.textMuted }]}>
+            {version}
+          </Text>
         </View>
 
-        {/* Stats bars */}
-        <View style={{ gap: 4 }}>
+        <View
+          style={styles.identityBars}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
           {[0.8, 0.6, 1, 0.4].map((h, i) => (
             <View
               key={i}
-              style={{
-                width: 4,
-                height: 24 * h,
-                backgroundColor: i === 2 ? colors.gold : colors.textGhost,
-                borderRadius: 2,
-              }}
+              style={[
+                styles.identityBar,
+                {
+                  height: 24 * h,
+                  backgroundColor: i === 2 ? theme.primary : theme.textMuted,
+                  opacity: i === 2 ? 1 : 0.35,
+                },
+              ]}
             />
           ))}
         </View>
       </View>
 
-      {/* Status Badge */}
-      <View style={{ marginTop: Spacing.lg, alignItems: "center" }}>
-        <Text
-          style={{
-            fontSize: 10,
-            fontWeight: "500",
-            letterSpacing: 2,
-            color: colors.textMuted,
-            marginBottom: 8,
-          }}
-        >
+      <View style={styles.identityStatus}>
+        <Text style={[styles.identityStatusLabel, { color: theme.textMuted }]}>
           CURRENT STATUS
         </Text>
-        <AetherBadge text="AETHER PRO" colors={colors} />
+        <AetherBadge text="AETHER TIER IV" theme={theme} />
       </View>
-    </ObsidianCard>
+    </PremiumCard>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎬 ACTION CARD - Style "COMPLETE ACQUISITION"
-// ═══════════════════════════════════════════════════════════════════════════════
+type ActionButtonProps = {
+  icon: AppIconName;
+  label: string;
+  onPress: () => void;
+  variant?: "default" | "danger" | "gold";
+  loading?: boolean;
+  theme: VantaTheme;
+  isReduceMotionEnabled: boolean;
+  accessibilityLabel: string;
+};
 
 function ActionButton({
   icon,
@@ -730,24 +486,21 @@ function ActionButton({
   onPress,
   variant = "default",
   loading = false,
-  colors,
-}: {
-  icon: AppIconName;
-  label: string;
-  onPress: () => void;
-  variant?: "default" | "danger" | "gold";
-  loading?: boolean;
-  colors: ReturnType<typeof getColors>;
-}) {
+  theme,
+  isReduceMotionEnabled,
+  accessibilityLabel,
+}: ActionButtonProps) {
   const scale = useSharedValue(1);
 
-  const handlePressIn = () => {
-    scale.value = withSpring(0.97, SPRING_CONFIG);
-  };
+  const handlePressIn = useCallback(() => {
+    if (isReduceMotionEnabled) return;
+    scale.value = withSpring(0.98, SPRING_CONFIG);
+  }, [isReduceMotionEnabled]);
 
-  const handlePressOut = () => {
+  const handlePressOut = useCallback(() => {
+    if (isReduceMotionEnabled) return;
     scale.value = withSpring(1, SPRING_CONFIG);
-  };
+  }, [isReduceMotionEnabled]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -755,62 +508,35 @@ function ActionButton({
 
   const isGold = variant === "gold";
   const isDanger = variant === "danger";
-
-  const borderColor = isDanger
-    ? colors.danger
-    : isGold
-      ? colors.gold
-      : colors.border;
-  const textColor = isDanger
-    ? colors.danger
-    : isGold
-      ? colors.gold
-      : colors.text;
+  const borderColor = isDanger ? theme.danger : isGold ? theme.primary : theme.border;
+  const textColor = isDanger ? theme.danger : isGold ? theme.primary : theme.text;
 
   return (
     <Pressable
       onPress={() => {
+        if (loading) return;
         Haptic.impactLight();
         onPress();
       }}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={loading}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: loading }}
+      style={{ marginBottom: Spacing.sm }}
     >
       <Animated.View
         style={[
-          {
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: Spacing.lg,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: borderColor,
-            backgroundColor: "transparent",
-            marginBottom: Spacing.sm,
-          },
+          styles.actionButton,
+          { borderColor, opacity: loading ? 0.6 : 1 },
           animatedStyle,
         ]}
       >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: Spacing.md,
-          }}
-        >
+        <View style={styles.actionLeft}>
           <AppIcon name={icon} size={18} color={textColor} />
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "700",
-              letterSpacing: 2,
-              color: textColor,
-              textTransform: "uppercase",
-            }}
-          >
-            {loading ? `${label}...` : label}
+          <Text style={[styles.actionText, { color: textColor }]}>
+            {label}
           </Text>
         </View>
         <AppIcon name="arrow-forward" size={18} color={textColor} />
@@ -819,50 +545,54 @@ function ActionButton({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📱 MAIN SETTINGS SCREEN
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-  const colors = getColors(isDark);
-
-  useTrackScreen("settings");
+  const theme = useVantaTheme();
+  const { isReduceMotionEnabled } = useAccessibility();
   const { t, locale, changeLocale } = useLocale();
 
-  const {
-    currency,
-    setCurrency,
-    targetMargin,
-    setTargetMargin,
-    resetOnboarding,
-    themeMode,
-    setThemeMode,
-  } = useSettingsStore();
+  useTrackScreen("settings");
+
+  const currency = useSettingsStore((s) => s.currency);
+  const setCurrency = useSettingsStore((s) => s.setCurrency);
+  const targetMargin = useSettingsStore((s) => s.targetMargin);
+  const setTargetMargin = useSettingsStore((s) => s.setTargetMargin);
+  const resetOnboarding = useSettingsStore((s) => s.resetOnboarding);
+  const themeMode = useSettingsStore((s) => s.themeMode);
+  const setThemeMode = useSettingsStore((s) => s.setThemeMode);
+  const hapticsEnabled = useSettingsStore((s) => s.hapticsEnabled);
+  const setHapticsEnabled = useSettingsStore((s) => s.setHapticsEnabled);
 
   const [exporting, setExporting] = useState(false);
-  const [hapticsEnabled, setHapticsEnabled] = useState(true);
 
-  // Helpers
-  const currentLang = SUPPORTED_LOCALES.find((l) => l.code === locale);
-  const currentCurrency =
-    SUPPORTED_CURRENCIES.find((c) => c.code === currency) ||
-    SUPPORTED_CURRENCIES[0];
-  const currentTheme = THEME_MODE_OPTIONS.find((o) => o.key === themeMode);
+  const currentLang = useMemo(
+    () => SUPPORTED_LOCALES.find((l) => l.code === locale) ?? SUPPORTED_LOCALES[0],
+    [locale],
+  );
 
-  const showLanguagePicker = () => {
+  const currentCurrency = useMemo(
+    () =>
+      SUPPORTED_CURRENCIES.find((c) => c.code === currency) ?? SUPPORTED_CURRENCIES[0],
+    [currency],
+  );
+
+  const currentTheme = useMemo(
+    () => THEME_MODE_OPTIONS.find((o) => o.key === themeMode) ?? THEME_MODE_OPTIONS[0],
+    [themeMode],
+  );
+
+  const showLanguagePicker = useCallback(() => {
+    const cancelLabel = t("common.cancel");
     if (Platform.OS === "ios") {
       const options = [
         ...SUPPORTED_LOCALES.map((l) => `${l.flag}  ${l.nativeName}`),
-        "Cancel",
+        cancelLabel,
       ];
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options,
           cancelButtonIndex: options.length - 1,
-          title: "SELECT LANGUAGE",
+          title: t("settings.language").toUpperCase(),
         },
         (idx) => {
           if (idx < SUPPORTED_LOCALES.length) {
@@ -871,28 +601,30 @@ export default function SettingsScreen() {
           }
         },
       );
-    } else {
-      Alert.alert("Select Language", undefined, [
-        ...SUPPORTED_LOCALES.map((l) => ({
-          text: `${l.flag} ${l.nativeName}`,
-          onPress: () => changeLocale(l.code),
-        })),
-        { text: "Cancel", style: "cancel" },
-      ]);
+      return;
     }
-  };
 
-  const showCurrencyPicker = () => {
+    Alert.alert(t("settings.language"), undefined, [
+      ...SUPPORTED_LOCALES.map((l) => ({
+        text: `${l.flag} ${l.nativeName}`,
+        onPress: () => changeLocale(l.code),
+      })),
+      { text: cancelLabel, style: "cancel" },
+    ]);
+  }, [changeLocale, t]);
+
+  const showCurrencyPicker = useCallback(() => {
+    const cancelLabel = t("common.cancel");
     if (Platform.OS === "ios") {
       const options = [
         ...SUPPORTED_CURRENCIES.map((c) => `${c.flag}  ${c.symbol}  ${c.name}`),
-        "Cancel",
+        cancelLabel,
       ];
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options,
           cancelButtonIndex: options.length - 1,
-          title: "SELECT CURRENCY",
+          title: t("settings.currency").toUpperCase(),
         },
         (idx) => {
           if (idx < SUPPORTED_CURRENCIES.length) {
@@ -901,25 +633,27 @@ export default function SettingsScreen() {
           }
         },
       );
-    } else {
-      Alert.alert("Select Currency", undefined, [
-        ...SUPPORTED_CURRENCIES.map((c) => ({
-          text: `${c.flag} ${c.symbol} ${c.name}`,
-          onPress: () => setCurrency(c.code),
-        })),
-        { text: "Cancel", style: "cancel" },
-      ]);
+      return;
     }
-  };
 
-  const showThemePicker = () => {
+    Alert.alert(t("settings.currency"), undefined, [
+      ...SUPPORTED_CURRENCIES.map((c) => ({
+        text: `${c.flag} ${c.symbol} ${c.name}`,
+        onPress: () => setCurrency(c.code),
+      })),
+      { text: cancelLabel, style: "cancel" },
+    ]);
+  }, [setCurrency, t]);
+
+  const showThemePicker = useCallback(() => {
+    const cancelLabel = t("common.cancel");
     if (Platform.OS === "ios") {
-      const options = [...THEME_MODE_OPTIONS.map((o) => o.label), "Cancel"];
+      const options = [...THEME_MODE_OPTIONS.map((o) => o.label), cancelLabel];
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options,
           cancelButtonIndex: options.length - 1,
-          title: "SELECT APPEARANCE",
+          title: t("settings.theme").toUpperCase(),
         },
         (idx) => {
           if (idx < THEME_MODE_OPTIONS.length) {
@@ -928,32 +662,33 @@ export default function SettingsScreen() {
           }
         },
       );
-    } else {
-      Alert.alert("Select Appearance", undefined, [
-        ...THEME_MODE_OPTIONS.map((o) => ({
-          text: o.label,
-          onPress: () => setThemeMode(o.key),
-        })),
-        { text: "Cancel", style: "cancel" },
-      ]);
+      return;
     }
-  };
 
-  const handleExport = async () => {
+    Alert.alert(t("settings.theme"), undefined, [
+      ...THEME_MODE_OPTIONS.map((o) => ({
+        text: o.label,
+        onPress: () => setThemeMode(o.key),
+      })),
+      { text: cancelLabel, style: "cancel" },
+    ]);
+  }, [setThemeMode, t]);
+
+  const handleExport = useCallback(async () => {
     setExporting(true);
     try {
       await exportDataToCSV();
       Haptic.success();
-      Alert.alert(t("common.success"), "Data exported successfully");
+      Alert.alert(t("common.success"), t("settings.exportSuccess"));
     } catch {
       Haptic.error();
-      Alert.alert(t("common.error"), "Export failed");
+      Alert.alert(t("common.error"), t("settings.exportError"));
     } finally {
       setExporting(false);
     }
-  };
+  }, [t]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     Alert.alert(t("settings.resetTitle"), t("settings.resetMessage"), [
       { text: t("common.cancel"), style: "cancel" },
       {
@@ -965,220 +700,413 @@ export default function SettingsScreen() {
         },
       },
     ]);
-  };
+  }, [resetOnboarding, t]);
+
+  const themeIcon: AppIconName =
+    themeMode === "dark"
+      ? "dark-mode"
+      : themeMode === "light"
+        ? "light-mode"
+        : "smartphone";
+
+  const version = String(appConfig?.expo?.version ?? "1.0.0");
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
-      <View
-        style={{
-          paddingTop: insets.top + Spacing.md,
-          paddingHorizontal: Spacing.xl,
-          paddingBottom: Spacing.lg,
-        }}
-      >
-        <Animated.Text
-          entering={FadeInDown.duration(400)}
-          style={{
-            fontSize: 34,
-            fontWeight: "800",
-            letterSpacing: -0.8,
-            color: colors.text,
-          }}
-        >
-          Settings
-        </Animated.Text>
-      </View>
-
+    <VantaScreen>
       <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: Spacing.lg,
-          paddingBottom: insets.bottom + 140,
-        }}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + Spacing.sm,
+            paddingBottom: insets.bottom + Spacing["6xl"],
+          },
+        ]}
       >
-        {/* ─── IDENTITY NODE ─────────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <IdentityNode colors={colors} />
-        </Animated.View>
-
-        {/* ─── DISPLAY CONFIGURATION ─────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(150).duration(400)}>
-          <SectionHeader title="DISPLAY CONFIGURATION" colors={colors} />
-
-          <VantaRow
-            icon={
-              themeMode === "dark"
-                ? "dark-mode"
-                : themeMode === "light"
-                  ? "light-mode"
-                  : "smartphone"
-            }
-            label="APPEARANCE"
-            sublabel={currentTheme?.description}
-            value={
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontWeight: "600",
-                  color: colors.gold,
-                  letterSpacing: 1,
-                }}
-              >
-                {currentTheme?.label.toUpperCase()}
-              </Text>
-            }
-            onPress={showThemePicker}
-            colors={colors}
+        <View style={styles.header}>
+          <PremiumHeader
+            title={t("settings.title")}
+            subtitle={t("settings.subtitle")}
+            style={{ paddingHorizontal: 0 }}
           />
+        </View>
 
-          <VantaRow
-            icon="language"
-            label="LANGUAGE PROTOCOL"
-            value={
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-              >
-                <Text style={{ fontSize: 16 }}>{currentLang?.flag}</Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: "600",
-                    color: colors.textMuted,
-                  }}
-                >
-                  {currentLang?.nativeName}
+        <View>
+          <Animated.View entering={getEnter(isReduceMotionEnabled, 80)}>
+            <IdentityNode theme={theme} appName="Optimus Vintage" version={`VER: ${version}`} />
+          </Animated.View>
+
+          <Animated.View entering={getEnter(isReduceMotionEnabled, 140)}>
+            <SectionHeader title={t("settings.appearance").toUpperCase()} theme={theme} />
+
+            <VantaRow
+              icon={themeIcon}
+              label={t("settings.theme").toUpperCase()}
+              sublabel={currentTheme.description}
+              value={
+                <Text style={[styles.valueAccent, { color: theme.primary }]}>
+                  {currentTheme.label.toUpperCase()}
                 </Text>
-              </View>
-            }
-            onPress={showLanguagePicker}
-            colors={colors}
-          />
-        </Animated.View>
+              }
+              onPress={showThemePicker}
+              theme={theme}
+              isReduceMotionEnabled={isReduceMotionEnabled}
+              accessibilityLabel={`${t("settings.theme")}: ${currentTheme.label}`}
+              accessibilityHint={t("common.edit")}
+            />
 
-        {/* ─── FINANCIAL PROTOCOLS ───────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <SectionHeader title="FINANCIAL PROTOCOLS" colors={colors} />
-
-          <VantaRow
-            icon="currency-exchange"
-            label="CURRENCY UNIT"
-            value={
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-              >
-                <Text style={{ fontSize: 16 }}>{currentCurrency.flag}</Text>
-                <View
-                  style={{
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 6,
-                    backgroundColor: colors.goldMicro,
-                    borderWidth: 1,
-                    borderColor: colors.goldBorder,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "700",
-                      color: colors.gold,
-                    }}
-                  >
-                    {currentCurrency.symbol}
+            <VantaRow
+              icon="language"
+              label={t("settings.language").toUpperCase()}
+              sublabel={t("settings.languageDescription")}
+              value={
+                <View style={styles.valueInline}>
+                  <Text style={styles.flag}>{currentLang.flag}</Text>
+                  <Text style={[styles.valueMuted, { color: theme.textMuted }]}>
+                    {currentLang.nativeName}
                   </Text>
                 </View>
-              </View>
-            }
-            onPress={showCurrencyPicker}
-            colors={colors}
-          />
+              }
+              onPress={showLanguagePicker}
+              theme={theme}
+              isReduceMotionEnabled={isReduceMotionEnabled}
+              accessibilityLabel={`${t("settings.language")}: ${currentLang.nativeName}`}
+              accessibilityHint={t("common.edit")}
+            />
+          </Animated.View>
 
-          <StepperRow
-            icon="trending-up"
-            label="TARGET MARGIN"
-            sublabel="Profit percentage per item"
-            value={targetMargin}
-            onChange={setTargetMargin}
-            colors={colors}
-          />
-        </Animated.View>
+          <Animated.View entering={getEnter(isReduceMotionEnabled, 200)}>
+            <SectionHeader title={t("settings.preferences").toUpperCase()} theme={theme} />
 
-        {/* ─── HAPTIC RESONANCE ──────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(250).duration(400)}>
-          <SectionHeader title="SENSORY FEEDBACK" colors={colors} />
+            <VantaRow
+              icon="currency-exchange"
+              label={t("settings.currency").toUpperCase()}
+              sublabel={t("settings.currencyDescription")}
+              value={
+                <View style={styles.valueInline}>
+                  <Text style={styles.flag}>{currentCurrency.flag}</Text>
+                  <View
+                    style={[
+                      styles.currencyPill,
+                      {
+                        backgroundColor: theme.primaryMuted,
+                        borderColor: theme.borderGold,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.currencySymbol, { color: theme.primary }]}>
+                      {currentCurrency.symbol}
+                    </Text>
+                  </View>
+                </View>
+              }
+              onPress={showCurrencyPicker}
+              theme={theme}
+              isReduceMotionEnabled={isReduceMotionEnabled}
+              accessibilityLabel={`${t("settings.currency")}: ${currentCurrency.code}`}
+              accessibilityHint={t("common.edit")}
+            />
 
-          <VantaToggleRow
-            icon="settings"
-            label="HAPTIC RESONANCE"
-            sublabel="Tactile fluidity"
-            value={hapticsEnabled}
-            onValueChange={setHapticsEnabled}
-            colors={colors}
-          />
-        </Animated.View>
+            <VantaStepperRow
+              icon="trending-up"
+              label={t("settings.targetMargin").toUpperCase()}
+              sublabel={t("settings.targetMarginDescription")}
+              value={targetMargin}
+              onChange={setTargetMargin}
+              min={0}
+              max={500}
+              step={5}
+              suffix={currentCurrency.symbol}
+              theme={theme}
+              accessibilityLabel={t("settings.targetMargin")}
+            />
 
-        {/* ─── DATA OPERATIONS ───────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <SectionHeader title="DATA OPERATIONS" colors={colors} />
+            <VantaToggleRow
+              icon="vibration"
+              label={t("settings.haptics").toUpperCase()}
+              sublabel={t("settings.hapticsDescription")}
+              value={hapticsEnabled}
+              onValueChange={setHapticsEnabled}
+              theme={theme}
+              isReduceMotionEnabled={isReduceMotionEnabled}
+              accessibilityLabel={t("settings.haptics")}
+            />
+          </Animated.View>
 
-          <ActionButton
-            icon="download"
-            label="EXPORT INVENTORY"
-            onPress={handleExport}
-            loading={exporting}
-            variant="gold"
-            colors={colors}
-          />
+          <Animated.View entering={getEnter(isReduceMotionEnabled, 260)}>
+            <SectionHeader
+              title={t("settings.dataManagement").toUpperCase()}
+              theme={theme}
+            />
 
-          <ActionButton
-            icon="refresh"
-            label="SYSTEM RESET"
-            onPress={handleReset}
-            variant="danger"
-            colors={colors}
-          />
-        </Animated.View>
+            <ActionButton
+              icon="download"
+              label={exporting ? t("settings.exporting") : t("settings.exportData")}
+              onPress={handleExport}
+              loading={exporting}
+              variant="gold"
+              theme={theme}
+              isReduceMotionEnabled={isReduceMotionEnabled}
+              accessibilityLabel={t("settings.exportData")}
+            />
 
-        {/* ─── ENCRYPTED FOOTER ──────────────────────────────────────────── */}
-        <Animated.View entering={FadeInDown.delay(350).duration(400)}>
-          <View
-            style={{
-              marginTop: Spacing.xl,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-            }}
-          >
-            <AppIcon name="check-circle" size={12} color={colors.textGhost} />
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: "500",
-                letterSpacing: 2,
-                color: colors.textGhost,
-              }}
-            >
-              AES-256 ENCRYPTED
-            </Text>
-            <View style={{ flexDirection: "row", gap: 3, marginLeft: 8 }}>
-              {[1, 0.6, 1].map((opacity, i) => (
-                <View
-                  key={i}
-                  style={{
-                    width: 3,
-                    height: 10,
-                    backgroundColor: colors.gold,
-                    opacity,
-                    borderRadius: 1,
-                  }}
-                />
-              ))}
-            </View>
-          </View>
-        </Animated.View>
+            <ActionButton
+              icon="refresh"
+              label={t("settings.resetOnboarding")}
+              onPress={handleReset}
+              variant="danger"
+              theme={theme}
+              isReduceMotionEnabled={isReduceMotionEnabled}
+              accessibilityLabel={t("settings.resetOnboarding")}
+            />
+          </Animated.View>
+        </View>
       </ScrollView>
-    </View>
+    </VantaScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingHorizontal: Spacing.xl,
+  },
+  header: {
+    paddingBottom: Spacing.sm,
+  },
+
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 3,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+    marginLeft: Spacing.xs,
+  },
+
+  card: {
+    marginBottom: Spacing.sm,
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  rowText: {
+    flex: 1,
+  },
+
+  rowLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 1.5,
+  },
+
+  rowSublabel: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: "400",
+    letterSpacing: 0.4,
+  },
+
+  rowValue: {
+    marginRight: Spacing.xs,
+  },
+
+  valueAccent: {
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+
+  valueInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  flag: {
+    fontSize: 16,
+  },
+
+  valueMuted: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  currencyPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+
+  currencySymbol: {
+    fontSize: 14,
+    fontWeight: "800",
+  },
+
+  switch: {
+    transform: [{ scaleX: 0.95 }, { scaleY: 0.95 }],
+  },
+
+  stepper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  stepButton: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  stepperValue: {
+    height: 40,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 78,
+    gap: 4,
+  },
+
+  stepperInput: {
+    fontSize: 16,
+    fontWeight: "800",
+    textAlign: "center",
+    minWidth: 28,
+    padding: 0,
+  },
+
+  stepperSuffix: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  badge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+
+  badgeText: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+  },
+
+  identityCard: {
+    marginBottom: Spacing.sm,
+  },
+
+  identityHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.lg,
+  },
+
+  identityAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+  },
+
+  identityAvatarEmoji: {
+    fontSize: 28,
+    fontWeight: "900",
+  },
+
+  identityText: {
+    flex: 1,
+  },
+
+  identityLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
+
+  identityTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+
+  identityMeta: {
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 1,
+  },
+
+  identityBars: {
+    gap: 4,
+  },
+
+  identityBar: {
+    width: 4,
+    borderRadius: 2,
+  },
+
+  identityStatus: {
+    marginTop: Spacing.lg,
+    alignItems: "center",
+    gap: 8,
+  },
+
+  identityStatusLabel: {
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+  },
+
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    backgroundColor: "transparent",
+  },
+
+  actionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+
+  actionText: {
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+  },
+});

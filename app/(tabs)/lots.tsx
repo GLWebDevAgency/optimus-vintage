@@ -2,12 +2,18 @@
  * 📦 LOTS SCREEN - Vanta-Aether Architecture
  * "Digital Architecture evolving in infinite spatial void"
  *
- * v2.0 - The Vanta-Aether Era
+ * v3.0 - Enhanced Vanta-Aether with Premium KPIs
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
+import {
+    GoldFissureProgress,
+    MonolithCard,
+    VantaStatusBadge,
+} from "@/components/ui/VantaComponents";
+import { Palette, Radius, Spacing } from "@/constants/Theme";
 import { LotSummary, LotsRepository } from "@/db/repositories";
 import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
@@ -414,10 +420,98 @@ const LotCard = React.memo(function LotCard({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 📊 VANTA STATS BAR
+// 📊 VANTA KPI SECTION - Monolith Style
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function StatsBar({ stats }: { stats: LotsStats }) {
+  const theme = useVantaTheme();
+  const { t } = useLocale();
+  const profit = stats.totalRevenue - stats.totalInvestment;
+  const profitPercent =
+    stats.totalInvestment > 0
+      ? ((profit / stats.totalInvestment) * 100).toFixed(0)
+      : "0";
+  const isProfitable = profit >= 0;
+
+  // Calcul des barres de visualisation basées sur les stats
+  const investmentBars = [40, 70, 100, 60, 30];
+  const progressPercent =
+    stats.totalItems > 0 ? (stats.totalSold / stats.totalItems) * 100 : 0;
+
+  return (
+    <Animated.View entering={FadeIn.duration(400)} style={styles.kpiSection}>
+      {/* Première rangée: Investissement et Profit */}
+      <View style={styles.kpiRow}>
+        <MonolithCard
+          icon="account-balance-wallet"
+          label={t("lots.investment")}
+          value={`€${stats.totalInvestment >= 1000 ? (stats.totalInvestment / 1000).toFixed(1) + "k" : stats.totalInvestment.toFixed(0)}`}
+          trend={`${stats.totalLots} lots`}
+          trendPositive
+          bars={investmentBars}
+          style={{ flex: 1 }}
+        />
+        <MonolithCard
+          icon="trending-up"
+          topLabel={
+            isProfitable ? t("lots.status.profitable") : t("lots.delta")
+          }
+          label={t("lots.profit")}
+          value={`${isProfitable ? "+" : ""}€${Math.abs(profit) >= 1000 ? (Math.abs(profit) / 1000).toFixed(1) + "k" : Math.abs(profit).toFixed(0)}`}
+          trend={`${isProfitable ? "+" : ""}${profitPercent}%`}
+          trendPositive={isProfitable}
+          style={{ flex: 1 }}
+        />
+      </View>
+
+      {/* Deuxième rangée: Revenue et Progress */}
+      <View style={styles.kpiRow}>
+        <MonolithCard
+          icon="payments"
+          label={t("lots.revenue")}
+          value={`€${stats.totalRevenue >= 1000 ? (stats.totalRevenue / 1000).toFixed(1) + "k" : stats.totalRevenue.toFixed(0)}`}
+          trend={`${stats.totalSold} ${t("lots.sold")}`}
+          trendPositive
+          style={{ flex: 1 }}
+        />
+        <View
+          style={[
+            styles.progressMonolith,
+            { backgroundColor: theme.surface, borderColor: theme.borderGlass },
+          ]}
+        >
+          <View style={styles.progressMonolithHeader}>
+            <AppIcon name="inventory-2" size={18} color={theme.textMuted} />
+            <Text
+              style={[styles.progressMonolithLabel, { color: theme.textMuted }]}
+            >
+              {t("items.title").toUpperCase()}
+            </Text>
+          </View>
+          <Text style={[styles.progressMonolithValue, { color: theme.text }]}>
+            {stats.totalSold}/{stats.totalItems}
+          </Text>
+          <GoldFissureProgress
+            percentage={progressPercent}
+            height={6}
+            rightLabel={`${progressPercent.toFixed(0)}%`}
+          />
+        </View>
+      </View>
+
+      {/* Status Badge */}
+      <VantaStatusBadge
+        icon="lock"
+        label="Données synchronisées"
+        bars={3}
+        style={{ marginTop: Spacing.sm, alignSelf: "center" }}
+      />
+    </Animated.View>
+  );
+}
+
+// Legacy stats bar kept for reference
+function _LegacyStatsBar({ stats }: { stats: LotsStats }) {
   const theme = useVantaTheme();
   const { t } = useLocale();
   const profit = stats.totalRevenue - stats.totalInvestment;
@@ -467,7 +561,11 @@ function StatsBar({ stats }: { stats: LotsStats }) {
           { backgroundColor: colors.background, borderColor: colors.border },
         ]}
       >
-        <AppIcon name="account-balance-wallet" size={16} color={theme.warning} />
+        <AppIcon
+          name="account-balance-wallet"
+          size={16}
+          color={theme.warning}
+        />
         <View>
           <Text
             style={{
@@ -883,6 +981,12 @@ export default function LotsScreen() {
     [],
   );
 
+  // ListHeaderComponent to include Stats in scroll
+  const renderHeader = useCallback(() => {
+    if (lots.length === 0) return null;
+    return <StatsBar stats={stats} />;
+  }, [lots.length, stats]);
+
   return (
     <VantaScreen style={styles.container}>
       {/* Vanta Header */}
@@ -930,11 +1034,7 @@ export default function LotsScreen() {
             accessibilityRole="button"
             accessibilityLabel={t("lots.newLot")}
           >
-            <AppIcon
-              name="add"
-              size={24}
-              color={theme.textOnAccent}
-            />
+            <AppIcon name="add" size={24} color={theme.textOnAccent} />
           </Pressable>
         </View>
       </View>
@@ -1064,32 +1164,33 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
   },
   addButton: {
     width: 48,
     height: 48,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
     borderCurve: "continuous",
+    boxShadow: `0 0 20px ${Palette.metal.goldGlow}`,
   },
   searchSection: {
     flexDirection: "row",
-    paddingHorizontal: 24,
-    gap: 12,
-    marginBottom: 12,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
   },
   searchContainer: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.md,
     height: 48,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    gap: 12,
+    gap: Spacing.md,
     borderCurve: "continuous",
   },
   searchInput: {
@@ -1100,7 +1201,7 @@ const styles = StyleSheet.create({
   sortButton: {
     width: 48,
     height: 48,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -1109,50 +1210,89 @@ const styles = StyleSheet.create({
   sortMenu: {
     position: "absolute",
     top: 70,
-    right: 24,
+    right: Spacing.xl,
     zIndex: 100,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     overflow: "hidden",
   },
   sortOption: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
+  // Nouvelle section KPI style Monolith
+  kpiSection: {
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  kpiRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  progressMonolith: {
+    flex: 1,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.lg,
+    justifyContent: "space-between",
+    minHeight: 140,
+    borderCurve: "continuous",
+  },
+  progressMonolithHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  progressMonolithLabel: {
+    fontSize: 10,
+    fontFamily: "Manrope_600SemiBold",
+    letterSpacing: 2,
+  },
+  progressMonolithValue: {
+    fontSize: 22,
+    fontFamily: "Manrope_600SemiBold",
+    marginVertical: Spacing.xs,
+  },
+  // Legacy stats bar (conservé pour compatibilité)
   statsBar: {
     flexDirection: "row",
-    paddingHorizontal: 24,
-    gap: 12,
-    marginBottom: 16,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
   },
   statsBarItem: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    padding: 14,
-    borderRadius: 16,
+    gap: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     borderCurve: "continuous",
   },
   listContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: Spacing.xl,
     paddingBottom: 120,
+  },
+  sectionListHeader: {
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.sm,
   },
   emptyList: {
     flexGrow: 1,
   },
   loaderContainer: {
     flex: 1,
-    paddingTop: 32,
+    paddingTop: Spacing["2xl"],
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: Spacing.md,
   },
   cardAccent: {
     position: "absolute",
@@ -1165,7 +1305,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 52,
     height: 52,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
     borderCurve: "continuous",
@@ -1174,14 +1314,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
     borderCurve: "continuous",
   },
   divider: {
     height: 1,
-    marginVertical: 16,
+    marginVertical: Spacing.md,
   },
   statsGrid: {
     flexDirection: "row",
@@ -1194,27 +1334,27 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: Spacing.md,
   },
   progressTrack: {
     flex: 1,
     height: 8,
-    borderRadius: 4,
+    borderRadius: Radius.xs,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 4,
+    borderRadius: Radius.xs,
   },
   empty: {
     alignItems: "center",
-    paddingVertical: 64,
-    paddingHorizontal: 24,
+    paddingVertical: Spacing["4xl"],
+    paddingHorizontal: Spacing.xl,
   },
   emptyIcon: {
     width: 96,
     height: 96,
-    borderRadius: 24,
+    borderRadius: Radius["2xl"],
     alignItems: "center",
     justifyContent: "center",
     borderCurve: "continuous",

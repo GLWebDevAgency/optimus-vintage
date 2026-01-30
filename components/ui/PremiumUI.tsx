@@ -22,6 +22,7 @@
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { useAccessibility } from "@/utils/accessibility";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
@@ -147,10 +148,14 @@ export function PremiumHeader({
 }: VantaHeaderProps) {
   const theme = usePremiumTheme();
   const isDark = useIsDarkMode();
+  const { isReduceMotionEnabled } = useAccessibility();
+  const entering = isReduceMotionEnabled
+    ? undefined
+    : FadeInDown.duration(400).springify();
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(400).springify()}
+      entering={entering}
       style={[styles.headerContainer, style]}
     >
       <View style={styles.headerTextContainer}>

@@ -2,20 +2,26 @@
  * 📦 STOCK SCREEN - Vanta-Aether Architecture
  * "Digital Architecture evolving in infinite spatial void"
  *
- * v2.0 - The Vanta-Aether Era
+ * v4.0 - Netflix-style Carousel by Lot with Visibility Controller
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { Chip } from "@/components/ui/Components";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { Radius, Spacing } from "@/constants/Theme";
-import { Item, ItemsRepository, LotsRepository } from "@/db/repositories";
+import {
+    CarouselItem,
+    LotVisibilityController,
+    LotVisibilityItem,
+    MonolithCard,
+    NetflixCarousel,
+    VantaSectionHeader,
+} from "@/components/ui/VantaComponents";
+import { Palette, Radius, Spacing } from "@/constants/Theme";
+import { Item, ItemsRepository, Lot, LotsRepository } from "@/db/repositories";
 import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
 import { useLocale } from "@/utils/i18n";
-import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
@@ -24,11 +30,9 @@ import React, {
     useCallback,
     useEffect,
     useMemo,
-    useRef,
-    useState,
+    useState
 } from "react";
 import {
-    ActivityIndicator,
     Keyboard,
     LayoutAnimation,
     Pressable,
@@ -38,7 +42,7 @@ import {
     Text,
     TextInput,
     UIManager,
-    View,
+    View
 } from "react-native";
 import Animated, {
     FadeIn,
@@ -97,7 +101,7 @@ function ObsidianBlock({
 // ============ TYPES ============
 
 type SortOption = "newest" | "oldest" | "cost_high" | "cost_low" | "lot";
-type ViewMode = "list" | "compact" | "grid";
+type ViewMode = "list" | "compact" | "grid"; // Kept for ItemCard compatibility
 
 interface StockStats {
   totalItems: number;
@@ -106,9 +110,14 @@ interface StockStats {
   lotsCount: number;
 }
 
+interface LotCarouselData {
+  lot: Lot;
+  items: Item[];
+}
+
 // ============ CONSTANTS ============
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_CAROUSEL = 10; // Items shown per lot carousel
 const ANIMATION_STAGGER = 30; // ms between each item animation
 const MAX_ANIMATED_ITEMS = 10; // Only animate first N items for performance
 
@@ -270,10 +279,7 @@ const ItemCard = React.memo(function ItemCard({
                 style={[styles.gridLotBadge, { backgroundColor: colors.gold }]}
               >
                 <Text
-                  style={[
-                    styles.gridLotText,
-                    { color: theme.textOnAccent },
-                  ]}
+                  style={[styles.gridLotText, { color: theme.textOnAccent }]}
                 >
                   #{item.lotId}
                 </Text>
@@ -321,11 +327,7 @@ const ItemCard = React.memo(function ItemCard({
                   accessibilityLabel={translations.sellA11yLabel}
                   accessibilityHint={translations.sellA11yLabel}
                 >
-                  <AppIcon
-                    name="sell"
-                    size={14}
-                    color={theme.textOnAccent}
-                  />
+                  <AppIcon name="sell" size={14} color={theme.textOnAccent} />
                 </Pressable>
               </View>
             </View>
@@ -427,11 +429,7 @@ const ItemCard = React.memo(function ItemCard({
               accessibilityLabel={translations.sellA11yLabel}
               accessibilityHint={translations.sellA11yLabel}
             >
-              <AppIcon
-                name="sell"
-                size={14}
-                color={theme.textOnAccent}
-              />
+              <AppIcon name="sell" size={14} color={theme.textOnAccent} />
             </Pressable>
           </ObsidianBlock>
         </Pressable>
@@ -491,10 +489,7 @@ const ItemCard = React.memo(function ItemCard({
               style={[styles.lotIndicator, { backgroundColor: colors.gold }]}
             >
               <Text
-                style={[
-                  styles.lotIndicatorText,
-                  { color: theme.textOnAccent },
-                ]}
+                style={[styles.lotIndicatorText, { color: theme.textOnAccent }]}
               >
                 #{item.lotId}
               </Text>
@@ -593,16 +588,9 @@ const ItemCard = React.memo(function ItemCard({
               <View
                 style={[styles.sellButton, { backgroundColor: colors.gold }]}
               >
-                <AppIcon
-                  name="sell"
-                  size={16}
-                  color={theme.textOnAccent}
-                />
+                <AppIcon name="sell" size={16} color={theme.textOnAccent} />
                 <Text
-                  style={[
-                    styles.sellButtonText,
-                    { color: theme.textOnAccent },
-                  ]}
+                  style={[styles.sellButtonText, { color: theme.textOnAccent }]}
                 >
                   {translations.sellLabel}
                 </Text>
@@ -616,16 +604,69 @@ const ItemCard = React.memo(function ItemCard({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 📊 VANTA STATS BAR
+// 📊 VANTA KPI SECTION - Monolith Style
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StatsBar({
-  stats,
-  t,
-}: {
-  stats: StockStats;
-  t: TFunction;
-}) {
+function StatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
+  const theme = useVantaTheme();
+
+  // Barres de visualisation pour le capital
+  const valueBars = [40, 70, 100, 60, 30];
+
+  return (
+    <Animated.View entering={FadeIn.duration(400)} style={styles.kpiSection}>
+      {/* Section Header */}
+      <VantaSectionHeader
+        label={t("dashboard.stats.overview", "Aperçu")}
+        style={{ paddingHorizontal: 0, marginBottom: Spacing.xs }}
+      />
+
+      {/* Première rangée: Articles et Valeur */}
+      <View style={styles.kpiRow}>
+        <MonolithCard
+          icon="inventory"
+          label={t("items.title")}
+          value={stats.totalItems}
+          trend={`${stats.lotsCount} ${t("navigation.lots")}`}
+          trendPositive
+          style={{ flex: 1 }}
+        />
+        <MonolithCard
+          icon="account-balance-wallet"
+          topLabel={t("dashboard.capital", "Capital")}
+          label={t("dashboard.stockValue")}
+          value={`€${stats.totalValue >= 1000 ? (stats.totalValue / 1000).toFixed(1) + "k" : stats.totalValue.toFixed(0)}`}
+          bars={valueBars}
+          style={{ flex: 1 }}
+        />
+      </View>
+
+      {/* Deuxième rangée: Moyenne et Encryption badge */}
+      <View style={styles.kpiRow}>
+        <MonolithCard
+          icon="analytics"
+          label={t("dashboard.stats.avgMargin", "Coût Moyen")}
+          value={`€${stats.avgCost.toFixed(2)}`}
+          trend={t("items.unitCost", "par article")}
+          trendPositive
+          style={{ flex: 1 }}
+        />
+        <MonolithCard
+          icon="lock"
+          topLabel="SECURE"
+          label={t("common.encryption", "Encryption")}
+          value="AES"
+          unit="4096"
+          hashLines
+          style={{ flex: 1 }}
+        />
+      </View>
+    </Animated.View>
+  );
+}
+
+// Legacy stats bar kept for reference
+function _LegacyStatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
   const theme = useVantaTheme();
   const colors = {
     background: theme.surface,
@@ -672,7 +713,11 @@ function StatsBar({
           { backgroundColor: colors.background, borderColor: colors.border },
         ]}
       >
-        <AppIcon name="account-balance-wallet" size={16} color={theme.success} />
+        <AppIcon
+          name="account-balance-wallet"
+          size={16}
+          color={theme.success}
+        />
         <View>
           <Text
             style={{
@@ -792,7 +837,6 @@ function SearchBar({
 export default function StockScreen() {
   const insets = useSafeAreaInsets();
   const theme = useVantaTheme();
-  const flashListRef = useRef<FlashListRef<Item>>(null);
   const { isReduceMotionEnabled } = useAccessibility();
   const { t } = useLocale();
 
@@ -827,33 +871,15 @@ export default function StockScreen() {
     (itemsQuery.isFetching || lotsQuery.isFetching) && !loading;
   const allItems = itemsQuery.data ?? [];
   const lots = lotsQuery.data ?? [];
-  const [loadingMore, setLoadingMore] = useState(false);
 
   // UI state
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterLotId, setFilterLotId] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showSortMenu, setShowSortMenu] = useState(false);
-  const [page, setPage] = useState(1);
+  const [showVisibilityController, setShowVisibilityController] =
+    useState(false);
+  const [hiddenLotIds, setHiddenLotIds] = useState<Set<number>>(new Set());
   const [hasAnimated, setHasAnimated] = useState(false);
-
-  // Translations for ItemCard (memoized to avoid re-renders)
-  const itemCardTranslations = useMemo(
-    () => ({
-      unknownBrand: t("items.unknownBrand", "Marque inconnue"),
-      defaultType: t("items.defaultType", "Article"),
-      defaultSize: t("items.defaultSize", "TU"),
-      conditionNew: t("items.conditions.new", "Neuf"),
-      conditionGood: t("items.conditions.good", "Bon"),
-      conditionUsed: t("items.conditions.used", "Usé"),
-      sellLabel: t("sales.confirmSale", "Vendre"),
-      sellA11yLabel: t("accessibility.sellItem"),
-      costLabel: t("items.unitCost", "Coût"),
-      openDetailsHint: t("accessibility.openDetails"),
-    }),
-    [t],
-  );
 
   // Translated sort options
   const sortOptions = useMemo(() => getSortOptions(t), [t]);
@@ -869,28 +895,23 @@ export default function StockScreen() {
 
   useEffect(() => {
     if (!loading) {
-      setPage(1);
       const timer = setTimeout(() => setHasAnimated(true), 500);
       return () => clearTimeout(timer);
     }
-
     return undefined;
   }, [loading, allItems, lots]);
 
-  // ============ FILTERING & SORTING ============
+  // ============ GROUPING BY LOT (Netflix Style) ============
 
-  const processedItems = useMemo(() => {
-    let result = [...allItems];
+  const lotCarousels = useMemo<LotCarouselData[]>(() => {
+    // Group items by lot
+    const lotMap = new Map<number, Item[]>();
 
-    // Filter by lot
-    if (filterLotId !== null) {
-      result = result.filter((i) => i.lotId === filterLotId);
-    }
-
-    // Search filter
+    // First filter by search query
+    let filteredItems = [...allItems];
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = result.filter(
+      filteredItems = filteredItems.filter(
         (item) =>
           item.brand?.toLowerCase().includes(query) ||
           item.type?.toLowerCase().includes(query) ||
@@ -901,86 +922,100 @@ export default function StockScreen() {
       );
     }
 
-    // Sort
-    switch (sortBy) {
-      case "newest":
-        result.sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateB - dateA;
+    // Sort items within each lot
+    const sortItems = (items: Item[]) => {
+      switch (sortBy) {
+        case "newest":
+          return items.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          });
+        case "oldest":
+          return items.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateA - dateB;
+          });
+        case "cost_high":
+          return items.sort(
+            (a, b) =>
+              parseFloat(String(b.unitCost)) - parseFloat(String(a.unitCost)),
+          );
+        case "cost_low":
+          return items.sort(
+            (a, b) =>
+              parseFloat(String(a.unitCost)) - parseFloat(String(b.unitCost)),
+          );
+        default:
+          return items;
+      }
+    };
+
+    // Group by lotId
+    filteredItems.forEach((item) => {
+      const existing = lotMap.get(item.lotId) || [];
+      lotMap.set(item.lotId, [...existing, item]);
+    });
+
+    // Create carousel data for each lot
+    const carousels: LotCarouselData[] = [];
+    lots.forEach((lot) => {
+      const items = lotMap.get(lot.id) || [];
+      if (items.length > 0 && !hiddenLotIds.has(lot.id)) {
+        carousels.push({
+          lot,
+          items: sortItems(items).slice(0, ITEMS_PER_CAROUSEL),
         });
-        break;
-      case "oldest":
-        result.sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateA - dateB;
-        });
-        break;
-      case "cost_high":
-        result.sort(
-          (a, b) =>
-            parseFloat(String(b.unitCost)) - parseFloat(String(a.unitCost)),
-        );
-        break;
-      case "cost_low":
-        result.sort(
-          (a, b) =>
-            parseFloat(String(a.unitCost)) - parseFloat(String(b.unitCost)),
-        );
-        break;
-      case "lot":
-        result.sort((a, b) => a.lotId - b.lotId);
-        break;
-    }
+      }
+    });
 
-    return result;
-  }, [allItems, filterLotId, searchQuery, sortBy]);
-
-  // Paginated items
-  const paginatedItems = useMemo(() => {
-    return processedItems.slice(0, page * ITEMS_PER_PAGE);
-  }, [processedItems, page]);
-
-  const hasMore = paginatedItems.length < processedItems.length;
+    return carousels;
+  }, [allItems, lots, searchQuery, sortBy, hiddenLotIds]);
 
   // Stats
   const stats = useMemo<StockStats>(() => {
-    const items =
-      filterLotId !== null
-        ? allItems.filter((i) => i.lotId === filterLotId)
-        : allItems;
-
-    const totalValue = items.reduce(
+    const totalValue = allItems.reduce(
       (sum, i) => sum + parseFloat(String(i.unitCost)),
       0,
     );
-    const uniqueLots = new Set(items.map((i) => i.lotId)).size;
+    const uniqueLots = new Set(allItems.map((i) => i.lotId)).size;
 
     return {
-      totalItems: items.length,
+      totalItems: allItems.length,
       totalValue,
-      avgCost: items.length > 0 ? totalValue / items.length : 0,
+      avgCost: allItems.length > 0 ? totalValue / allItems.length : 0,
       lotsCount: uniqueLots,
     };
-  }, [allItems, filterLotId]);
+  }, [allItems]);
+
+  // Lot visibility items for controller
+  const lotVisibilityItems = useMemo<LotVisibilityItem[]>(() => {
+    return lots.map((lot) => ({
+      id: lot.id,
+      name: lot.name || `Lot #${lot.id}`,
+      itemCount: allItems.filter((i) => i.lotId === lot.id).length,
+      isVisible: !hiddenLotIds.has(lot.id),
+    }));
+  }, [lots, allItems, hiddenLotIds]);
 
   // ============ HANDLERS ============
 
-  const handleSell = useCallback((item: Item) => {
+  const handleSell = useCallback((item: CarouselItem) => {
     router.push({
       pathname: "/sales/new",
       params: { itemId: item.id, lotId: item.lotId },
     });
   }, []);
 
-  const handleLoadMore = useCallback(() => {
-    if (!loadingMore && hasMore) {
-      setLoadingMore(true);
-      setPage((p) => p + 1);
-      setTimeout(() => setLoadingMore(false), 100);
-    }
-  }, [loadingMore, hasMore]);
+  const handleItemPress = useCallback((item: CarouselItem) => {
+    router.push(`/items/edit/${item.id}`);
+  }, []);
+
+  const handleSeeAllPress = useCallback((lotId: number) => {
+    // Navigate to lot detail or filter by this lot
+    router.push(`/lots/${lotId}`);
+  }, []);
 
   const handleRefresh = useCallback(() => {
     setHasAnimated(false);
@@ -990,7 +1025,6 @@ export default function StockScreen() {
 
   const handleSearch = useCallback((text: string) => {
     setSearchQuery(text);
-    setPage(1); // Reset pagination on search
   }, []);
 
   const handleClearSearch = useCallback(() => {
@@ -1002,96 +1036,29 @@ export default function StockScreen() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSortBy(option);
     setShowSortMenu(false);
-    setPage(1);
   }, []);
 
-  const handleFilterChange = useCallback((lotId: number | null) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setFilterLotId(lotId);
-    setPage(1);
-  }, []);
-
-  const toggleViewMode = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setViewMode((v) => {
-      if (v === "list") return "compact";
-      if (v === "compact") return "grid";
-      return "list";
+  const handleToggleLotVisibility = useCallback((lotId: number) => {
+    setHiddenLotIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(lotId)) {
+        newSet.delete(lotId);
+      } else {
+        newSet.add(lotId);
+      }
+      return newSet;
     });
   }, []);
 
-  const getViewModeIcon = useCallback((): string => {
-    switch (viewMode) {
-      case "list":
-        return "view-stream";
-      case "compact":
-        return "view-agenda";
-      case "grid":
-        return "grid-view";
-      default:
-        return "view-stream";
-    }
-  }, [viewMode]);
+  const handleShowAllLots = useCallback(() => {
+    setHiddenLotIds(new Set());
+  }, []);
+
+  const handleHideAllLots = useCallback(() => {
+    setHiddenLotIds(new Set(lots.map((l) => l.id)));
+  }, [lots]);
 
   // ============ RENDER ============
-
-  const renderItem = useCallback(
-    ({ item, index }: { item: Item; index: number }) => (
-      <ItemCard
-        item={item}
-        index={index}
-        onSell={() => handleSell(item)}
-        onPress={() => router.push(`/items/edit/${item.id}`)}
-        viewMode={viewMode}
-        shouldAnimate={
-          !isReduceMotionEnabled && !hasAnimated && index < MAX_ANIMATED_ITEMS
-        }
-        translations={itemCardTranslations}
-      />
-    ),
-    [viewMode, hasAnimated, handleSell, itemCardTranslations, isReduceMotionEnabled],
-  );
-
-  const renderSeparator = useCallback(
-    () => (
-      <View
-        style={
-          viewMode === "compact"
-            ? styles.itemSeparatorCompact
-            : styles.itemSeparator
-        }
-      />
-    ),
-    [viewMode],
-  );
-
-  const renderFooter = useCallback(() => {
-    if (!hasMore) return null;
-
-    return (
-      <View style={styles.footerLoader}>
-        {loadingMore ? (
-          <ActivityIndicator size="small" color={colors.gold} />
-        ) : (
-          <Text
-            style={{
-              fontFamily: "Manrope_400Regular",
-              fontSize: 12,
-              color: colors.textMuted,
-            }}
-          >
-            {processedItems.length - paginatedItems.length} {t("items.title")}
-          </Text>
-        )}
-      </View>
-    );
-  }, [
-    hasMore,
-    loadingMore,
-    processedItems.length,
-    paginatedItems.length,
-    colors,
-  ]);
 
   const renderEmpty = useCallback(() => {
     if (loading) return null;
@@ -1203,7 +1170,8 @@ export default function StockScreen() {
     );
   }, [loading, searchQuery, colors, handleClearSearch, t, theme]);
 
-  const keyExtractor = useCallback((item: Item) => item.id.toString(), []);
+  // Visible lot count for header
+  const visibleLotCount = lots.length - hiddenLotIds.size;
 
   return (
     <VantaScreen>
@@ -1242,29 +1210,55 @@ export default function StockScreen() {
                 color: colors.textSecondary,
               }}
             >
-              {processedItems.length}{" "}
-              {filterLotId ? t("common.filter", "filtrés") : t("items.title")}
+              {allItems.length} {t("items.title")} · {visibleLotCount} lots
             </Text>
           </View>
           <View style={styles.headerActions}>
+            {/* Lot Visibility Controller Button */}
             <Pressable
-              style={[styles.headerBtn, { backgroundColor: colors.surface }]}
+              style={[
+                styles.headerBtn,
+                {
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor:
+                    hiddenLotIds.size > 0 ? Palette.metal.gold : colors.border,
+                },
+              ]}
               onPress={() => {
                 Haptic.selection();
-                toggleViewMode();
+                setShowVisibilityController(true);
               }}
+              accessibilityLabel={`Gérer la visibilité des lots. ${visibleLotCount} sur ${lots.length} affichés`}
+              accessibilityRole="button"
             >
               <AppIcon
-                name={getViewModeIcon() as any}
+                name={hiddenLotIds.size > 0 ? "visibility-off" : "visibility"}
                 size={20}
-                color={colors.textSecondary}
+                color={
+                  hiddenLotIds.size > 0
+                    ? Palette.metal.gold
+                    : colors.textSecondary
+                }
               />
             </Pressable>
           </View>
         </View>
       </View>
 
-      <View style={{ flex: 1, paddingTop: insets.top + 90 }}>
+      <ScrollView
+        style={{ flex: 1, paddingTop: insets.top + 90 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.gold}
+            colors={[colors.gold]}
+          />
+        }
+      >
         {/* Search Bar */}
         <View style={styles.searchSection}>
           <SearchBar
@@ -1284,6 +1278,8 @@ export default function StockScreen() {
               Haptic.selection();
               setShowSortMenu(!showSortMenu);
             }}
+            accessibilityLabel="Trier les articles"
+            accessibilityRole="button"
           >
             <AppIcon
               name={
@@ -1339,92 +1335,52 @@ export default function StockScreen() {
         )}
 
         {/* Stats Bar */}
-        {allItems.length > 0 && (
-          <StatsBar stats={stats} t={t} />
-        )}
+        {allItems.length > 0 && <StatsBar stats={stats} t={t} />}
 
-        {/* Filter Chips */}
-        <Animated.View
-          entering={FadeInDown.delay(100).duration(400)}
-          style={styles.filterBar}
-        >
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterScroll}
-          >
-            <Chip
-              label={t("common.all")}
-              selected={filterLotId === null}
-              icon={
-                <AppIcon
-                  name="inventory-2"
-                  size={14}
-                  color={
-                    filterLotId === null ? colors.gold : colors.textSecondary
-                  }
-                />
-              }
-              onPress={() => handleFilterChange(null)}
-              accessibilityLabel={t("common.all")}
-              accessibilityHint={t("common.filter")}
-            />
-
-            {lots.map((lot) => {
-              const lotItemCount = allItems.filter(
-                (i) => i.lotId === lot.id,
-              ).length;
-              if (lotItemCount === 0) return null;
-
-              return (
-                <Chip
-                  key={lot.id}
-                  label={`${lot.name || `Lot #${lot.id}`} (${lotItemCount})`}
-                  selected={filterLotId === lot.id}
-                  onPress={() =>
-                    handleFilterChange(lot.id === filterLotId ? null : lot.id)
-                  }
-                />
-              );
-            })}
-          </ScrollView>
-        </Animated.View>
-
-        {/* Items List - FlashList for performance */}
+        {/* Loading State */}
         {loading && !refreshing ? (
           <View style={styles.loaderContainer}>
             <SkeletonList count={6} />
           </View>
+        ) : lotCarousels.length === 0 ? (
+          renderEmpty()
         ) : (
-          <FlashList
-            key={`flashlist-${viewMode}`}
-            ref={flashListRef}
-            data={paginatedItems}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            numColumns={viewMode === "grid" ? 2 : 1}
-            getItemType={() => viewMode}
-            ItemSeparatorComponent={
-              viewMode !== "grid" ? renderSeparator : undefined
-            }
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor={colors.gold}
-                colors={[colors.gold]}
-              />
-            }
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={renderEmpty}
-            ListFooterComponent={renderFooter}
-            showsVerticalScrollIndicator={false}
-            drawDistance={250}
-          />
+          /* Netflix-style Carousels by Lot */
+          lotCarousels.map((carouselData) => (
+            <NetflixCarousel
+              key={carouselData.lot.id}
+              lotId={carouselData.lot.id}
+              lotName={carouselData.lot.name || `Lot #${carouselData.lot.id}`}
+              items={carouselData.items.map((item) => ({
+                id: item.id,
+                brand: item.brand,
+                type: item.type,
+                unitCost: item.unitCost,
+                color: item.color,
+                size: item.size,
+                photoUri: getItemFirstPhoto(item),
+                lotId: item.lotId,
+              }))}
+              itemCount={
+                allItems.filter((i) => i.lotId === carouselData.lot.id).length
+              }
+              onItemPress={handleItemPress}
+              onSellPress={handleSell}
+              onSeeAllPress={() => handleSeeAllPress(carouselData.lot.id)}
+            />
+          ))
         )}
-      </View>
+      </ScrollView>
+
+      {/* Lot Visibility Controller Sheet */}
+      <LotVisibilityController
+        visible={showVisibilityController}
+        lots={lotVisibilityItems}
+        onToggle={handleToggleLotVisibility}
+        onClose={() => setShowVisibilityController(false)}
+        onShowAll={handleShowAllLots}
+        onHideAll={handleHideAllLots}
+      />
     </VantaScreen>
   );
 }
@@ -1524,6 +1480,16 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     borderWidth: 1,
     borderCurve: "continuous",
+  },
+  // Section KPI Vanta Monolith
+  kpiSection: {
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  kpiRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
   },
   filterBar: {
     marginBottom: Spacing.xs,

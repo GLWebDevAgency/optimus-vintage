@@ -258,9 +258,13 @@
     "dataManagement": "Gestion des données",
     "exportData": "Exporter les données (CSV)",
     "exporting": "Export en cours...",
+    "exportSuccess": "Données exportées avec succès.",
+    "exportError": "Impossible d'exporter les données.",
     "resetOnboarding": "Réinitialiser l'onboarding",
     "resetTitle": "Réinitialiser l'app ?",
     "resetMessage": "Cela effacera les préférences locales et relancera l'onboarding.",
+    "haptics": "Retour haptique",
+    "hapticsDescription": "Vibrations lors des interactions",
     "themes": {
       "light": "Clair",
       "dark": "Sombre",

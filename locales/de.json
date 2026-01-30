@@ -258,9 +258,13 @@
     "dataManagement": "Datenverwaltung",
     "exportData": "Daten exportieren (CSV)",
     "exporting": "Exportieren...",
+    "exportSuccess": "Daten erfolgreich exportiert.",
+    "exportError": "Export fehlgeschlagen.",
     "resetOnboarding": "Onboarding zurücksetzen",
     "resetTitle": "App zurücksetzen?",
     "resetMessage": "Dies löscht lokale Einstellungen und startet das Onboarding neu.",
+    "haptics": "Haptisches Feedback",
+    "hapticsDescription": "Vibrationen bei Interaktionen",
     "themes": {
       "light": "Hell",
       "dark": "Dunkel",
