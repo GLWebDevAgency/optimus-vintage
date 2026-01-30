@@ -1,13 +1,12 @@
 /**
- * ✏️ EDIT LOT SCREEN - Ultra Premium Edition
+ * ✏️ EDIT LOT SCREEN - Vanta-Aether Edition
  * Edit existing lot with pre-filled data
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { AnimatedPremiumBackground, Button } from "@/components/ui/Components";
 import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
 import { LotsRepository, NewLot } from "@/db/repositories";
+import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -26,6 +25,55 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// ═══ VANTA-AETHER DESIGN TOKENS ═══
+const VANTA = {
+  black: "#000000",
+  obsidian: "#0a0a0a",
+  obsidianLight: "#1a1a1a",
+  titanium: "#111111",
+  carbon: "#1c1c1c",
+  gold: "#f4c025",
+  goldGlow: "rgba(244, 192, 37, 0.6)",
+  goldSubtle: "rgba(244, 192, 37, 0.15)",
+  success: "#22c55e",
+  successSubtle: "rgba(34, 197, 94, 0.15)",
+  danger: "#ef4444",
+  dangerSubtle: "rgba(239, 68, 68, 0.15)",
+  warning: "#f59e0b",
+  warningSubtle: "rgba(245, 158, 11, 0.15)",
+  textPrimary: "#ffffff",
+  textSecondary: "rgba(255, 255, 255, 0.6)",
+  textMuted: "rgba(255, 255, 255, 0.4)",
+  light: {
+    background: "#fafafa",
+    surface: "#ffffff",
+    gold: "#d4a017",
+    text: "#1a1a1a",
+    textSecondary: "rgba(0, 0, 0, 0.6)",
+    textMuted: "rgba(0, 0, 0, 0.4)",
+    border: "rgba(0, 0, 0, 0.08)",
+  },
+};
+
+function getColors(isDark: boolean) {
+  return {
+    background: isDark ? VANTA.black : VANTA.light.background,
+    surface: isDark ? VANTA.obsidianLight : VANTA.light.surface,
+    surfaceCard: isDark ? VANTA.titanium : VANTA.light.surface,
+    gold: isDark ? VANTA.gold : VANTA.light.gold,
+    text: isDark ? VANTA.textPrimary : VANTA.light.text,
+    textSecondary: isDark ? VANTA.textSecondary : VANTA.light.textSecondary,
+    textMuted: isDark ? VANTA.textMuted : VANTA.light.textMuted,
+    border: isDark ? "rgba(255, 255, 255, 0.08)" : VANTA.light.border,
+    success: VANTA.success,
+    successSubtle: VANTA.successSubtle,
+    danger: VANTA.danger,
+    dangerSubtle: VANTA.dangerSubtle,
+    warning: VANTA.warning,
+    warningSubtle: VANTA.warningSubtle,
+  };
+}
+
 // Provider options
 const PROVIDERS = [
   { id: "eureka", label: "Eureka", icon: "store" },
@@ -42,9 +90,11 @@ const LOT_TYPES = [
 export default function EditLotScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = getColors(isDark);
   const queryClient = useQueryClient();
+  const { t } = useLocale();
 
   // Form state
   const [provider, setProvider] = useState("");
@@ -141,15 +191,15 @@ export default function EditLotScreen() {
 
   const handleUpdate = async () => {
     if (!provider) {
-      Alert.alert("Missing Info", "Please select a provider");
+      Alert.alert(t("common.error"), t("lots.validation.selectProvider"));
       return;
     }
     if (!totalCost || parseFloat(totalCost) <= 0) {
-      Alert.alert("Missing Info", "Please enter a valid cost");
+      Alert.alert(t("common.error"), t("lots.validation.validCost"));
       return;
     }
     if (quantity <= 0) {
-      Alert.alert("Missing Info", "Please set a quantity");
+      Alert.alert(t("common.error"), t("lots.validation.setQuantity"));
       return;
     }
 
@@ -167,52 +217,53 @@ export default function EditLotScreen() {
         type: lotType,
       });
 
-      Alert.alert("Success! ✅", "Lot updated successfully!", [
+      Alert.alert(t("common.success") + " ✅", t("lots.updatedSuccess"), [
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (e) {
       console.error(e);
-      Alert.alert("Error", "Could not update the lot.");
+      Alert.alert(t("common.error"), t("lots.updateError"));
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      "Delete Lot",
-      "Are you sure you want to delete this lot? This action cannot be undone and will also delete all associated items and sales.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteLot.mutateAsync();
-              Alert.alert("Deleted", "Lot has been deleted.");
-            } catch (e) {
-              console.error(e);
-              Alert.alert("Error", "Could not delete the lot.");
-            }
-          },
+    Alert.alert(t("lots.deleteLot"), t("lots.confirmDelete"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("common.delete"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteLot.mutateAsync();
+            Alert.alert(t("common.success"), t("lots.deletedSuccess"));
+          } catch (e) {
+            console.error(e);
+            Alert.alert(t("common.error"), t("lots.deleteError"));
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   // Loading state
   if (lotQuery.isLoading) {
     return (
       <View
-        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
       >
-        <ActivityIndicator size="large" color={theme.primary} />
+        <ActivityIndicator size="large" color={colors.gold} />
         <Text
-          style={[
-            Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.md },
-          ]}
+          style={{
+            fontFamily: "Manrope-Medium",
+            fontSize: 14,
+            color: colors.textMuted,
+            marginTop: 16,
+          }}
         >
-          Loading lot...
+          {t("common.loading")}
         </Text>
       </View>
     );
@@ -222,24 +273,42 @@ export default function EditLotScreen() {
   if (!lotQuery.data) {
     return (
       <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
+        style={[styles.errorContainer, { backgroundColor: colors.background }]}
       >
         <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          style={[styles.errorIcon, { backgroundColor: colors.dangerSubtle }]}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
+          <AppIcon name="error-outline" size={40} color={colors.danger} />
         </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
-          Lot Not Found
-        </Text>
-        <Button
-          variant="ghost"
-          size="md"
-          onPress={() => router.back()}
-          style={{ marginTop: Spacing.xl }}
+        <Text
+          style={{
+            fontFamily: "Manrope-Bold",
+            fontSize: 20,
+            color: colors.text,
+          }}
         >
-          Go Back
-        </Button>
+          {t("lots.notFound")}
+        </Text>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            marginTop: 24,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            borderRadius: 12,
+            backgroundColor: VANTA.goldSubtle,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "Manrope-SemiBold",
+              fontSize: 14,
+              color: colors.gold,
+            }}
+          >
+            {t("common.back")}
+          </Text>
+        </Pressable>
       </View>
     );
   }
@@ -247,20 +316,17 @@ export default function EditLotScreen() {
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {/* ═══ Animated Premium Background ═══ */}
-      <AnimatedPremiumBackground variant="light" />
-
       <Stack.Screen
         options={{
-          title: "Edit Lot",
-          headerStyle: { backgroundColor: theme.background },
-          headerTintColor: theme.text,
+          title: t("lots.editLot"),
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerShadowVisible: false,
           headerLeft: () => (
             <Pressable onPress={() => router.back()} hitSlop={8}>
-              <AppIcon name="close" size={24} color={theme.text} />
+              <AppIcon name="close" size={24} color={colors.text} />
             </Pressable>
           ),
           headerRight: () => (
@@ -268,13 +334,13 @@ export default function EditLotScreen() {
               <AppIcon
                 name="cancel"
                 size={24}
-                color={isDeleting ? theme.textMuted : theme.danger}
+                color={isDeleting ? colors.textMuted : colors.danger}
               />
             </Pressable>
           ),
         }}
       />
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <StatusBar style={isDark ? "light" : "dark"} />
 
       <ScrollView
         contentContainerStyle={[
@@ -289,22 +355,22 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(50).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
-            Lot Name (optional)
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("lots.lotName")} ({t("common.optional")})
           </Text>
           <TextInput
             style={[
               styles.textInput,
               {
-                backgroundColor: theme.surface,
-                color: theme.text,
-                borderColor: theme.border,
+                backgroundColor: colors.surface,
+                color: colors.text,
+                borderColor: colors.border,
               },
             ]}
             value={name}
             onChangeText={setName}
             placeholder="e.g., Summer Collection"
-            placeholderTextColor={theme.textMuted}
+            placeholderTextColor={colors.textMuted}
           />
         </Animated.View>
 
@@ -313,8 +379,8 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(100).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
-            Provider
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("lots.provider")}
           </Text>
           <View style={styles.typeSelector}>
             {PROVIDERS.map((p) => (
@@ -324,9 +390,9 @@ export default function EditLotScreen() {
                   styles.typeButton,
                   {
                     backgroundColor:
-                      provider === p.id ? theme.primary : theme.surface,
+                      provider === p.id ? colors.gold : colors.surface,
                     borderColor:
-                      provider === p.id ? theme.primary : theme.border,
+                      provider === p.id ? colors.gold : colors.border,
                   },
                 ]}
                 onPress={() => setProvider(p.id)}
@@ -334,13 +400,13 @@ export default function EditLotScreen() {
                 <AppIcon
                   name={p.icon as any}
                   size={18}
-                  color={provider === p.id ? "#FFF" : theme.textMuted}
+                  color={provider === p.id ? "#FFF" : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.typeLabel,
                     {
-                      color: provider === p.id ? "#FFF" : theme.textMuted,
+                      color: provider === p.id ? "#FFF" : colors.textMuted,
                     },
                   ]}
                 >
@@ -356,17 +422,17 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(150).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
-            Purchase Date
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("lots.buyDate")}
           </Text>
           <Pressable
             style={[
               styles.dateButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
+              { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
             onPress={() => setShowDateSelector(!showDateSelector)}
           >
-            <Text style={[styles.dateText, { color: theme.text }]}>
+            <Text style={[styles.dateText, { color: colors.text }]}>
               {formatDate(buyDate)}
             </Text>
             <AppIcon
@@ -374,7 +440,7 @@ export default function EditLotScreen() {
                 showDateSelector ? "keyboard-arrow-up" : "keyboard-arrow-down"
               }
               size={24}
-              color={theme.primary}
+              color={colors.gold}
             />
           </Pressable>
 
@@ -397,13 +463,13 @@ export default function EditLotScreen() {
                       styles.dateChip,
                       {
                         backgroundColor: isSelected
-                          ? theme.primary
-                          : theme.surface,
+                          ? colors.gold
+                          : colors.surface,
                         borderColor: isSelected
-                          ? theme.primary
+                          ? colors.gold
                           : isToday
-                            ? theme.success
-                            : theme.border,
+                            ? colors.success
+                            : colors.border,
                       },
                     ]}
                     onPress={() => {
@@ -415,7 +481,7 @@ export default function EditLotScreen() {
                       style={[
                         styles.dateChipDay,
                         {
-                          color: isSelected ? "#FFF" : theme.textMuted,
+                          color: isSelected ? "#FFF" : colors.textMuted,
                         },
                       ]}
                     >
@@ -424,7 +490,7 @@ export default function EditLotScreen() {
                     <Text
                       style={[
                         styles.dateChipDate,
-                        { color: isSelected ? "#FFF" : theme.text },
+                        { color: isSelected ? "#FFF" : colors.text },
                       ]}
                     >
                       {date.getDate()}
@@ -433,7 +499,7 @@ export default function EditLotScreen() {
                       style={[
                         styles.dateChipMonth,
                         {
-                          color: isSelected ? "#FFF" : theme.textMuted,
+                          color: isSelected ? "#FFF" : colors.textMuted,
                         },
                       ]}
                     >
@@ -451,8 +517,8 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(200).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
-            Lot Type
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("lots.type")}
           </Text>
           <View style={styles.typeSelector}>
             {LOT_TYPES.map((t) => (
@@ -463,9 +529,8 @@ export default function EditLotScreen() {
                   styles.typeButtonWide,
                   {
                     backgroundColor:
-                      lotType === t.id ? theme.primary : theme.surface,
-                    borderColor:
-                      lotType === t.id ? theme.primary : theme.border,
+                      lotType === t.id ? colors.gold : colors.surface,
+                    borderColor: lotType === t.id ? colors.gold : colors.border,
                   },
                 ]}
                 onPress={() => setLotType(t.id)}
@@ -474,7 +539,7 @@ export default function EditLotScreen() {
                   style={[
                     styles.typeLabel,
                     {
-                      color: lotType === t.id ? "#FFF" : theme.textMuted,
+                      color: lotType === t.id ? "#FFF" : colors.textMuted,
                     },
                   ]}
                 >
@@ -490,55 +555,61 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(250).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
-            Financials
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("lots.finances")}
           </Text>
           <View style={styles.financialGrid}>
             <View style={styles.financialInput}>
-              <Text style={[styles.inputLabel, { color: theme.textMuted }]}>
-                Total Cost
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                {t("lots.totalCost")}
               </Text>
               <View
                 style={[
                   styles.currencyInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
                 ]}
               >
-                <Text style={[styles.currencySymbol, { color: theme.primary }]}>
+                <Text style={[styles.currencySymbol, { color: colors.gold }]}>
                   €
                 </Text>
                 <TextInput
-                  style={[styles.currencyValue, { color: theme.text }]}
+                  style={[styles.currencyValue, { color: colors.text }]}
                   value={totalCost}
                   onChangeText={setTotalCost}
                   keyboardType="decimal-pad"
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
             </View>
             <View style={styles.financialInput}>
-              <Text style={[styles.inputLabel, { color: theme.textMuted }]}>
-                Shipping
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                {t("lots.shipping")}
               </Text>
               <View
                 style={[
                   styles.currencyInput,
-                  { backgroundColor: theme.surface, borderColor: theme.border },
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
                 ]}
               >
                 <Text
-                  style={[styles.currencySymbol, { color: theme.textMuted }]}
+                  style={[styles.currencySymbol, { color: colors.textMuted }]}
                 >
                   €
                 </Text>
                 <TextInput
-                  style={[styles.currencyValue, { color: theme.text }]}
+                  style={[styles.currencyValue, { color: colors.text }]}
                   value={shippingCost}
                   onChangeText={setShippingCost}
                   keyboardType="decimal-pad"
                   placeholder="0.00"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
             </View>
@@ -550,26 +621,26 @@ export default function EditLotScreen() {
           entering={FadeInDown.delay(300).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
-            Quantity
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("lots.initialQuantity")}
           </Text>
           <View style={styles.quantityRow}>
             <Pressable
               style={[
                 styles.quantityButton,
-                { backgroundColor: theme.primaryMuted },
+                { backgroundColor: VANTA.goldSubtle },
               ]}
               onPress={() => setQuantity(Math.max(0, quantity - 1))}
             >
-              <AppIcon name="remove" size={24} color={theme.primary} />
+              <AppIcon name="remove" size={24} color={colors.gold} />
             </Pressable>
             <TextInput
               style={[
                 styles.quantityInput,
                 {
-                  backgroundColor: theme.surface,
-                  color: theme.text,
-                  borderColor: theme.border,
+                  backgroundColor: colors.surface,
+                  color: colors.text,
+                  borderColor: colors.border,
                 },
               ]}
               value={quantity.toString()}
@@ -579,22 +650,22 @@ export default function EditLotScreen() {
             <Pressable
               style={[
                 styles.quantityButton,
-                { backgroundColor: theme.primaryMuted },
+                { backgroundColor: VANTA.goldSubtle },
               ]}
               onPress={() => setQuantity(quantity + 1)}
             >
-              <AppIcon name="add" size={24} color={theme.primary} />
+              <AppIcon name="add" size={24} color={colors.gold} />
             </Pressable>
           </View>
           {quantity > 0 && totalAmount > 0 && (
             <View
               style={[
                 styles.unitCostBadge,
-                { backgroundColor: theme.successSubtle },
+                { backgroundColor: colors.successSubtle },
               ]}
             >
-              <Text style={[styles.unitCostText, { color: theme.success }]}>
-                Unit cost: €{unitCost}
+              <Text style={[styles.unitCostText, { color: colors.success }]}>
+                {t("lots.unitCost")}: €{unitCost}
               </Text>
             </View>
           )}
@@ -603,21 +674,25 @@ export default function EditLotScreen() {
 
       {/* Sticky CTA */}
       <View
-        style={[
-          styles.ctaContainer,
-          { paddingBottom: insets.bottom + Spacing.lg },
-        ]}
+        style={[styles.ctaContainer, { paddingBottom: insets.bottom + 16 }]}
       >
-        <Button
-          variant="primary"
-          size="lg"
+        <Pressable
           onPress={handleUpdate}
           disabled={isSubmitting || !provider}
-          icon={<AppIcon name="check-circle" size={20} color="#FFF" />}
-          style={styles.ctaButton}
+          style={[
+            styles.ctaButton,
+            {
+              backgroundColor:
+                isSubmitting || !provider ? colors.textMuted : colors.gold,
+              opacity: isSubmitting || !provider ? 0.6 : 1,
+            },
+          ]}
         >
-          {isSubmitting ? "Updating..." : "Save Changes"}
-        </Button>
+          <AppIcon name="check-circle" size={20} color="#FFF" />
+          <Text style={styles.ctaButtonText}>
+            {isSubmitting ? t("lots.updating") : t("lots.saveChanges")}
+          </Text>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
@@ -631,13 +706,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: Spacing.xl,
+    padding: 24,
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: Spacing.xl,
+    padding: 24,
   },
   errorIcon: {
     width: 80,
@@ -645,158 +720,171 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.lg,
+    marginBottom: 16,
   },
   content: {
-    padding: Spacing.xl,
+    padding: 24,
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: 24,
   },
   label: {
+    fontFamily: "Manrope-SemiBold",
     fontSize: 14,
-    fontWeight: "600",
-    marginBottom: Spacing.sm,
+    marginBottom: 8,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   textInput: {
+    fontFamily: "Manrope-Regular",
     borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
   },
   typeSelector: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: 8,
   },
   typeButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.xs,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.md,
+    gap: 4,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 12,
     borderWidth: 1,
   },
   typeButtonWide: {
     flex: 1,
   },
   typeLabel: {
+    fontFamily: "Manrope-SemiBold",
     fontSize: 13,
-    fontWeight: "600",
   },
   dateButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: Spacing.md,
-    borderRadius: Radius.md,
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1,
   },
   dateText: {
+    fontFamily: "Manrope-Medium",
     fontSize: 16,
-    fontWeight: "500",
   },
   dateScroller: {
-    marginTop: Spacing.md,
+    marginTop: 16,
   },
   dateScrollerContent: {
-    gap: Spacing.sm,
+    gap: 8,
   },
   dateChip: {
     alignItems: "center",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
     minWidth: 60,
   },
   dateChipDay: {
+    fontFamily: "Manrope-SemiBold",
     fontSize: 10,
-    fontWeight: "600",
     textTransform: "uppercase",
   },
   dateChipDate: {
+    fontFamily: "Manrope-Bold",
     fontSize: 18,
-    fontWeight: "700",
     marginVertical: 2,
   },
   dateChipMonth: {
+    fontFamily: "Manrope-Medium",
     fontSize: 10,
-    fontWeight: "500",
   },
   financialGrid: {
     flexDirection: "row",
-    gap: Spacing.md,
+    gap: 16,
   },
   financialInput: {
     flex: 1,
   },
   inputLabel: {
+    fontFamily: "Manrope-Regular",
     fontSize: 12,
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
   },
   currencyInput: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
+    borderRadius: 12,
+    paddingHorizontal: 16,
   },
   currencySymbol: {
+    fontFamily: "Manrope-Bold",
     fontSize: 18,
-    fontWeight: "700",
-    marginRight: Spacing.xs,
+    marginRight: 4,
   },
   currencyValue: {
     flex: 1,
+    fontFamily: "Manrope-SemiBold",
     fontSize: 18,
-    fontWeight: "600",
-    paddingVertical: Spacing.md,
+    paddingVertical: 16,
   },
   quantityRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
+    gap: 16,
   },
   quantityButton: {
     width: 48,
     height: 48,
-    borderRadius: Radius.md,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
   quantityInput: {
     flex: 1,
+    fontFamily: "Manrope-Bold",
     textAlign: "center",
     fontSize: 24,
-    fontWeight: "700",
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+    paddingVertical: 16,
+    borderRadius: 12,
     borderWidth: 1,
   },
   unitCostBadge: {
-    marginTop: Spacing.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     alignSelf: "flex-start",
   },
   unitCostText: {
+    fontFamily: "Manrope-SemiBold",
     fontSize: 14,
-    fontWeight: "600",
   },
   ctaContainer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    padding: Spacing.lg,
+    padding: 16,
   },
   ctaButton: {
     width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  ctaButtonText: {
+    fontFamily: "Manrope-Bold",
+    fontSize: 16,
+    color: "#FFF",
   },
 });

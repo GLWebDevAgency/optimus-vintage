@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Rare Oil Collection</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Spectral:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f4c025",
+                        "obsidian-dark": "#0a0a0a",
+                        "obsidian-light": "#1a1a1a",
+                        "background-dark": "#000000",
+                        "background-light": "#f8f8f5",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "serif": ["Spectral", "serif"],
+                    },
+                    backgroundImage: {
+                        'obsidian-gradient': 'linear-gradient(160deg, #161616 0%, #050505 100%)',
+                        'card-shine': 'linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.03) 25%, transparent 30%)',
+                        'gold-glow': 'radial-gradient(circle at center, rgba(244, 192, 37, 0.15) 0%, rgba(0,0,0,0) 70%)',
+                    },
+                    boxShadow: {
+                        'obsidian': 'inset 1px 1px 1px rgba(255, 255, 255, 0.05), 0 10px 30px -10px rgba(0, 0, 0, 0.8)',
+                        'gold-leak': '0 0 20px rgba(244, 192, 37, 0.1)',
+                        'card-hover': '0 10px 40px -10px rgba(244, 192, 37, 0.15)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }.chromatic-text {
+            text-shadow: 1px 0px 1px rgba(255, 0, 0, 0.2), -1px 0px 1px rgba(0, 0, 255, 0.2);
+        }@keyframes shine-pass {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .kinetic-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .kinetic-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(105deg, transparent 40%, rgba(244, 192, 37, 0.1) 45%, rgba(255, 255, 255, 0.05) 50%, transparent 55%);
+            transform: skewX(-20deg);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .kinetic-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(244, 192, 37, 0.5);
+            box-shadow: 0 10px 40px -10px rgba(244, 192, 37, 0.1);
+        }
+        .kinetic-card:hover::after {
+            opacity: 1;
+            animation: shine-pass 1.5s infinite;
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-dark text-white font-display antialiased selection:bg-primary selection:text-black overflow-x-hidden min-h-screen flex flex-col items-center justify-center">
+<main class="w-full max-w-md mx-auto min-h-screen relative flex flex-col p-6 gap-6 z-10">
+<header class="flex justify-between items-center py-2 opacity-80 shrink-0">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-opacity-80 text-sm">grid_view</span>
+<span class="text-xs tracking-[0.2em] text-white/40 font-bold uppercase">Nexus-01</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="h-2 w-2 rounded-full bg-primary animate-pulse shadow-gold-leak"></div>
+<span class="text-xs tracking-widest text-white/40">CONNECTED</span>
+</div>
+</header>
+<section class="sticky top-2 z-30 flex justify-center w-full shrink-0">
+<div class="bg-[#111]/80 backdrop-blur-xl border border-white/10 rounded-full px-1 py-1 flex items-center shadow-2xl">
+<button class="group flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/5 transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px] text-primary/80 group-hover:text-primary transition-colors">diamond</span>
+<span class="text-[10px] uppercase tracking-widest text-white/60 group-hover:text-white font-medium">Rarity</span>
+</button>
+<div class="w-px h-4 bg-white/10"></div>
+<button class="group flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/5 transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px] text-primary/80 group-hover:text-primary transition-colors">category</span>
+<span class="text-[10px] uppercase tracking-widest text-white/60 group-hover:text-white font-medium">Type</span>
+</button>
+<div class="w-px h-4 bg-white/10"></div>
+<button class="group flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/5 transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px] text-primary/80 group-hover:text-primary transition-colors">public</span>
+<span class="text-[10px] uppercase tracking-widest text-white/60 group-hover:text-white font-medium">Origin</span>
+</button>
+</div>
+</section>
+<div class="text-center shrink-0 mt-2 mb-2">
+<h1 class="font-serif text-2xl text-white tracking-widest uppercase chromatic-text opacity-90">Rare Oil Collection</h1>
+<div class="h-[1px] w-24 mx-auto mt-4 bg-gradient-to-r from-transparent via-primary/40 to-transparent"></div>
+</div>
+<div class="grid grid-cols-2 gap-4 pb-24 overflow-y-auto no-scrollbar grow">
+<div class="kinetic-card bg-obsidian-gradient rounded-sm border border-primary/20 p-3 flex flex-col gap-3 group">
+<div class="relative w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+<img alt="Void Nectar" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 contrast-125 saturate-0 group-hover:saturate-50 mix-blend-lighten" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDq6EEhH8K1PP-j4CvJ-QtNer7VNjf_GLRjN8ppx7hyVstrroiyNqJ37mOu34wgBNR75N43LPJut6nf6Getm49Mzuo0JTLEuXTRSm5tRgb563Kfvh1ddE1_D25lIcgsLZZlFTowjKURtuUMzqWxwgAFS__7jFmmvldgCv11A05pVn8ktfVUISeD396ssM06fqJyrn087FrwIMbgBwuHSh5Fr3LxFmUZxU8Gbe8N_wGIkww4AFmWjyNsGeg9NgAMybrrsPGVef2AaHwU"/>
+<div class="absolute top-2 right-2 z-20">
+<span class="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 tracking-widest uppercase backdrop-blur-sm">Rare</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 z-10">
+<h3 class="font-serif text-lg leading-tight text-white/90 group-hover:text-primary transition-colors">Void Nectar</h3>
+<div class="flex justify-between items-end border-t border-white/5 pt-2 mt-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">50ml</span>
+<span class="font-display text-sm text-white font-medium chromatic-text">$420.00</span>
+</div>
+</div>
+</div>
+<div class="kinetic-card bg-obsidian-gradient rounded-sm border border-primary/20 p-3 flex flex-col gap-3 group">
+<div class="relative w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+<img alt="Aether Gold" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 contrast-125 saturate-50 group-hover:saturate-100 mix-blend-luminosity" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgemS-csVkUVEsvTnh5x7ax1dSRDc0Q3Xf8c0i0GkLKYTPioRLL4eU3w4JHMDbRaDH8UjgHI-dWnFSVk4dPddApOV1NdKh64TtIpO-yWZT7gI8YBvMaixjG5INH20sxkkHx9Ok_lyXJ9hfRK0AiXy_dEtP112GaebQOE01ErSdbONgWUyp5s48u8_OxP6L84OKhZXP95KRQV4IKrzlcCtPeVvEKXmFPqjZi5T445HNEt9aFrVx32LGoZEdpyPtHFfBbAs3E-bP1Kzu"/>
+<div class="absolute top-2 right-2 z-20">
+<span class="text-[8px] bg-white/5 text-white/60 border border-white/10 px-1.5 py-0.5 tracking-widest uppercase backdrop-blur-sm">Exotic</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 z-10">
+<h3 class="font-serif text-lg leading-tight text-white/90 group-hover:text-primary transition-colors">Aether Gold</h3>
+<div class="flex justify-between items-end border-t border-white/5 pt-2 mt-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">30ml</span>
+<span class="font-display text-sm text-white font-medium chromatic-text">$250.00</span>
+</div>
+</div>
+</div>
+<div class="kinetic-card bg-obsidian-gradient rounded-sm border border-primary/20 p-3 flex flex-col gap-3 group">
+<div class="relative w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+<img alt="Abyssal Serum" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 contrast-125 sepia-[.5] group-hover:sepia-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDo2_Sf5nLlHvZE9cXvy_hoEz-DiZkHV9Jj1WkLfD6YAZO0S_n9fqvpfpoSLQUYz0bkQkrSfc_mqOmMssh-pXISJwla3-rlhbna1K8gC8Fl2VTZ_tPXGb7pLk_5lvIrS6KKyv-KbnrC738LMivZd-EBlVVkgs6VWHTY2SzLqEvQvYjk8FUsNhSZwz-9Rk5SOCIwd7Dj6L8W4yiZvfw8nbda-1iFcxG48anzMqqRfwiAhRGVpwAp06b-P8b128xpgk7FAfS1fC3a17ys"/>
+<div class="absolute top-2 right-2 z-20">
+<span class="text-[8px] bg-primary/20 text-primary border border-primary/40 px-1.5 py-0.5 tracking-widest uppercase backdrop-blur-sm shadow-[0_0_10px_rgba(244,192,37,0.3)]">Legendary</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 z-10">
+<h3 class="font-serif text-lg leading-tight text-white/90 group-hover:text-primary transition-colors">Abyssal Serum</h3>
+<div class="flex justify-between items-end border-t border-white/5 pt-2 mt-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">15ml</span>
+<span class="font-display text-sm text-white font-medium chromatic-text">$850.00</span>
+</div>
+</div>
+</div>
+<div class="kinetic-card bg-obsidian-gradient rounded-sm border border-primary/20 p-3 flex flex-col gap-3 group">
+<div class="relative w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+<img alt="Lunar Essence" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 contrast-150 grayscale group-hover:grayscale-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCffA7QxGr9e593hg6TvS8TUFvrfTWO_vsZL21M2vxcWMCjL1BJFFJQFIHNFQ_zPAs1EBrlRXJounFM7ZOC-XmPWylB6FCD3Tqek8B36zgxOsV5AILm9Hq04gTcSxivbwV8wt5cg1b92JVfcQrWc0L6D5ag6I3vO4GJpqQNbetvT6HZVmxwQL-iehhzD0LzbXdaqrfFPBWHJHR4NAu7ZN0NpLE7TIWOT1rlYOCkcxvYwCj2AO--gC5eErzQrW0R_90dtGMFSWujpOo"/>
+</div>
+<div class="flex flex-col gap-1 z-10">
+<h3 class="font-serif text-lg leading-tight text-white/90 group-hover:text-primary transition-colors">Lunar Essence</h3>
+<div class="flex justify-between items-end border-t border-white/5 pt-2 mt-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">100ml</span>
+<span class="font-display text-sm text-white font-medium chromatic-text">$180.00</span>
+</div>
+</div>
+</div>
+<div class="kinetic-card bg-obsidian-gradient rounded-sm border border-primary/20 p-3 flex flex-col gap-3 group">
+<div class="relative w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+<img alt="Chronos Drop" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 contrast-125 saturate-50 group-hover:saturate-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDJGO3iS4T0cD1Oc3Kl5Ztu-mx6hPwh4IsbOF7oP7sp07P8Tm9F9RMtesjxMWWxZfQQts27VbgaQzWaw-OnT-xClm-XXipEzkz9-v1EQGaPOFNmmdRICnjIOzfDb3V026fhmsOYg0ABteQ4-24SNHzJithgp4_MbrrTOAUPWTvCve2TGMRdhoATwjbU3brDlWcSAaM16JOYMjFrZcX0UNPeUyn0ro6BfPqRv1quN340efWMMO0mMWR9F4LTj_l6h6dTPFqesoEYD4Q"/>
+<div class="absolute top-2 right-2 z-20">
+<span class="text-[8px] bg-white/5 text-white/60 border border-white/10 px-1.5 py-0.5 tracking-widest uppercase backdrop-blur-sm">Ancient</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 z-10">
+<h3 class="font-serif text-lg leading-tight text-white/90 group-hover:text-primary transition-colors">Chronos Drop</h3>
+<div class="flex justify-between items-end border-t border-white/5 pt-2 mt-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">10ml</span>
+<span class="font-display text-sm text-white font-medium chromatic-text">$1,200.00</span>
+</div>
+</div>
+</div>
+<div class="kinetic-card bg-obsidian-gradient rounded-sm border border-primary/20 p-3 flex flex-col gap-3 group">
+<div class="relative w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+<img alt="Nebula Resin" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 contrast-125 brightness-75 group-hover:brightness-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXf5FkvdXCZhicge24uZFSoaXF_Zo4qL8Enw2K9SoJdj7eMW0vZOxGU-EdetXYKvwmdkWzvGykwoA6KVMH79sGE39zM5nV96PQ3Sszrt08RbnZCeQxxXvnyn4NhOdw0X9xj3no8GJAMG8HuDCyL0P3Mee3lpk0HABPSn6WDbUWnlRtLvhSkmhcctBauEH65tx9kXfGRc-F57xrUP99chUFpIvtfkBbZ60iSLvpDpidDh9jmSdWEXDTwRmeX4saYFGhLFCBmyakgoSa"/>
+</div>
+<div class="flex flex-col gap-1 z-10">
+<h3 class="font-serif text-lg leading-tight text-white/90 group-hover:text-primary transition-colors">Nebula Resin</h3>
+<div class="flex justify-between items-end border-t border-white/5 pt-2 mt-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">45ml</span>
+<span class="font-display text-sm text-white font-medium chromatic-text">$310.00</span>
+</div>
+</div>
+</div>
+<div class="col-span-2 flex items-center justify-center py-6 opacity-40">
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-primary animate-spin">data_usage</span>
+<span class="text-[10px] tracking-[0.2em] uppercase text-white/60">Decrypting Archives...</span>
+</div>
+</div>
+</div>
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 flex justify-around items-center w-full max-w-md px-8 z-50">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 w-1/3 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none"></div>
+<div class="absolute inset-0 bg-obsidian-dark/90 backdrop-blur-xl border border-white/5 rounded-full shadow-obsidian -z-10 mx-6"></div>
+<button class="group p-4 rounded-full relative flex items-center justify-center">
+<span class="material-symbols-outlined text-white/40 group-hover:text-primary transition-colors duration-300">home_app_logo</span>
+</button>
+<button class="group p-4 rounded-full relative flex items-center justify-center -translate-y-4">
+<div class="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-50 group-hover:opacity-100 transition-all duration-500"></div>
+<div class="h-14 w-14 rounded-full border border-primary/30 bg-[#161616] flex items-center justify-center shadow-[0_0_15px_rgba(244,192,37,0.2)] group-active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary drop-shadow-[0_0_5px_rgba(244,192,37,0.8)]">fingerprint</span>
+</div>
+</button>
+<button class="group p-4 rounded-full relative flex items-center justify-center">
+<span class="material-symbols-outlined text-white/40 group-hover:text-primary transition-colors duration-300">shopping_bag</span>
+</button>
+</nav>
+</main>
+
+</body></html>

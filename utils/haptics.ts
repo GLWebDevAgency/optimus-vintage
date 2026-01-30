@@ -4,6 +4,7 @@
  */
 
 import * as Haptics from "expo-haptics";
+import { useSettingsStore } from "@/store/settings";
 
 const isIOS = process.env.EXPO_OS === "ios";
 
@@ -12,11 +13,14 @@ const isIOS = process.env.EXPO_OS === "ios";
  * Automatically disabled on non-iOS platforms
  */
 export function useHaptics() {
+  const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
+  const canHaptic = isIOS && hapticsEnabled;
+
   /**
    * Light impact - for minor UI events (toggles, small buttons)
    */
   const impactLight = () => {
-    if (isIOS) {
+    if (canHaptic) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -25,7 +29,7 @@ export function useHaptics() {
    * Medium impact - for standard UI events (button presses, selections)
    */
   const impactMedium = () => {
-    if (isIOS) {
+    if (canHaptic) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   };
@@ -34,7 +38,7 @@ export function useHaptics() {
    * Heavy impact - for significant UI events (important actions, confirmations)
    */
   const impactHeavy = () => {
-    if (isIOS) {
+    if (canHaptic) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
   };
@@ -43,7 +47,7 @@ export function useHaptics() {
    * Selection feedback - for picker/list selections
    */
   const selection = () => {
-    if (isIOS) {
+    if (canHaptic) {
       Haptics.selectionAsync();
     }
   };
@@ -52,7 +56,7 @@ export function useHaptics() {
    * Success notification - for successful actions
    */
   const notificationSuccess = () => {
-    if (isIOS) {
+    if (canHaptic) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   };
@@ -61,7 +65,7 @@ export function useHaptics() {
    * Warning notification - for warning states
    */
   const notificationWarning = () => {
-    if (isIOS) {
+    if (canHaptic) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
   };
@@ -70,7 +74,7 @@ export function useHaptics() {
    * Error notification - for error states
    */
   const notificationError = () => {
-    if (isIOS) {
+    if (canHaptic) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
@@ -91,37 +95,37 @@ export function useHaptics() {
  */
 export const Haptic = {
   impactLight: () => {
-    if (isIOS) {
+    if (isIOS && useSettingsStore.getState().hapticsEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   },
   impactMedium: () => {
-    if (isIOS) {
+    if (isIOS && useSettingsStore.getState().hapticsEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   },
   impactHeavy: () => {
-    if (isIOS) {
+    if (isIOS && useSettingsStore.getState().hapticsEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
   },
   selection: () => {
-    if (isIOS) {
+    if (isIOS && useSettingsStore.getState().hapticsEnabled) {
       Haptics.selectionAsync();
     }
   },
   success: () => {
-    if (isIOS) {
+    if (isIOS && useSettingsStore.getState().hapticsEnabled) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   },
   warning: () => {
-    if (isIOS) {
+    if (isIOS && useSettingsStore.getState().hapticsEnabled) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
   },
   error: () => {
-    if (isIOS) {
+    if (isIOS && useSettingsStore.getState().hapticsEnabled) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   },

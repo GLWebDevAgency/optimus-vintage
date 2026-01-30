@@ -43,8 +43,8 @@ const SkeletonColors = {
     highlight: Palette.neutral[100],
   },
   dark: {
-    base: Palette.navy[800],
-    highlight: Palette.navy[700],
+    base: Palette.neutral[800],
+    highlight: Palette.neutral[700],
   },
 };
 
@@ -454,8 +454,8 @@ const styles = StyleSheet.create({
     borderColor: Palette.neutral[200],
   },
   heroCardDark: {
-    backgroundColor: Palette.navy[800],
-    borderColor: Palette.navy[700],
+    backgroundColor: Palette.neutral[800],
+    borderColor: Palette.neutral[700],
   },
   periodChips: {
     flexDirection: "row",
@@ -504,17 +504,20 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: "22%",
     backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.md,
     alignItems: "center",
     borderWidth: 1,
     borderColor: Palette.neutral[200],
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.03), 0 4px 8px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
 
-  // Top lot card
+  // Top lot card - Premium glassmorphic
   topLotCard: {
     backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.md,
     flexDirection: "row",
     alignItems: "center",
@@ -522,6 +525,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
     borderWidth: 1,
     borderColor: Palette.neutral[200],
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.03), 0 4px 8px rgba(0,0,0,0.02), 0 8px 16px rgba(0,0,0,0.01), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   topLotInfo: {
     flex: 1,
@@ -536,11 +542,14 @@ const styles = StyleSheet.create({
   },
   detailsCard: {
     backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
     gap: Spacing.sm,
     borderWidth: 1,
     borderColor: Palette.neutral[200],
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.03), 0 4px 8px rgba(0,0,0,0.02), 0 8px 16px rgba(0,0,0,0.01), inset 0 1px 0 rgba(255,255,255,0.6)",
   },
   statRow: {
     flexDirection: "row",
@@ -559,17 +568,20 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.xs,
   },
 
-  // List skeleton
+  // List skeleton - Premium styling
   listItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.md,
+    padding: Spacing.lg,
     backgroundColor: Palette.neutral.white,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     marginBottom: Spacing.sm,
     gap: Spacing.md,
     borderWidth: 1,
     borderColor: Palette.neutral[200],
+    borderCurve: "continuous",
+    boxShadow:
+      "0 2px 4px rgba(0,0,0,0.03), 0 4px 8px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.5)",
   },
   listItemContent: {
     flex: 1,

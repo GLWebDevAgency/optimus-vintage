@@ -16,17 +16,23 @@ type ThemeProps = {
 export type TextProps = ThemeProps & DefaultText["props"];
 export type ViewProps = ThemeProps & DefaultView["props"];
 
+// Exclude 'dark' property (boolean) from the color names
+type ThemeColorName = Exclude<
+  keyof typeof Theme.light & keyof typeof Theme.dark,
+  "dark"
+>;
+
 export function useThemeColor(
   props: { light?: string; dark?: string },
-  colorName: keyof typeof Theme.light & keyof typeof Theme.dark,
-) {
-  const theme = useColorScheme() ?? "light";
+  colorName: ThemeColorName,
+): string {
+  const theme = useColorScheme();
   const colorFromProps = props[theme];
 
   if (colorFromProps) {
     return colorFromProps;
   } else {
-    return Theme[theme][colorName];
+    return Theme[theme][colorName] as string;
   }
 }
 

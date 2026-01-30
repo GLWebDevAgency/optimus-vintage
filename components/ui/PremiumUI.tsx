@@ -1,32 +1,41 @@
 /**
- * 💎 PREMIUM UI SYSTEM - World-Class Components
+ * 🌌 VANTA UI SYSTEM - Aether & Ivory Architecture
  *
- * Système de design unifié inspiré de Linear, Arc, Figma
- * Thème cohérent avec la TabBar premium
+ * "Digital Architecture evolving in an infinite spatial void."
+ *
+ * Design Principles:
+ * - AETHER (Dark): Obsidian slabs floating in void, defined by golden light lines
+ * - IVORY (Light): Sculptures of light with diffuse shadows creating Z-axis depth
+ *
+ * Materials:
+ * - Dark: Polished Obsidian, Black Titanium, Carbon Glass
+ * - Light: Mother of Pearl, Frosted Glass, Noble Paper
  *
  * ✨ Features:
- * - Glassmorphic effects with blur
- * - Multi-layer shadows
- * - Smooth spring animations
- * - Haptic feedback
- * - Aurora gradients
- * - Luminous borders
+ * - Monolithic dock navigation
+ * - Singularity data visualizations
+ * - Optical fluid interactions
+ * - Photon emanation accents
+ * - Gravity-based animations
  */
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { useColorScheme } from "@/components/useColorScheme";
-import { Palette, Radius, Spacing, Typography } from "@/constants/Theme";
+import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { useAccessibility } from "@/utils/accessibility";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import {
     ActivityIndicator,
     Pressable,
     StyleSheet,
     Text,
+    TextInput,
     View,
     type PressableProps,
+    type TextInputProps,
     type ViewStyle,
 } from "react-native";
 import Animated, {
@@ -36,253 +45,95 @@ import Animated, {
     interpolate,
     useAnimatedStyle,
     useSharedValue,
-    withRepeat,
     withSpring,
-    withTiming,
+    withTiming
 } from "react-native-reanimated";
-import Svg, { Path } from "react-native-svg";
 
 const isIOS = process.env.EXPO_OS === "ios";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🎨 PREMIUM COLORS - Unified Theme
+// 🎨 VANTA THEME HOOK
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const PremiumColors = {
-  // Primary accent - Emerald
-  accent: Palette.emerald[500],
-  accentLight: Palette.emerald[100],
-  accentDark: Palette.emerald[600],
-  accentMuted: `${Palette.emerald[500]}15`,
-  accentGlow: `${Palette.emerald[500]}40`,
+export type VantaTheme = typeof Theme.light;
 
-  // Secondary accent - Gold
-  gold: Palette.gold[500],
-  goldLight: Palette.gold[100],
-  goldDark: Palette.gold[600],
-  goldMuted: `${Palette.gold[500]}15`,
-  goldGlow: `${Palette.gold[500]}40`,
-
-  // Backgrounds
-  background: Palette.neutral[50],
-  backgroundSubtle: Palette.neutral[100],
-  surface: Palette.neutral.white,
-  surfaceElevated: Palette.neutral.white,
-  cardBackground: Palette.neutral.white,
-
-  // Text
-  textPrimary: Palette.neutral[900],
-  textSecondary: Palette.neutral[600],
-  textMuted: Palette.neutral[400],
-  textInverse: Palette.neutral.white,
-  textWhite: Palette.neutral.white,
-
-  // Navy / Secondary
-  navy: Palette.navy[600],
-  navyLight: Palette.navy[100],
-
-  // Semantic
-  success: Palette.success[500],
-  successLight: Palette.success[50],
-  danger: Palette.danger[500],
-  dangerLight: Palette.danger[50],
-  warning: Palette.warning[500],
-  warningLight: Palette.warning[50],
-  info: Palette.info[500],
-  infoLight: Palette.info[50],
-
-  // Glass & Borders
-  glass: `${Palette.neutral.white}85`,
-  glassBorder: `${Palette.neutral[200]}50`,
-  border: Palette.neutral[200],
-  borderSubtle: Palette.neutral[100],
-
-  // Shadows
-  shadowLight: "rgba(0, 0, 0, 0.04)",
-  shadowMedium: "rgba(0, 0, 0, 0.08)",
-  shadowStrong: "rgba(0, 0, 0, 0.12)",
-  shadowAccent: `${Palette.emerald[200]}30`,
-
-  // Dark mode variants
-  dark: {
-    background: Palette.navy[900],
-    surface: Palette.navy[800],
-    surfaceElevated: Palette.navy[750],
-    textPrimary: Palette.neutral.white,
-    textSecondary: Palette.neutral[400],
-    textMuted: Palette.neutral[500],
-    border: Palette.navy[700],
-    borderSubtle: Palette.navy[800],
-    glass: `${Palette.navy[800]}90`,
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// � USE PREMIUM THEME - Hook for easy theme access
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export interface PremiumTheme {
-  // Core surfaces
-  surface: string;
-  surfaceCard: string;
-  surfaceHover: string;
-  surfaceHighlight: string;
-  background: string;
-
-  // Borders
-  border: string;
-  borderCard: string;
-
-  // Primary accent
-  primary: string;
-  primarySubtle: string;
-
-  // Text
-  text: string;
-  textSecondary: string;
-  textMuted: string;
-  textOnAccent: string;
-
-  // Semantic
-  success: string;
-  successSubtle: string;
-  danger: string;
-  dangerSubtle: string;
-  warning: string;
-  warningSubtle: string;
-}
-
-export function usePremiumTheme(): PremiumTheme {
+export function usePremiumTheme(): VantaTheme {
   const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
+  return colorScheme === "dark" ? Theme.dark : Theme.light;
+}
 
-  return {
-    surface: isDark ? PremiumColors.dark.surface : PremiumColors.surface,
-    surfaceCard: isDark
-      ? PremiumColors.dark.surface
-      : PremiumColors.cardBackground,
-    surfaceHover: isDark ? Palette.navy[700] : Palette.neutral[100],
-    surfaceHighlight: isDark ? Palette.emerald[900] : PremiumColors.accentLight,
-    background: isDark
-      ? PremiumColors.dark.background
-      : PremiumColors.background,
-    border: isDark ? PremiumColors.dark.border : PremiumColors.border,
-    borderCard: isDark ? PremiumColors.dark.border : PremiumColors.glassBorder,
-    primary: PremiumColors.accent,
-    primarySubtle: PremiumColors.accentLight,
-    text: isDark ? PremiumColors.dark.textPrimary : PremiumColors.textPrimary,
-    textSecondary: isDark
-      ? PremiumColors.dark.textSecondary
-      : PremiumColors.textSecondary,
-    textMuted: isDark ? PremiumColors.dark.textMuted : PremiumColors.textMuted,
-    textOnAccent: PremiumColors.textWhite,
-    success: PremiumColors.success,
-    successSubtle: PremiumColors.successLight,
-    danger: PremiumColors.danger,
-    dangerSubtle: PremiumColors.dangerLight,
-    warning: PremiumColors.warning,
-    warningSubtle: PremiumColors.warningLight,
-  };
+export function useVantaTheme(): VantaTheme {
+  return usePremiumTheme();
+}
+
+export function useIsDarkMode(): boolean {
+  const colorScheme = useColorScheme() ?? "light";
+  return colorScheme === "dark";
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// �🏛️ PREMIUM SCREEN - Base container with aurora background
+// 🏛️ VANTA SCREEN - Base container with spatial void background
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface PremiumScreenProps {
+interface VantaScreenProps {
   children: React.ReactNode;
   style?: ViewStyle;
 }
 
-export function PremiumScreen({ children, style }: PremiumScreenProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
+export function PremiumScreen({ children, style }: VantaScreenProps) {
+  const theme = usePremiumTheme();
+  const isDark = useIsDarkMode();
 
   return (
     <View
       style={[
         styles.screenContainer,
-        {
-          backgroundColor: isDark
-            ? PremiumColors.dark.background
-            : PremiumColors.background,
-        },
+        { backgroundColor: theme.background },
         style,
       ]}
     >
-      {/* Subtle arabesque pattern background */}
+      {/* Vanta Background Layer */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <LinearGradient
-          colors={
-            isDark
-              ? [Palette.navy[900], Palette.navy[950], Palette.navy[900]]
-              : ["#F8F9FA", "#F5F6F7", "#F8F9FA"]
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        {/* Arabesque pattern overlay */}
-        <Svg
-          width="100%"
-          height="100%"
-          style={[StyleSheet.absoluteFill, { opacity: isDark ? 0.03 : 0.04 }]}
-          viewBox="0 0 100 100"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          {/* Moroccan-inspired geometric pattern */}
-          <Path
-            d="M50,0 L60,10 L50,20 L40,10 Z M50,20 L60,30 L50,40 L40,30 Z M50,40 L60,50 L50,60 L40,50 Z M50,60 L60,70 L50,80 L40,70 Z M50,80 L60,90 L50,100 L40,90 Z"
-            fill={isDark ? Palette.gold[400] : Palette.gold[600]}
-            fillOpacity="0.5"
+        {isDark ? (
+          // AETHER: Absolute void with subtle gradient
+          <LinearGradient
+            colors={[
+              Palette.vanta.black,
+              Palette.vanta.obsidian,
+              Palette.vanta.black,
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
           />
-          <Path
-            d="M25,10 L35,20 L25,30 L15,20 Z M25,30 L35,40 L25,50 L15,40 Z M25,50 L35,60 L25,70 L15,60 Z M25,70 L35,80 L25,90 L15,80 Z"
-            fill={isDark ? Palette.emerald[400] : Palette.emerald[600]}
-            fillOpacity="0.4"
+        ) : (
+          // IVORY: Organic gradient (paper/silk feel)
+          <LinearGradient
+            colors={[
+              Palette.ivory.cream,
+              Palette.ivory.base,
+              Palette.ivory.sand,
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
           />
-          <Path
-            d="M75,10 L85,20 L75,30 L65,20 Z M75,30 L85,40 L75,50 L65,40 Z M75,50 L85,60 L75,70 L65,60 Z M75,70 L85,80 L75,90 L65,80 Z"
-            fill={isDark ? Palette.emerald[400] : Palette.emerald[600]}
-            fillOpacity="0.4"
-          />
-          <Path
-            d="M0,25 L10,35 L0,45 L-10,35 Z M0,45 L10,55 L0,65 L-10,55 Z M0,65 L10,75 L0,85 L-10,75 Z"
-            fill={isDark ? Palette.gold[300] : Palette.gold[500]}
-            fillOpacity="0.3"
-          />
-          <Path
-            d="M100,25 L110,35 L100,45 L90,35 Z M100,45 L110,55 L100,65 L90,55 Z M100,65 L110,75 L100,85 L90,75 Z"
-            fill={isDark ? Palette.gold[300] : Palette.gold[500]}
-            fillOpacity="0.3"
-          />
-          {/* Interlocking curves */}
-          <Path
-            d="M0,0 Q25,25 50,0 T100,0 M0,50 Q25,75 50,50 T100,50 M0,100 Q25,125 50,100 T100,100"
-            stroke={isDark ? Palette.gold[400] : Palette.gold[500]}
-            strokeWidth="0.3"
-            fill="none"
-            strokeOpacity="0.4"
-          />
-          <Path
-            d="M0,25 Q25,50 50,25 T100,25 M0,75 Q25,100 50,75 T100,75"
-            stroke={isDark ? Palette.emerald[400] : Palette.emerald[500]}
-            strokeWidth="0.3"
-            fill="none"
-            strokeOpacity="0.35"
-          />
-        </Svg>
+        )}
       </View>
       {children}
     </View>
   );
 }
 
+export function VantaScreen({ children, style }: VantaScreenProps) {
+  return <PremiumScreen style={style}>{children}</PremiumScreen>;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// 📋 PREMIUM HEADER - App header with title
+// 📋 VANTA HEADER - System status header
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface PremiumHeaderProps {
+interface VantaHeaderProps {
   title: string;
   subtitle?: string;
   rightAction?: React.ReactNode;
@@ -294,36 +145,31 @@ export function PremiumHeader({
   subtitle,
   rightAction,
   style,
-}: PremiumHeaderProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
+}: VantaHeaderProps) {
+  const theme = usePremiumTheme();
+  const isDark = useIsDarkMode();
+  const { isReduceMotionEnabled } = useAccessibility();
+  const entering = isReduceMotionEnabled
+    ? undefined
+    : FadeInDown.duration(400).springify();
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(400).springify()}
+      entering={entering}
       style={[styles.headerContainer, style]}
     >
       <View style={styles.headerTextContainer}>
         {subtitle && (
           <Text
             style={[
-              styles.headerSubtitle,
-              { color: isDark ? Palette.neutral[500] : Palette.neutral[400] },
+              Typography.label.sm,
+              { color: isDark ? theme.textGold : theme.textSecondary },
             ]}
           >
             {subtitle}
           </Text>
         )}
-        <Text
-          style={[
-            styles.headerTitle,
-            {
-              color: isDark
-                ? PremiumColors.dark.textPrimary
-                : PremiumColors.textPrimary,
-            },
-          ]}
-        >
+        <Text style={[Typography.heading.lg, { color: theme.text }]}>
           {title}
         </Text>
       </View>
@@ -333,10 +179,10 @@ export function PremiumHeader({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🃏 PREMIUM CARD - Glassmorphic card with luminous border
+// 🃏 VANTA SLAB - Obsidian/Pearl floating card
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface PremiumCardProps {
+interface VantaSlabProps {
   children: React.ReactNode;
   variant?: "default" | "elevated" | "glass" | "accent";
   padding?: "none" | "sm" | "md" | "lg";
@@ -352,20 +198,23 @@ export function PremiumCard({
   style,
   onPress,
   entering,
-}: PremiumCardProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
+}: VantaSlabProps) {
+  const theme = usePremiumTheme();
+  const isDark = useIsDarkMode();
   const scale = useSharedValue(1);
+  const pressed = useSharedValue(0);
 
   const handlePressIn = useCallback(() => {
     if (onPress) {
-      scale.value = withSpring(0.98, { damping: 15, stiffness: 300 });
+      scale.value = withSpring(0.98, { damping: 18, stiffness: 300 });
+      pressed.value = withTiming(1, { duration: 100 });
       if (isIOS) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   }, [onPress]);
 
   const handlePressOut = useCallback(() => {
     scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    pressed.value = withTiming(0, { duration: 150 });
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -379,70 +228,91 @@ export function PremiumCard({
     lg: Spacing.lg,
   }[padding];
 
-  const variantStyles = {
-    default: {
-      backgroundColor: isDark
-        ? PremiumColors.dark.surface
-        : PremiumColors.surface,
-      borderColor: isDark
-        ? PremiumColors.dark.border
-        : PremiumColors.glassBorder,
-      boxShadow: `
-        0 2px 8px ${PremiumColors.shadowLight},
-        0 4px 16px ${PremiumColors.shadowMedium}
-      `,
-    },
-    elevated: {
-      backgroundColor: isDark
-        ? PremiumColors.dark.surfaceElevated
-        : PremiumColors.surfaceElevated,
-      borderColor: isDark
-        ? PremiumColors.dark.border
-        : PremiumColors.glassBorder,
-      boxShadow: `
-        0 4px 12px ${PremiumColors.shadowMedium},
-        0 8px 24px ${PremiumColors.shadowStrong},
-        0 16px 40px ${PremiumColors.shadowAccent}
-      `,
-    },
-    glass: {
-      backgroundColor: isDark ? PremiumColors.dark.glass : PremiumColors.glass,
-      borderColor: isDark
-        ? PremiumColors.dark.border
-        : PremiumColors.glassBorder,
-      boxShadow: `
-        0 2px 8px ${PremiumColors.shadowLight},
-        0 8px 32px ${PremiumColors.shadowMedium}
-      `,
-    },
-    accent: {
-      backgroundColor: isDark
-        ? Palette.emerald[900]
-        : PremiumColors.accentLight,
-      borderColor: `${Palette.emerald[300]}40`,
-      boxShadow: `
-        0 4px 16px ${PremiumColors.accentGlow},
-        0 8px 32px ${PremiumColors.shadowAccent}
-      `,
-    },
+  // Vanta slab styles based on mode and variant
+  const getSlabStyle = () => {
+    if (isDark) {
+      // AETHER: Obsidian slabs with golden edge definition
+      switch (variant) {
+        case "elevated":
+          return {
+            backgroundColor: Palette.vanta.titanium,
+            borderColor: Palette.vanta.steel,
+            borderWidth: 1,
+            boxShadow: theme.shadowCardFloat,
+          };
+        case "glass":
+          return {
+            backgroundColor: theme.surfaceGlass,
+            borderColor: theme.borderGlass,
+            borderWidth: 1,
+            boxShadow: theme.shadowMd,
+          };
+        case "accent":
+          return {
+            backgroundColor: Palette.vanta.carbon,
+            borderColor: theme.borderGold,
+            borderWidth: 1,
+            boxShadow: theme.shadowGlow,
+          };
+        default:
+          return {
+            backgroundColor: Palette.vanta.obsidian,
+            borderColor: Palette.vanta.graphite,
+            borderWidth: 1,
+            boxShadow: theme.shadowSm,
+          };
+      }
+    } else {
+      // IVORY: Sculptures of light with diffuse shadows
+      switch (variant) {
+        case "elevated":
+          return {
+            backgroundColor: Palette.ivory.cream,
+            borderColor: Palette.ivory.linen,
+            borderWidth: 1,
+            boxShadow: theme.shadowCardFloat,
+          };
+        case "glass":
+          return {
+            backgroundColor: theme.surfaceGlass,
+            borderColor: theme.borderGlass,
+            borderWidth: 1,
+            boxShadow: theme.shadowMd,
+          };
+        case "accent":
+          return {
+            backgroundColor: Palette.ivory.parchment,
+            borderColor: theme.borderGold,
+            borderWidth: 1,
+            boxShadow: theme.shadowGlow,
+          };
+        default:
+          return {
+            backgroundColor: Palette.ivory.cream,
+            borderColor: Palette.ivory.linen,
+            borderWidth: 1,
+            boxShadow: theme.shadowSm,
+          };
+      }
+    }
   };
+
+  const slabStyles = getSlabStyle();
 
   const cardContent = (
     <Animated.View
       entering={entering}
       style={[
-        styles.cardContainer,
-        {
-          padding: paddingValue,
-          ...variantStyles[variant],
-        },
+        styles.slabContainer,
+        { padding: paddingValue },
+        slabStyles,
         animatedStyle,
         style,
       ]}
     >
       {variant === "glass" && isIOS && (
         <BlurView
-          intensity={40}
+          intensity={isDark ? 30 : 40}
           tint={isDark ? "dark" : "light"}
           style={StyleSheet.absoluteFill}
         />
@@ -466,155 +336,15 @@ export function PremiumCard({
   return cardContent;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📊 PREMIUM STAT CARD - Metric display with icon
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface PremiumStatCardProps {
-  label: string;
-  value: string | number;
-  subtitle?: string;
-  trend?: {
-    value: string;
-    isPositive: boolean;
-  };
-  icon?: AppIconName | React.ReactNode;
-  iconColor?: string;
-  iconBackgroundColor?: string;
-  variant?: "default" | "accent";
-  style?: ViewStyle;
-  onPress?: () => void;
-}
-
-export function PremiumStatCard({
-  label,
-  value,
-  subtitle,
-  trend,
-  icon,
-  iconColor = PremiumColors.accent,
-  iconBackgroundColor,
-  variant = "default",
-  style,
-  onPress,
-}: PremiumStatCardProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
-
-  return (
-    <PremiumCard
-      variant={variant === "accent" ? "accent" : "elevated"}
-      padding="lg"
-      style={style ? [{ flex: 1 }, style] : { flex: 1 }}
-      onPress={onPress}
-      entering={FadeInUp.duration(400).springify()}
-    >
-      {/* Header with label and icon */}
-      <View style={styles.statCardHeader}>
-        <Text
-          style={[
-            styles.statCardLabel,
-            {
-              color: isDark
-                ? PremiumColors.dark.textSecondary
-                : PremiumColors.textSecondary,
-            },
-          ]}
-        >
-          {label}
-        </Text>
-        {icon && (
-          <View
-            style={[
-              styles.statCardIcon,
-              {
-                backgroundColor:
-                  iconBackgroundColor ||
-                  (isDark ? `${iconColor}20` : `${iconColor}15`),
-              },
-            ]}
-          >
-            {typeof icon === "string" ? (
-              <AppIcon name={icon as AppIconName} size={18} color={iconColor} />
-            ) : (
-              icon
-            )}
-          </View>
-        )}
-      </View>
-
-      {/* Value */}
-      <Text
-        style={[
-          styles.statCardValue,
-          {
-            color: isDark
-              ? PremiumColors.dark.textPrimary
-              : PremiumColors.textPrimary,
-          },
-        ]}
-      >
-        {value}
-      </Text>
-
-      {/* Trend or Subtitle */}
-      <View style={styles.statCardFooter}>
-        {trend && (
-          <View
-            style={[
-              styles.trendBadge,
-              {
-                backgroundColor: trend.isPositive
-                  ? PremiumColors.successLight
-                  : PremiumColors.dangerLight,
-              },
-            ]}
-          >
-            <AppIcon
-              name={trend.isPositive ? "trending-up" : "trending-down"}
-              size={12}
-              color={
-                trend.isPositive ? PremiumColors.success : PremiumColors.danger
-              }
-            />
-            <Text
-              style={[
-                styles.trendText,
-                {
-                  color: trend.isPositive
-                    ? PremiumColors.success
-                    : PremiumColors.danger,
-                },
-              ]}
-            >
-              {trend.value}
-            </Text>
-          </View>
-        )}
-        {subtitle && (
-          <Text
-            style={[
-              styles.statCardSubtitle,
-              {
-                color: isDark
-                  ? PremiumColors.dark.textMuted
-                  : PremiumColors.textMuted,
-              },
-            ]}
-          >
-            {subtitle}
-          </Text>
-        )}
-      </View>
-    </PremiumCard>
-  );
+export function VantaSlab(props: VantaSlabProps) {
+  return <PremiumCard {...props} />;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🔘 PREMIUM BUTTON - Animated button with variants
+// 🔘 VANTA BUTTON - Optical Fluid / Mercury Effect
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface PremiumButtonProps extends Omit<PressableProps, "style"> {
+interface VantaButtonProps extends Omit<PressableProps, "style"> {
   variant?: "primary" | "secondary" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
@@ -636,61 +366,104 @@ export function PremiumButton({
   style,
   children,
   ...props
-}: PremiumButtonProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
+}: VantaButtonProps) {
+  const theme = usePremiumTheme();
+  const isDark = useIsDarkMode();
   const scale = useSharedValue(1);
+  const pressed = useSharedValue(0);
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
-    if (isIOS) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    scale.value = withSpring(0.96, { damping: 18, stiffness: 350 });
+    pressed.value = withTiming(1, { duration: 80 });
+    if (isIOS) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    scale.value = withSpring(1, { damping: 12, stiffness: 300 });
+    pressed.value = withTiming(0, { duration: 150 });
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    // Optical Fluid effect - button "flattens" on press
+    const shadowOpacity = interpolate(pressed.value, [0, 1], [1, 0.3]);
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: disabled ? 0.5 : 1,
+    };
+  });
 
   const sizeStyles = {
-    sm: { height: 36, paddingHorizontal: Spacing.md, gap: Spacing.xs },
-    md: { height: 48, paddingHorizontal: Spacing.lg, gap: Spacing.sm },
-    lg: { height: 56, paddingHorizontal: Spacing.xl, gap: Spacing.md },
+    sm: { height: 40, paddingHorizontal: Spacing.lg, gap: Spacing.xs },
+    md: { height: 52, paddingHorizontal: Spacing.xl, gap: Spacing.sm },
+    lg: { height: 60, paddingHorizontal: Spacing["2xl"], gap: Spacing.md },
   };
 
-  const variantStyles = {
-    primary: {
-      backgroundColor: PremiumColors.accent,
-      borderWidth: 0,
-      boxShadow: `0 4px 16px ${PremiumColors.accentGlow}`,
-    },
-    secondary: {
-      backgroundColor: isDark
-        ? PremiumColors.dark.surface
-        : PremiumColors.surface,
-      borderWidth: 1,
-      borderColor: isDark ? PremiumColors.dark.border : PremiumColors.border,
-    },
-    ghost: {
-      backgroundColor: "transparent",
-      borderWidth: 0,
-    },
-    danger: {
-      backgroundColor: PremiumColors.danger,
-      borderWidth: 0,
-      boxShadow: `0 4px 16px ${Palette.danger[200]}40`,
-    },
+  // Vanta button variants
+  const getVariantStyles = () => {
+    if (isDark) {
+      switch (variant) {
+        case "primary":
+          return {
+            backgroundColor: Palette.metal.gold,
+            borderWidth: 0,
+            boxShadow: `0 0 24px ${Palette.metal.gold}50, 0 4px 16px rgba(0,0,0,0.4)`,
+          };
+        case "secondary":
+          return {
+            backgroundColor: Palette.vanta.titanium,
+            borderWidth: 1,
+            borderColor: Palette.vanta.steel,
+            boxShadow: theme.shadowMd,
+          };
+        case "ghost":
+          return {
+            backgroundColor: "transparent",
+            borderWidth: 1,
+            borderColor: Palette.metal.gold + "40",
+          };
+        case "danger":
+          return {
+            backgroundColor: theme.danger,
+            borderWidth: 0,
+            boxShadow: `0 0 20px ${theme.dangerGlow}`,
+          };
+      }
+    } else {
+      switch (variant) {
+        case "primary":
+          return {
+            backgroundColor: Palette.metal.champagne,
+            borderWidth: 0,
+            boxShadow: `0 4px 20px ${Palette.metal.champagne}40, 0 2px 8px rgba(0,0,0,0.08)`,
+          };
+        case "secondary":
+          return {
+            backgroundColor: Palette.ivory.cream,
+            borderWidth: 1,
+            borderColor: Palette.ivory.linen,
+            boxShadow: theme.shadowMd,
+          };
+        case "ghost":
+          return {
+            backgroundColor: "transparent",
+            borderWidth: 1,
+            borderColor: Palette.metal.champagne + "40",
+          };
+        case "danger":
+          return {
+            backgroundColor: theme.danger,
+            borderWidth: 0,
+            boxShadow: theme.shadowMd,
+          };
+      }
+    }
   };
 
   const textColor = {
-    primary: PremiumColors.textInverse,
-    secondary: isDark
-      ? PremiumColors.dark.textPrimary
-      : PremiumColors.textPrimary,
-    ghost: PremiumColors.accent,
-    danger: PremiumColors.textInverse,
+    primary: isDark ? Palette.vanta.black : Palette.neutral.white,
+    secondary: theme.text,
+    ghost: theme.primary,
+    danger: Palette.neutral.white,
   };
 
   return (
@@ -704,9 +477,8 @@ export function PremiumButton({
         style={[
           styles.buttonContainer,
           sizeStyles[size],
-          variantStyles[variant],
+          getVariantStyles(),
           fullWidth && { width: "100%" },
-          (disabled || loading) && { opacity: 0.5 },
           animatedStyle,
           style,
         ]}
@@ -718,16 +490,17 @@ export function PremiumButton({
             {icon && iconPosition === "left" && (
               <AppIcon
                 name={icon}
-                size={size === "sm" ? 16 : 20}
+                size={size === "sm" ? 18 : 22}
                 color={textColor[variant]}
               />
             )}
             <Text
               style={[
-                styles.buttonText,
-                { color: textColor[variant] },
-                size === "sm" && { fontSize: 13 },
-                size === "lg" && { fontSize: 16 },
+                Typography.label.md,
+                {
+                  color: textColor[variant],
+                  letterSpacing: 1.5,
+                },
               ]}
             >
               {children}
@@ -735,7 +508,7 @@ export function PremiumButton({
             {icon && iconPosition === "right" && (
               <AppIcon
                 name={icon}
-                size={size === "sm" ? 16 : 20}
+                size={size === "sm" ? 18 : 22}
                 color={textColor[variant]}
               />
             )}
@@ -746,11 +519,143 @@ export function PremiumButton({
   );
 }
 
+export function VantaButton(props: VantaButtonProps) {
+  return <PremiumButton {...props} />;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// ⚡ PREMIUM QUICK ACTION - Action button with icon
+// 📊 VANTA METRIC CARD - Singularity style data display
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface PremiumQuickActionProps {
+interface VantaMetricProps {
+  label: string;
+  value: string | number;
+  subtitle?: string;
+  trend?: { value: string; isPositive: boolean };
+  icon?: AppIconName | React.ReactNode;
+  iconColor?: string;
+  iconBackgroundColor?: string;
+  variant?: "default" | "accent";
+  style?: ViewStyle;
+  onPress?: () => void;
+}
+
+export function PremiumStatCard({
+  label,
+  value,
+  subtitle,
+  trend,
+  icon,
+  iconColor,
+  iconBackgroundColor,
+  variant = "default",
+  style,
+  onPress,
+}: VantaMetricProps) {
+  const theme = usePremiumTheme();
+  const isDark = useIsDarkMode();
+  const finalIconColor = iconColor || theme.primary;
+
+  return (
+    <PremiumCard
+      variant={variant === "accent" ? "accent" : "elevated"}
+      padding="lg"
+      style={style ? [{ flex: 1 }, style] : { flex: 1 }}
+      onPress={onPress}
+      entering={FadeInUp.duration(400).springify()}
+    >
+      {/* Header */}
+      <View style={styles.metricHeader}>
+        <Text
+          style={[
+            Typography.label.sm,
+            { color: isDark ? theme.textSecondary : theme.textMuted },
+          ]}
+        >
+          {label}
+        </Text>
+        {icon && (
+          <View
+            style={[
+              styles.metricIcon,
+              {
+                backgroundColor:
+                  iconBackgroundColor ||
+                  (isDark ? theme.primarySubtle : theme.primaryMuted),
+              },
+            ]}
+          >
+            {typeof icon === "string" ? (
+              <AppIcon
+                name={icon as AppIconName}
+                size={18}
+                color={finalIconColor}
+              />
+            ) : (
+              icon
+            )}
+          </View>
+        )}
+      </View>
+
+      {/* Value - Large number display */}
+      <Text
+        style={[
+          Typography.number.lg,
+          {
+            color: theme.text,
+            marginTop: Spacing.sm,
+          },
+        ]}
+      >
+        {value}
+      </Text>
+
+      {/* Footer */}
+      {(trend || subtitle) && (
+        <View style={styles.metricFooter}>
+          {trend && (
+            <View
+              style={[
+                styles.trendBadge,
+                {
+                  backgroundColor: trend.isPositive
+                    ? theme.successSubtle
+                    : theme.dangerSubtle,
+                },
+              ]}
+            >
+              <AppIcon
+                name={trend.isPositive ? "trending-up" : "trending-down"}
+                size={12}
+                color={trend.isPositive ? theme.success : theme.danger}
+              />
+              <Text
+                style={[
+                  Typography.label.xs,
+                  { color: trend.isPositive ? theme.success : theme.danger },
+                ]}
+              >
+                {trend.value}
+              </Text>
+            </View>
+          )}
+          {subtitle && (
+            <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
+              {subtitle}
+            </Text>
+          )}
+        </View>
+      )}
+    </PremiumCard>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ⚡ VANTA QUICK ACTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface VantaQuickActionProps {
   icon: AppIconName | React.ReactNode;
   label: string;
   onPress: () => void;
@@ -764,18 +669,21 @@ export function PremiumQuickAction({
   onPress,
   variant = "default",
   style,
-}: PremiumQuickActionProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
+}: VantaQuickActionProps) {
+  const theme = usePremiumTheme();
+  const isDark = useIsDarkMode();
   const scale = useSharedValue(1);
+  const pressed = useSharedValue(0);
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+    scale.value = withSpring(0.95, { damping: 18, stiffness: 350 });
+    pressed.value = withTiming(1, { duration: 80 });
     if (isIOS) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handlePressOut = () => {
     scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    pressed.value = withTiming(0, { duration: 150 });
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -783,6 +691,7 @@ export function PremiumQuickAction({
   }));
 
   const isAccent = variant === "accent";
+  const iconColor = isAccent ? theme.primary : theme.textSecondary;
 
   return (
     <Pressable
@@ -797,18 +706,14 @@ export function PremiumQuickAction({
           {
             backgroundColor: isDark
               ? isAccent
-                ? Palette.emerald[900]
-                : PremiumColors.dark.surface
+                ? Palette.vanta.carbon
+                : Palette.vanta.titanium
               : isAccent
-                ? PremiumColors.accentLight
-                : PremiumColors.surface,
-            borderColor: isDark
-              ? isAccent
-                ? Palette.emerald[700]
-                : PremiumColors.dark.border
-              : isAccent
-                ? `${Palette.emerald[300]}40`
-                : PremiumColors.border,
+                ? Palette.ivory.parchment
+                : Palette.ivory.cream,
+            borderColor: isAccent ? theme.borderGold : theme.borderCard,
+            borderWidth: 1,
+            boxShadow: isAccent ? theme.shadowGlow : theme.shadowSm,
           },
           animatedStyle,
           style,
@@ -816,41 +721,28 @@ export function PremiumQuickAction({
       >
         <View
           style={[
-            styles.quickActionIcon,
+            styles.quickActionIconContainer,
             {
-              backgroundColor: isDark
-                ? isAccent
-                  ? `${Palette.emerald[500]}30`
-                  : PremiumColors.dark.border
-                : isAccent
-                  ? `${Palette.emerald[500]}20`
-                  : PremiumColors.backgroundSubtle,
+              backgroundColor: isAccent
+                ? theme.primarySubtle
+                : isDark
+                  ? Palette.vanta.graphite
+                  : Palette.ivory.sand,
             },
           ]}
         >
           {typeof icon === "string" ? (
-            <AppIcon
-              name={icon as AppIconName}
-              size={20}
-              color={
-                isAccent
-                  ? PremiumColors.accent
-                  : isDark
-                    ? Palette.neutral[400]
-                    : Palette.neutral[600]
-              }
-            />
+            <AppIcon name={icon as AppIconName} size={24} color={iconColor} />
           ) : (
             icon
           )}
         </View>
         <Text
           style={[
-            styles.quickActionLabel,
+            Typography.label.sm,
             {
-              color: isDark
-                ? PremiumColors.dark.textPrimary
-                : PremiumColors.textPrimary,
+              color: isAccent ? theme.text : theme.textSecondary,
+              marginTop: Spacing.sm,
             },
           ]}
         >
@@ -862,334 +754,198 @@ export function PremiumQuickAction({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 📅 PREMIUM PERIOD SELECTOR
+// ⌨️ VANTA INPUT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface PremiumPeriodSelectorProps {
-  label: string;
-  icon?: React.ReactNode;
-  onPress: () => void;
-  style?: ViewStyle;
+interface VantaInputProps extends TextInputProps {
+  label?: string;
+  error?: string;
+  helper?: string;
+  icon?: AppIconName;
+  rightIcon?: AppIconName;
+  onRightIconPress?: () => void;
+  containerStyle?: ViewStyle;
 }
 
-export function PremiumPeriodSelector({
+export function PremiumInput({
   label,
+  error,
+  helper,
   icon,
-  onPress,
+  rightIcon,
+  onRightIconPress,
+  containerStyle,
   style,
-}: PremiumPeriodSelectorProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
-  const scale = useSharedValue(1);
+  onFocus,
+  onBlur,
+  ...props
+}: VantaInputProps) {
+  const theme = usePremiumTheme();
+  const isDark = useIsDarkMode();
+  const [isFocused, setIsFocused] = React.useState(false);
 
-  const handlePressIn = () => {
-    scale.value = withSpring(0.98, { damping: 15, stiffness: 300 });
+  const handleFocus = (e: any) => {
+    setIsFocused(true);
+    onFocus?.(e);
   };
 
-  const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  const handleBlur = (e: any) => {
+    setIsFocused(false);
+    onBlur?.(e);
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const borderColor = error
+    ? theme.danger
+    : isFocused
+      ? theme.primary
+      : theme.border;
 
   return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-    >
-      <Animated.View
-        style={[
-          styles.periodSelectorContainer,
-          {
-            backgroundColor: isDark
-              ? PremiumColors.dark.surface
-              : PremiumColors.surface,
-            borderColor: isDark
-              ? PremiumColors.dark.border
-              : PremiumColors.border,
-          },
-          animatedStyle,
-          style,
-        ]}
-      >
-        {icon}
+    <View style={[styles.inputWrapper, containerStyle]}>
+      {label && (
         <Text
           style={[
-            styles.periodSelectorLabel,
+            Typography.label.sm,
             {
-              color: isDark
-                ? PremiumColors.dark.textPrimary
-                : PremiumColors.textPrimary,
+              color: error ? theme.danger : theme.textSecondary,
+              marginBottom: Spacing.xs,
             },
           ]}
         >
           {label}
         </Text>
-        <AppIcon
-          name="expand-more"
-          size={20}
-          color={isDark ? Palette.neutral[400] : Palette.neutral[500]}
-        />
-      </Animated.View>
-    </Pressable>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📦 PREMIUM SUMMARY CARD - Multi-row summary
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface SummaryRow {
-  icon?: React.ReactNode;
-  label: string;
-  value: string;
-  valueColor?: string;
-}
-
-interface PremiumSummaryCardProps {
-  rows: SummaryRow[];
-  rightSection?: {
-    label: string;
-    value: string;
-    valueColor?: string;
-    badge?: React.ReactNode;
-  };
-  bottomBadge?: {
-    icon?: React.ReactNode;
-    label: string;
-  };
-  style?: ViewStyle;
-}
-
-export function PremiumSummaryCard({
-  rows,
-  rightSection,
-  bottomBadge,
-  style,
-}: PremiumSummaryCardProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
-
-  return (
-    <PremiumCard
-      variant="elevated"
-      padding="lg"
-      style={style}
-      entering={FadeInUp.duration(400).springify()}
-    >
-      <View style={styles.summaryContent}>
-        {/* Left rows */}
-        <View style={styles.summaryRows}>
-          {rows.map((row, index) => (
-            <View key={index} style={styles.summaryRow}>
-              {row.icon}
-              <Text
-                style={[
-                  styles.summaryRowLabel,
-                  {
-                    color: isDark
-                      ? PremiumColors.dark.textSecondary
-                      : PremiumColors.textSecondary,
-                  },
-                ]}
-              >
-                {row.label}
-              </Text>
-              <Text
-                style={[
-                  styles.summaryRowValue,
-                  {
-                    color:
-                      row.valueColor ||
-                      (isDark
-                        ? PremiumColors.dark.textPrimary
-                        : PremiumColors.textPrimary),
-                  },
-                ]}
-              >
-                {row.value}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Right section */}
-        {rightSection && (
-          <View style={styles.summaryRightSection}>
-            <View style={styles.summaryRightHeader}>
-              <Text
-                style={[
-                  styles.summaryRightLabel,
-                  {
-                    color: isDark
-                      ? PremiumColors.dark.textMuted
-                      : PremiumColors.textMuted,
-                  },
-                ]}
-              >
-                {rightSection.label}
-              </Text>
-              {rightSection.badge}
-            </View>
-            <Text
-              style={[
-                styles.summaryRightValue,
-                {
-                  color:
-                    rightSection.valueColor ||
-                    (isDark
-                      ? PremiumColors.dark.textPrimary
-                      : PremiumColors.textPrimary),
-                },
-              ]}
-            >
-              {rightSection.value}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Bottom badge */}
-      {bottomBadge && (
-        <View
-          style={[
-            styles.summaryBottomBadge,
-            {
-              backgroundColor: isDark
-                ? `${PremiumColors.accent}20`
-                : PremiumColors.accentMuted,
-            },
-          ]}
-        >
-          {bottomBadge.icon}
-          <Text
-            style={[
-              styles.summaryBottomBadgeText,
-              { color: PremiumColors.accent },
-            ]}
-          >
-            {bottomBadge.label}
-          </Text>
-        </View>
       )}
-    </PremiumCard>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎯 PREMIUM SECTION HEADER
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface PremiumSectionHeaderProps {
-  title: string;
-  action?: {
-    label: string;
-    onPress: () => void;
-  };
-  style?: ViewStyle;
-}
-
-export function PremiumSectionHeader({
-  title,
-  action,
-  style,
-}: PremiumSectionHeaderProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
-
-  return (
-    <View style={[styles.sectionHeader, style]}>
-      <Text
+      <View
         style={[
-          styles.sectionHeaderTitle,
+          styles.inputContainer,
           {
-            color: isDark
-              ? PremiumColors.dark.textPrimary
-              : PremiumColors.textPrimary,
+            backgroundColor: isDark
+              ? Palette.vanta.titanium
+              : Palette.ivory.cream,
+            borderColor,
+            borderWidth: 1,
+            boxShadow: isFocused && !error ? theme.shadowGlow : "none",
           },
         ]}
       >
-        {title}
-      </Text>
-      {action && (
-        <Pressable onPress={action.onPress}>
-          <Text
-            style={[
-              styles.sectionHeaderAction,
-              { color: PremiumColors.accent },
-            ]}
+        {icon && (
+          <View style={styles.inputIconLeft}>
+            <AppIcon
+              name={icon}
+              size={20}
+              color={
+                error
+                  ? theme.danger
+                  : isFocused
+                    ? theme.primary
+                    : theme.textMuted
+              }
+            />
+          </View>
+        )}
+        <TextInput
+          style={[
+            styles.input,
+            { color: theme.text },
+            icon && { paddingLeft: 0 },
+            style,
+          ]}
+          placeholderTextColor={theme.textMuted}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          {...props}
+        />
+        {rightIcon && (
+          <Pressable
+            onPress={onRightIconPress}
+            style={styles.inputIconRight}
+            disabled={!onRightIconPress}
           >
-            {action.label}
-          </Text>
-        </Pressable>
+            <AppIcon
+              name={rightIcon}
+              size={20}
+              color={error ? theme.danger : theme.textMuted}
+            />
+          </Pressable>
+        )}
+      </View>
+      {(error || helper) && (
+        <Text
+          style={[
+            Typography.body.xs,
+            {
+              color: error ? theme.danger : theme.textMuted,
+              marginTop: Spacing.xs,
+            },
+          ]}
+        >
+          {error || helper}
+        </Text>
       )}
     </View>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ✨ PREMIUM SHIMMER - Loading placeholder
+// 🔵 VANTA STATUS INDICATOR - Pulsing connection dot
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface PremiumShimmerProps {
-  width?: number | string;
-  height?: number;
-  borderRadius?: number;
-  style?: ViewStyle;
+interface VantaStatusProps {
+  status: "connected" | "warning" | "error" | "idle";
+  label?: string;
 }
 
-export function PremiumShimmer({
-  width = "100%",
-  height = 20,
-  borderRadius = Radius.md,
-  style,
-}: PremiumShimmerProps) {
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
-  const shimmerPhase = useSharedValue(0);
+export function VantaStatus({ status, label }: VantaStatusProps) {
+  const theme = usePremiumTheme();
+  const isDark = useIsDarkMode();
+  const pulseOpacity = useSharedValue(1);
 
-  useEffect(() => {
-    shimmerPhase.value = withRepeat(
-      withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      false,
-    );
-  }, []);
+  React.useEffect(() => {
+    if (status === "connected") {
+      pulseOpacity.value = withTiming(0.4, {
+        duration: 1000,
+        easing: Easing.inOut(Easing.ease),
+      });
+    }
+  }, [status]);
 
-  const shimmerStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(shimmerPhase.value, [0, 0.5, 1], [0.3, 0.6, 0.3]),
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
   }));
 
+  const statusColors = {
+    connected: theme.success,
+    warning: theme.warning,
+    error: theme.danger,
+    idle: theme.textMuted,
+  };
+
+  const statusLabels = {
+    connected: "CONNECTED",
+    warning: "WARNING",
+    error: "ERROR",
+    idle: "IDLE",
+  };
+
   return (
-    <View
-      style={[
-        {
-          width: typeof width === "number" ? width : undefined,
-          height,
-          borderRadius,
-          backgroundColor: isDark
-            ? PremiumColors.dark.border
-            : PremiumColors.border,
-          overflow: "hidden",
-        },
-        typeof width === "string" && { width: width as any },
-        style,
-      ]}
-    >
-      <Animated.View
+    <View style={styles.statusContainer}>
+      <View
         style={[
-          StyleSheet.absoluteFill,
-          shimmerStyle,
+          styles.statusDot,
           {
-            backgroundColor: isDark
-              ? PremiumColors.dark.surface
-              : PremiumColors.backgroundSubtle,
+            backgroundColor: statusColors[status],
+            boxShadow: `0 0 8px ${statusColors[status]}`,
           },
         ]}
       />
+      <Text
+        style={[
+          Typography.label.xs,
+          { color: isDark ? theme.textSecondary : theme.textMuted },
+        ]}
+      >
+        {label || statusLabels[status]}
+      </Text>
     </View>
   );
 }
@@ -1209,73 +965,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
   },
   headerTextContainer: {
     flex: 1,
-  },
-  headerSubtitle: {
-    ...Typography.label.sm,
-    letterSpacing: 1.5,
-    marginBottom: Spacing.xs,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    fontFamily: "Manrope_700Bold",
-    letterSpacing: -0.5,
+    gap: Spacing["2xs"],
   },
 
-  // Card
-  cardContainer: {
+  // Slab (Card)
+  slabContainer: {
     borderRadius: Radius.xl,
-    borderWidth: 1,
-    overflow: "hidden",
     borderCurve: "continuous",
-  },
-
-  // Stat Card
-  statCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-  statCardLabel: {
-    ...Typography.label.sm,
-    letterSpacing: 0.5,
-  },
-  statCardIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statCardValue: {
-    ...Typography.number.xl,
-    marginBottom: Spacing.xs,
-  },
-  statCardFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  statCardSubtitle: {
-    ...Typography.body.sm,
-  },
-  trendBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
-  trendText: {
-    fontSize: 12,
-    fontWeight: "600",
+    overflow: "hidden",
   },
 
   // Button
@@ -1286,122 +987,91 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderCurve: "continuous",
   },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    fontFamily: "Manrope_600SemiBold",
+
+  // Metric Card
+  metricHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  metricIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  metricFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  trendBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing["2xs"],
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing["2xs"],
+    borderRadius: Radius.full,
   },
 
   // Quick Action
   quickActionContainer: {
     alignItems: "center",
-    padding: Spacing.md,
+    justifyContent: "center",
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     borderRadius: Radius.xl,
-    borderWidth: 1,
     borderCurve: "continuous",
-    gap: Spacing.sm,
   },
-  quickActionIcon: {
-    width: 44,
-    height: 44,
+  quickActionIconContainer: {
+    width: 48,
+    height: 48,
     borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
   },
-  quickActionLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    fontFamily: "Manrope_600SemiBold",
-    textAlign: "center",
-  },
 
-  // Period Selector
-  periodSelectorContainer: {
+  // Input
+  inputWrapper: {
+    width: "100%",
+  },
+  inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    height: 52,
     borderRadius: Radius.lg,
-    borderWidth: 1,
-    alignSelf: "flex-start",
-  },
-  periodSelectorLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-
-  // Summary Card
-  summaryContent: {
-    flexDirection: "row",
-    gap: Spacing.lg,
-  },
-  summaryRows: {
-    flex: 1,
-    gap: Spacing.sm,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  summaryRowLabel: {
-    ...Typography.body.sm,
-    flex: 1,
-  },
-  summaryRowValue: {
-    ...Typography.body.sm,
-    fontWeight: "600",
-  },
-  summaryRightSection: {
-    alignItems: "flex-end",
-    justifyContent: "center",
-  },
-  summaryRightHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    marginBottom: Spacing.xs,
-  },
-  summaryRightLabel: {
-    ...Typography.label.xs,
-    letterSpacing: 0.5,
-  },
-  summaryRightValue: {
-    fontSize: 24,
-    fontWeight: "700",
-    fontFamily: "Manrope_700Bold",
-  },
-  summaryBottomBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    alignSelf: "flex-start",
-    marginTop: Spacing.md,
   },
-  summaryBottomBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
+  input: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 0,
+  },
+  inputIconLeft: {
+    marginRight: Spacing.sm,
+  },
+  inputIconRight: {
+    marginLeft: Spacing.sm,
+    padding: Spacing.xs,
   },
 
-  // Section Header
-  sectionHeader: {
+  // Status
+  statusContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    gap: Spacing.sm,
   },
-  sectionHeaderTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    fontFamily: "Manrope_600SemiBold",
-  },
-  sectionHeaderAction: {
-    fontSize: 14,
-    fontWeight: "600",
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📤 EXPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type PremiumTheme = VantaTheme;

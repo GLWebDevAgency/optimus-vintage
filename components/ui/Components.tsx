@@ -35,6 +35,10 @@ interface ButtonProps extends Omit<PressableProps, "style"> {
   iconPosition?: "left" | "right";
   style?: ViewStyle;
   children: React.ReactNode;
+  /** Accessibility label for screen readers */
+  accessibilityLabel?: string;
+  /** Accessibility hint describing what happens when pressed */
+  accessibilityHint?: string;
 }
 
 export function Button({
@@ -47,6 +51,8 @@ export function Button({
   disabled,
   style,
   children,
+  accessibilityLabel,
+  accessibilityHint,
   ...props
 }: ButtonProps) {
   const colorScheme = useColorScheme() ?? "dark";
@@ -127,6 +133,10 @@ export function Button({
   const isDisabled = disabled || loading;
   const opacity = isDisabled ? 0.5 : 1;
 
+  // Derive accessibility label from children if not provided
+  const a11yLabel =
+    accessibilityLabel || (typeof children === "string" ? children : undefined);
+
   return (
     <Animated.View
       style={{
@@ -138,6 +148,13 @@ export function Button({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         disabled={isDisabled}
+        accessibilityRole="button"
+        accessibilityLabel={a11yLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{
+          disabled: isDisabled,
+          busy: loading,
+        }}
         {...props}
         style={({ pressed }) => [
           {
@@ -186,6 +203,10 @@ interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   onPress?: () => void;
+  /** Accessibility label for screen readers */
+  accessibilityLabel?: string;
+  /** Accessibility hint describing what happens when pressed */
+  accessibilityHint?: string;
 }
 
 export function Card({
@@ -195,6 +216,8 @@ export function Card({
   children,
   style,
   onPress,
+  accessibilityLabel,
+  accessibilityHint,
 }: CardProps) {
   const colorScheme = useColorScheme() ?? "dark";
   const theme = Theme[colorScheme];
@@ -227,18 +250,39 @@ export function Card({
       backgroundColor: theme.surfaceCard,
       borderWidth: 1,
       borderColor: theme.borderCard,
-      boxShadow: theme.shadowCard,
+      // Premium multi-layer glassmorphic shadow
+      boxShadow: `
+        0 1px 2px rgba(0, 0, 0, 0.02),
+        0 2px 4px rgba(0, 0, 0, 0.02),
+        0 4px 8px rgba(0, 0, 0, 0.03),
+        0 8px 16px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6)
+      `,
     },
     glass: {
       backgroundColor: theme.surfaceGlass,
       borderWidth: 1,
       borderColor: theme.border,
+      // Glassmorphic effect
+      boxShadow: `
+        0 4px 12px rgba(0, 0, 0, 0.05),
+        0 8px 24px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4)
+      `,
     },
     elevated: {
       backgroundColor: theme.surfaceCard,
       borderWidth: 1,
       borderColor: theme.borderCard,
-      boxShadow: theme.shadowCardHover,
+      // Premium elevated shadow with depth
+      boxShadow: `
+        0 2px 4px rgba(0, 0, 0, 0.02),
+        0 4px 8px rgba(0, 0, 0, 0.03),
+        0 8px 16px rgba(0, 0, 0, 0.04),
+        0 16px 32px rgba(0, 0, 0, 0.06),
+        0 32px 64px rgba(16, 185, 129, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7)
+      `,
     },
   };
 
@@ -265,6 +309,9 @@ export function Card({
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          accessibilityHint={accessibilityHint}
         >
           {content}
         </Pressable>
@@ -427,6 +474,10 @@ interface ChipProps {
   icon?: React.ReactNode;
   onPress?: () => void;
   style?: ViewStyle;
+  /** Accessibility label for screen readers */
+  accessibilityLabel?: string;
+  /** Accessibility hint describing what happens when pressed */
+  accessibilityHint?: string;
 }
 
 export function Chip({
@@ -437,6 +488,8 @@ export function Chip({
   icon,
   onPress,
   style,
+  accessibilityLabel,
+  accessibilityHint,
 }: ChipProps) {
   const colorScheme = useColorScheme() ?? "dark";
   const theme = Theme[colorScheme];
@@ -509,7 +562,17 @@ export function Chip({
   );
 
   if (onPress) {
-    return <Pressable onPress={onPress}>{chipContent}</Pressable>;
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel || label}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ selected }}
+      >
+        {chipContent}
+      </Pressable>
+    );
   }
 
   return chipContent;
@@ -557,16 +620,21 @@ export function AnimatedPremiumBackground({
       // Dark mode: navy-based backgrounds
       switch (variant) {
         case "light":
-          return Palette.navy[900];
+          return Palette.neutral.white;
         case "navy":
-          return Palette.navy[950];
+          return Palette.neutral[900];
         case "warm":
-        case "graphite":
-        case "midnight":
-        case "aurora":
+          return Palette.neutral[50];
         case "cool":
+          return Palette.neutral[50];
+        case "graphite":
+          return Palette.neutral[800];
+        case "midnight":
+          return Palette.neutral[950];
+        case "aurora":
+          return Palette.neutral[900];
         default:
-          return Palette.navy[900];
+          return Palette.neutral.white;
       }
     }
   };

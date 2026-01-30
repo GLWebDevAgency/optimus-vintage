@@ -1,17 +1,22 @@
 /**
- * 📦 LOT DETAIL SCREEN - Ultra Premium Edition
+ * 📦 LOT DETAIL SCREEN - Vanta-Aether Edition
  * Enterprise-grade lot management with real-time insights
+ *
+ * v2.0 - Enhanced with Vanta Monolith components
  */
 
-import { AppIcon } from "@/components/ui/AppIcon";
 import {
-    AnimatedPremiumBackground,
-    Button,
-    Card,
-} from "@/components/ui/Components";
-import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+    AnimatedButton,
+    AnimatedSkeleton,
+} from "@/components/ui/AnimatedComponents";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { Card } from "@/components/ui/Components";
+import {
+    type VantaTheme,
+    useVantaTheme,
+    VantaScreen,
+} from "@/components/ui/PremiumUI";
+import { Palette, Radius, Spacing } from "@/constants/Theme";
 import {
     Item,
     ItemsRepository,
@@ -19,6 +24,7 @@ import {
     Sale,
     SalesRepository,
 } from "@/db/repositories";
+import { ReanimatedSpring } from "@/utils/animations-reanimated";
 import {
     computeLotSummary,
     computeProtection,
@@ -26,17 +32,65 @@ import {
     ProtectionAnalysis,
 } from "@/utils/engine/calculations";
 import { Haptic } from "@/utils/haptics";
+import { useLocale } from "@/utils/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { MotiView } from "moti";
+import { MotiPressable } from "moti/interactions";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, {
     FadeIn,
     FadeInDown,
+    interpolateColor,
+    LinearTransition,
     SlideInRight,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+type LotColors = {
+  background: string;
+  surface: string;
+  surfaceCard: string;
+  gold: string;
+  goldSubtle: string;
+  textOnGold: string;
+  text: string;
+  textSecondary: string;
+  textMuted: string;
+  border: string;
+  success: string;
+  successSubtle: string;
+  danger: string;
+  dangerSubtle: string;
+  warning: string;
+  warningSubtle: string;
+};
+
+function getLotColors(theme: VantaTheme): LotColors {
+  return {
+    background: theme.background,
+    surface: theme.surface,
+    surfaceCard: theme.surfaceCard,
+    gold: theme.primary,
+    goldSubtle: theme.primarySubtle,
+    textOnGold: theme.textOnAccent,
+    text: theme.text,
+    textSecondary: theme.textSecondary,
+    textMuted: theme.textMuted,
+    border: theme.borderGlass,
+    success: theme.success,
+    successSubtle: theme.successSubtle,
+    danger: theme.danger,
+    dangerSubtle: theme.dangerSubtle,
+    warning: theme.warning,
+    warningSubtle: theme.warningSubtle,
+  };
+}
 
 // Segment options for items view
 type SegmentOption = "top" | "losses" | "all";
@@ -47,12 +101,194 @@ interface ItemWithSale extends Item {
   profit?: number;
 }
 
+/**
+ * 🎨 Animated Segment Control - Vanta Premium Selection
+ * Matching dashboard VantaPeriodSelector design
+ */
+function AnimatedSegmentControl({
+  options,
+  activeKey,
+  onSelect,
+  colors,
+  isDark,
+}: {
+  options: { key: string; label: string }[];
+  activeKey: string;
+  onSelect: (key: string) => void;
+  colors: LotColors;
+  isDark: boolean;
+}) {
+  const selectedIndex = options.findIndex((o) => o.key === activeKey);
+  const indicatorPosition = useSharedValue(selectedIndex);
+  const [containerWidth, setContainerWidth] = React.useState(0);
+  const segmentWidth =
+    containerWidth > 0 ? (containerWidth - 8) / options.length : 0;
+
+  useEffect(() => {
+    indicatorPosition.value = withSpring(selectedIndex, {
+      damping: 22,
+      stiffness: 180,
+      mass: 1.2,
+    });
+  }, [selectedIndex]);
+
+  const indicatorStyle = useAnimatedStyle(() => {
+    if (segmentWidth === 0) return { opacity: 0 };
+    return {
+      opacity: 1,
+      transform: [{ translateX: indicatorPosition.value * segmentWidth }],
+      width: segmentWidth,
+    };
+  }, [segmentWidth]);
+
+  return (
+    <View
+      onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+      style={[
+        styles.segmentedControl,
+        {
+          backgroundColor: isDark ? colors.surface : Palette.ivory.sand,
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,255,255,0.03)" : `${colors.gold}20`,
+        },
+      ]}
+    >
+      {/* Gold Indicator */}
+      <Animated.View
+        style={[
+          {
+            position: "absolute",
+            top: 4,
+            left: 4,
+            bottom: 4,
+            borderRadius: 10,
+          },
+          indicatorStyle,
+        ]}
+      >
+        <View
+          style={{
+            flex: 1,
+            borderRadius: 10,
+            backgroundColor: isDark ? colors.surfaceCard : Palette.ivory.pearl,
+            borderWidth: 1,
+            borderColor: colors.gold,
+          }}
+        />
+      </Animated.View>
+
+      {/* Segment Buttons */}
+      <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
+        {options.map((seg) => {
+          const isActive = activeKey === seg.key;
+          return (
+            <Pressable
+              key={seg.key}
+              onPress={() => {
+                Haptic.selection();
+                onSelect(seg.key);
+              }}
+              style={{
+                flex: 1,
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1,
+              }}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: "Manrope_700Bold",
+                  fontWeight: "700",
+                  letterSpacing: 1,
+                  color: isActive
+                    ? colors.gold
+                    : isDark
+                      ? colors.textSecondary
+                      : Palette.neutral[500],
+                }}
+              >
+                {seg.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// Legacy AnimatedSegmentButton kept for compatibility but no longer used
+function AnimatedSegmentButton({
+  label,
+  isActive,
+  onPress,
+  colors,
+  index,
+}: {
+  label: string;
+  isActive: boolean;
+  onPress: () => void;
+  colors: LotColors;
+  index: number;
+}) {
+  const scale = useSharedValue(1);
+  const progress = useSharedValue(isActive ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withSpring(isActive ? 1 : 0, ReanimatedSpring.responsive);
+  }, [isActive]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      ["transparent", colors.surface],
+    ),
+  }));
+
+  const textStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(
+      progress.value,
+      [0, 1],
+      [colors.textSecondary, colors.gold],
+    ),
+  }));
+
+  return (
+    <MotiPressable
+      onPress={() => {
+        Haptic.selection();
+        onPress();
+      }}
+      onPressIn={() => {
+        scale.value = withSpring(0.95, ReanimatedSpring.responsive);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, ReanimatedSpring.bouncy);
+      }}
+      style={{ flex: 1 }}
+    >
+      <Animated.View style={[styles.segmentButton, animatedStyle]}>
+        <Animated.Text style={[styles.segmentText, textStyle]}>
+          {label}
+        </Animated.Text>
+      </Animated.View>
+    </MotiPressable>
+  );
+}
+
 export default function LotDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
-  const isDark = colorScheme === "dark";
+  const theme = useVantaTheme();
+  const colors = getLotColors(theme);
+  const isDark = theme.dark;
+  const { t } = useLocale();
 
   const [activeSegment, setActiveSegment] = useState<SegmentOption>("all");
   const lotId = id ? parseInt(id, 10) : null;
@@ -125,60 +361,120 @@ export default function LotDetailScreen() {
     const diffDays = Math.floor(
       (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
     );
-    if (diffDays === 0) return "Aujourd'hui";
-    if (diffDays === 1) return "Hier";
-    if (diffDays < 7) return `Il y a ${diffDays}j`;
-    if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)}sem`;
+    if (diffDays === 0) return t("common.today");
+    if (diffDays === 1) return t("common.yesterday");
+    if (diffDays < 7)
+      return `${t("common.ago")} ${diffDays}${t("common.daysShort")}`;
+    if (diffDays < 30)
+      return `${t("common.ago")} ${Math.floor(diffDays / 7)}${t("common.weeksShort")}`;
     return date.toLocaleDateString("fr-FR");
   };
 
   const getROILabel = (roi: number): { label: string; color: string } => {
-    if (roi >= 50) return { label: "Excellent", color: theme.success };
-    if (roi >= 25) return { label: "Très bien", color: Palette.forest[500] };
-    if (roi >= 0) return { label: "Bien", color: theme.primary };
-    if (roi >= -25) return { label: "Faible", color: theme.warning };
-    return { label: "Perte", color: theme.danger };
+    if (roi >= 50)
+      return { label: t("lots.roiExcellent"), color: colors.success };
+    if (roi >= 25)
+      return { label: t("lots.roiVeryGood"), color: Palette.forest[500] };
+    if (roi >= 0) return { label: t("lots.roiGood"), color: colors.gold };
+    if (roi >= -25) return { label: t("lots.roiLow"), color: colors.warning };
+    return { label: t("lots.roiLoss"), color: colors.danger };
   };
 
   if (loading) {
     return (
-      <View
-        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
-      >
-        <View style={{ padding: Spacing.lg, gap: Spacing.md }}>
-          <Skeleton width="100%" height={120} borderRadius={Radius.xl} />
+      <VantaScreen style={styles.loadingContainer}>
+        <MotiView
+          from={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "timing", duration: 400 }}
+          style={{ padding: Spacing.lg, gap: Spacing.md, width: "100%" }}
+        >
+          {/* Header skeleton */}
+          <AnimatedSkeleton
+            width="100%"
+            height={120}
+            borderRadius={Radius.xl}
+            delay={0}
+          />
+
+          {/* Stats row skeleton */}
           <View style={{ flexDirection: "row", gap: Spacing.sm }}>
-            <Skeleton width="48%" height={80} borderRadius={Radius.lg} />
-            <Skeleton width="48%" height={80} borderRadius={Radius.lg} />
+            <AnimatedSkeleton
+              width="48%"
+              height={80}
+              borderRadius={Radius.lg}
+              delay={100}
+            />
+            <AnimatedSkeleton
+              width="48%"
+              height={80}
+              borderRadius={Radius.lg}
+              delay={150}
+            />
           </View>
-          <Skeleton width="100%" height={60} borderRadius={Radius.lg} />
-          <SkeletonList count={3} />
-        </View>
-      </View>
+
+          {/* ROI card skeleton */}
+          <AnimatedSkeleton
+            width="100%"
+            height={60}
+            borderRadius={Radius.lg}
+            delay={200}
+          />
+
+          {/* Items list skeleton */}
+          {[0, 1, 2].map((i) => (
+            <AnimatedSkeleton
+              key={i}
+              width="100%"
+              height={80}
+              borderRadius={Radius.lg}
+              delay={300 + i * 100}
+            />
+          ))}
+        </MotiView>
+      </VantaScreen>
     );
   }
 
   if (!lot || !summary || !protection) {
     return (
-      <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
-      >
-        <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+      <VantaScreen style={styles.errorContainer}>
+        <MotiView
+          from={{ opacity: 0, scale: 0.8, translateY: 20 }}
+          animate={{ opacity: 1, scale: 1, translateY: 0 }}
+          transition={{ type: "spring", damping: 15 }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
-        </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
-          Lot introuvable
-        </Text>
-        <Button
+          <View
+            style={[styles.errorIcon, { backgroundColor: colors.dangerSubtle }]}
+          >
+            <AppIcon name="error-outline" size={40} color={colors.danger} />
+          </View>
+        </MotiView>
+        <MotiView
+          from={{ opacity: 0, translateY: 10 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 400, delay: 200 }}
+        >
+          <Text
+            style={{
+              fontFamily: "Manrope_700Bold",
+              fontSize: 20,
+              color: colors.text,
+              textAlign: "center",
+            }}
+          >
+            {t("lots.notFound")}
+          </Text>
+        </MotiView>
+        <AnimatedButton
           variant="ghost"
           onPress={() => router.back()}
+          delay={400}
           style={{ marginTop: Spacing.lg }}
         >
-          Retour
-        </Button>
-      </View>
+          {t("common.back")}
+        </AnimatedButton>
+      </VantaScreen>
     );
   }
 
@@ -188,10 +484,7 @@ export default function LotDetailScreen() {
       ? Math.min(100, (summary.totalRevenue / summary.totalInvestment) * 100)
       : 0;
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* ═══ Animated Premium Background ═══ */}
-      <AnimatedPremiumBackground variant="light" />
-
+    <VantaScreen style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Floating Header */}
@@ -208,10 +501,10 @@ export default function LotDetailScreen() {
           style={styles.headerButton}
           hitSlop={8}
         >
-          <AppIcon name="arrow-back" size={24} color={theme.text} />
+          <AppIcon name="arrow-back" size={24} color={colors.text} />
         </Pressable>
         <Text
-          style={[styles.headerTitle, { color: theme.text }]}
+          style={[styles.headerTitle, { color: colors.text }]}
           numberOfLines={1}
         >
           Lot #{lot.id} - {lot.name || lot.provider}
@@ -224,7 +517,7 @@ export default function LotDetailScreen() {
             router.push(`/lots/edit/${lot.id}`);
           }}
         >
-          <AppIcon name="edit" size={24} color={theme.primary} />
+          <AppIcon name="edit" size={24} color={colors.gold} />
         </Pressable>
       </BlurView>
 
@@ -244,20 +537,30 @@ export default function LotDetailScreen() {
         >
           {/* Total Invested */}
           <Card style={styles.statCard}>
-            <Text style={[styles.statLabel, { color: theme.textMuted }]}>
-              Total investi
+            <Text
+              style={[
+                styles.statLabel,
+                { color: isDark ? colors.textSecondary : Palette.neutral[600] },
+              ]}
+            >
+              {t("lots.totalInvested")}
             </Text>
-            <Text style={[styles.statValue, { color: theme.text }]}>
+            <Text style={[styles.statValue, { color: colors.text }]}>
               {formatCurrency(summary.totalInvestment)}
             </Text>
           </Card>
 
           {/* Total Returned */}
           <Card style={styles.statCard}>
-            <Text style={[styles.statLabel, { color: theme.textMuted }]}>
-              Total récupéré
+            <Text
+              style={[
+                styles.statLabel,
+                { color: isDark ? colors.textSecondary : Palette.neutral[600] },
+              ]}
+            >
+              {t("lots.totalRecovered")}
             </Text>
-            <Text style={[styles.statValue, { color: theme.text }]}>
+            <Text style={[styles.statValue, { color: colors.text }]}>
               {formatCurrency(summary.totalRevenue)}
             </Text>
           </Card>
@@ -265,10 +568,17 @@ export default function LotDetailScreen() {
           {/* ROI Full Width */}
           <Card variant="elevated" style={styles.statCardFull}>
             <View style={styles.roiLeft}>
-              <Text style={[styles.statLabel, { color: theme.textMuted }]}>
-                Retour sur investissement
+              <Text
+                style={[
+                  styles.statLabel,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[600],
+                  },
+                ]}
+              >
+                {t("lots.returnOnInvestment")}
               </Text>
-              <Text style={[styles.roiValue, { color: theme.text }]}>
+              <Text style={[styles.roiValue, { color: colors.text }]}>
                 {summary.roiPercent >= 0 ? "+" : ""}
                 {summary.roiPercent.toFixed(0)}%
               </Text>
@@ -295,24 +605,31 @@ export default function LotDetailScreen() {
         <Animated.View entering={FadeInDown.delay(200).duration(400)}>
           <Card style={styles.recoveryCard}>
             <View style={styles.recoveryHeader}>
-              <Text style={[styles.recoveryTitle, { color: theme.text }]}>
-                Récupération des revenus
+              <Text style={[styles.recoveryTitle, { color: colors.text }]}>
+                {t("lots.revenueRecovery")}
               </Text>
-              <Text style={[styles.recoveryProfit, { color: theme.textMuted }]}>
-                {formatCurrency(summary.profit)} Bénéfice net
+              <Text
+                style={[
+                  styles.recoveryProfit,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[600],
+                  },
+                ]}
+              >
+                {formatCurrency(summary.profit)} {t("lots.netProfit")}
               </Text>
             </View>
 
             {/* Progress Bar */}
             <View
-              style={[styles.progressTrack, { backgroundColor: theme.border }]}
+              style={[styles.progressTrack, { backgroundColor: colors.border }]}
             >
               <Animated.View
                 entering={FadeIn.delay(300).duration(600)}
                 style={[
                   styles.progressFill,
                   {
-                    backgroundColor: theme.primary,
+                    backgroundColor: colors.gold,
                     width: `${Math.min(recoveryPercent, 100)}%`,
                   },
                 ]}
@@ -320,7 +637,14 @@ export default function LotDetailScreen() {
             </View>
 
             <View style={styles.progressLabels}>
-              <Text style={[styles.progressLabel, { color: theme.textMuted }]}>
+              <Text
+                style={[
+                  styles.progressLabel,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[500],
+                  },
+                ]}
+              >
                 €0
               </Text>
               <Text
@@ -328,16 +652,27 @@ export default function LotDetailScreen() {
                   styles.progressLabel,
                   {
                     color:
-                      recoveryPercent >= 100 ? theme.primary : theme.textMuted,
+                      recoveryPercent >= 100
+                        ? colors.gold
+                        : isDark
+                          ? colors.textSecondary
+                          : Palette.neutral[600],
                     fontWeight: "600",
                   },
                 ]}
               >
                 {recoveryPercent >= 100
-                  ? "Seuil de rentabilité atteint"
-                  : `${recoveryPercent.toFixed(0)}% récupéré`}
+                  ? t("lots.breakEvenReached")
+                  : `${recoveryPercent.toFixed(0)}% ${t("lots.recovered")}`}
               </Text>
-              <Text style={[styles.progressLabel, { color: theme.textMuted }]}>
+              <Text
+                style={[
+                  styles.progressLabel,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[500],
+                  },
+                ]}
+              >
                 {formatCurrency(summary.totalInvestment)}
               </Text>
             </View>
@@ -351,10 +686,18 @@ export default function LotDetailScreen() {
               style={[
                 styles.protectionCard,
                 {
-                  backgroundColor: theme.primarySubtle,
+                  backgroundColor: isDark
+                    ? colors.surface
+                    : Palette.ivory.cream,
                   borderRadius: Radius.xl,
                   borderWidth: 1,
-                  borderColor: theme.primary + "30",
+                  borderColor: colors.gold,
+                  // Ajout d'une ombre pour plus de profondeur
+                  shadowColor: colors.gold,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDark ? 0.3 : 0.15,
+                  shadowRadius: 8,
+                  elevation: 4,
                 },
               ]}
             >
@@ -362,99 +705,130 @@ export default function LotDetailScreen() {
                 <View
                   style={[
                     styles.protectionIcon,
-                    { backgroundColor: theme.primary + "30" },
+                    { backgroundColor: colors.goldSubtle },
                   ]}
                 >
-                  <AppIcon name="shield" size={24} color={theme.primary} />
+                  <AppIcon name="shield" size={24} color={colors.gold} />
                 </View>
                 <View style={styles.protectionInfo}>
-                  <Text style={[styles.protectionTitle, { color: theme.text }]}>
-                    Protection prix plancher
+                  <Text
+                    style={[styles.protectionTitle, { color: colors.text }]}
+                  >
+                    {t("lots.floorPriceProtection")}
                   </Text>
                   <Text
-                    style={[styles.protectionDesc, { color: theme.textMuted }]}
+                    style={[
+                      styles.protectionDesc,
+                      {
+                        color: isDark
+                          ? colors.textSecondary
+                          : Palette.neutral[600],
+                        lineHeight: 22,
+                      },
+                    ]}
                   >
                     Vendez les{" "}
-                    <Text style={{ fontWeight: "700", color: theme.text }}>
+                    <Text style={{ fontWeight: "700", color: colors.text }}>
                       {summary.remainingQuantity} articles restants
                     </Text>{" "}
                     au-dessus de{" "}
-                    <Text style={{ fontWeight: "700", color: theme.primary }}>
+                    <Text style={{ fontWeight: "700", color: colors.gold }}>
                       {formatCurrency(protection.floorPriceBreakEven)}
                     </Text>{" "}
                     pour maintenir la rentabilité.
                   </Text>
                 </View>
               </View>
-              <Button
-                variant="primary"
-                size="sm"
+              <Pressable
                 onPress={() => {}}
-                style={styles.protectionButton}
+                style={{
+                  backgroundColor: colors.gold,
+                  paddingVertical: Spacing.md,
+                  paddingHorizontal: Spacing.lg,
+                  borderRadius: Radius.lg,
+                  alignItems: "center",
+                  marginTop: Spacing.sm,
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t("lots.adjustStrategy")}
               >
-                Ajuster la stratégie
-              </Button>
+                <Text
+                  style={{
+                    color: colors.textOnGold,
+                    fontFamily: "Manrope_700Bold",
+                    fontSize: 14,
+                  }}
+                >
+                  {t("lots.adjustStrategy")}
+                </Text>
+              </Pressable>
             </View>
           </Animated.View>
         )}
 
         {/* Segmented Control */}
-        <Animated.View entering={FadeInDown.delay(350).duration(400)}>
-          <View
-            style={[
-              styles.segmentedControl,
-              { backgroundColor: theme.surfaceCard },
+        <Animated.View
+          entering={FadeInDown.delay(350).duration(400)}
+          layout={LinearTransition.springify()}
+        >
+          <AnimatedSegmentControl
+            options={[
+              { key: "top", label: t("lots.topSales") },
+              { key: "losses", label: t("lots.losses") },
+              { key: "all", label: t("common.all") },
             ]}
-          >
-            {[
-              { key: "top", label: "Meilleures ventes" },
-              { key: "losses", label: "Pertes" },
-              { key: "all", label: "Tous" },
-            ].map((seg) => (
-              <Pressable
-                key={seg.key}
-                style={[
-                  styles.segmentButton,
-                  activeSegment === seg.key && [
-                    styles.segmentButtonActive,
-                    { backgroundColor: theme.surface },
-                  ],
-                ]}
-                onPress={() => {
-                  Haptic.selection();
-                  setActiveSegment(seg.key as SegmentOption);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.segmentText,
-                    {
-                      color:
-                        activeSegment === seg.key
-                          ? theme.primary
-                          : theme.textMuted,
-                    },
-                  ]}
-                >
-                  {seg.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+            activeKey={activeSegment}
+            onSelect={(key) => setActiveSegment(key as SegmentOption)}
+            colors={colors}
+            isDark={isDark}
+          />
         </Animated.View>
 
         {/* Items List */}
         <Animated.View
           entering={FadeInDown.delay(400).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.itemsList}
         >
           {filteredItems.length === 0 ? (
-            <Card style={styles.emptyState}>
-              <AppIcon name="inventory-2" size={40} color={theme.textMuted} />
-              <Text style={[styles.emptyText, { color: theme.textMuted }]}>
-                Aucun article dans cette catégorie
+            <View
+              style={[
+                styles.emptyState,
+                {
+                  backgroundColor: isDark
+                    ? colors.surface
+                    : Palette.ivory.cream,
+                  borderRadius: Radius.xl,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  backgroundColor: colors.goldSubtle,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: Spacing.md,
+                }}
+              >
+                <AppIcon name="inventory-2" size={32} color={colors.gold} />
+              </View>
+              <Text
+                style={[
+                  styles.emptyText,
+                  {
+                    color: isDark ? colors.textSecondary : Palette.neutral[600],
+                    fontSize: 15,
+                  },
+                ]}
+              >
+                {t("lots.noItemsInCategory")}
               </Text>
-            </Card>
+            </View>
           ) : (
             filteredItems.slice(0, 10).map((item, index) => (
               <Animated.View
@@ -465,10 +839,10 @@ export default function LotDetailScreen() {
                   style={[
                     styles.itemCard,
                     {
-                      backgroundColor: theme.surfaceCard,
+                      backgroundColor: colors.surfaceCard,
                       borderRadius: Radius.xl,
                       borderWidth: 1,
-                      borderColor: theme.border,
+                      borderColor: colors.border,
                       opacity:
                         item.status === "STOCK" || item.status === "ONLINE"
                           ? 0.7
@@ -481,13 +855,15 @@ export default function LotDetailScreen() {
                     <View
                       style={[
                         styles.itemImage,
-                        { backgroundColor: theme.surfaceCard },
+                        { backgroundColor: colors.surfaceCard },
                       ]}
                     >
                       <AppIcon
                         name="checkroom"
                         size={24}
-                        color={theme.textMuted}
+                        color={
+                          isDark ? colors.textSecondary : Palette.neutral[500]
+                        }
                       />
                     </View>
                     {/* Status Badge */}
@@ -497,19 +873,21 @@ export default function LotDetailScreen() {
                         {
                           backgroundColor:
                             item.status === "SOLD"
-                              ? theme.success
+                              ? colors.success
                               : item.status === "ONLINE"
-                                ? theme.warning
-                                : theme.textMuted,
+                                ? colors.warning
+                                : isDark
+                                  ? colors.textSecondary
+                                  : Palette.neutral[500],
                         },
                       ]}
                     >
                       <Text style={styles.statusBadgeText}>
                         {item.status === "SOLD"
-                          ? "VENDU"
+                          ? t("items.status.sold").toUpperCase()
                           : item.status === "ONLINE"
-                            ? "EN LIGNE"
-                            : "STOCK"}
+                            ? t("items.status.online").toUpperCase()
+                            : t("items.status.stock").toUpperCase()}
                       </Text>
                     </View>
                   </View>
@@ -518,22 +896,27 @@ export default function LotDetailScreen() {
                   <View style={styles.itemInfo}>
                     <View>
                       <Text
-                        style={[styles.itemTitle, { color: theme.text }]}
+                        style={[styles.itemTitle, { color: colors.text }]}
                         numberOfLines={1}
                       >
-                        {item.brand || "Inconnu"} - {item.type || "Article"}
+                        {item.brand || t("items.unknownBrand")} -{" "}
+                        {item.type || t("items.defaultType")}
                       </Text>
                       <Text
                         style={[
                           styles.itemSubtitle,
-                          { color: theme.textMuted },
+                          {
+                            color: isDark
+                              ? colors.textSecondary
+                              : Palette.neutral[600],
+                          },
                         ]}
                       >
                         {item.sale
-                          ? `Vendu sur ${item.sale.platform || "Vinted"} • ${formatDate(item.sale.saleDate)}`
+                          ? `${t("items.soldOn")} ${item.sale.platform || "Vinted"} • ${formatDate(item.sale.saleDate)}`
                           : item.status === "ONLINE"
-                            ? "En vente"
-                            : "En stock"}
+                            ? t("items.onSale")
+                            : t("items.inStock")}
                       </Text>
                     </View>
 
@@ -542,7 +925,11 @@ export default function LotDetailScreen() {
                         <Text
                           style={[
                             styles.profitLabel,
-                            { color: theme.textMuted },
+                            {
+                              color: isDark
+                                ? colors.textSecondary
+                                : Palette.neutral[600],
+                            },
                           ]}
                         >
                           {item.sale ? "BÉNÉFICE NET" : "BÉNÉFICE EST."}
@@ -553,8 +940,8 @@ export default function LotDetailScreen() {
                             {
                               color:
                                 (item.profit ?? 0) >= 0
-                                  ? theme.success
-                                  : theme.danger,
+                                  ? colors.success
+                                  : colors.danger,
                             },
                           ]}
                         >
@@ -565,7 +952,14 @@ export default function LotDetailScreen() {
                       </View>
                       {item.sale && (
                         <Text
-                          style={[styles.salePrice, { color: theme.textMuted }]}
+                          style={[
+                            styles.salePrice,
+                            {
+                              color: isDark
+                                ? colors.textSecondary
+                                : Palette.neutral[500],
+                            },
+                          ]}
                         >
                           {formatCurrency(
                             parseFloat(String(item.sale.priceGross)),
@@ -580,7 +974,12 @@ export default function LotDetailScreen() {
           )}
 
           {filteredItems.length > 10 && (
-            <Text style={[styles.moreItems, { color: theme.textMuted }]}>
+            <Text
+              style={[
+                styles.moreItems,
+                { color: isDark ? colors.textSecondary : Palette.neutral[600] },
+              ]}
+            >
               + {filteredItems.length - 10} autres articles
             </Text>
           )}
@@ -597,16 +996,15 @@ export default function LotDetailScreen() {
             width: 56,
             height: 56,
             borderRadius: 28,
-            backgroundColor: theme.primary,
+            backgroundColor: colors.gold,
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
           }}
         >
-          <AppIcon name="add" size={28} color="#FFF" />
+          <AppIcon name="add" size={28} color={colors.textOnGold} />
         </Pressable>
       </View>
-    </View>
+    </VantaScreen>
   );
 }
 
@@ -714,9 +1112,11 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_700Bold",
   },
 
-  // Recovery Card
+  // Recovery Card - Premium
   recoveryCard: {
     padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
   },
   recoveryHeader: {
     flexDirection: "row",
@@ -733,14 +1133,16 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_500Medium",
   },
   progressTrack: {
-    height: 12,
-    borderRadius: 6,
+    height: 14,
+    borderRadius: 7,
     overflow: "hidden",
     marginBottom: Spacing.sm,
+    borderCurve: "continuous",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 6,
+    borderRadius: 7,
+    borderCurve: "continuous",
   },
   progressLabels: {
     flexDirection: "row",
@@ -762,11 +1164,12 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   protectionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
+    width: 48,
+    height: 48,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
   },
   protectionInfo: {
     flex: 1,
@@ -781,28 +1184,27 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_400Regular",
     lineHeight: 20,
   },
-  protectionButton: {
-    marginTop: Spacing.xs,
-  },
 
-  // Segmented Control
+  // Segmented Control - Premium Vanta Style
   segmentedControl: {
-    flexDirection: "row",
+    height: 44,
+    borderRadius: 14,
     padding: 4,
-    borderRadius: Radius.lg,
+    position: "relative",
+    borderCurve: "continuous",
   },
   segmentButton: {
     flex: 1,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     alignItems: "center",
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
+    borderCurve: "continuous",
   },
-  segmentButtonActive: {
-    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
-  },
+  segmentButtonActive: {},
   segmentText: {
-    fontSize: 13,
-    fontFamily: "Manrope_600SemiBold",
+    fontSize: 12,
+    fontFamily: "Manrope_700Bold",
+    letterSpacing: 1,
   },
 
   // Items List
@@ -820,27 +1222,31 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     flexDirection: "row",
-    padding: Spacing.sm,
+    padding: Spacing.md,
     gap: Spacing.md,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
   },
   itemImageContainer: {
     position: "relative",
   },
   itemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: Radius.lg,
+    width: 84,
+    height: 84,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+    borderCurve: "continuous",
   },
   statusBadge: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    top: 6,
+    right: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.md,
+    borderCurve: "continuous",
   },
   statusBadgeText: {
     color: "#FFF",
