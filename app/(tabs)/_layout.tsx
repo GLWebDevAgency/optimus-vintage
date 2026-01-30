@@ -1,38 +1,35 @@
 /**
- * 📱 WORLD-CLASS TAB BAR - Inspired by Linear, Arc, Figma
+ * 🌌 VANTA MONOLITHIC DOCK - World-Class Tab Navigation
  *
- * ✨ Premium Features:
- * - Fluid morphing indicator with elastic spring physics
- * - Parallax depth layers with subtle 3D effects
- * - Luminescent glow trails following active tab
- * - Haptic micro-feedback on iOS
- * - Glassmorphic aurora background
- * - Particle shimmer effects on focus
- * - Responsive pressure-sensitive animations
+ * Design:
+ * - AETHER (Dark): Brushed Black Titanium dock with Pure Gold glyphs
+ * - IVORY (Light): Mother of Pearl Glass dock with Champagne Gold glyphs
+ *
+ * ✨ Features:
+ * - Monolithic floating dock
+ * - Abstract geometric glyphs pulsing with system activity
+ * - Gravity-based inertia transitions
+ * - Haptic shockwave feedback on iOS
+ * - 100% visual consistency across all screens
  */
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
-import { Palette } from "@/constants/Theme";
-import { BlurView } from "expo-blur";
+import { useColorScheme } from "@/components/useColorScheme";
+import { Palette, Radius } from "@/constants/Theme";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import React, { useCallback, useEffect, useMemo } from "react";
 import { Dimensions, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
-  Easing,
-  FadeIn,
-  FadeInDown,
-  interpolate,
-  runOnJS,
-  SharedValue,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
+    FadeInUp,
+    interpolate,
+    runOnJS,
+    SharedValue,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -40,144 +37,83 @@ const isIOS = process.env.EXPO_OS === "ios";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🎯 CONFIGURATION - Physics & Timing
+// 🎯 VANTA PHYSICS CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const SPRING_CONFIG = {
-  damping: 18,
+// Gravity-based spring (heavy, luxurious feel)
+const SPRING_GRAVITY = {
+  damping: 22,
   stiffness: 180,
-  mass: 0.8,
+  mass: 1.2,
   overshootClamping: false,
 };
 
+// Quick response spring
 const SPRING_SNAPPY = {
-  damping: 22,
-  stiffness: 280,
+  damping: 25,
+  stiffness: 350,
   mass: 0.6,
 };
 
 const TAB_COUNT = 5;
 const TAB_BAR_MARGIN = 20;
-const TAB_BAR_HEIGHT = 68;
-const TAB_BAR_RADIUS = 32;
+const TAB_BAR_HEIGHT = 72;
+const ACTIVE_ICON_SIZE = 24;
+const INACTIVE_ICON_SIZE = 22;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🌊 AURORA BACKGROUND - Animated gradient mesh
+// 🎨 VANTA THEME HOOK
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function AuroraBackground() {
-  const phase = useSharedValue(0);
+function useIsDarkMode(): boolean {
+  const colorScheme = useColorScheme() ?? "light";
+  return colorScheme === "dark";
+}
 
-  useEffect(() => {
-    phase.value = withRepeat(
-      withTiming(1, { duration: 8000, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
-    );
-  }, []);
+// ═══════════════════════════════════════════════════════════════════════════════
+// ✨ GOLD INDICATOR - Floating pill with photon emanation
+// ═══════════════════════════════════════════════════════════════════════════════
 
-  const gradientStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(phase.value, [0, 0.5, 1], [0.3, 0.5, 0.3]),
-  }));
+interface GoldIndicatorProps {
+  activeIndex: SharedValue<number>;
+  tabWidth: number;
+  containerPadding: number;
+}
+
+function GoldIndicator({
+  activeIndex,
+  tabWidth,
+  containerPadding,
+}: GoldIndicatorProps) {
+  const isDark = useIsDarkMode();
+
+  const indicatorStyle = useAnimatedStyle(() => {
+    const indicatorWidth = tabWidth - 12;
+    const translateX = activeIndex.value * tabWidth + containerPadding + 6;
+
+    return {
+      transform: [{ translateX }],
+      width: indicatorWidth,
+    };
+  });
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, gradientStyle]}>
-      <LinearGradient
-        colors={[
-          `${Palette.emerald[100]}20`,
-          `${Palette.neutral[100]}40`,
-          `${Palette.gold[100]}15`,
+    <Animated.View style={[styles.goldIndicator, indicatorStyle]}>
+      <View
+        style={[
+          styles.indicatorPill,
+          isDark ? styles.indicatorPillDark : styles.indicatorPillLight,
         ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
       />
     </Animated.View>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ✨ MORPHING INDICATOR - Fluid pill that morphs between tabs
+// 💎 VANTA GLYPH - Animated tab icon with gold pulse
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface MorphingIndicatorProps {
-  activeIndex: SharedValue<number>;
-  tabWidth: number;
-  containerPadding: number;
-}
-
-function MorphingIndicator({
-  activeIndex,
-  tabWidth,
-  containerPadding,
-}: MorphingIndicatorProps) {
-  // Glow pulse animation
-  const glowPulse = useSharedValue(0);
-
-  useEffect(() => {
-    glowPulse.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
-  }, []);
-
-  // Calculate indicator position with elastic overshoot
-  const indicatorStyle = useAnimatedStyle(() => {
-    const translateX =
-      activeIndex.value * tabWidth + containerPadding + (tabWidth - 52) / 2;
-    const glowIntensity = interpolate(glowPulse.value, [0, 1], [0.6, 1]);
-
-    return {
-      transform: [{ translateX }],
-      opacity: glowIntensity,
-    };
-  });
-
-  return (
-    <Animated.View style={[styles.morphIndicator, indicatorStyle]}>
-      {/* Outer glow */}
-      <View style={styles.indicatorGlowOuter}>
-        <LinearGradient
-          colors={[
-            `${Palette.emerald[400]}00`,
-            `${Palette.emerald[500]}40`,
-            `${Palette.emerald[400]}00`,
-          ]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-
-      {/* Main pill */}
-      <View style={styles.indicatorPillMain}>
-        <LinearGradient
-          colors={[
-            Palette.emerald[400],
-            Palette.emerald[500],
-            Palette.emerald[600],
-          ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-
-      {/* Highlight reflection */}
-      <View style={styles.indicatorHighlight} />
-    </Animated.View>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 💎 PREMIUM TAB ICON - Multi-layer animated icon
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface PremiumTabIconProps {
+interface VantaGlyphProps {
   name: AppIconName;
   label: string;
   focused: boolean;
@@ -185,66 +121,51 @@ interface PremiumTabIconProps {
   onPress: () => void;
 }
 
-function PremiumTabIcon({
-  name,
-  label,
-  focused,
-  index,
-  onPress,
-}: PremiumTabIconProps) {
+function VantaGlyph({ name, label, focused, index, onPress }: VantaGlyphProps) {
+  const isDark = useIsDarkMode();
+
   // Animation values
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
-  const iconRotate = useSharedValue(0);
-  const labelOpacity = useSharedValue(0.6);
-  const labelScale = useSharedValue(0.95);
+  const glyphRotate = useSharedValue(0);
+  const glowIntensity = useSharedValue(0);
   const pressScale = useSharedValue(1);
-  const glowRadius = useSharedValue(0);
-  const shimmerPhase = useSharedValue(0);
+
+  // Colors based on mode
+  const activeColor = isDark ? Palette.metal.gold : Palette.metal.champagne;
+  const inactiveColor = isDark ? Palette.neutral[500] : Palette.neutral[400];
 
   // Focus state animations
   useEffect(() => {
     if (focused) {
-      // Icon lifts up and scales
-      scale.value = withSpring(1.12, SPRING_CONFIG);
-      translateY.value = withSpring(-3, SPRING_CONFIG);
+      // Subtle lift and scale
+      scale.value = withSpring(1.08, SPRING_SNAPPY);
+      translateY.value = withSpring(-2, SPRING_SNAPPY);
+      glowIntensity.value = withTiming(1, { duration: 300 });
 
-      // Subtle rotation bounce
-      iconRotate.value = withSequence(
-        withSpring(-3, { damping: 8, stiffness: 400 }),
-        withSpring(0, { damping: 12, stiffness: 300 }),
+      // Subtle rotation sequence
+      glyphRotate.value = withSequence(
+        withSpring(-3, { damping: 12, stiffness: 300 }),
+        withSpring(0, { damping: 15, stiffness: 250 }),
       );
-
-      // Label appears
-      labelOpacity.value = withDelay(50, withTiming(1, { duration: 200 }));
-      labelScale.value = withDelay(50, withSpring(1, SPRING_SNAPPY));
-
-      // Glow expands
-      glowRadius.value = withSpring(1, { damping: 15, stiffness: 150 });
-
-      // Shimmer effect
-      shimmerPhase.value = withDelay(100, withTiming(1, { duration: 600 }));
     } else {
-      scale.value = withSpring(1, SPRING_SNAPPY);
-      translateY.value = withSpring(0, SPRING_SNAPPY);
-      iconRotate.value = withSpring(0, SPRING_SNAPPY);
-      labelOpacity.value = withTiming(0.55, { duration: 150 });
-      labelScale.value = withTiming(0.95, { duration: 150 });
-      glowRadius.value = withTiming(0, { duration: 200 });
-      shimmerPhase.value = 0;
+      scale.value = withSpring(1, SPRING_GRAVITY);
+      translateY.value = withSpring(0, SPRING_GRAVITY);
+      glyphRotate.value = withSpring(0, SPRING_GRAVITY);
+      glowIntensity.value = withTiming(0, { duration: 200 });
     }
   }, [focused]);
 
-  // Press handlers with haptic
+  // Press handlers with haptic shockwave
   const handlePressIn = useCallback(() => {
-    pressScale.value = withSpring(0.92, SPRING_SNAPPY);
+    pressScale.value = withSpring(0.88, SPRING_SNAPPY);
     if (isIOS) {
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
     }
   }, []);
 
   const handlePressOut = useCallback(() => {
-    pressScale.value = withSpring(1, SPRING_CONFIG);
+    pressScale.value = withSpring(1, SPRING_GRAVITY);
   }, []);
 
   const handlePress = useCallback(() => {
@@ -262,93 +183,45 @@ function PremiumTabIcon({
     ],
   }));
 
-  const iconWrapperStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${iconRotate.value}deg` }],
+  const glyphStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${glyphRotate.value}deg` }],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowRadius.value * 0.8,
-    transform: [{ scale: interpolate(glowRadius.value, [0, 1], [0.5, 1.3]) }],
-  }));
-
-  const labelStyle = useAnimatedStyle(() => ({
-    opacity: labelOpacity.value,
-    transform: [
-      { scale: labelScale.value },
-      { translateY: interpolate(labelOpacity.value, [0.55, 1], [2, 0]) },
-    ],
-  }));
-
-  const shimmerStyle = useAnimatedStyle(() => ({
-    opacity: shimmerPhase.value,
-    transform: [
-      { translateX: interpolate(shimmerPhase.value, [0, 1], [-20, 20]) },
-    ],
-  }));
+  const labelStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(glowIntensity.value, [0, 1], [0.5, 1]);
+    return {
+      opacity,
+      transform: [
+        { translateY: interpolate(glowIntensity.value, [0, 1], [1, 0]) },
+      ],
+    };
+  });
 
   return (
     <Pressable
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={styles.tabItem}
+      style={styles.glyphItem}
     >
-      <Animated.View style={[styles.tabContent, containerStyle]}>
-        {/* Ambient glow */}
-        <Animated.View style={[styles.ambientGlow, glowStyle]}>
-          <LinearGradient
-            colors={[
-              `${Palette.emerald[400]}00`,
-              `${Palette.emerald[500]}50`,
-              `${Palette.emerald[400]}00`,
-            ]}
-            style={StyleSheet.absoluteFill}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-          />
-        </Animated.View>
-
-        {/* Icon container with background */}
-        <Animated.View style={[styles.iconWrapper, iconWrapperStyle]}>
-          {/* Focus background pill */}
-          {focused && (
-            <Animated.View
-              entering={FadeIn.duration(150)}
-              style={styles.iconBgPill}
-            >
-              <LinearGradient
-                colors={[`${Palette.emerald[100]}`, `${Palette.emerald[50]}`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-
-              {/* Shimmer overlay */}
-              <Animated.View style={[styles.shimmerOverlay, shimmerStyle]}>
-                <LinearGradient
-                  colors={[
-                    "transparent",
-                    `${Palette.neutral.white}60`,
-                    "transparent",
-                  ]}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={StyleSheet.absoluteFill}
-                />
-              </Animated.View>
-            </Animated.View>
-          )}
-
-          {/* Icon */}
+      <Animated.View style={[styles.glyphContent, containerStyle]}>
+        {/* Glyph Icon */}
+        <Animated.View style={[styles.glyphWrapper, glyphStyle]}>
           <AppIcon
             name={name}
-            size={22}
-            color={focused ? Palette.emerald[600] : Palette.neutral[400]}
+            size={focused ? ACTIVE_ICON_SIZE : INACTIVE_ICON_SIZE}
+            color={focused ? activeColor : inactiveColor}
           />
         </Animated.View>
 
-        {/* Label with micro-animation */}
-        <Animated.Text style={[styles.tabLabel, labelStyle]}>
+        {/* Label */}
+        <Animated.Text
+          style={[
+            styles.glyphLabel,
+            labelStyle,
+            { color: focused ? activeColor : inactiveColor },
+          ]}
+        >
           {label}
         </Animated.Text>
       </Animated.View>
@@ -357,40 +230,38 @@ function PremiumTabIcon({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🏛️ WORLD-CLASS TAB BAR
+// 🏛️ VANTA MONOLITHIC DOCK
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface WorldClassTabBarProps {
+interface VantaDockProps {
   state: any;
   descriptors: any;
   navigation: any;
 }
 
-function WorldClassTabBar({
-  state,
-  descriptors,
-  navigation,
-}: WorldClassTabBarProps) {
+function VantaDock({ state, descriptors, navigation }: VantaDockProps) {
   const insets = useSafeAreaInsets();
+  const isDark = useIsDarkMode();
   const activeIndex = useSharedValue(state.index);
 
   // Calculate dimensions
   const containerWidth = SCREEN_WIDTH - TAB_BAR_MARGIN * 2;
-  const containerPadding = 12;
+  const containerPadding = 10;
   const tabWidth = (containerWidth - containerPadding * 2) / TAB_COUNT;
 
-  // Update active index with spring animation
+  // Update active index with gravity spring
   useEffect(() => {
-    activeIndex.value = withSpring(state.index, SPRING_CONFIG);
+    activeIndex.value = withSpring(state.index, SPRING_GRAVITY);
   }, [state.index]);
 
-  // Route configuration
+  // Route configuration with SHORT universal labels (no i18n needed for tabs)
+  // Using short English/universal words that fit well in tab bar
   const routeConfigMap: Record<string, { name: AppIconName; label: string }> = {
-    index: { name: "home", label: "Accueil" },
+    index: { name: "home", label: "Home" },
     lots: { name: "inventory-2", label: "Lots" },
     stock: { name: "checkroom", label: "Stock" },
-    sales: { name: "point-of-sale", label: "Ventes" },
-    settings: { name: "settings", label: "Réglages" },
+    sales: { name: "point-of-sale", label: "Sales" },
+    settings: { name: "settings", label: "Config" },
   };
 
   // Filter valid routes
@@ -401,68 +272,38 @@ function WorldClassTabBar({
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(500).springify()}
+      entering={FadeInUp.duration(600).springify()}
       style={[
-        styles.tabBarWrapper,
-        { paddingBottom: Math.max(insets.bottom, 8) },
+        styles.dockWrapper,
+        { paddingBottom: Math.max(insets.bottom, 12) },
       ]}
     >
-      {/* Main container */}
-      <View style={styles.tabBarContainer}>
-        {/* Multi-layer glassmorphic background */}
-        <View style={styles.glassContainer}>
-          {/* Base blur */}
-          <BlurView
-            intensity={isIOS ? 60 : 100}
-            tint="light"
-            style={StyleSheet.absoluteFill}
-          />
+      {/* Monolithic Dock Container */}
+      <View
+        style={[
+          styles.dockContainer,
+          isDark ? styles.dockContainerDark : styles.dockContainerLight,
+        ]}
+      >
+        {/* Track Background */}
+        <View
+          style={[
+            styles.trackBackground,
+            isDark ? styles.trackBackgroundDark : styles.trackBackgroundLight,
+          ]}
+        />
 
-          {/* Aurora gradient mesh */}
-          <AuroraBackground />
-
-          {/* Glass overlay */}
-          <View style={styles.glassOverlay} />
-
-          {/* Top edge highlight */}
-          <View style={styles.topHighlight}>
-            <LinearGradient
-              colors={[
-                `${Palette.neutral.white}80`,
-                `${Palette.neutral.white}20`,
-                "transparent",
-              ]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-        </View>
-
-        {/* Luminous border */}
-        <View style={styles.luminousBorder}>
-          <LinearGradient
-            colors={[
-              `${Palette.emerald[300]}30`,
-              `${Palette.neutral[200]}15`,
-              `${Palette.gold[300]}25`,
-              `${Palette.neutral[200]}10`,
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-
-        {/* Morphing active indicator */}
-        <MorphingIndicator
+        {/* Gold Active Indicator */}
+        <GoldIndicator
           activeIndex={activeIndex}
           tabWidth={tabWidth}
           containerPadding={containerPadding}
         />
 
-        {/* Tab items */}
-        <View style={[styles.tabsRow, { paddingHorizontal: containerPadding }]}>
+        {/* Glyph Items */}
+        <View
+          style={[styles.glyphsRow, { paddingHorizontal: containerPadding }]}
+        >
           {validRoutes.map((route: any, index: number) => {
             const isFocused = state.index === index;
             const config = routeConfigMap[route.name];
@@ -481,7 +322,7 @@ function WorldClassTabBar({
             };
 
             return (
-              <PremiumTabIcon
+              <VantaGlyph
                 key={route.key}
                 name={config.name}
                 label={config.label}
@@ -504,7 +345,7 @@ function WorldClassTabBar({
 export default function TabLayout() {
   return (
     <Tabs
-      tabBar={(props) => <WorldClassTabBar {...props} />}
+      tabBar={(props) => <VantaDock {...props} />}
       screenOptions={{
         headerShown: false,
       }}
@@ -519,162 +360,140 @@ export default function TabLayout() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🎨 PREMIUM STYLES
+// 🎨 VANTA STYLES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const styles = StyleSheet.create({
-  // ─── Container ─────────────────────────────────────────────────────────────
-  tabBarWrapper: {
+  // ─── Dock Wrapper ──────────────────────────────────────────────────────────
+  dockWrapper: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: TAB_BAR_MARGIN,
-    paddingTop: 8,
+    paddingTop: 12,
   },
 
-  tabBarContainer: {
+  // ─── Dock Container ────────────────────────────────────────────────────────
+  dockContainer: {
     height: TAB_BAR_HEIGHT,
-    borderRadius: TAB_BAR_RADIUS,
+    borderRadius: Radius["3xl"],
     overflow: "hidden",
     borderCurve: "continuous",
-    // Premium multi-layer shadow
+    padding: 6,
+  },
+
+  // AETHER (Dark) - Brushed Black Titanium
+  dockContainerDark: {
+    backgroundColor: Palette.vanta.titanium,
+    borderWidth: 1,
+    borderColor: Palette.vanta.graphite,
     boxShadow: `
-      0 2px 4px rgba(0, 0, 0, 0.02),
-      0 4px 8px rgba(0, 0, 0, 0.03),
-      0 8px 16px rgba(0, 0, 0, 0.04),
-      0 16px 32px rgba(0, 0, 0, 0.05),
-      0 0 0 0.5px ${Palette.neutral[200]}50,
-      0 20px 40px ${Palette.emerald[200]}20
+      0 0 1px ${Palette.metal.gold}20,
+      0 8px 32px rgba(0, 0, 0, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05)
     `,
   },
 
-  // ─── Glass Effect ──────────────────────────────────────────────────────────
-  glassContainer: {
+  // IVORY (Light) - Mother of Pearl Glass
+  dockContainerLight: {
+    backgroundColor: "rgba(253, 252, 249, 0.85)",
+    borderWidth: 1,
+    borderColor: Palette.ivory.linen,
+    boxShadow: `
+      0 8px 32px rgba(28, 25, 23, 0.12),
+      0 2px 8px rgba(28, 25, 23, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9)
+    `,
+  },
+
+  // ─── Track Background ──────────────────────────────────────────────────────
+  trackBackground: {
     ...StyleSheet.absoluteFillObject,
-    overflow: "hidden",
-    borderRadius: TAB_BAR_RADIUS,
+    borderRadius: Radius["3xl"],
   },
 
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: `${Palette.neutral.white}75`,
+  trackBackgroundDark: {
+    backgroundColor: Palette.vanta.titanium,
   },
 
-  topHighlight: {
+  trackBackgroundLight: {
+    backgroundColor: "transparent",
+  },
+
+  // ─── Gold Indicator ────────────────────────────────────────────────────────
+  goldIndicator: {
     position: "absolute",
-    top: 0,
-    left: 24,
-    right: 24,
-    height: 1,
-  },
-
-  // ─── Luminous Border ───────────────────────────────────────────────────────
-  luminousBorder: {
-    position: "absolute",
-    top: 0,
+    top: 6,
+    bottom: 6,
     left: 0,
-    right: 0,
-    height: 1,
-    opacity: 0.8,
+    borderRadius: Radius.xl,
   },
 
-  // ─── Morphing Indicator ────────────────────────────────────────────────────
-  morphIndicator: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: 52,
-    height: 4,
-    alignItems: "center",
+  indicatorPill: {
+    flex: 1,
+    borderRadius: Radius.xl,
+    borderCurve: "continuous",
   },
 
-  indicatorGlowOuter: {
-    position: "absolute",
-    top: -2,
-    left: -8,
-    right: -8,
-    height: 8,
-    opacity: 0.6,
+  // AETHER - Obsidian pill with gold edge
+  indicatorPillDark: {
+    backgroundColor: Palette.vanta.carbon,
+    boxShadow: `
+      0 0 12px ${Palette.metal.gold}30,
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 2px 8px rgba(0, 0, 0, 0.4)
+    `,
+    borderWidth: 1,
+    borderColor: `${Palette.metal.gold}30`,
   },
 
-  indicatorPillMain: {
-    width: 32,
-    height: 3,
-    borderRadius: 1.5,
-    overflow: "hidden",
-    boxShadow: `0 0 8px ${Palette.emerald[500]}80`,
+  // IVORY - White pill with champagne glow
+  indicatorPillLight: {
+    backgroundColor: Palette.ivory.pearl,
+    boxShadow: `
+      0 4px 16px rgba(201, 169, 97, 0.2),
+      0 2px 8px rgba(28, 25, 23, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 1)
+    `,
+    borderWidth: 1,
+    borderColor: `${Palette.metal.champagne}20`,
   },
 
-  indicatorHighlight: {
-    position: "absolute",
-    top: 0,
-    left: 10,
-    right: 10,
-    height: 1,
-    backgroundColor: `${Palette.neutral.white}60`,
-    borderRadius: 0.5,
-  },
-
-  // ─── Tabs Row ──────────────────────────────────────────────────────────────
-  tabsRow: {
+  // ─── Glyphs Row ────────────────────────────────────────────────────────────
+  glyphsRow: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    zIndex: 1,
   },
 
-  // ─── Tab Item ──────────────────────────────────────────────────────────────
-  tabItem: {
+  // ─── Glyph Item ────────────────────────────────────────────────────────────
+  glyphItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 6,
   },
 
-  tabContent: {
+  glyphContent: {
     alignItems: "center",
     justifyContent: "center",
   },
 
-  // ─── Ambient Glow ──────────────────────────────────────────────────────────
-  ambientGlow: {
-    position: "absolute",
-    top: -16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-  },
-
-  // ─── Icon Wrapper ──────────────────────────────────────────────────────────
-  iconWrapper: {
-    width: 44,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    borderCurve: "continuous",
-    overflow: "hidden",
-  },
-
-  iconBgPill: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 16,
-    overflow: "hidden",
-    borderCurve: "continuous",
-  },
-
-  shimmerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  glyphWrapper: {
     width: 40,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
-  // ─── Tab Label ─────────────────────────────────────────────────────────────
-  tabLabel: {
+  glyphLabel: {
     fontSize: 10,
     fontFamily: "Manrope_600SemiBold",
     fontWeight: "600",
-    letterSpacing: 0.1,
-    marginTop: 4,
-    color: Palette.neutral[600],
+    letterSpacing: 0.5,
+    marginTop: 2,
+    textTransform: "uppercase",
   },
 });

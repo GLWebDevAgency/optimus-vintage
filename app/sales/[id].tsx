@@ -1,13 +1,17 @@
 /**
- * 📜 SALE DETAIL SCREEN - View and manage sale
+ * 📜 SALE DETAIL SCREEN - Vanta-Aether Edition
  * Shows sale details with cancel/refund option
+ *
+ * v2.0 - Enhanced with Vanta premium components
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { Button } from "@/components/ui/Components";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import {
+    useVantaTheme,
+    VantaScreen
+} from "@/components/ui/PremiumUI";
 import { ItemsRepository, SalesRepository } from "@/db/repositories";
+import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -17,7 +21,6 @@ import {
     Alert,
     Pressable,
     ScrollView,
-    StyleSheet,
     Text,
     View,
 } from "react-native";
@@ -27,9 +30,26 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function SaleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "light";
-  const theme = Theme[colorScheme];
+  const theme = useVantaTheme();
+  const colors = {
+    background: theme.background,
+    surface: theme.surface,
+    surfaceCard: theme.surfaceCard,
+    gold: theme.primary,
+    goldSubtle: theme.primarySubtle,
+    text: theme.text,
+    textSecondary: theme.textSecondary,
+    textMuted: theme.textMuted,
+    border: theme.borderGlass,
+    success: theme.success,
+    successSubtle: theme.successSubtle,
+    danger: theme.danger,
+    dangerSubtle: theme.dangerSubtle,
+    warning: theme.warning,
+    warningSubtle: theme.warningSubtle,
+  };
   const queryClient = useQueryClient();
+  const { t } = useLocale();
 
   const saleId = id ? parseInt(id, 10) : null;
 
@@ -101,16 +121,24 @@ export default function SaleDetailScreen() {
   if (saleQuery.isLoading) {
     return (
       <View
-        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+          backgroundColor: colors.background,
+        }}
       >
-        <ActivityIndicator size="large" color={theme.primary} />
+        <ActivityIndicator size="large" color={colors.gold} />
         <Text
-          style={[
-            Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.md },
-          ]}
+          style={{
+            fontFamily: "Manrope-Regular",
+            fontSize: 14,
+            color: colors.textMuted,
+            marginTop: 16,
+          }}
         >
-          Loading sale...
+          {t("common.loading")}
         </Text>
       </View>
     );
@@ -120,24 +148,57 @@ export default function SaleDetailScreen() {
   if (!saleQuery.data) {
     return (
       <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+          backgroundColor: colors.background,
+        }}
       >
         <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+          style={{
+            width: 88,
+            height: 88,
+            borderRadius: 44,
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 20,
+            borderCurve: "continuous",
+            backgroundColor: colors.dangerSubtle,
+          }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
+          <AppIcon name="error-outline" size={40} color={colors.danger} />
         </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
-          Sale Not Found
-        </Text>
-        <Button
-          variant="ghost"
-          size="md"
-          onPress={() => router.back()}
-          style={{ marginTop: Spacing.xl }}
+        <Text
+          style={{
+            fontFamily: "Manrope-Bold",
+            fontSize: 20,
+            color: colors.text,
+          }}
         >
-          Go Back
-        </Button>
+          {t("errors.notFound")}
+        </Text>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            marginTop: 24,
+            paddingHorizontal: 20,
+            paddingVertical: 12,
+            borderRadius: 12,
+            backgroundColor: colors.goldSubtle,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "Manrope-SemiBold",
+              fontSize: 14,
+              color: colors.gold,
+            }}
+          >
+            {t("common.back")}
+          </Text>
+        </Pressable>
       </View>
     );
   }
@@ -154,46 +215,50 @@ export default function SaleDetailScreen() {
   const priceNet = parseFloat(String(sale.priceNet));
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <VantaScreen>
       <Stack.Screen
         options={{
-          title: "Sale Details",
-          headerStyle: { backgroundColor: theme.background },
-          headerTintColor: theme.text,
+          title: t("sales.saleDetails"),
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerShadowVisible: false,
           headerLeft: () => (
             <Pressable onPress={() => router.back()} hitSlop={8}>
-              <AppIcon name="close" size={24} color={theme.text} />
+              <AppIcon name="close" size={24} color={colors.text} />
             </Pressable>
           ),
         }}
       />
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <StatusBar style={theme.dark ? "light" : "dark"} />
 
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + 120 },
-        ]}
+        contentContainerStyle={{
+          padding: 24,
+          paddingBottom: insets.bottom + 120,
+        }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* Status Header */}
         <Animated.View
           entering={FadeInDown.delay(50).duration(400)}
-          style={styles.statusHeader}
+          style={{ alignItems: "center", marginBottom: 24 }}
         >
           <View
-            style={[
-              styles.statusIcon,
-              {
-                backgroundColor: isCompleted
-                  ? theme.successSubtle
-                  : isCancelled
-                    ? theme.dangerSubtle
-                    : theme.warningSubtle,
-              },
-            ]}
+            style={{
+              width: 88,
+              height: 88,
+              borderRadius: 44,
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: 16,
+              borderCurve: "continuous",
+              backgroundColor: isCompleted
+                ? colors.successSubtle
+                : isCancelled
+                  ? colors.dangerSubtle
+                  : colors.warningSubtle,
+            }}
           >
             <AppIcon
               name={
@@ -206,17 +271,29 @@ export default function SaleDetailScreen() {
               size={36}
               color={
                 isCompleted
-                  ? theme.success
+                  ? colors.success
                   : isCancelled
-                    ? theme.danger
-                    : theme.warning
+                    ? colors.danger
+                    : colors.warning
               }
             />
           </View>
-          <Text style={[Typography.heading.lg, { color: theme.text }]}>
-            {isCompleted ? "Sale Completed" : sale.status}
+          <Text
+            style={{
+              fontFamily: "Manrope-Bold",
+              fontSize: 24,
+              color: colors.text,
+            }}
+          >
+            {isCompleted ? t("sales.status.completed") : sale.status}
           </Text>
-          <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+          <Text
+            style={{
+              fontFamily: "Manrope-Regular",
+              fontSize: 14,
+              color: colors.textMuted,
+            }}
+          >
             {new Date(sale.saleDate).toLocaleDateString("en-US", {
               weekday: "long",
               day: "numeric",
@@ -228,29 +305,56 @@ export default function SaleDetailScreen() {
 
         {/* Amount Card */}
         <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <View style={styles.amountCard}>
-            <Text style={[Typography.label.sm, { color: theme.textMuted }]}>
-              NET AMOUNT
+          <View
+            style={{
+              alignItems: "center",
+              paddingVertical: 24,
+              marginBottom: 24,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: "Manrope-Medium",
+                fontSize: 11,
+                letterSpacing: 0.5,
+                textTransform: "uppercase",
+                color: colors.textMuted,
+              }}
+            >
+              {t("sales.priceNet")}
             </Text>
             <Text
-              style={[
-                Typography.hero,
-                {
-                  color: isCompleted ? theme.success : theme.textMuted,
-                  textDecorationLine: isCancelled ? "line-through" : "none",
-                },
-              ]}
+              style={{
+                fontFamily: "Manrope-Bold",
+                fontSize: 48,
+                color: isCompleted ? colors.success : colors.textMuted,
+                textDecorationLine: isCancelled ? "line-through" : "none",
+              }}
             >
               €{priceNet.toFixed(2)}
             </Text>
             <View
-              style={[
-                styles.platformBadge,
-                { backgroundColor: theme.primaryMuted },
-              ]}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 999,
+                marginTop: 16,
+                borderCurve: "continuous",
+                backgroundColor: colors.goldSubtle,
+              }}
             >
-              <AppIcon name="store" size={14} color={theme.primary} />
-              <Text style={[Typography.label.sm, { color: theme.primary }]}>
+              <AppIcon name="store" size={14} color={colors.gold} />
+              <Text
+                style={{
+                  fontFamily: "Manrope-Medium",
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                  color: colors.gold,
+                }}
+              >
                 {sale.platform || "Vinted"}
               </Text>
             </View>
@@ -260,57 +364,173 @@ export default function SaleDetailScreen() {
         {/* Breakdown */}
         <Animated.View
           entering={FadeInDown.delay(150).duration(400)}
-          style={styles.section}
+          style={{ marginBottom: 24 }}
         >
-          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-            Breakdown
+          <Text
+            style={{
+              fontSize: 12,
+              fontFamily: "Manrope-SemiBold",
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+              marginBottom: 8,
+              color: colors.textSecondary,
+            }}
+          >
+            {t("sales.saleDetails")}
           </Text>
           <View>
-            <View style={styles.breakdownRow}>
-              <Text style={[Typography.body.md, { color: theme.text }]}>
-                Gross Price
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingVertical: 8,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "Manrope-Regular",
+                  fontSize: 16,
+                  color: colors.text,
+                }}
+              >
+                {t("sales.priceGross")}
               </Text>
-              <Text style={[Typography.number.md, { color: theme.text }]}>
+              <Text
+                style={{
+                  fontFamily: "Manrope-SemiBold",
+                  fontSize: 16,
+                  fontVariant: ["tabular-nums"],
+                  color: colors.text,
+                }}
+              >
                 €{priceGross.toFixed(2)}
               </Text>
             </View>
-            <View style={[styles.divider, { backgroundColor: theme.border }]} />
-            <View style={styles.breakdownRow}>
-              <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
-                Platform Fees
+            <View
+              style={{
+                height: 1,
+                marginVertical: 8,
+                backgroundColor: colors.border,
+              }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingVertical: 8,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "Manrope-Regular",
+                  fontSize: 14,
+                  color: colors.textMuted,
+                }}
+              >
+                {t("sales.platformFees")}
               </Text>
-              <Text style={[Typography.number.sm, { color: theme.danger }]}>
+              <Text
+                style={{
+                  fontFamily: "Manrope-SemiBold",
+                  fontSize: 14,
+                  fontVariant: ["tabular-nums"],
+                  color: colors.danger,
+                }}
+              >
                 -€{platformFees.toFixed(2)}
               </Text>
             </View>
-            <View style={styles.breakdownRow}>
-              <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
-                Shipping Fees
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingVertical: 8,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "Manrope-Regular",
+                  fontSize: 14,
+                  color: colors.textMuted,
+                }}
+              >
+                {t("sales.shippingFees")}
               </Text>
-              <Text style={[Typography.number.sm, { color: theme.danger }]}>
+              <Text
+                style={{
+                  fontFamily: "Manrope-SemiBold",
+                  fontSize: 14,
+                  fontVariant: ["tabular-nums"],
+                  color: colors.danger,
+                }}
+              >
                 -€{shippingFees.toFixed(2)}
               </Text>
             </View>
             {miscFees > 0 && (
-              <View style={styles.breakdownRow}>
-                <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
-                  Other Fees
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingVertical: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "Manrope-Regular",
+                    fontSize: 14,
+                    color: colors.textMuted,
+                  }}
+                >
+                  {t("lots.additionalFees")}
                 </Text>
-                <Text style={[Typography.number.sm, { color: theme.danger }]}>
+                <Text
+                  style={{
+                    fontFamily: "Manrope-SemiBold",
+                    fontSize: 14,
+                    fontVariant: ["tabular-nums"],
+                    color: colors.danger,
+                  }}
+                >
                   -€{miscFees.toFixed(2)}
                 </Text>
               </View>
             )}
-            <View style={[styles.divider, { backgroundColor: theme.border }]} />
-            <View style={styles.breakdownRow}>
-              <Text style={[Typography.heading.sm, { color: theme.text }]}>
-                Net Profit
+            <View
+              style={{
+                height: 1,
+                marginVertical: 8,
+                backgroundColor: colors.border,
+              }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingVertical: 8,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "Manrope-Bold",
+                  fontSize: 16,
+                  color: colors.text,
+                }}
+              >
+                {t("sales.profit")}
               </Text>
               <Text
-                style={[
-                  Typography.number.md,
-                  { color: theme.success, fontWeight: "700" },
-                ]}
+                style={{
+                  fontFamily: "Manrope-Bold",
+                  fontSize: 16,
+                  fontVariant: ["tabular-nums"],
+                  color: colors.success,
+                }}
               >
                 €{priceNet.toFixed(2)}
               </Text>
@@ -322,57 +542,92 @@ export default function SaleDetailScreen() {
         {item && (
           <Animated.View
             entering={FadeInDown.delay(200).duration(400)}
-            style={styles.section}
+            style={{ marginBottom: 24 }}
           >
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              Item
+            <Text
+              style={{
+                fontSize: 12,
+                fontFamily: "Manrope-SemiBold",
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                marginBottom: 8,
+                color: colors.textSecondary,
+              }}
+            >
+              {t("items.title")}
             </Text>
-            <View style={styles.itemCard}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 16 }}
+            >
               <View
-                style={[
-                  styles.itemIcon,
-                  { backgroundColor: theme.primaryMuted },
-                ]}
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 16,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderCurve: "continuous",
+                  backgroundColor: colors.goldSubtle,
+                }}
               >
-                <AppIcon name="checkroom" size={24} color={theme.primary} />
+                <AppIcon name="checkroom" size={24} color={colors.gold} />
               </View>
-              <View style={styles.itemInfo}>
-                <Text style={[Typography.heading.xs, { color: theme.text }]}>
-                  {item.brand || "Unknown Brand"}
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontFamily: "Manrope-Bold",
+                    fontSize: 14,
+                    color: colors.text,
+                  }}
+                >
+                  {item.brand || t("items.unknownBrand")}
                 </Text>
-                <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+                <Text
+                  style={{
+                    fontFamily: "Manrope-Regular",
+                    fontSize: 14,
+                    color: colors.textMuted,
+                  }}
+                >
                   {item.type || "Clothing"} • {item.size || "OS"} •{" "}
                   {item.condition || "Good"}
                 </Text>
-                <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
+                <Text
+                  style={{
+                    fontFamily: "Manrope-Regular",
+                    fontSize: 12,
+                    color: colors.textMuted,
+                  }}
+                >
                   Cost: €{parseFloat(String(item.unitCost)).toFixed(2)}
                 </Text>
               </View>
               <View
-                style={[
-                  styles.itemStatus,
-                  {
-                    backgroundColor:
-                      item.status === "SOLD"
-                        ? theme.successSubtle
-                        : item.status === "STOCK"
-                          ? theme.primaryMuted
-                          : theme.warningSubtle,
-                  },
-                ]}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  borderCurve: "continuous",
+                  backgroundColor:
+                    item.status === "SOLD"
+                      ? colors.successSubtle
+                      : item.status === "STOCK"
+                        ? colors.goldSubtle
+                        : colors.warningSubtle,
+                }}
               >
                 <Text
-                  style={[
-                    Typography.label.xs,
-                    {
-                      color:
-                        item.status === "SOLD"
-                          ? theme.success
-                          : item.status === "STOCK"
-                            ? theme.primary
-                            : theme.warning,
-                    },
-                  ]}
+                  style={{
+                    fontFamily: "Manrope-Medium",
+                    fontSize: 11,
+                    letterSpacing: 0.5,
+                    color:
+                      item.status === "SOLD"
+                        ? colors.success
+                        : item.status === "STOCK"
+                          ? colors.gold
+                          : colors.warning,
+                  }}
                 >
                   {item.status}
                 </Text>
@@ -384,31 +639,70 @@ export default function SaleDetailScreen() {
         {/* Lot Reference */}
         <Animated.View
           entering={FadeInDown.delay(250).duration(400)}
-          style={styles.section}
+          style={{ marginBottom: 24 }}
         >
-          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-            Reference
+          <Text
+            style={{
+              fontSize: 12,
+              fontFamily: "Manrope-SemiBold",
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+              marginBottom: 8,
+              color: colors.textSecondary,
+            }}
+          >
+            {t("navigation.lots")}
           </Text>
-          <View style={styles.referenceRow}>
+          <View style={{ flexDirection: "row", gap: 16 }}>
             <View
-              style={[
-                styles.refBadge,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-              ]}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                borderCurve: "continuous",
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              }}
             >
-              <AppIcon name="inventory-2" size={16} color={theme.primary} />
-              <Text style={[Typography.label.sm, { color: theme.text }]}>
+              <AppIcon name="inventory-2" size={16} color={colors.gold} />
+              <Text
+                style={{
+                  fontFamily: "Manrope-Medium",
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                  color: colors.text,
+                }}
+              >
                 Lot #{sale.lotId}
               </Text>
             </View>
             <View
-              style={[
-                styles.refBadge,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-              ]}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                borderCurve: "continuous",
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              }}
             >
-              <AppIcon name="receipt" size={16} color={theme.textMuted} />
-              <Text style={[Typography.label.sm, { color: theme.text }]}>
+              <AppIcon name="receipt" size={16} color={colors.textMuted} />
+              <Text
+                style={{
+                  fontFamily: "Manrope-Medium",
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                  color: colors.text,
+                }}
+              >
                 Sale #{sale.id}
               </Text>
             </View>
@@ -419,141 +713,44 @@ export default function SaleDetailScreen() {
       {/* Cancel CTA - only show for completed sales */}
       {isCompleted && (
         <View
-          style={[
-            styles.ctaContainer,
-            { paddingBottom: insets.bottom + Spacing.lg },
-          ]}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: 20,
+            paddingBottom: insets.bottom + 20,
+          }}
         >
-          <Button
-            variant="danger"
-            size="lg"
+          <Pressable
             onPress={handleCancel}
             disabled={cancelSale.isPending}
-            icon={<AppIcon name="cancel" size={20} color="#FFF" />}
-            style={styles.ctaButton}
+            style={({ pressed }) => ({
+              width: "100%",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              paddingVertical: 16,
+              borderRadius: 16,
+              borderCurve: "continuous",
+              backgroundColor: colors.danger,
+              opacity: pressed || cancelSale.isPending ? 0.8 : 1,
+            })}
           >
-            {cancelSale.isPending ? "Cancelling..." : "Cancel Sale"}
-          </Button>
+            <AppIcon name="cancel" size={20} color="#FFF" />
+            <Text
+              style={{
+                fontFamily: "Manrope-Bold",
+                fontSize: 16,
+                color: "#FFF",
+              }}
+            >
+              {cancelSale.isPending ? t("common.loading") : t("common.cancel")}
+            </Text>
+          </Pressable>
         </View>
       )}
-    </View>
+    </VantaScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: Spacing.xl,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: Spacing.xl,
-  },
-  errorIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  content: {
-    padding: Spacing.xl,
-  },
-  statusHeader: {
-    alignItems: "center",
-    marginBottom: Spacing.xl,
-  },
-  statusIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-  amountCard: {
-    alignItems: "center",
-    paddingVertical: Spacing.xl,
-    marginBottom: Spacing.xl,
-  },
-  platformBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    marginTop: Spacing.md,
-  },
-  section: {
-    marginBottom: Spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: Spacing.sm,
-  },
-  breakdownRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: Spacing.sm,
-  },
-  divider: {
-    height: 1,
-    marginVertical: Spacing.sm,
-  },
-  itemCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  itemIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.md,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  itemInfo: {
-    flex: 1,
-  },
-  itemStatus: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.sm,
-  },
-  referenceRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  refBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  ctaContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: Spacing.lg,
-  },
-  ctaButton: {
-    width: "100%",
-  },
-});

@@ -1,17 +1,20 @@
 /**
- * ✏️ EDIT ITEM SCREEN - Luxury Edition
+ * ✏️ EDIT ITEM SCREEN - Vanta-Aether Edition
  * Edit existing item with pre-filled data
  */
 
+import { AnimatedSkeleton } from "@/components/ui/AnimatedComponents";
 import { AppIcon } from "@/components/ui/AppIcon";
-import { Button, ShimmerSkeleton } from "@/components/ui/Components";
 import { ItemPhotoPicker } from "@/components/ui/ItemPhotoPicker";
 import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Theme, Typography } from "@/constants/Theme";
 import { ItemsRepository, NewItem } from "@/db/repositories";
+import { ReanimatedSpring } from "@/utils/animations-reanimated";
+import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { MotiView } from "moti";
+import { MotiPressable } from "moti/interactions";
 import React, { useEffect, useState } from "react";
 import {
     Alert,
@@ -23,11 +26,69 @@ import {
     TextInput,
     View,
 } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+    FadeInDown,
+    interpolateColor,
+    LinearTransition,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// ═══════════════════════════════════════════════════════════════════
+// 🎨 VANTA-AETHER DESIGN TOKENS
+// ═══════════════════════════════════════════════════════════════════
+const VANTA = {
+  black: "#000000",
+  obsidian: "#0a0a0a",
+  obsidianLight: "#1a1a1a",
+  titanium: "#111111",
+  carbon: "#1c1c1c",
+  gold: "#f4c025",
+  goldGlow: "rgba(244, 192, 37, 0.6)",
+  goldSubtle: "rgba(244, 192, 37, 0.15)",
+  success: "#22c55e",
+  successSubtle: "rgba(34, 197, 94, 0.15)",
+  danger: "#ef4444",
+  dangerSubtle: "rgba(239, 68, 68, 0.15)",
+  warning: "#f59e0b",
+  warningSubtle: "rgba(245, 158, 11, 0.15)",
+  textPrimary: "#ffffff",
+  textSecondary: "rgba(255, 255, 255, 0.6)",
+  textMuted: "rgba(255, 255, 255, 0.4)",
+  light: {
+    background: "#fafafa",
+    surface: "#ffffff",
+    gold: "#d4a017",
+    text: "#1a1a1a",
+    textSecondary: "rgba(0, 0, 0, 0.6)",
+    textMuted: "rgba(0, 0, 0, 0.4)",
+    border: "rgba(0, 0, 0, 0.08)",
+  },
+};
+
+function getColors(isDark: boolean) {
+  return {
+    background: isDark ? VANTA.black : VANTA.light.background,
+    surface: isDark ? VANTA.obsidianLight : VANTA.light.surface,
+    surfaceCard: isDark ? VANTA.titanium : VANTA.light.surface,
+    gold: isDark ? VANTA.gold : VANTA.light.gold,
+    text: isDark ? VANTA.textPrimary : VANTA.light.text,
+    textSecondary: isDark ? VANTA.textSecondary : VANTA.light.textSecondary,
+    textMuted: isDark ? VANTA.textMuted : VANTA.light.textMuted,
+    border: isDark ? "rgba(255, 255, 255, 0.08)" : VANTA.light.border,
+    success: VANTA.success,
+    successSubtle: VANTA.successSubtle,
+    danger: VANTA.danger,
+    dangerSubtle: VANTA.dangerSubtle,
+    warning: VANTA.warning,
+    warningSubtle: VANTA.warningSubtle,
+  };
+}
+
 // Common options
-const CONDITIONS = ["New", "Like New", "Good", "Fair", "Poor"] as const;
+const CONDITIONS = ["new", "likeNew", "veryGood", "good", "fair"] as const;
 const ITEM_TYPES = [
   "Clothing",
   "Shoes",
@@ -38,17 +99,166 @@ const ITEM_TYPES = [
 ] as const;
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "One Size", "N/A"] as const;
 const STATUS_OPTIONS = [
-  { id: "STOCK", label: "En stock", color: "success" },
-  { id: "SOLD", label: "Vendu", color: "primary" },
-  { id: "RESERVED", label: "Réservé", color: "warning" },
+  { id: "STOCK", labelKey: "items.status.stock", color: "success" },
+  { id: "SOLD", labelKey: "items.status.sold", color: "primary" },
+  { id: "RESERVED", labelKey: "items.status.reserved", color: "warning" },
 ] as const;
+
+/**
+ * 🎨 Animated Chip Component - Premium Selection
+ */
+function AnimatedChip({
+  label,
+  isSelected,
+  onPress,
+  colors,
+}: {
+  label: string;
+  isSelected: boolean;
+  onPress: () => void;
+  colors: ReturnType<typeof getColors>;
+  small?: boolean;
+}) {
+  const scale = useSharedValue(1);
+  const progress = useSharedValue(isSelected ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withSpring(
+      isSelected ? 1 : 0,
+      ReanimatedSpring.responsive,
+    );
+  }, [isSelected]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [colors.surface, colors.gold],
+    ),
+    borderColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [colors.border, colors.gold],
+    ),
+  }));
+
+  const textStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(progress.value, [0, 1], [colors.textMuted, "#FFF"]),
+  }));
+
+  return (
+    <MotiPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.92, ReanimatedSpring.responsive);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, ReanimatedSpring.bouncy);
+      }}
+    >
+      <Animated.View style={[styles.chip, animatedStyle]}>
+        <Animated.Text style={[styles.chipText, textStyle]}>
+          {label}
+        </Animated.Text>
+      </Animated.View>
+    </MotiPressable>
+  );
+}
+
+/**
+ * 🎨 Animated Status Button - Premium Selection
+ */
+function AnimatedStatusButton({
+  id,
+  label,
+  colorType,
+  isSelected,
+  onPress,
+  colors,
+}: {
+  id: string;
+  label: string;
+  colorType: "success" | "primary" | "warning";
+  isSelected: boolean;
+  onPress: () => void;
+  colors: ReturnType<typeof getColors>;
+  t?: (key: string) => string;
+}) {
+  const scale = useSharedValue(1);
+  const progress = useSharedValue(isSelected ? 1 : 0);
+
+  const statusColor =
+    colorType === "success"
+      ? colors.success
+      : colorType === "warning"
+        ? colors.warning
+        : colors.gold;
+
+  useEffect(() => {
+    progress.value = withSpring(
+      isSelected ? 1 : 0,
+      ReanimatedSpring.responsive,
+    );
+  }, [isSelected]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [colors.surface, statusColor + "20"],
+    ),
+    borderColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [colors.border, statusColor],
+    ),
+  }));
+
+  const dotStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: progress.value * 0.4 + 0.6 }],
+  }));
+
+  const textStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(
+      progress.value,
+      [0, 1],
+      [colors.textMuted, statusColor],
+    ),
+  }));
+
+  return (
+    <MotiPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.95, ReanimatedSpring.responsive);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, ReanimatedSpring.bouncy);
+      }}
+      style={{ flex: 1 }}
+    >
+      <Animated.View style={[styles.statusButton, animatedStyle]}>
+        <Animated.View
+          style={[styles.statusDot, { backgroundColor: statusColor }, dotStyle]}
+        />
+        <Animated.Text style={[styles.statusText, textStyle]}>
+          {label}
+        </Animated.Text>
+      </Animated.View>
+    </MotiPressable>
+  );
+}
 
 export default function EditItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme() ?? "dark";
-  const theme = Theme[colorScheme];
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = getColors(isDark);
   const queryClient = useQueryClient();
+  const { t } = useLocale();
 
   // Form state
   const [brand, setBrand] = useState("");
@@ -130,7 +340,7 @@ export default function EditItemScreen() {
 
   const handleUpdate = async () => {
     if (!unitCost || parseFloat(unitCost) < 0) {
-      Alert.alert("Missing Info", "Please enter a valid cost");
+      Alert.alert(t("errors.validation"), t("lots.validation.validCost"));
       return;
     }
 
@@ -148,79 +358,183 @@ export default function EditItemScreen() {
         photos: JSON.stringify(photos),
       });
 
-      Alert.alert("Success! ✅", "Item updated successfully!", [
+      Alert.alert(t("common.success") + " ✅", t("lots.updatedSuccess"), [
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (e) {
       console.error(e);
-      Alert.alert("Error", "Could not update the item.");
+      Alert.alert(t("common.error"), t("errors.saveFailed"));
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      "Delete Item",
-      "Are you sure you want to delete this item? This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteItem.mutateAsync();
-              Alert.alert("Deleted", "Item has been deleted.");
-            } catch (e) {
-              console.error(e);
-              Alert.alert("Error", "Could not delete the item.");
-            }
-          },
+    Alert.alert(t("items.deleteItem"), t("items.confirmDelete"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("common.delete"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteItem.mutateAsync();
+            Alert.alert(t("common.success"), t("lots.deletedSuccess"));
+          } catch (e) {
+            console.error(e);
+            Alert.alert(t("common.error"), t("errors.deleteFailed"));
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
-  // Loading state
+  // Loading state - Premium animated skeletons
   if (itemQuery.isLoading) {
     return (
       <View
-        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
       >
-        <ShimmerSkeleton width={200} height={100} borderRadius={Radius.xl} />
-        <Text
-          style={[
-            Typography.body.sm,
-            { color: theme.textMuted, marginTop: Spacing.md },
-          ]}
+        <MotiView
+          from={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "timing", duration: 400 }}
+          style={styles.loadingContent}
         >
-          Chargement de l'article...
+          {/* Header skeleton */}
+          <View style={styles.skeletonHeader}>
+            <AnimatedSkeleton
+              width={56}
+              height={56}
+              borderRadius={12}
+              delay={0}
+            />
+            <View style={{ gap: 6 }}>
+              <AnimatedSkeleton
+                width={80}
+                height={14}
+                borderRadius={4}
+                delay={50}
+              />
+              <AnimatedSkeleton
+                width={120}
+                height={20}
+                borderRadius={4}
+                delay={100}
+              />
+            </View>
+          </View>
+
+          {/* Photos skeleton */}
+          <View style={{ marginTop: 24 }}>
+            <AnimatedSkeleton
+              width={60}
+              height={14}
+              borderRadius={4}
+              delay={150}
+            />
+            <View style={[styles.skeletonPhotos, { marginTop: 12 }]}>
+              {[0, 1, 2].map((i) => (
+                <AnimatedSkeleton
+                  key={i}
+                  width={80}
+                  height={80}
+                  borderRadius={12}
+                  delay={200 + i * 50}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Fields skeleton */}
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={{ marginTop: 24 }}>
+              <AnimatedSkeleton
+                width={80}
+                height={14}
+                borderRadius={4}
+                delay={350 + i * 100}
+              />
+              <AnimatedSkeleton
+                width="100%"
+                height={48}
+                borderRadius={12}
+                delay={400 + i * 100}
+                style={{ marginTop: 12 }}
+              />
+            </View>
+          ))}
+        </MotiView>
+
+        <Text
+          style={{
+            fontFamily: "Manrope_400Regular",
+            fontSize: 14,
+            color: colors.textMuted,
+            marginTop: 24,
+          }}
+        >
+          {t("common.loading")}
         </Text>
       </View>
     );
   }
 
-  // Error state
+  // Error state - Animated
   if (!itemQuery.data) {
     return (
       <View
-        style={[styles.errorContainer, { backgroundColor: theme.background }]}
+        style={[styles.errorContainer, { backgroundColor: colors.background }]}
       >
-        <View
-          style={[styles.errorIcon, { backgroundColor: theme.dangerSubtle }]}
+        <MotiView
+          from={{ opacity: 0, scale: 0.8, translateY: 20 }}
+          animate={{ opacity: 1, scale: 1, translateY: 0 }}
+          transition={{ type: "spring", damping: 15 }}
         >
-          <AppIcon name="error-outline" size={40} color={theme.danger} />
-        </View>
-        <Text style={[Typography.heading.md, { color: theme.text }]}>
-          Item Not Found
-        </Text>
-        <Button
-          variant="ghost"
-          size="md"
+          <View
+            style={[styles.errorIcon, { backgroundColor: colors.dangerSubtle }]}
+          >
+            <AppIcon name="error-outline" size={40} color={colors.danger} />
+          </View>
+        </MotiView>
+        <MotiView
+          from={{ opacity: 0, translateY: 10 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 400, delay: 200 }}
+        >
+          <Text
+            style={{
+              fontFamily: "Manrope_700Bold",
+              fontSize: 20,
+              color: colors.text,
+              textAlign: "center",
+            }}
+          >
+            {t("errors.notFound")}
+          </Text>
+        </MotiView>
+        <Pressable
           onPress={() => router.back()}
-          style={{ marginTop: Spacing.xl }}
+          style={({ pressed }) => ({
+            marginTop: 24,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            borderRadius: 12,
+            borderWidth: 1.5,
+            borderColor: colors.border,
+            opacity: pressed ? 0.7 : 1,
+          })}
         >
-          Go Back
-        </Button>
+          <Text
+            style={{
+              fontFamily: "Manrope_600SemiBold",
+              fontSize: 16,
+              color: colors.text,
+            }}
+          >
+            {t("common.back")}
+          </Text>
+        </Pressable>
       </View>
     );
   }
@@ -230,17 +544,17 @@ export default function EditItemScreen() {
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <Stack.Screen
         options={{
-          title: "Edit Item",
-          headerStyle: { backgroundColor: theme.background },
-          headerTintColor: theme.text,
+          title: t("items.editItem"),
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerShadowVisible: false,
           headerLeft: () => (
             <Pressable onPress={() => router.back()} hitSlop={8}>
-              <AppIcon name="close" size={24} color={theme.text} />
+              <AppIcon name="close" size={24} color={colors.text} />
             </Pressable>
           ),
           headerRight: () => (
@@ -248,13 +562,13 @@ export default function EditItemScreen() {
               <AppIcon
                 name="cancel"
                 size={24}
-                color={isDeleting ? theme.textMuted : theme.danger}
+                color={isDeleting ? colors.textMuted : colors.danger}
               />
             </Pressable>
           ),
         }}
       />
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <StatusBar style={isDark ? "light" : "dark"} />
 
       <ScrollView
         contentContainerStyle={[
@@ -270,15 +584,27 @@ export default function EditItemScreen() {
           style={styles.itemHeader}
         >
           <View
-            style={[styles.itemIcon, { backgroundColor: theme.primaryMuted }]}
+            style={[styles.itemIcon, { backgroundColor: VANTA.goldSubtle }]}
           >
-            <AppIcon name="checkroom" size={28} color={theme.primary} />
+            <AppIcon name="checkroom" size={28} color={colors.gold} />
           </View>
           <View style={styles.itemInfo}>
-            <Text style={[Typography.body.sm, { color: theme.textMuted }]}>
+            <Text
+              style={{
+                fontFamily: "Manrope_400Regular",
+                fontSize: 14,
+                color: colors.textMuted,
+              }}
+            >
               Lot #{item.lotId}
             </Text>
-            <Text style={[Typography.heading.sm, { color: theme.text }]}>
+            <Text
+              style={{
+                fontFamily: "Manrope_700Bold",
+                fontSize: 18,
+                color: colors.text,
+              }}
+            >
               Item #{item.id}
             </Text>
           </View>
@@ -289,7 +615,9 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(75).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Photos</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("items.photos")}
+          </Text>
           <ItemPhotoPicker
             photos={photos}
             onPhotosChange={setPhotos}
@@ -302,55 +630,47 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(100).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Brand</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("items.brand")}
+          </Text>
           <TextInput
             style={[
               styles.textInput,
               {
-                backgroundColor: theme.surface,
-                color: theme.text,
-                borderColor: theme.border,
+                backgroundColor: colors.surface,
+                color: colors.text,
+                borderColor: colors.border,
               },
             ]}
             value={brand}
             onChangeText={setBrand}
             placeholder="e.g., Nike, Levi's, Zara..."
-            placeholderTextColor={theme.textMuted}
+            placeholderTextColor={colors.textMuted}
           />
         </Animated.View>
 
         {/* Type */}
         <Animated.View
           entering={FadeInDown.delay(150).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Type</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("items.type")}
+          </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.chipContainer}
           >
-            {ITEM_TYPES.map((t) => (
-              <Pressable
-                key={t}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: type === t ? theme.primary : theme.surface,
-                    borderColor: type === t ? theme.primary : theme.border,
-                  },
-                ]}
-                onPress={() => setType(t)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    { color: type === t ? "#FFF" : theme.textMuted },
-                  ]}
-                >
-                  {t}
-                </Text>
-              </Pressable>
+            {ITEM_TYPES.map((itemType) => (
+              <AnimatedChip
+                key={itemType}
+                label={itemType}
+                isSelected={type === itemType}
+                onPress={() => setType(itemType)}
+                colors={colors}
+              />
             ))}
           </ScrollView>
         </Animated.View>
@@ -360,56 +680,47 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(200).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Color</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("items.color")}
+          </Text>
           <TextInput
             style={[
               styles.textInput,
               {
-                backgroundColor: theme.surface,
-                color: theme.text,
-                borderColor: theme.border,
+                backgroundColor: colors.surface,
+                color: colors.text,
+                borderColor: colors.border,
               },
             ]}
             value={color}
             onChangeText={setColor}
             placeholder="e.g., Black, Navy Blue..."
-            placeholderTextColor={theme.textMuted}
+            placeholderTextColor={colors.textMuted}
           />
         </Animated.View>
 
         {/* Size */}
         <Animated.View
           entering={FadeInDown.delay(250).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Size</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("items.size")}
+          </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.chipContainer}
           >
             {SIZES.map((s) => (
-              <Pressable
+              <AnimatedChip
                 key={s}
-                style={[
-                  styles.chip,
-                  styles.chipSmall,
-                  {
-                    backgroundColor: size === s ? theme.primary : theme.surface,
-                    borderColor: size === s ? theme.primary : theme.border,
-                  },
-                ]}
+                label={s}
+                isSelected={size === s}
                 onPress={() => setSize(s)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    { color: size === s ? "#FFF" : theme.textMuted },
-                  ]}
-                >
-                  {s}
-                </Text>
-              </Pressable>
+                colors={colors}
+              />
             ))}
           </ScrollView>
         </Animated.View>
@@ -417,10 +728,11 @@ export default function EditItemScreen() {
         {/* Condition */}
         <Animated.View
           entering={FadeInDown.delay(300).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
-            Condition
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("items.condition")}
           </Text>
           <ScrollView
             horizontal
@@ -428,27 +740,13 @@ export default function EditItemScreen() {
             contentContainerStyle={styles.chipContainer}
           >
             {CONDITIONS.map((c) => (
-              <Pressable
+              <AnimatedChip
                 key={c}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor:
-                      condition === c ? theme.primary : theme.surface,
-                    borderColor: condition === c ? theme.primary : theme.border,
-                  },
-                ]}
+                label={t(`items.conditions.${c}`)}
+                isSelected={condition === c}
                 onPress={() => setCondition(c)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    { color: condition === c ? "#FFF" : theme.textMuted },
-                  ]}
-                >
-                  {c}
-                </Text>
-              </Pressable>
+                colors={colors}
+              />
             ))}
           </ScrollView>
         </Animated.View>
@@ -458,25 +756,25 @@ export default function EditItemScreen() {
           entering={FadeInDown.delay(350).duration(400)}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>
-            Unit Cost
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("items.unitCost")}
           </Text>
           <View
             style={[
               styles.currencyInput,
-              { backgroundColor: theme.surface, borderColor: theme.border },
+              { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Text style={[styles.currencySymbol, { color: theme.primary }]}>
+            <Text style={[styles.currencySymbol, { color: colors.gold }]}>
               €
             </Text>
             <TextInput
-              style={[styles.currencyValue, { color: theme.text }]}
+              style={[styles.currencyValue, { color: colors.text }]}
               value={unitCost}
               onChangeText={setUnitCost}
               keyboardType="decimal-pad"
               placeholder="0.00"
-              placeholderTextColor={theme.textMuted}
+              placeholderTextColor={colors.textMuted}
             />
           </View>
         </Animated.View>
@@ -484,67 +782,60 @@ export default function EditItemScreen() {
         {/* Status */}
         <Animated.View
           entering={FadeInDown.delay(400).duration(400)}
+          layout={LinearTransition.springify()}
           style={styles.section}
         >
-          <Text style={[styles.label, { color: theme.textMuted }]}>Status</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>
+            {t("items.statusLabel")}
+          </Text>
           <View style={styles.statusContainer}>
-            {STATUS_OPTIONS.map((s) => {
-              const statusColor =
-                s.color === "success"
-                  ? theme.success
-                  : s.color === "warning"
-                    ? theme.warning
-                    : theme.primary;
-              return (
-                <Pressable
-                  key={s.id}
-                  style={[
-                    styles.statusButton,
-                    {
-                      backgroundColor:
-                        status === s.id ? statusColor + "20" : theme.surface,
-                      borderColor: status === s.id ? statusColor : theme.border,
-                    },
-                  ]}
-                  onPress={() => setStatus(s.id)}
-                >
-                  <View
-                    style={[styles.statusDot, { backgroundColor: statusColor }]}
-                  />
-                  <Text
-                    style={[
-                      styles.statusText,
-                      {
-                        color: status === s.id ? statusColor : theme.textMuted,
-                      },
-                    ]}
-                  >
-                    {s.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            {STATUS_OPTIONS.map((s) => (
+              <AnimatedStatusButton
+                key={s.id}
+                id={s.id}
+                label={t(s.labelKey)}
+                colorType={s.color}
+                isSelected={status === s.id}
+                onPress={() => setStatus(s.id)}
+                colors={colors}
+              />
+            ))}
           </View>
         </Animated.View>
       </ScrollView>
 
       {/* Sticky CTA */}
       <View
-        style={[
-          styles.ctaContainer,
-          { paddingBottom: insets.bottom + Spacing.lg },
-        ]}
+        style={[styles.ctaContainer, { paddingBottom: insets.bottom + 20 }]}
       >
-        <Button
-          variant="primary"
-          size="lg"
+        <Pressable
           onPress={handleUpdate}
           disabled={isSubmitting}
-          icon={<AppIcon name="check-circle" size={20} color="#FFF" />}
-          style={styles.ctaButton}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            backgroundColor: isSubmitting ? colors.textMuted : colors.gold,
+            paddingVertical: 16,
+            paddingHorizontal: 24,
+            borderRadius: 16,
+            borderCurve: "continuous",
+            opacity: pressed ? 0.9 : 1,
+            transform: [{ scale: pressed ? 0.98 : 1 }],
+          })}
         >
-          {isSubmitting ? "Updating..." : "Save Changes"}
-        </Button>
+          <AppIcon name="check-circle" size={20} color="#FFF" />
+          <Text
+            style={{
+              fontFamily: "Manrope_700Bold",
+              fontSize: 17,
+              color: "#FFF",
+            }}
+          >
+            {isSubmitting ? t("lots.updating") : t("common.save")}
+          </Text>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
@@ -558,125 +849,141 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: Spacing.xl,
+    padding: 24,
+  },
+  loadingContent: {
+    width: "100%",
+    maxWidth: 360,
+  },
+  skeletonHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  skeletonPhotos: {
+    flexDirection: "row",
+    gap: 12,
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: Spacing.xl,
+    padding: 24,
   },
   errorIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.lg,
+    marginBottom: 20,
+    borderCurve: "continuous",
   },
   content: {
-    padding: Spacing.xl,
+    padding: 24,
   },
   itemHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    gap: 16,
+    marginBottom: 24,
   },
   itemIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: Radius.md,
+    width: 64,
+    height: 64,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+    borderCurve: "continuous",
   },
   itemInfo: {
     flex: 1,
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: 24,
   },
   label: {
+    fontFamily: "Manrope_600SemiBold",
     fontSize: 14,
-    fontWeight: "600",
-    marginBottom: Spacing.sm,
+    marginBottom: 12,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   textInput: {
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    fontSize: 16,
+    fontFamily: "Manrope_400Regular",
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 16,
+    fontSize: 17,
+    borderCurve: "continuous",
   },
   chipContainer: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    flexWrap: "wrap",
+    gap: 12,
   },
   chip: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  chipSmall: {
-    paddingHorizontal: Spacing.sm,
-    minWidth: 44,
-    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderCurve: "continuous",
   },
   chipText: {
+    fontFamily: "Manrope_600SemiBold",
     fontSize: 14,
-    fontWeight: "600",
+    letterSpacing: 0.3,
   },
   currencyInput: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
+    borderWidth: 1.5,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    borderCurve: "continuous",
   },
   currencySymbol: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginRight: Spacing.xs,
+    fontFamily: "Manrope_700Bold",
+    fontSize: 22,
+    marginRight: 10,
   },
   currencyValue: {
+    fontFamily: "Manrope_600SemiBold",
     flex: 1,
-    fontSize: 20,
-    fontWeight: "600",
-    paddingVertical: Spacing.md,
+    fontSize: 22,
+    paddingVertical: 16,
   },
   statusContainer: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: 14,
   },
   statusButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.xs,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderCurve: "continuous",
+    minHeight: 56,
   },
   statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   statusText: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontFamily: "Manrope_600SemiBold",
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
   ctaContainer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    padding: Spacing.lg,
-  },
-  ctaButton: {
-    width: "100%",
+    padding: 20,
   },
 });

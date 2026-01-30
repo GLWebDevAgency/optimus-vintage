@@ -1,34 +1,38 @@
 /**
- * 📦 STOCK SCREEN - Ultra Premium Edition
- * Premium inventory management with world-class animations
+ * 📦 STOCK SCREEN - Vanta-Aether Architecture
+ * "Digital Architecture evolving in infinite spatial void"
+ *
+ * v4.0 - Netflix-style Carousel by Lot with Visibility Controller
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { Button, Card, Chip } from "@/components/ui/Components";
-import {
-    PremiumScreen,
-    usePremiumTheme,
-    type PremiumTheme,
-} from "@/components/ui/PremiumUI";
+import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing, Typography } from "@/constants/Theme";
-import { Item, ItemsRepository, LotsRepository } from "@/db/repositories";
+import {
+    CarouselItem,
+    LotVisibilityController,
+    LotVisibilityItem,
+    MonolithCard,
+    NetflixCarousel,
+    VantaSectionHeader,
+} from "@/components/ui/VantaComponents";
+import { Palette, Radius, Spacing } from "@/constants/Theme";
+import { Item, ItemsRepository, Lot, LotsRepository } from "@/db/repositories";
+import { useAccessibility } from "@/utils/accessibility";
+import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
+import { useLocale } from "@/utils/i18n";
 import { useQuery } from "@tanstack/react-query";
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
+import type { TFunction } from "i18next";
 import React, {
     useCallback,
     useEffect,
     useMemo,
-    useRef,
-    useState,
+    useState
 } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
     Keyboard,
     LayoutAnimation,
     Pressable,
@@ -38,10 +42,24 @@ import {
     Text,
     TextInput,
     UIManager,
-    View,
+    View
 } from "react-native";
-import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
+import Animated, {
+    FadeIn,
+    FadeInDown,
+    FadeOut,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Gravity-based spring physics
+const SPRING_GRAVITY = {
+  damping: 22,
+  stiffness: 180,
+  mass: 1.2,
+};
 
 const isAndroid = process.env.EXPO_OS === "android";
 
@@ -50,10 +68,40 @@ if (isAndroid && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🌌 OBSIDIAN BLOCK - Base Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function ObsidianBlock({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: any;
+}) {
+  const theme = useVantaTheme();
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: theme.surface,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: theme.borderGlass,
+          borderCurve: "continuous",
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+
 // ============ TYPES ============
 
 type SortOption = "newest" | "oldest" | "cost_high" | "cost_low" | "lot";
-type ViewMode = "list" | "compact" | "grid";
+type ViewMode = "list" | "compact" | "grid"; // Kept for ItemCard compatibility
 
 interface StockStats {
   totalItems: number;
@@ -62,19 +110,34 @@ interface StockStats {
   lotsCount: number;
 }
 
+interface LotCarouselData {
+  lot: Lot;
+  items: Item[];
+}
+
 // ============ CONSTANTS ============
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_CAROUSEL = 10; // Items shown per lot carousel
 const ANIMATION_STAGGER = 30; // ms between each item animation
 const MAX_ANIMATED_ITEMS = 10; // Only animate first N items for performance
 
-const SORT_OPTIONS: { key: SortOption; label: string; icon: string }[] = [
-  { key: "newest", label: "Récent", icon: "schedule" },
-  { key: "oldest", label: "Ancien", icon: "history" },
-  { key: "cost_high", label: "Prix ↓", icon: "trending-down" },
-  { key: "cost_low", label: "Prix ↑", icon: "trending-up" },
-  { key: "lot", label: "Par Lot", icon: "inventory-2" },
+const SORT_OPTIONS_KEYS: { key: SortOption; icon: string }[] = [
+  { key: "newest", icon: "schedule" },
+  { key: "oldest", icon: "history" },
+  { key: "cost_high", icon: "trending-down" },
+  { key: "cost_low", icon: "trending-up" },
+  { key: "lot", icon: "inventory-2" },
 ];
+
+// Helper to get translated sort options
+function getSortOptions(t: TFunction) {
+  return SORT_OPTIONS_KEYS.map((option) => ({
+    ...option,
+    label: t(
+      `items.sort.${option.key === "cost_high" ? "costHigh" : option.key === "cost_low" ? "costLow" : option.key === "lot" ? "byLot" : option.key}`,
+    ),
+  }));
+}
 
 // Helper to get first photo from item
 function getItemFirstPhoto(item: Item): string | null {
@@ -87,7 +150,31 @@ function getItemFirstPhoto(item: Item): string | null {
   }
 }
 
-// ============ ITEM CARD COMPONENT ============
+// Helper to normalize brand name (handle "Unknown" or empty)
+function normalizeBrand(
+  brand: string | null | undefined,
+  fallback: string,
+): string {
+  if (!brand || brand.toLowerCase() === "unknown" || brand.trim() === "") {
+    return fallback;
+  }
+  return brand;
+}
+
+// Helper to normalize type name (handle "Clothing" or empty)
+function normalizeType(
+  type: string | null | undefined,
+  fallback: string,
+): string {
+  if (!type || type.toLowerCase() === "clothing" || type.trim() === "") {
+    return fallback;
+  }
+  return type;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📦 VANTA ITEM CARD - Kinetic Card Component
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface ItemCardProps {
   item: Item;
@@ -96,6 +183,18 @@ interface ItemCardProps {
   onPress?: () => void;
   viewMode: ViewMode;
   shouldAnimate: boolean;
+  translations: {
+    unknownBrand: string;
+    defaultType: string;
+    defaultSize: string;
+    conditionNew: string;
+    conditionGood: string;
+    conditionUsed: string;
+    sellLabel: string;
+    sellA11yLabel: string;
+    costLabel: string;
+    openDetailsHint: string;
+  };
 }
 
 const ItemCard = React.memo(function ItemCard({
@@ -105,10 +204,32 @@ const ItemCard = React.memo(function ItemCard({
   onPress,
   viewMode,
   shouldAnimate,
+  translations,
 }: ItemCardProps) {
-  const theme = usePremiumTheme();
+  const theme = useVantaTheme();
+  const isDark = theme.dark;
+  const scale = useSharedValue(1);
   const unitCost = parseFloat(String(item.unitCost));
   const photoUri = getItemFirstPhoto(item);
+
+  // Theme colors
+  const colors = {
+    background: theme.surface,
+    border: theme.borderGlass,
+    text: theme.text,
+    textMuted: theme.textMuted,
+    gold: theme.primary,
+    goldSubtle: theme.primarySubtle,
+  };
+
+  // Normalize values
+  const displayBrand = normalizeBrand(item.brand, translations.unknownBrand);
+  const displayType = normalizeType(item.type, translations.defaultType);
+  const displaySize = item.size || translations.defaultSize;
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   // Grid view for 2-column card layout
   if (viewMode === "grid") {
@@ -119,81 +240,98 @@ const ItemCard = React.memo(function ItemCard({
             ? FadeIn.delay(index * ANIMATION_STAGGER).duration(200)
             : undefined
         }
-        style={styles.gridCardWrapper}
+        style={[styles.gridCardWrapper, animatedStyle]}
       >
         <Pressable
           onPress={onPress}
-          style={({ pressed }) => [
-            styles.gridCard,
-            {
-              backgroundColor: theme.surface,
-              borderColor: theme.borderCard,
-              opacity: pressed ? 0.9 : 1,
-              transform: [{ scale: pressed ? 0.98 : 1 }],
-            },
-          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`${displayBrand}. ${displayType}. ${translations.costLabel}: €${unitCost.toFixed(2)}.`}
+          accessibilityHint={translations.openDetailsHint}
+          onPressIn={() => {
+            scale.value = withSpring(0.97, SPRING_GRAVITY);
+          }}
+          onPressOut={() => {
+            scale.value = withSpring(1, SPRING_GRAVITY);
+          }}
         >
-          {/* Image or placeholder */}
-          <View
-            style={[
-              styles.gridImageContainer,
-              { backgroundColor: theme.surfaceCard },
-            ]}
-          >
-            {photoUri ? (
-              <Image
-                source={{ uri: photoUri }}
-                style={styles.gridImage}
-                contentFit="cover"
-                transition={200}
-              />
-            ) : (
-              <AppIcon name="checkroom" size={32} color={theme.textMuted} />
-            )}
-            {/* Lot badge */}
+          <ObsidianBlock style={{ overflow: "hidden" }}>
+            {/* Image or placeholder */}
             <View
-              style={[styles.gridLotBadge, { backgroundColor: theme.primary }]}
-            >
-              <Text style={styles.gridLotText}>#{item.lotId}</Text>
-            </View>
-          </View>
-
-          {/* Info */}
-          <View style={styles.gridContent}>
-            <Text
               style={[
-                Typography.body.sm,
-                { color: theme.text, fontWeight: "600" },
+                styles.gridImageContainer,
+                {
+                  backgroundColor: theme.surfaceSlab,
+                },
               ]}
-              numberOfLines={1}
             >
-              {item.brand || "Marque inconnue"}
-            </Text>
-            <Text
-              style={[Typography.body.xs, { color: theme.textMuted }]}
-              numberOfLines={1}
-            >
-              {item.type || "Article"} • {item.size || "TU"}
-            </Text>
-
-            <View style={styles.gridFooter}>
-              <Text
-                style={[
-                  Typography.number.sm,
-                  { color: theme.primary, fontWeight: "700" },
-                ]}
+              {photoUri ? (
+                <Image
+                  source={{ uri: photoUri }}
+                  style={styles.gridImage}
+                  contentFit="cover"
+                  transition={200}
+                />
+              ) : (
+                <AppIcon name="checkroom" size={32} color={colors.textMuted} />
+              )}
+              {/* Lot badge */}
+              <View
+                style={[styles.gridLotBadge, { backgroundColor: colors.gold }]}
               >
-                €{unitCost.toFixed(2)}
-              </Text>
-              <Pressable
-                onPress={onSell}
-                hitSlop={8}
-                style={[styles.gridSellBtn, { backgroundColor: theme.primary }]}
-              >
-                <AppIcon name="sell" size={14} color={theme.textOnAccent} />
-              </Pressable>
+                <Text
+                  style={[styles.gridLotText, { color: theme.textOnAccent }]}
+                >
+                  #{item.lotId}
+                </Text>
+              </View>
             </View>
-          </View>
+
+            {/* Info */}
+            <View style={styles.gridContent}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: "Manrope_600SemiBold",
+                  color: colors.text,
+                }}
+                numberOfLines={1}
+              >
+                {displayBrand}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: "Manrope_400Regular",
+                  color: colors.textMuted,
+                }}
+                numberOfLines={1}
+              >
+                {displayType} • {displaySize}
+              </Text>
+
+              <View style={styles.gridFooter}>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontFamily: "Manrope_700Bold",
+                    color: colors.gold,
+                  }}
+                >
+                  €{unitCost.toFixed(2)}
+                </Text>
+                <Pressable
+                  onPress={onSell}
+                  hitSlop={8}
+                  style={[styles.gridSellBtn, { backgroundColor: colors.gold }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={translations.sellA11yLabel}
+                  accessibilityHint={translations.sellA11yLabel}
+                >
+                  <AppIcon name="sell" size={14} color={theme.textOnAccent} />
+                </Pressable>
+              </View>
+            </View>
+          </ObsidianBlock>
         </Pressable>
       </Animated.View>
     );
@@ -208,72 +346,98 @@ const ItemCard = React.memo(function ItemCard({
             ? FadeIn.delay(index * ANIMATION_STAGGER).duration(200)
             : undefined
         }
+        style={animatedStyle}
       >
         <Pressable
           onPress={onPress}
-          style={({ pressed }) => [
-            styles.compactCard,
-            {
-              backgroundColor: theme.surface,
-              borderColor: theme.borderCard,
-              opacity: pressed ? 0.9 : 1,
-            },
-          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`${displayBrand}. ${displayType}. ${translations.costLabel}: €${unitCost.toFixed(2)}.`}
+          accessibilityHint={translations.openDetailsHint}
+          onPressIn={() => {
+            scale.value = withSpring(0.98, SPRING_GRAVITY);
+          }}
+          onPressOut={() => {
+            scale.value = withSpring(1, SPRING_GRAVITY);
+          }}
         >
-          <View
-            style={[
-              styles.compactIcon,
-              { backgroundColor: theme.surfaceCard, overflow: "hidden" },
-            ]}
+          <ObsidianBlock
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingVertical: 12,
+              paddingHorizontal: 14,
+            }}
           >
-            {photoUri ? (
-              <Image
-                source={{ uri: photoUri }}
-                style={{ width: "100%", height: "100%" }}
-                contentFit="cover"
-              />
-            ) : (
-              <AppIcon name="checkroom" size={18} color={theme.textMuted} />
-            )}
-          </View>
-
-          <View style={styles.compactInfo}>
-            <Text
+            <View
               style={[
-                Typography.body.sm,
-                { color: theme.text, fontWeight: "600" },
+                styles.compactIcon,
+                {
+                  backgroundColor: theme.surfaceSlab,
+                  overflow: "hidden",
+                },
               ]}
-              numberOfLines={1}
             >
-              {item.brand || "Marque"} • {item.type || "Article"}
-            </Text>
-            <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-              Lot #{item.lotId} • {item.size || "TU"}
-            </Text>
-          </View>
+              {photoUri ? (
+                <Image
+                  source={{ uri: photoUri }}
+                  style={{ width: "100%", height: "100%" }}
+                  contentFit="cover"
+                />
+              ) : (
+                <AppIcon name="checkroom" size={18} color={colors.textMuted} />
+              )}
+            </View>
 
-          <Text
-            style={[
-              Typography.number.sm,
-              { color: theme.primary, marginRight: Spacing.md },
-            ]}
-          >
-            €{unitCost.toFixed(2)}
-          </Text>
+            <View style={styles.compactInfo}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: "Manrope_600SemiBold",
+                  color: colors.text,
+                }}
+                numberOfLines={1}
+              >
+                {displayBrand} • {displayType}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: "Manrope_400Regular",
+                  color: colors.textMuted,
+                }}
+              >
+                Lot #{item.lotId} • {displaySize}
+              </Text>
+            </View>
 
-          <Pressable
-            onPress={onSell}
-            hitSlop={8}
-            style={[styles.compactSellBtn, { backgroundColor: theme.primary }]}
-          >
-            <AppIcon name="sell" size={14} color={theme.textOnAccent} />
-          </Pressable>
+            <Text
+              style={{
+                fontSize: 15,
+                fontFamily: "Manrope_700Bold",
+                color: colors.gold,
+                marginRight: 12,
+              }}
+            >
+              €{unitCost.toFixed(2)}
+            </Text>
+
+            <Pressable
+              onPress={onSell}
+              hitSlop={8}
+              style={[styles.compactSellBtn, { backgroundColor: colors.gold }]}
+              accessibilityRole="button"
+              accessibilityLabel={translations.sellA11yLabel}
+              accessibilityHint={translations.sellA11yLabel}
+            >
+              <AppIcon name="sell" size={14} color={theme.textOnAccent} />
+            </Pressable>
+          </ObsidianBlock>
         </Pressable>
       </Animated.View>
     );
   }
 
-  // Full card view
+  // Full card view (list mode)
   return (
     <Animated.View
       entering={
@@ -281,16 +445,33 @@ const ItemCard = React.memo(function ItemCard({
           ? FadeInDown.delay(index * ANIMATION_STAGGER).duration(300)
           : undefined
       }
+      style={animatedStyle}
     >
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
+        accessibilityRole="button"
+        accessibilityLabel={`${displayBrand}. ${displayType}. ${translations.costLabel}: €${unitCost.toFixed(2)}.`}
+        accessibilityHint={translations.openDetailsHint}
+        onPressIn={() => {
+          scale.value = withSpring(0.98, SPRING_GRAVITY);
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, SPRING_GRAVITY);
+        }}
       >
-        <Card variant="default" style={styles.itemCard}>
+        <ObsidianBlock
+          style={{
+            flexDirection: "row",
+            padding: 16,
+          }}
+        >
           <View
             style={[
               styles.imageContainer,
-              { backgroundColor: theme.surfaceCard, overflow: "hidden" },
+              {
+                backgroundColor: theme.surfaceSlab,
+                overflow: "hidden",
+              },
             ]}
           >
             {photoUri ? (
@@ -301,44 +482,58 @@ const ItemCard = React.memo(function ItemCard({
                 transition={200}
               />
             ) : (
-              <AppIcon name="checkroom" size={28} color={theme.textMuted} />
+              <AppIcon name="checkroom" size={28} color={colors.textMuted} />
             )}
             {/* Lot indicator */}
             <View
-              style={[styles.lotIndicator, { backgroundColor: theme.primary }]}
+              style={[styles.lotIndicator, { backgroundColor: colors.gold }]}
             >
-              <Text style={styles.lotIndicatorText}>#{item.lotId}</Text>
+              <Text
+                style={[styles.lotIndicatorText, { color: theme.textOnAccent }]}
+              >
+                #{item.lotId}
+              </Text>
             </View>
           </View>
 
           <View style={styles.cardContent}>
             <View style={styles.cardInfo}>
               <Text
-                style={[Typography.heading.xs, { color: theme.text }]}
+                style={{
+                  fontSize: 16,
+                  fontFamily: "Manrope_700Bold",
+                  color: colors.text,
+                }}
                 numberOfLines={1}
               >
-                {item.brand || "Marque inconnue"}
+                {displayBrand}
               </Text>
               <Text
-                style={[Typography.body.xs, { color: theme.textMuted }]}
+                style={{
+                  fontSize: 13,
+                  fontFamily: "Manrope_400Regular",
+                  color: colors.textMuted,
+                  marginTop: 2,
+                }}
                 numberOfLines={1}
               >
-                {item.type || "Vêtement"} {item.color ? `• ${item.color}` : ""}
+                {displayType} {item.color ? `• ${item.color}` : ""}
               </Text>
               <View style={styles.metaRow}>
                 <View
                   style={[
                     styles.sizeBadge,
-                    { backgroundColor: theme.surfaceCard },
+                    { backgroundColor: colors.goldSubtle },
                   ]}
                 >
                   <Text
-                    style={[
-                      Typography.label.xs,
-                      { color: theme.textSecondary },
-                    ]}
+                    style={{
+                      fontSize: 11,
+                      fontFamily: "Manrope_600SemiBold",
+                      color: colors.gold,
+                    }}
                   >
-                    {item.size || "TU"}
+                    {displaySize}
                   </Text>
                 </View>
                 <View
@@ -350,78 +545,164 @@ const ItemCard = React.memo(function ItemCard({
                           ? theme.success
                           : item.condition === "Good"
                             ? theme.warning
-                            : theme.textMuted,
+                            : colors.textMuted,
                     },
                   ]}
                 />
-                <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontFamily: "Manrope_400Regular",
+                    color: colors.textMuted,
+                  }}
+                >
                   {item.condition === "New"
-                    ? "Neuf"
+                    ? translations.conditionNew
                     : item.condition === "Good"
-                      ? "Bon"
-                      : "Usé"}
+                      ? translations.conditionGood
+                      : translations.conditionUsed}
                 </Text>
               </View>
               <View
-                style={[
-                  styles.costTag,
-                  { backgroundColor: theme.primarySubtle },
-                ]}
+                style={[styles.costTag, { backgroundColor: colors.goldSubtle }]}
               >
-                <Text style={[Typography.label.xs, { color: theme.primary }]}>
-                  Coût: €{unitCost.toFixed(2)}
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontFamily: "Manrope_600SemiBold",
+                    color: colors.gold,
+                  }}
+                >
+                  {translations.costLabel}: €{unitCost.toFixed(2)}
                 </Text>
               </View>
             </View>
 
-            <Pressable style={styles.sellButtonWrapper} onPress={onSell}>
+            <Pressable
+              style={styles.sellButtonWrapper}
+              onPress={onSell}
+              accessibilityRole="button"
+              accessibilityLabel={translations.sellA11yLabel}
+              accessibilityHint={translations.sellA11yLabel}
+            >
               <View
-                style={[
-                  styles.sellButton,
-                  {
-                    backgroundColor: theme.primary,
-                  },
-                ]}
+                style={[styles.sellButton, { backgroundColor: colors.gold }]}
               >
                 <AppIcon name="sell" size={16} color={theme.textOnAccent} />
                 <Text
                   style={[styles.sellButtonText, { color: theme.textOnAccent }]}
                 >
-                  Vendre
+                  {translations.sellLabel}
                 </Text>
               </View>
             </Pressable>
           </View>
-        </Card>
+        </ObsidianBlock>
       </Pressable>
     </Animated.View>
   );
 });
 
-// ============ STATS BAR COMPONENT ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📊 VANTA KPI SECTION - Monolith Style
+// ═══════════════════════════════════════════════════════════════════════════════
 
-function StatsBar({
-  stats,
-  theme,
-}: {
-  stats: StockStats;
-  theme: PremiumTheme;
-}) {
+function StatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
+  const theme = useVantaTheme();
+
+  // Barres de visualisation pour le capital
+  const valueBars = [40, 70, 100, 60, 30];
+
+  return (
+    <Animated.View entering={FadeIn.duration(400)} style={styles.kpiSection}>
+      {/* Section Header */}
+      <VantaSectionHeader
+        label={t("dashboard.stats.overview", "Aperçu")}
+        style={{ paddingHorizontal: 0, marginBottom: Spacing.xs }}
+      />
+
+      {/* Première rangée: Articles et Valeur */}
+      <View style={styles.kpiRow}>
+        <MonolithCard
+          icon="inventory"
+          label={t("items.title")}
+          value={stats.totalItems}
+          trend={`${stats.lotsCount} ${t("navigation.lots")}`}
+          trendPositive
+          style={{ flex: 1 }}
+        />
+        <MonolithCard
+          icon="account-balance-wallet"
+          topLabel={t("dashboard.capital", "Capital")}
+          label={t("dashboard.stockValue")}
+          value={`€${stats.totalValue >= 1000 ? (stats.totalValue / 1000).toFixed(1) + "k" : stats.totalValue.toFixed(0)}`}
+          bars={valueBars}
+          style={{ flex: 1 }}
+        />
+      </View>
+
+      {/* Deuxième rangée: Moyenne et Encryption badge */}
+      <View style={styles.kpiRow}>
+        <MonolithCard
+          icon="analytics"
+          label={t("dashboard.stats.avgMargin", "Coût Moyen")}
+          value={`€${stats.avgCost.toFixed(2)}`}
+          trend={t("items.unitCost", "par article")}
+          trendPositive
+          style={{ flex: 1 }}
+        />
+        <MonolithCard
+          icon="lock"
+          topLabel="SECURE"
+          label={t("common.encryption", "Encryption")}
+          value="AES"
+          unit="4096"
+          hashLines
+          style={{ flex: 1 }}
+        />
+      </View>
+    </Animated.View>
+  );
+}
+
+// Legacy stats bar kept for reference
+function _LegacyStatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
+  const theme = useVantaTheme();
+  const colors = {
+    background: theme.surface,
+    border: theme.borderGlass,
+    text: theme.text,
+    textMuted: theme.textMuted,
+    gold: theme.primary,
+  };
+
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.statsBar}>
       <View
         style={[
           styles.statItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
+          { backgroundColor: colors.background, borderColor: colors.border },
         ]}
       >
-        <AppIcon name="inventory" size={16} color={theme.primary} />
+        <AppIcon name="inventory" size={16} color={colors.gold} />
         <View>
-          <Text style={[Typography.number.sm, { color: theme.text }]}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Manrope_700Bold",
+              color: colors.text,
+            }}
+          >
             {stats.totalItems}
           </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Articles
+          <Text
+            style={{
+              fontSize: 11,
+              fontFamily: "Manrope_400Regular",
+              color: colors.textMuted,
+            }}
+          >
+            {t("items.title")}
           </Text>
         </View>
       </View>
@@ -429,7 +710,7 @@ function StatsBar({
       <View
         style={[
           styles.statItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
+          { backgroundColor: colors.background, borderColor: colors.border },
         ]}
       >
         <AppIcon
@@ -438,11 +719,23 @@ function StatsBar({
           color={theme.success}
         />
         <View>
-          <Text style={[Typography.number.sm, { color: theme.success }]}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Manrope_700Bold",
+              color: theme.success,
+            }}
+          >
             €{stats.totalValue.toFixed(0)}
           </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Valeur
+          <Text
+            style={{
+              fontSize: 11,
+              fontFamily: "Manrope_400Regular",
+              color: colors.textMuted,
+            }}
+          >
+            {t("dashboard.stockValue")}
           </Text>
         </View>
       </View>
@@ -450,16 +743,28 @@ function StatsBar({
       <View
         style={[
           styles.statItem,
-          { backgroundColor: theme.surface, borderColor: theme.border },
+          { backgroundColor: colors.background, borderColor: colors.border },
         ]}
       >
         <AppIcon name="analytics" size={16} color={theme.warning} />
         <View>
-          <Text style={[Typography.number.sm, { color: theme.text }]}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Manrope_700Bold",
+              color: colors.text,
+            }}
+          >
             €{stats.avgCost.toFixed(2)}
           </Text>
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            Moy.
+          <Text
+            style={{
+              fontSize: 11,
+              fontFamily: "Manrope_400Regular",
+              color: colors.textMuted,
+            }}
+          >
+            {t("dashboard.stats.avgMargin", "Moy.")}
           </Text>
         </View>
       </View>
@@ -467,34 +772,43 @@ function StatsBar({
   );
 }
 
-// ============ SEARCH BAR COMPONENT ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔍 VANTA SEARCH BAR
+// ═══════════════════════════════════════════════════════════════════════════════
 
 function SearchBar({
   value,
   onChangeText,
   onClear,
-  theme,
+  placeholder,
 }: {
   value: string;
   onChangeText: (text: string) => void;
   onClear: () => void;
-  theme: PremiumTheme;
+  placeholder: string;
 }) {
-  const inputRef = useRef<TextInput>(null);
+  const theme = useVantaTheme();
+  const { t } = useLocale();
+  const colors = {
+    background: theme.surface,
+    border: theme.borderGlass,
+    text: theme.text,
+    textMuted: theme.textMuted,
+  };
 
   return (
     <View
       style={[
         styles.searchContainer,
-        { backgroundColor: theme.surface, borderColor: theme.border },
+        { backgroundColor: colors.background, borderColor: colors.border },
       ]}
     >
-      <AppIcon name="search" size={20} color={theme.textMuted} />
+      <AppIcon name="search" size={20} color={colors.textMuted} />
       <TextInput
-        ref={inputRef}
-        style={[styles.searchInput, { color: theme.text }]}
-        placeholder="Rechercher par marque, type, couleur..."
-        placeholderTextColor={theme.textMuted}
+        style={[styles.searchInput, { color: colors.text }]}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textMuted}
+        accessibilityLabel={placeholder}
         value={value}
         onChangeText={onChangeText}
         returnKeyType="search"
@@ -502,20 +816,44 @@ function SearchBar({
         autoCapitalize="none"
       />
       {value.length > 0 && (
-        <Pressable onPress={onClear} hitSlop={8}>
-          <AppIcon name="close" size={18} color={theme.textMuted} />
+        <Pressable
+          onPress={onClear}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.cancel")}
+          accessibilityHint={t("accessibility.search")}
+        >
+          <AppIcon name="close" size={18} color={colors.textMuted} />
         </Pressable>
       )}
     </View>
   );
 }
 
-// ============ MAIN SCREEN ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📦 MAIN SCREEN - VANTA STOCK
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export default function StockScreen() {
   const insets = useSafeAreaInsets();
-  const theme = usePremiumTheme();
-  const flatListRef = useRef<FlatList>(null);
+  const theme = useVantaTheme();
+  const { isReduceMotionEnabled } = useAccessibility();
+  const { t } = useLocale();
+
+  // Screen tracking
+  useTrackScreen("stock");
+
+  // Vanta theme colors
+  const colors = {
+    background: theme.background,
+    surface: theme.surface,
+    border: theme.borderGlass,
+    text: theme.text,
+    textSecondary: theme.textSecondary,
+    textMuted: theme.textMuted,
+    gold: theme.primary,
+    goldSubtle: theme.primarySubtle,
+  };
 
   // Data state
   const itemsQuery = useQuery({
@@ -533,16 +871,18 @@ export default function StockScreen() {
     (itemsQuery.isFetching || lotsQuery.isFetching) && !loading;
   const allItems = itemsQuery.data ?? [];
   const lots = lotsQuery.data ?? [];
-  const [loadingMore, setLoadingMore] = useState(false);
 
   // UI state
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterLotId, setFilterLotId] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showSortMenu, setShowSortMenu] = useState(false);
-  const [page, setPage] = useState(1);
+  const [showVisibilityController, setShowVisibilityController] =
+    useState(false);
+  const [hiddenLotIds, setHiddenLotIds] = useState<Set<number>>(new Set());
   const [hasAnimated, setHasAnimated] = useState(false);
+
+  // Translated sort options
+  const sortOptions = useMemo(() => getSortOptions(t), [t]);
 
   // ============ DATA LOADING ============
 
@@ -555,28 +895,23 @@ export default function StockScreen() {
 
   useEffect(() => {
     if (!loading) {
-      setPage(1);
       const timer = setTimeout(() => setHasAnimated(true), 500);
       return () => clearTimeout(timer);
     }
-
     return undefined;
   }, [loading, allItems, lots]);
 
-  // ============ FILTERING & SORTING ============
+  // ============ GROUPING BY LOT (Netflix Style) ============
 
-  const processedItems = useMemo(() => {
-    let result = [...allItems];
+  const lotCarousels = useMemo<LotCarouselData[]>(() => {
+    // Group items by lot
+    const lotMap = new Map<number, Item[]>();
 
-    // Filter by lot
-    if (filterLotId !== null) {
-      result = result.filter((i) => i.lotId === filterLotId);
-    }
-
-    // Search filter
+    // First filter by search query
+    let filteredItems = [...allItems];
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = result.filter(
+      filteredItems = filteredItems.filter(
         (item) =>
           item.brand?.toLowerCase().includes(query) ||
           item.type?.toLowerCase().includes(query) ||
@@ -587,86 +922,100 @@ export default function StockScreen() {
       );
     }
 
-    // Sort
-    switch (sortBy) {
-      case "newest":
-        result.sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateB - dateA;
+    // Sort items within each lot
+    const sortItems = (items: Item[]) => {
+      switch (sortBy) {
+        case "newest":
+          return items.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          });
+        case "oldest":
+          return items.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateA - dateB;
+          });
+        case "cost_high":
+          return items.sort(
+            (a, b) =>
+              parseFloat(String(b.unitCost)) - parseFloat(String(a.unitCost)),
+          );
+        case "cost_low":
+          return items.sort(
+            (a, b) =>
+              parseFloat(String(a.unitCost)) - parseFloat(String(b.unitCost)),
+          );
+        default:
+          return items;
+      }
+    };
+
+    // Group by lotId
+    filteredItems.forEach((item) => {
+      const existing = lotMap.get(item.lotId) || [];
+      lotMap.set(item.lotId, [...existing, item]);
+    });
+
+    // Create carousel data for each lot
+    const carousels: LotCarouselData[] = [];
+    lots.forEach((lot) => {
+      const items = lotMap.get(lot.id) || [];
+      if (items.length > 0 && !hiddenLotIds.has(lot.id)) {
+        carousels.push({
+          lot,
+          items: sortItems(items).slice(0, ITEMS_PER_CAROUSEL),
         });
-        break;
-      case "oldest":
-        result.sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateA - dateB;
-        });
-        break;
-      case "cost_high":
-        result.sort(
-          (a, b) =>
-            parseFloat(String(b.unitCost)) - parseFloat(String(a.unitCost)),
-        );
-        break;
-      case "cost_low":
-        result.sort(
-          (a, b) =>
-            parseFloat(String(a.unitCost)) - parseFloat(String(b.unitCost)),
-        );
-        break;
-      case "lot":
-        result.sort((a, b) => a.lotId - b.lotId);
-        break;
-    }
+      }
+    });
 
-    return result;
-  }, [allItems, filterLotId, searchQuery, sortBy]);
-
-  // Paginated items
-  const paginatedItems = useMemo(() => {
-    return processedItems.slice(0, page * ITEMS_PER_PAGE);
-  }, [processedItems, page]);
-
-  const hasMore = paginatedItems.length < processedItems.length;
+    return carousels;
+  }, [allItems, lots, searchQuery, sortBy, hiddenLotIds]);
 
   // Stats
   const stats = useMemo<StockStats>(() => {
-    const items =
-      filterLotId !== null
-        ? allItems.filter((i) => i.lotId === filterLotId)
-        : allItems;
-
-    const totalValue = items.reduce(
+    const totalValue = allItems.reduce(
       (sum, i) => sum + parseFloat(String(i.unitCost)),
       0,
     );
-    const uniqueLots = new Set(items.map((i) => i.lotId)).size;
+    const uniqueLots = new Set(allItems.map((i) => i.lotId)).size;
 
     return {
-      totalItems: items.length,
+      totalItems: allItems.length,
       totalValue,
-      avgCost: items.length > 0 ? totalValue / items.length : 0,
+      avgCost: allItems.length > 0 ? totalValue / allItems.length : 0,
       lotsCount: uniqueLots,
     };
-  }, [allItems, filterLotId]);
+  }, [allItems]);
+
+  // Lot visibility items for controller
+  const lotVisibilityItems = useMemo<LotVisibilityItem[]>(() => {
+    return lots.map((lot) => ({
+      id: lot.id,
+      name: lot.name || `Lot #${lot.id}`,
+      itemCount: allItems.filter((i) => i.lotId === lot.id).length,
+      isVisible: !hiddenLotIds.has(lot.id),
+    }));
+  }, [lots, allItems, hiddenLotIds]);
 
   // ============ HANDLERS ============
 
-  const handleSell = useCallback((item: Item) => {
+  const handleSell = useCallback((item: CarouselItem) => {
     router.push({
       pathname: "/sales/new",
       params: { itemId: item.id, lotId: item.lotId },
     });
   }, []);
 
-  const handleLoadMore = useCallback(() => {
-    if (!loadingMore && hasMore) {
-      setLoadingMore(true);
-      setPage((p) => p + 1);
-      setTimeout(() => setLoadingMore(false), 100);
-    }
-  }, [loadingMore, hasMore]);
+  const handleItemPress = useCallback((item: CarouselItem) => {
+    router.push(`/items/edit/${item.id}`);
+  }, []);
+
+  const handleSeeAllPress = useCallback((lotId: number) => {
+    // Navigate to lot detail or filter by this lot
+    router.push(`/lots/${lotId}`);
+  }, []);
 
   const handleRefresh = useCallback(() => {
     setHasAnimated(false);
@@ -676,7 +1025,6 @@ export default function StockScreen() {
 
   const handleSearch = useCallback((text: string) => {
     setSearchQuery(text);
-    setPage(1); // Reset pagination on search
   }, []);
 
   const handleClearSearch = useCallback(() => {
@@ -688,74 +1036,29 @@ export default function StockScreen() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSortBy(option);
     setShowSortMenu(false);
-    setPage(1);
   }, []);
 
-  const handleFilterChange = useCallback((lotId: number | null) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setFilterLotId(lotId);
-    setPage(1);
-  }, []);
-
-  const toggleViewMode = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setViewMode((v) => {
-      if (v === "list") return "compact";
-      if (v === "compact") return "grid";
-      return "list";
+  const handleToggleLotVisibility = useCallback((lotId: number) => {
+    setHiddenLotIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(lotId)) {
+        newSet.delete(lotId);
+      } else {
+        newSet.add(lotId);
+      }
+      return newSet;
     });
   }, []);
 
-  const getViewModeIcon = useCallback((): string => {
-    switch (viewMode) {
-      case "list":
-        return "view-stream";
-      case "compact":
-        return "view-agenda";
-      case "grid":
-        return "grid-view";
-      default:
-        return "view-stream";
-    }
-  }, [viewMode]);
+  const handleShowAllLots = useCallback(() => {
+    setHiddenLotIds(new Set());
+  }, []);
+
+  const handleHideAllLots = useCallback(() => {
+    setHiddenLotIds(new Set(lots.map((l) => l.id)));
+  }, [lots]);
 
   // ============ RENDER ============
-
-  const renderItem = useCallback(
-    ({ item, index }: { item: Item; index: number }) => (
-      <ItemCard
-        item={item}
-        index={index}
-        onSell={() => handleSell(item)}
-        onPress={() => router.push(`/items/edit/${item.id}`)}
-        viewMode={viewMode}
-        shouldAnimate={!hasAnimated && index < MAX_ANIMATED_ITEMS}
-      />
-    ),
-    [viewMode, hasAnimated, handleSell],
-  );
-
-  const renderFooter = useCallback(() => {
-    if (!hasMore) return null;
-
-    return (
-      <View style={styles.footerLoader}>
-        {loadingMore ? (
-          <ActivityIndicator size="small" color={theme.primary} />
-        ) : (
-          <Text style={[Typography.body.xs, { color: theme.textMuted }]}>
-            {processedItems.length - paginatedItems.length} articles de plus
-          </Text>
-        )}
-      </View>
-    );
-  }, [
-    hasMore,
-    loadingMore,
-    processedItems.length,
-    paginatedItems.length,
-    theme,
-  ]);
 
   const renderEmpty = useCallback(() => {
     if (loading) return null;
@@ -763,39 +1066,48 @@ export default function StockScreen() {
     if (searchQuery) {
       return (
         <View style={styles.empty}>
-          <View
-            style={[styles.emptyIcon, { backgroundColor: theme.surfaceCard }]}
-          >
-            <AppIcon name="search-off" size={48} color={theme.textMuted} />
+          <View style={[styles.emptyIcon, { backgroundColor: colors.surface }]}>
+            <AppIcon name="search-off" size={48} color={colors.textMuted} />
           </View>
           <Text
-            style={[
-              Typography.heading.md,
-              { color: theme.text, marginTop: Spacing.lg },
-            ]}
+            style={{
+              fontFamily: "Manrope_700Bold",
+              fontSize: 18,
+              color: colors.text,
+              marginTop: Spacing.lg,
+            }}
           >
-            Aucun résultat
+            {t("common.noResults")}
           </Text>
           <Text
-            style={[
-              Typography.body.sm,
-              {
-                color: theme.textMuted,
-                textAlign: "center",
-                marginTop: Spacing.xs,
-              },
-            ]}
+            style={{
+              fontFamily: "Manrope_400Regular",
+              fontSize: 14,
+              color: colors.textMuted,
+              textAlign: "center",
+              marginTop: Spacing.xs,
+            }}
           >
-            Aucun article ne correspond à "{searchQuery}"
+            {t("common.noResults")} "{searchQuery}"
           </Text>
-          <Button
-            variant="ghost"
-            size="sm"
+          <Pressable
             onPress={handleClearSearch}
-            style={{ marginTop: Spacing.lg }}
+            style={{
+              marginTop: Spacing.lg,
+              paddingVertical: Spacing.sm,
+              paddingHorizontal: Spacing.lg,
+            }}
           >
-            Effacer la recherche
-          </Button>
+            <Text
+              style={{
+                fontFamily: "Manrope_600SemiBold",
+                fontSize: 14,
+                color: colors.gold,
+              }}
+            >
+              {t("common.cancel")}
+            </Text>
+          </Pressable>
         </View>
       );
     }
@@ -803,120 +1115,179 @@ export default function StockScreen() {
     return (
       <View style={styles.empty}>
         <View
-          style={[styles.emptyIcon, { backgroundColor: theme.primarySubtle }]}
+          style={[styles.emptyIcon, { backgroundColor: colors.goldSubtle }]}
         >
-          <AppIcon name="checkroom" size={48} color={theme.primary} />
+          <AppIcon name="checkroom" size={48} color={colors.gold} />
         </View>
         <Text
-          style={[
-            Typography.heading.md,
-            { color: theme.text, marginTop: Spacing.lg },
-          ]}
+          style={{
+            fontFamily: "Manrope_700Bold",
+            fontSize: 18,
+            color: colors.text,
+            marginTop: Spacing.lg,
+          }}
         >
-          Stock vide
+          {t("items.empty.title")}
         </Text>
         <Text
-          style={[
-            Typography.body.sm,
-            {
-              color: theme.textMuted,
-              textAlign: "center",
-              marginTop: Spacing.xs,
-            },
-          ]}
+          style={{
+            fontFamily: "Manrope_400Regular",
+            fontSize: 14,
+            color: colors.textMuted,
+            textAlign: "center",
+            marginTop: Spacing.xs,
+          }}
         >
-          Ajoutez des articles via les Lots pour remplir votre stock
+          {t("items.empty.description")}
         </Text>
-        <Button
-          variant="primary"
-          size="md"
-          icon={<AppIcon name="add" size={18} color="#FFF" />}
+        <Pressable
           onPress={() => router.push("/lots/new")}
-          style={{ marginTop: Spacing.xl }}
+          style={{
+            marginTop: Spacing.xl,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: Spacing.xs,
+            backgroundColor: colors.gold,
+            paddingVertical: Spacing.md,
+            paddingHorizontal: Spacing.xl,
+            borderRadius: 16,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t("lots.newLot")}
         >
-          Créer un Lot
-        </Button>
+          <AppIcon name="add" size={18} color={theme.textOnAccent} />
+          <Text
+            style={{
+              fontFamily: "Manrope_700Bold",
+              fontSize: 14,
+              color: theme.textOnAccent,
+            }}
+          >
+            {t("lots.newLot")}
+          </Text>
+        </Pressable>
       </View>
     );
-  }, [loading, searchQuery, theme, handleClearSearch]);
+  }, [loading, searchQuery, colors, handleClearSearch, t, theme]);
 
-  const keyExtractor = useCallback((item: Item) => item.id.toString(), []);
-  const colorScheme = useColorScheme() ?? "light";
+  // Visible lot count for header
+  const visibleLotCount = lots.length - hiddenLotIds.size;
 
   return (
-    <PremiumScreen>
-      {/* Floating Header with Blur */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <BlurView
-          intensity={80}
-          tint={colorScheme === "dark" ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
+    <VantaScreen>
+      {/* Floating Header - Vanta Style */}
+      <View
+        style={[
+          styles.header,
+          { paddingTop: insets.top, backgroundColor: colors.surface },
+        ]}
+      >
         <View
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: theme.surface + "E6" },
+            {
+              backgroundColor: colors.surface,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            },
           ]}
         />
         <View style={styles.headerContent}>
           <View>
-            <Text style={[Typography.display.sm, { color: theme.text }]}>
-              Stock
+            <Text
+              style={{
+                fontFamily: "Manrope_700Bold",
+                fontSize: 28,
+                color: colors.text,
+              }}
+            >
+              {t("navigation.stock")}
             </Text>
-            <Text style={[Typography.body.sm, { color: theme.textSecondary }]}>
-              {processedItems.length}{" "}
-              {filterLotId ? "filtrés" : "articles en stock"}
+            <Text
+              style={{
+                fontFamily: "Manrope_400Regular",
+                fontSize: 14,
+                color: colors.textSecondary,
+              }}
+            >
+              {allItems.length} {t("items.title")} · {visibleLotCount} lots
             </Text>
           </View>
           <View style={styles.headerActions}>
+            {/* Lot Visibility Controller Button */}
             <Pressable
               style={[
                 styles.headerBtn,
-                { backgroundColor: theme.surfaceHighlight },
+                {
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor:
+                    hiddenLotIds.size > 0 ? Palette.metal.gold : colors.border,
+                },
               ]}
               onPress={() => {
                 Haptic.selection();
-                toggleViewMode();
+                setShowVisibilityController(true);
               }}
+              accessibilityLabel={`Gérer la visibilité des lots. ${visibleLotCount} sur ${lots.length} affichés`}
+              accessibilityRole="button"
             >
               <AppIcon
-                name={getViewModeIcon() as any}
+                name={hiddenLotIds.size > 0 ? "visibility-off" : "visibility"}
                 size={20}
-                color={theme.textSecondary}
+                color={
+                  hiddenLotIds.size > 0
+                    ? Palette.metal.gold
+                    : colors.textSecondary
+                }
               />
             </Pressable>
           </View>
         </View>
       </View>
 
-      <View style={{ flex: 1, paddingTop: insets.top + 90 }}>
+      <ScrollView
+        style={{ flex: 1, paddingTop: insets.top + 90 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.gold}
+            colors={[colors.gold]}
+          />
+        }
+      >
         {/* Search Bar */}
         <View style={styles.searchSection}>
           <SearchBar
             value={searchQuery}
             onChangeText={handleSearch}
             onClear={handleClearSearch}
-            theme={theme}
+            placeholder={t("common.search")}
           />
 
           {/* Sort Button */}
           <Pressable
             style={[
               styles.sortButton,
-              { backgroundColor: theme.surface, borderColor: theme.border },
+              { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
             onPress={() => {
               Haptic.selection();
               setShowSortMenu(!showSortMenu);
             }}
+            accessibilityLabel="Trier les articles"
+            accessibilityRole="button"
           >
             <AppIcon
               name={
-                (SORT_OPTIONS.find((o) => o.key === sortBy)?.icon as any) ||
+                (sortOptions.find((o) => o.key === sortBy)?.icon as any) ||
                 "sort"
               }
               size={18}
-              color={theme.primary}
+              color={colors.gold}
             />
           </Pressable>
         </View>
@@ -928,16 +1299,16 @@ export default function StockScreen() {
             exiting={FadeOut.duration(100)}
             style={[
               styles.sortMenu,
-              { backgroundColor: theme.surface, borderColor: theme.border },
+              { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            {SORT_OPTIONS.map((option) => (
+            {sortOptions.map((option) => (
               <Pressable
                 key={option.key}
                 style={[
                   styles.sortOption,
                   sortBy === option.key && {
-                    backgroundColor: theme.primarySubtle,
+                    backgroundColor: colors.goldSubtle,
                   },
                 ]}
                 onPress={() => handleSortChange(option.key)}
@@ -946,16 +1317,15 @@ export default function StockScreen() {
                   name={option.icon as any}
                   size={16}
                   color={
-                    sortBy === option.key ? theme.primary : theme.textSecondary
+                    sortBy === option.key ? colors.gold : colors.textSecondary
                   }
                 />
                 <Text
-                  style={[
-                    Typography.body.sm,
-                    {
-                      color: sortBy === option.key ? theme.primary : theme.text,
-                    },
-                  ]}
+                  style={{
+                    fontFamily: "Manrope_500Medium",
+                    fontSize: 14,
+                    color: sortBy === option.key ? colors.gold : colors.text,
+                  }}
                 >
                   {option.label}
                 </Text>
@@ -965,107 +1335,53 @@ export default function StockScreen() {
         )}
 
         {/* Stats Bar */}
-        {allItems.length > 0 && <StatsBar stats={stats} theme={theme} />}
+        {allItems.length > 0 && <StatsBar stats={stats} t={t} />}
 
-        {/* Filter Chips */}
-        <Animated.View
-          entering={FadeInDown.delay(100).duration(400)}
-          style={styles.filterBar}
-        >
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterScroll}
-          >
-            <Chip
-              label="Tout le stock"
-              selected={filterLotId === null}
-              icon={
-                <AppIcon
-                  name="inventory-2"
-                  size={14}
-                  color={
-                    filterLotId === null
-                      ? theme.textOnAccent
-                      : theme.textSecondary
-                  }
-                />
-              }
-              onPress={() => handleFilterChange(null)}
-            />
-
-            {lots.map((lot) => {
-              const lotItemCount = allItems.filter(
-                (i) => i.lotId === lot.id,
-              ).length;
-              if (lotItemCount === 0) return null;
-
-              return (
-                <Chip
-                  key={lot.id}
-                  label={`${lot.name || `Lot #${lot.id}`} (${lotItemCount})`}
-                  selected={filterLotId === lot.id}
-                  onPress={() =>
-                    handleFilterChange(lot.id === filterLotId ? null : lot.id)
-                  }
-                />
-              );
-            })}
-          </ScrollView>
-        </Animated.View>
-
-        {/* Items List */}
+        {/* Loading State */}
         {loading && !refreshing ? (
           <View style={styles.loaderContainer}>
             <SkeletonList count={6} />
           </View>
+        ) : lotCarousels.length === 0 ? (
+          renderEmpty()
         ) : (
-          <FlatList
-            key={viewMode === "grid" ? "grid" : "list"}
-            ref={flatListRef}
-            data={paginatedItems}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            numColumns={viewMode === "grid" ? 2 : 1}
-            columnWrapperStyle={
-              viewMode === "grid" ? styles.gridRow : undefined
-            }
-            contentInsetAdjustmentBehavior="automatic"
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor={theme.primary}
-                colors={[theme.primary]}
-              />
-            }
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.3}
-            contentContainerStyle={[
-              styles.listContent,
-              paginatedItems.length === 0 && styles.emptyList,
-            ]}
-            ListEmptyComponent={renderEmpty}
-            ListFooterComponent={renderFooter}
-            showsVerticalScrollIndicator={false}
-            // Performance optimizations
-            removeClippedSubviews={isAndroid}
-            maxToRenderPerBatch={10}
-            windowSize={10}
-            initialNumToRender={10}
-            getItemLayout={
-              viewMode === "compact"
-                ? (_, index) => ({
-                    length: 56,
-                    offset: 56 * index,
-                    index,
-                  })
-                : undefined
-            }
-          />
+          /* Netflix-style Carousels by Lot */
+          lotCarousels.map((carouselData) => (
+            <NetflixCarousel
+              key={carouselData.lot.id}
+              lotId={carouselData.lot.id}
+              lotName={carouselData.lot.name || `Lot #${carouselData.lot.id}`}
+              items={carouselData.items.map((item) => ({
+                id: item.id,
+                brand: item.brand,
+                type: item.type,
+                unitCost: item.unitCost,
+                color: item.color,
+                size: item.size,
+                photoUri: getItemFirstPhoto(item),
+                lotId: item.lotId,
+              }))}
+              itemCount={
+                allItems.filter((i) => i.lotId === carouselData.lot.id).length
+              }
+              onItemPress={handleItemPress}
+              onSellPress={handleSell}
+              onSeeAllPress={() => handleSeeAllPress(carouselData.lot.id)}
+            />
+          ))
         )}
-      </View>
-    </PremiumScreen>
+      </ScrollView>
+
+      {/* Lot Visibility Controller Sheet */}
+      <LotVisibilityController
+        visible={showVisibilityController}
+        lots={lotVisibilityItems}
+        onToggle={handleToggleLotVisibility}
+        onClose={() => setShowVisibilityController(false)}
+        onShowAll={handleShowAllLots}
+        onHideAll={handleHideAllLots}
+      />
+    </VantaScreen>
   );
 }
 
@@ -1095,11 +1411,12 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.lg,
+    width: 44,
+    height: 44,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
   },
   searchSection: {
     flexDirection: "row",
@@ -1112,10 +1429,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
-    height: 44,
-    borderRadius: Radius.lg,
+    height: 48,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     gap: Spacing.sm,
+    borderCurve: "continuous",
   },
   searchInput: {
     flex: 1,
@@ -1123,12 +1441,13 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_400Regular",
   },
   sortButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
+    width: 48,
+    height: 48,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
   },
   sortMenu: {
     position: "absolute",
@@ -1138,7 +1457,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
   },
   sortOption: {
     flexDirection: "row",
@@ -1159,19 +1477,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.sm,
     padding: Spacing.md,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     borderWidth: 1,
+    borderCurve: "continuous",
+  },
+  // Section KPI Vanta Monolith
+  kpiSection: {
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  kpiRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
   },
   filterBar: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   filterScroll: {
     paddingHorizontal: Spacing.xl,
     gap: Spacing.sm,
   },
   listContent: {
-    padding: Spacing.xl,
+    paddingHorizontal: Spacing.md,
     paddingBottom: 120,
+    backgroundColor: "transparent",
   },
   emptyList: {
     flexGrow: 1,
@@ -1180,32 +1510,39 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Spacing["2xl"],
   },
+  itemSeparator: {
+    height: Spacing.sm,
+  },
+  itemSeparatorCompact: {
+    height: 4,
+  },
   footerLoader: {
     paddingVertical: Spacing.lg,
     alignItems: "center",
   },
 
-  // Full Card Styles
+  // Full Card Styles - Premium Glassmorphic
   itemCard: {
     flexDirection: "row",
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
+    padding: Spacing.lg,
+    borderCurve: "continuous",
   },
   imageContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: Radius.lg,
+    width: 76,
+    height: 76,
+    borderRadius: Radius.xl,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.md,
     position: "relative",
+    borderCurve: "continuous",
   },
   lotIndicator: {
     position: "absolute",
     bottom: -4,
     right: -4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     borderRadius: Radius.full,
   },
   lotIndicatorText: {
@@ -1254,40 +1591,43 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
+    borderCurve: "continuous",
   },
   sellButtonText: {
     fontFamily: "Manrope_700Bold",
     fontSize: 13,
   },
 
-  // Compact Card Styles
+  // Compact Card Styles - Premium
   compactCard: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.xs,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     borderWidth: 1,
+    borderCurve: "continuous",
   },
   compactIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
+    width: 40,
+    height: 40,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.sm,
+    borderCurve: "continuous",
   },
   compactInfo: {
     flex: 1,
   },
   compactSellBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.md,
+    width: 36,
+    height: 36,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
   },
 
   // Grid Card Styles
@@ -1297,13 +1637,13 @@ const styles = StyleSheet.create({
   },
   gridCardWrapper: {
     flex: 1,
-    maxWidth: "48%",
+    padding: Spacing.xs,
   },
   gridCard: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     overflow: "hidden",
-    marginBottom: Spacing.md,
+    borderCurve: "continuous",
   },
   gridImageContainer: {
     aspectRatio: 1,
@@ -1340,11 +1680,12 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   gridSellBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.md,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
+    borderCurve: "continuous",
   },
 
   // Empty State
