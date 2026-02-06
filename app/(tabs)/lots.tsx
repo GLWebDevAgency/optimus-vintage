@@ -6,6 +6,7 @@
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
+import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import {
@@ -19,6 +20,7 @@ import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
 import { useLocale } from "@/utils/i18n";
+import { useSettingsStore } from "@/store/settings";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { router, useFocusEffect } from "expo-router";
@@ -110,32 +112,6 @@ const SORT_OPTIONS: { key: SortOption; labelKey: string; icon: string }[] = [
 // "Polished Obsidian with surgical reflections"
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function ObsidianBlock({
-  children,
-  style,
-}: {
-  children: React.ReactNode;
-  style?: any;
-}) {
-  const theme = useVantaTheme();
-  return (
-    <View
-      style={[
-        {
-          backgroundColor: theme.surface,
-          borderRadius: 20,
-          borderWidth: 1,
-          borderColor: theme.borderGlass,
-          borderCurve: "continuous",
-        },
-        style,
-      ]}
-    >
-      {children}
-    </View>
-  );
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📦 VANTA LOT CARD - Kinetic Card Component
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -154,6 +130,8 @@ const LotCard = React.memo(function LotCard({
   const theme = useVantaTheme();
   const scale = useSharedValue(1);
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
 
   // Theme tokens
   const colors = {
@@ -195,7 +173,7 @@ const LotCard = React.memo(function LotCard({
       <Pressable
         onPress={handlePress}
         accessibilityRole="button"
-        accessibilityLabel={`${lot.name || `Lot #${lot.id}`}. ${t("lots.investment")}: €${investment.toFixed(0)}. ${t("lots.revenue")}: €${revenue.toFixed(0)}.`}
+        accessibilityLabel={`${lot.name || `Lot #${lot.id}`}. ${t("lots.investment")}: ${currencySymbol}${investment.toFixed(0)}. ${t("lots.revenue")}: ${currencySymbol}${revenue.toFixed(0)}.`}
         accessibilityHint={t("accessibility.openDetails")}
         onPressIn={() => {
           scale.value = withSpring(0.98, SPRING_GRAVITY);
@@ -329,7 +307,7 @@ const LotCard = React.memo(function LotCard({
                   marginTop: 4,
                 }}
               >
-                €{investment.toFixed(0)}
+                {currencySymbol}{investment.toFixed(0)}
               </Text>
             </View>
             <View style={styles.statItem}>
@@ -351,7 +329,7 @@ const LotCard = React.memo(function LotCard({
                   marginTop: 4,
                 }}
               >
-                €{revenue.toFixed(0)}
+                {currencySymbol}{revenue.toFixed(0)}
               </Text>
             </View>
             <View style={styles.statItem}>
@@ -373,7 +351,7 @@ const LotCard = React.memo(function LotCard({
                   marginTop: 4,
                 }}
               >
-                {isProfitable ? "+" : "-"}€
+                {isProfitable ? "+" : "-"}{currencySymbol}
                 {Math.abs(revenue - investment).toFixed(0)}
               </Text>
             </View>
@@ -426,6 +404,8 @@ const LotCard = React.memo(function LotCard({
 function StatsBar({ stats }: { stats: LotsStats }) {
   const theme = useVantaTheme();
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
   const profit = stats.totalRevenue - stats.totalInvestment;
   const profitPercent =
     stats.totalInvestment > 0
@@ -445,7 +425,7 @@ function StatsBar({ stats }: { stats: LotsStats }) {
         <MonolithCard
           icon="account-balance-wallet"
           label={t("lots.investment")}
-          value={`€${stats.totalInvestment >= 1000 ? (stats.totalInvestment / 1000).toFixed(1) + "k" : stats.totalInvestment.toFixed(0)}`}
+          value={`${currencySymbol}${stats.totalInvestment >= 1000 ? (stats.totalInvestment / 1000).toFixed(1) + "k" : stats.totalInvestment.toFixed(0)}`}
           trend={`${stats.totalLots} lots`}
           trendPositive
           bars={investmentBars}
@@ -457,7 +437,7 @@ function StatsBar({ stats }: { stats: LotsStats }) {
             isProfitable ? t("lots.status.profitable") : t("lots.delta")
           }
           label={t("lots.profit")}
-          value={`${isProfitable ? "+" : ""}€${Math.abs(profit) >= 1000 ? (Math.abs(profit) / 1000).toFixed(1) + "k" : Math.abs(profit).toFixed(0)}`}
+          value={`${isProfitable ? "+" : ""}${currencySymbol}${Math.abs(profit) >= 1000 ? (Math.abs(profit) / 1000).toFixed(1) + "k" : Math.abs(profit).toFixed(0)}`}
           trend={`${isProfitable ? "+" : ""}${profitPercent}%`}
           trendPositive={isProfitable}
           style={{ flex: 1 }}
@@ -469,7 +449,7 @@ function StatsBar({ stats }: { stats: LotsStats }) {
         <MonolithCard
           icon="payments"
           label={t("lots.revenue")}
-          value={`€${stats.totalRevenue >= 1000 ? (stats.totalRevenue / 1000).toFixed(1) + "k" : stats.totalRevenue.toFixed(0)}`}
+          value={`${currencySymbol}${stats.totalRevenue >= 1000 ? (stats.totalRevenue / 1000).toFixed(1) + "k" : stats.totalRevenue.toFixed(0)}`}
           trend={`${stats.totalSold} ${t("lots.sold")}`}
           trendPositive
           style={{ flex: 1 }}
@@ -514,6 +494,8 @@ function StatsBar({ stats }: { stats: LotsStats }) {
 function _LegacyStatsBar({ stats }: { stats: LotsStats }) {
   const theme = useVantaTheme();
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
   const profit = stats.totalRevenue - stats.totalInvestment;
 
   const colors = {
@@ -574,7 +556,7 @@ function _LegacyStatsBar({ stats }: { stats: LotsStats }) {
               color: colors.text,
             }}
           >
-            €{stats.totalInvestment.toFixed(0)}
+            {currencySymbol}{stats.totalInvestment.toFixed(0)}
           </Text>
           <Text
             style={{
@@ -607,7 +589,7 @@ function _LegacyStatsBar({ stats }: { stats: LotsStats }) {
               color: profit >= 0 ? theme.success : theme.danger,
             }}
           >
-            {profit >= 0 ? "+" : ""}€{profit.toFixed(0)}
+            {profit >= 0 ? "+" : ""}{currencySymbol}{profit.toFixed(0)}
           </Text>
           <Text
             style={{

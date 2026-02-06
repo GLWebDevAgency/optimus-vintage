@@ -6,6 +6,7 @@
 import { AppIcon } from "@/components/ui/AppIcon";
 import { useColorScheme } from "@/components/useColorScheme";
 import { LotsRepository, NewLot } from "@/db/repositories";
+import { useSettingsStore } from "@/store/settings";
 import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -95,6 +96,8 @@ export default function EditLotScreen() {
   const colors = getColors(isDark);
   const queryClient = useQueryClient();
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
 
   // Form state
   const [provider, setProvider] = useState("");
@@ -257,7 +260,7 @@ export default function EditLotScreen() {
         <ActivityIndicator size="large" color={colors.gold} />
         <Text
           style={{
-            fontFamily: "Manrope-Medium",
+            fontFamily: "Manrope_500Medium",
             fontSize: 14,
             color: colors.textMuted,
             marginTop: 16,
@@ -282,7 +285,7 @@ export default function EditLotScreen() {
         </View>
         <Text
           style={{
-            fontFamily: "Manrope-Bold",
+            fontFamily: "Manrope_700Bold",
             fontSize: 20,
             color: colors.text,
           }}
@@ -301,7 +304,7 @@ export default function EditLotScreen() {
         >
           <Text
             style={{
-              fontFamily: "Manrope-SemiBold",
+              fontFamily: "Manrope_600SemiBold",
               fontSize: 14,
               color: colors.gold,
             }}
@@ -573,7 +576,7 @@ export default function EditLotScreen() {
                 ]}
               >
                 <Text style={[styles.currencySymbol, { color: colors.gold }]}>
-                  €
+                  {currencySymbol}
                 </Text>
                 <TextInput
                   style={[styles.currencyValue, { color: colors.text }]}
@@ -601,7 +604,7 @@ export default function EditLotScreen() {
                 <Text
                   style={[styles.currencySymbol, { color: colors.textMuted }]}
                 >
-                  €
+                  {currencySymbol}
                 </Text>
                 <TextInput
                   style={[styles.currencyValue, { color: colors.text }]}
@@ -665,7 +668,7 @@ export default function EditLotScreen() {
               ]}
             >
               <Text style={[styles.unitCostText, { color: colors.success }]}>
-                {t("lots.unitCost")}: €{unitCost}
+                {t("lots.unitCost")}: {currencySymbol}{unitCost}
               </Text>
             </View>
           )}
@@ -729,14 +732,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   label: {
-    fontFamily: "Manrope-SemiBold",
+    fontFamily: "Manrope_600SemiBold",
     fontSize: 14,
     marginBottom: 8,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   textInput: {
-    fontFamily: "Manrope-Regular",
+    fontFamily: "Manrope_400Regular",
     borderWidth: 1,
     borderRadius: 12,
     padding: 16,
@@ -761,7 +764,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   typeLabel: {
-    fontFamily: "Manrope-SemiBold",
+    fontFamily: "Manrope_600SemiBold",
     fontSize: 13,
   },
   dateButton: {
@@ -773,7 +776,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   dateText: {
-    fontFamily: "Manrope-Medium",
+    fontFamily: "Manrope_500Medium",
     fontSize: 16,
   },
   dateScroller: {
@@ -791,17 +794,17 @@ const styles = StyleSheet.create({
     minWidth: 60,
   },
   dateChipDay: {
-    fontFamily: "Manrope-SemiBold",
+    fontFamily: "Manrope_600SemiBold",
     fontSize: 10,
     textTransform: "uppercase",
   },
   dateChipDate: {
-    fontFamily: "Manrope-Bold",
+    fontFamily: "Manrope_700Bold",
     fontSize: 18,
     marginVertical: 2,
   },
   dateChipMonth: {
-    fontFamily: "Manrope-Medium",
+    fontFamily: "Manrope_500Medium",
     fontSize: 10,
   },
   financialGrid: {
@@ -812,7 +815,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputLabel: {
-    fontFamily: "Manrope-Regular",
+    fontFamily: "Manrope_400Regular",
     fontSize: 12,
     marginBottom: 4,
   },
@@ -824,13 +827,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   currencySymbol: {
-    fontFamily: "Manrope-Bold",
+    fontFamily: "Manrope_700Bold",
     fontSize: 18,
     marginRight: 4,
   },
   currencyValue: {
     flex: 1,
-    fontFamily: "Manrope-SemiBold",
+    fontFamily: "Manrope_600SemiBold",
     fontSize: 18,
     paddingVertical: 16,
   },
@@ -848,7 +851,7 @@ const styles = StyleSheet.create({
   },
   quantityInput: {
     flex: 1,
-    fontFamily: "Manrope-Bold",
+    fontFamily: "Manrope_700Bold",
     textAlign: "center",
     fontSize: 24,
     paddingVertical: 16,
@@ -863,7 +866,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   unitCostText: {
-    fontFamily: "Manrope-SemiBold",
+    fontFamily: "Manrope_600SemiBold",
     fontSize: 14,
   },
   ctaContainer: {
@@ -883,7 +886,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   ctaButtonText: {
-    fontFamily: "Manrope-Bold",
+    fontFamily: "Manrope_700Bold",
     fontSize: 16,
     color: "#FFF",
   },

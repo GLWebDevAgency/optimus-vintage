@@ -16,6 +16,7 @@
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Palette, Radius } from "@/constants/Theme";
+import { useLocale } from "@/utils/i18n";
 import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
 import React, { useCallback, useEffect, useMemo } from "react";
@@ -243,6 +244,7 @@ function VantaDock({ state, descriptors, navigation }: VantaDockProps) {
   const insets = useSafeAreaInsets();
   const isDark = useIsDarkMode();
   const activeIndex = useSharedValue(state.index);
+  const { t } = useLocale();
 
   // Calculate dimensions
   const containerWidth = SCREEN_WIDTH - TAB_BAR_MARGIN * 2;
@@ -254,15 +256,17 @@ function VantaDock({ state, descriptors, navigation }: VantaDockProps) {
     activeIndex.value = withSpring(state.index, SPRING_GRAVITY);
   }, [state.index]);
 
-  // Route configuration with SHORT universal labels (no i18n needed for tabs)
-  // Using short English/universal words that fit well in tab bar
-  const routeConfigMap: Record<string, { name: AppIconName; label: string }> = {
-    index: { name: "home", label: "Home" },
-    lots: { name: "inventory-2", label: "Lots" },
-    stock: { name: "checkroom", label: "Stock" },
-    sales: { name: "point-of-sale", label: "Sales" },
-    settings: { name: "settings", label: "Config" },
-  };
+  // Route configuration with i18n labels
+  const routeConfigMap: Record<string, { name: AppIconName; label: string }> = useMemo(
+    () => ({
+      index: { name: "home", label: t("navigation.dashboard") },
+      lots: { name: "inventory-2", label: t("navigation.lots") },
+      stock: { name: "checkroom", label: t("navigation.stock") },
+      sales: { name: "point-of-sale", label: t("navigation.sales") },
+      settings: { name: "settings", label: t("navigation.settings") },
+    }),
+    [t],
+  );
 
   // Filter valid routes
   const validRoutes = useMemo(

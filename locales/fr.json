@@ -60,6 +60,38 @@
       "remainingItems": "Articles Restants",
       "avgMargin": "Marge Moyenne",
       "topPlatform": "Plateforme #1"
+    },
+    "hero": {
+      "revenue": "Chiffre d'Affaires",
+      "optimalFlow": "Flux Optimal",
+      "profit": "Profit",
+      "investment": "Investissement",
+      "deficit": "DÉFICIT",
+      "capital": "CAPITAL"
+    },
+    "metrics": {
+      "inStock": "En stock",
+      "sales": "Ventes",
+      "activeLots": "Lots actifs"
+    },
+    "quickActions": {
+      "title": "Actions Rapides",
+      "tier": "TIER 2 // COMMANDES",
+      "newLot": "Nouveau lot",
+      "sell": "Vendre",
+      "aiScanner": "Scanner IA"
+    },
+    "topPerformers": {
+      "title": "Top Performers",
+      "tier": "TIER 3 // PERFORMANCE",
+      "viewAll": "Voir tout",
+      "sale": "vente",
+      "sales": "ventes"
+    },
+    "status": {
+      "connected": "CONNECTÉ",
+      "lots": "lots",
+      "items": "articles"
     }
   },
   "lots": {
@@ -241,7 +273,14 @@
       "title": "Aucune vente",
       "description": "Enregistrez votre première vente"
     },
-    "confirmSale": "Confirmer la vente"
+    "confirmSale": "Confirmer la vente",
+    "cancelSale": "Annuler la vente",
+    "cancelSaleConfirm": "Êtes-vous sûr de vouloir annuler cette vente ? L'article sera remis en stock.",
+    "keepSale": "Garder la vente",
+    "saleCancelled": "Vente annulée",
+    "itemReturnedToStock": "L'article a été remis en stock.",
+    "cancelError": "Impossible d'annuler la vente.",
+    "alreadyCancelled": "Cette vente est déjà annulée ou remboursée."
   },
   "settings": {
     "title": "Réglages",

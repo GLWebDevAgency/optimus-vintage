@@ -113,6 +113,15 @@ const ICON_MAP = {
   // Visibility icons for lot controller
   visibility: { symbol: "eye.fill", material: "visibility" },
   "visibility-off": { symbol: "eye.slash.fill", material: "visibility-off" },
+  // Item detail icons
+  "shopping-bag": { symbol: "bag.fill", material: "shopping-bag" },
+  palette: { symbol: "paintpalette.fill", material: "palette" },
+  straighten: { symbol: "ruler.fill", material: "straighten" },
+  verified: { symbol: "checkmark.seal.fill", material: "verified" },
+  event: { symbol: "calendar", material: "event" },
+  delete: { symbol: "trash.fill", material: "delete" },
+  public: { symbol: "globe", material: "public" },
+  replay: { symbol: "arrow.counterclockwise", material: "replay" },
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;

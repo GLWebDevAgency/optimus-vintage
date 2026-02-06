@@ -17,6 +17,7 @@ import {
     getRecommendationLabel,
     type ScannerUIState
 } from "@/utils/ai";
+import { useSettingsStore } from "@/store/settings";
 import { Haptic } from "@/utils/haptics";
 import { Image } from "expo-image";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -50,6 +51,8 @@ export default function AnalyzeScreen() {
   const insets = useSafeAreaInsets();
   const theme = useVantaTheme();
   const isDark = theme.dark;
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
 
   const [scanState, setScanState] = useState<ScannerUIState>({
     state: "analyzing",
@@ -404,7 +407,7 @@ export default function AnalyzeScreen() {
                 Vente rapide
               </Text>
               <Text style={[styles.priceValue, { color: colors.text }]}>
-                €{result.pricing.lowPrice}
+                {currencySymbol}{result.pricing.lowPrice}
               </Text>
             </View>
             <View style={[styles.priceItem, styles.priceItemMain]}>
@@ -412,7 +415,7 @@ export default function AnalyzeScreen() {
                 Prix marché
               </Text>
               <Text style={[styles.priceValueMain, { color: colors.gold }]}>
-                €{result.pricing.midPrice}
+                {currencySymbol}{result.pricing.midPrice}
               </Text>
             </View>
             <View style={styles.priceItem}>
@@ -420,7 +423,7 @@ export default function AnalyzeScreen() {
                 Collectionneur
               </Text>
               <Text style={[styles.priceValue, { color: colors.text }]}>
-                €{result.pricing.highPrice}
+                {currencySymbol}{result.pricing.highPrice}
               </Text>
             </View>
           </View>
@@ -435,7 +438,7 @@ export default function AnalyzeScreen() {
             >
               <AppIcon name="lightbulb" size={16} color={colors.gold} />
               <Text style={[styles.suggestedPriceText, { color: colors.gold }]}>
-                Prix d'achat max suggéré: €
+                Prix d'achat max suggéré: {currencySymbol}
                 {result.recommendation.suggestedBuyPrice}
               </Text>
             </View>
@@ -464,7 +467,7 @@ export default function AnalyzeScreen() {
                     <Text
                       style={[styles.platformPrice, { color: colors.success }]}
                     >
-                      €{platform.estimatedPrice}
+                      {currencySymbol}{platform.estimatedPrice}
                     </Text>
                     <Text
                       style={[styles.platformDays, { color: colors.textMuted }]}

@@ -60,6 +60,38 @@
       "remainingItems": "Remaining Items",
       "avgMargin": "Avg Margin",
       "topPlatform": "Top Platform"
+    },
+    "hero": {
+      "revenue": "Revenue",
+      "optimalFlow": "Optimal Flow",
+      "profit": "Profit",
+      "investment": "Investment",
+      "deficit": "DEFICIT",
+      "capital": "CAPITAL"
+    },
+    "metrics": {
+      "inStock": "In stock",
+      "sales": "Sales",
+      "activeLots": "Active lots"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "tier": "TIER 2 // COMMANDS",
+      "newLot": "New lot",
+      "sell": "Sell",
+      "aiScanner": "AI Scanner"
+    },
+    "topPerformers": {
+      "title": "Top Performers",
+      "tier": "TIER 3 // PERFORMANCE",
+      "viewAll": "View all",
+      "sale": "sale",
+      "sales": "sales"
+    },
+    "status": {
+      "connected": "CONNECTED",
+      "lots": "lots",
+      "items": "items"
     }
   },
   "lots": {
@@ -241,7 +273,14 @@
       "title": "No sales",
       "description": "Record your first sale"
     },
-    "confirmSale": "Confirm sale"
+    "confirmSale": "Confirm sale",
+    "cancelSale": "Cancel Sale",
+    "cancelSaleConfirm": "Are you sure you want to cancel this sale? The item will be returned to stock.",
+    "keepSale": "Keep Sale",
+    "saleCancelled": "Sale Cancelled",
+    "itemReturnedToStock": "The item has been returned to stock.",
+    "cancelError": "Could not cancel the sale.",
+    "alreadyCancelled": "This sale is already cancelled or refunded."
   },
   "settings": {
     "title": "Settings",

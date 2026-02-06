@@ -33,6 +33,7 @@ import {
 } from "@/utils/engine/calculations";
 import { Haptic } from "@/utils/haptics";
 import { useLocale } from "@/utils/i18n";
+import { useSettingsStore } from "@/store/settings";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -289,6 +290,8 @@ export default function LotDetailScreen() {
   const colors = getLotColors(theme);
   const isDark = theme.dark;
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
 
   const [activeSegment, setActiveSegment] = useState<SegmentOption>("all");
   const lotId = id ? parseInt(id, 10) : null;
@@ -354,7 +357,7 @@ export default function LotDetailScreen() {
     }
   }, [items, activeSegment]);
 
-  const formatCurrency = (value: number) => `€${Math.abs(value).toFixed(2)}`;
+  const formatCurrency = (value: number) => `${currencySymbol}${Math.abs(value).toFixed(2)}`;
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -645,7 +648,7 @@ export default function LotDetailScreen() {
                   },
                 ]}
               >
-                €0
+                {currencySymbol}0
               </Text>
               <Text
                 style={[

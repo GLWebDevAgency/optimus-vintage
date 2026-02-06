@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/Components";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { Radius, Spacing } from "@/constants/Theme";
 import { Item, ItemsRepository, SalesRepository } from "@/db/repositories";
+import { useSettingsStore } from "@/store/settings";
 import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -51,6 +52,8 @@ export default function NewSaleScreen() {
     warningSubtle: theme.warningSubtle,
   };
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
 
   const [price, setPrice] = useState("");
   const [platformFees, setPlatformFees] = useState("");
@@ -133,7 +136,7 @@ export default function NewSaleScreen() {
 
       Alert.alert(
         "Congrats! 💸",
-        `Sale recorded. Net profit: €${result.net.toFixed(2)}`,
+        `Sale recorded. Net profit: ${currencySymbol}${result.net.toFixed(2)}`,
         [
           {
             text: "Awesome",
@@ -379,7 +382,7 @@ export default function NewSaleScreen() {
                   color: colors.textMuted,
                 }}
               >
-                Lot #{item?.lotId} • ID: {item?.id} • Cost: €
+                Lot #{item?.lotId} • ID: {item?.id} • Cost: {currencySymbol}
                 {item ? parseFloat(String(item.unitCost)).toFixed(2) : "0.00"}
               </Text>
             </View>
@@ -408,7 +411,7 @@ export default function NewSaleScreen() {
                 marginBottom: Spacing.xs,
               }}
             >
-              {t("sales.priceGross")} (€) *
+              {t("sales.priceGross")} ({currencySymbol}) *
             </Text>
             <TextInput
               value={price}
@@ -504,7 +507,7 @@ export default function NewSaleScreen() {
                     color: colors.text,
                   }}
                 >
-                  €{netAmount}
+                  {currencySymbol}{netAmount}
                 </Text>
               </View>
               <View
@@ -528,7 +531,7 @@ export default function NewSaleScreen() {
                       parseFloat(profit) >= 0 ? colors.success : colors.danger,
                   }}
                 >
-                  {parseFloat(profit) >= 0 ? "+" : ""}€{profit}
+                  {parseFloat(profit) >= 0 ? "+" : ""}{currencySymbol}{profit}
                 </Text>
               </View>
             </View>

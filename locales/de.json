@@ -60,6 +60,38 @@
       "remainingItems": "Verbleibende Artikel",
       "avgMargin": "Durchschn. Marge",
       "topPlatform": "Top Plattform"
+    },
+    "hero": {
+      "revenue": "Umsatz",
+      "optimalFlow": "Optimaler Fluss",
+      "profit": "Gewinn",
+      "investment": "Investition",
+      "deficit": "DEFIZIT",
+      "capital": "KAPITAL"
+    },
+    "metrics": {
+      "inStock": "Auf Lager",
+      "sales": "Verkäufe",
+      "activeLots": "Aktive Posten"
+    },
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "tier": "TIER 2 // BEFEHLE",
+      "newLot": "Neuer Posten",
+      "sell": "Verkaufen",
+      "aiScanner": "KI-Scanner"
+    },
+    "topPerformers": {
+      "title": "Top-Performer",
+      "tier": "TIER 3 // LEISTUNG",
+      "viewAll": "Alle anzeigen",
+      "sale": "Verkauf",
+      "sales": "Verkäufe"
+    },
+    "status": {
+      "connected": "VERBUNDEN",
+      "lots": "Posten",
+      "items": "Artikel"
     }
   },
   "lots": {
@@ -241,7 +273,14 @@
       "title": "Keine Verkäufe",
       "description": "Erfassen Sie Ihren ersten Verkauf"
     },
-    "confirmSale": "Verkauf bestätigen"
+    "confirmSale": "Verkauf bestätigen",
+    "cancelSale": "Verkauf stornieren",
+    "cancelSaleConfirm": "Möchten Sie diesen Verkauf wirklich stornieren? Der Artikel wird zurück ins Lager gebracht.",
+    "keepSale": "Verkauf behalten",
+    "saleCancelled": "Verkauf storniert",
+    "itemReturnedToStock": "Der Artikel wurde zurück ins Lager gebracht.",
+    "cancelError": "Der Verkauf konnte nicht storniert werden.",
+    "alreadyCancelled": "Dieser Verkauf ist bereits storniert oder erstattet."
   },
   "settings": {
     "title": "Einstellungen",

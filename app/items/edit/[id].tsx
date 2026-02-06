@@ -9,6 +9,7 @@ import { ItemPhotoPicker } from "@/components/ui/ItemPhotoPicker";
 import { useColorScheme } from "@/components/useColorScheme";
 import { ItemsRepository, NewItem } from "@/db/repositories";
 import { ReanimatedSpring } from "@/utils/animations-reanimated";
+import { useSettingsStore } from "@/store/settings";
 import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -259,6 +260,8 @@ export default function EditItemScreen() {
   const colors = getColors(isDark);
   const queryClient = useQueryClient();
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
 
   // Form state
   const [brand, setBrand] = useState("");
@@ -766,7 +769,7 @@ export default function EditItemScreen() {
             ]}
           >
             <Text style={[styles.currencySymbol, { color: colors.gold }]}>
-              €
+              {currencySymbol}
             </Text>
             <TextInput
               style={[styles.currencyValue, { color: colors.text }]}
