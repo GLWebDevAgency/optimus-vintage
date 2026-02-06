@@ -143,6 +143,14 @@ function RootLayoutNav() {
           name="sales"
           options={{ headerShown: false, presentation: "modal" }}
         />
+        <Stack.Screen
+          name="scanner"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="items"
+          options={{ headerShown: false, presentation: "modal" }}
+        />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         <Stack.Screen
           name="onboarding"
