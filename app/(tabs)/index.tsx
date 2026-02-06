@@ -14,9 +14,9 @@
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import {
-  VantaScreen,
-  useIsDarkMode,
-  useVantaTheme,
+    VantaScreen,
+    useIsDarkMode,
+    useVantaTheme,
 } from "@/components/ui/PremiumUI";
 import { SkeletonDashboard } from "@/components/ui/Skeleton";
 import { Palette, Spacing } from "@/constants/Theme";
@@ -29,21 +29,21 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
 import Animated, {
-  Easing,
-  FadeInDown,
-  FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSpring,
-  withTiming,
+    Easing,
+    FadeInDown,
+    FadeInUp,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
@@ -1708,6 +1708,13 @@ export default function VantaDashboard() {
               accentColor={isDark ? VANTA.gold : Palette.metal.champagne}
               accentGlow={isDark ? VANTA.goldGlow : Palette.metal.champagneGlow}
               onPress={() => router.push("/sales/new")}
+            />
+            <VantaActionSlab
+              icon="auto-awesome"
+              label="Scanner IA"
+              accentColor={Palette.sky[400]}
+              accentGlow={`${Palette.sky[400]}50`}
+              onPress={() => router.push("/scanner")}
             />
           </View>
         </Animated.View>

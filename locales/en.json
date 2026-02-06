@@ -301,6 +301,49 @@
     "saveFailed": "Failed to save",
     "deleteFailed": "Failed to delete"
   },
+  "scanner": {
+    "title": "AI Scanner",
+    "cameraAccess": "Camera Access",
+    "cameraAccessDesc": "To scan and analyze your vintage items, the app needs access to your camera.",
+    "allowCamera": "Allow Camera",
+    "frameItem": "Frame the vintage item",
+    "aiWillAnalyze": "AI will analyze brand, condition and price",
+    "analyzing": "Analyzing...",
+    "preparingImage": "Preparing image",
+    "analysisFailed": "Analysis failed",
+    "retry": "Retry",
+    "result": "Analysis Result",
+    "addToStock": "Add to Stock",
+    "scanAnother": "Scan Another",
+    "identification": "Identification",
+    "brand": "Brand",
+    "category": "Category",
+    "model": "Model",
+    "era": "Era",
+    "condition": "Condition",
+    "colors": "Colors",
+    "priceEstimate": "Price Estimate",
+    "quickSale": "Quick Sale",
+    "marketPrice": "Market Price",
+    "collector": "Collector",
+    "confidence": "confidence",
+    "suggestedBuyPrice": "Suggested Max Buy Price",
+    "recommendedPlatforms": "Recommended Platforms",
+    "marketAnalysis": "Market Analysis",
+    "demand": "Demand",
+    "trend": "Trend",
+    "rarity": "Rarity",
+    "target": "Target",
+    "keyPoints": "Key Points",
+    "analyzedBy": "Analyzed by",
+    "recommendation": {
+      "strong_buy": "STRONG BUY 🔥",
+      "buy": "BUY ✓",
+      "consider": "CONSIDER",
+      "pass": "PASS",
+      "strong_pass": "AVOID ✗"
+    }
+  },
   "accessibility": {
     "back": "Go back",
     "close": "Close",
@@ -310,6 +353,10 @@
     "openDetails": "Open details",
     "sellItem": "Sell this item",
     "deleteItem": "Delete this item",
-    "editItem": "Edit this item"
+    "editItem": "Edit this item",
+    "takePhoto": "Take a photo",
+    "pickFromGallery": "Pick from gallery",
+    "flashOn": "Flash on",
+    "flashOff": "Flash off"
   }
 }
