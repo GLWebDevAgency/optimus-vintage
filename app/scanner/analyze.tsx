@@ -148,9 +148,25 @@ export default function AnalyzeScreen() {
   // Handle add to stock
   const handleAddToStock = useCallback(() => {
     Haptic.impactMedium();
-    // TODO: Navigate to add item with pre-filled data
-    router.push("/lots/new");
-  }, []);
+    if (!scanState.result) return;
+
+    const result = scanState.result;
+    router.push({
+      pathname: "/scanner/add-to-stock",
+      params: {
+        imageUri: imageUri || "",
+        brand: result.identification.brand || "",
+        category: result.identification.category || "",
+        model: result.identification.model || "",
+        condition: result.identification.condition || "",
+        colors: result.identification.colors?.join(", ") || "",
+        size: result.identification.size || "",
+        suggestedBuyPrice: result.recommendation.suggestedBuyPrice?.toString() || "",
+        midPrice: result.pricing.midPrice?.toString() || "",
+        era: result.identification.era || "",
+      },
+    });
+  }, [scanState.result, imageUri]);
 
   // Render loading state
   const renderLoading = () => (
