@@ -7,6 +7,12 @@
     "production": {
       "autoIncrement": true
     },
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "distribution": "internal"
+    },
     "development": {
       "autoIncrement": true,
       "developmentClient": true,

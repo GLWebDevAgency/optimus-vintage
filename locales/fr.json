@@ -301,6 +301,49 @@
     "saveFailed": "Échec de la sauvegarde",
     "deleteFailed": "Échec de la suppression"
   },
+  "scanner": {
+    "title": "Scanner IA",
+    "cameraAccess": "Accès à la caméra",
+    "cameraAccessDesc": "Pour scanner et analyser vos articles vintage, l'application a besoin d'accéder à votre caméra.",
+    "allowCamera": "Autoriser la caméra",
+    "frameItem": "Cadrez l'article vintage",
+    "aiWillAnalyze": "L'IA analysera la marque, l'état et le prix",
+    "analyzing": "Analyse en cours...",
+    "preparingImage": "Préparation de l'image",
+    "analysisFailed": "Analyse échouée",
+    "retry": "Réessayer",
+    "result": "Résultat analyse",
+    "addToStock": "Ajouter au stock",
+    "scanAnother": "Scanner autre",
+    "identification": "Identification",
+    "brand": "Marque",
+    "category": "Catégorie",
+    "model": "Modèle",
+    "era": "Époque",
+    "condition": "État",
+    "colors": "Couleurs",
+    "priceEstimate": "Estimation prix",
+    "quickSale": "Vente rapide",
+    "marketPrice": "Prix marché",
+    "collector": "Collectionneur",
+    "confidence": "confiance",
+    "suggestedBuyPrice": "Prix d'achat max suggéré",
+    "recommendedPlatforms": "Plateformes recommandées",
+    "marketAnalysis": "Analyse marché",
+    "demand": "Demande",
+    "trend": "Tendance",
+    "rarity": "Rareté",
+    "target": "Cible",
+    "keyPoints": "Points clés",
+    "analyzedBy": "Analysé par",
+    "recommendation": {
+      "strong_buy": "ACHETER 🔥",
+      "buy": "ACHETER ✓",
+      "consider": "À CONSIDÉRER",
+      "pass": "PASSER",
+      "strong_pass": "ÉVITER ✗"
+    }
+  },
   "accessibility": {
     "back": "Retour",
     "close": "Fermer",
@@ -310,6 +353,10 @@
     "openDetails": "Ouvrir les détails",
     "sellItem": "Vendre cet article",
     "deleteItem": "Supprimer cet article",
-    "editItem": "Modifier cet article"
+    "editItem": "Modifier cet article",
+    "takePhoto": "Prendre une photo",
+    "pickFromGallery": "Choisir depuis la galerie",
+    "flashOn": "Flash activé",
+    "flashOff": "Flash désactivé"
   }
 }

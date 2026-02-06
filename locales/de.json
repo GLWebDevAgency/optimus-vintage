@@ -301,6 +301,49 @@
     "saveFailed": "Speichern fehlgeschlagen",
     "deleteFailed": "Löschen fehlgeschlagen"
   },
+  "scanner": {
+    "title": "KI-Scanner",
+    "cameraAccess": "Kamerazugriff",
+    "cameraAccessDesc": "Um Ihre Vintage-Artikel zu scannen und analysieren, benötigt die App Zugriff auf Ihre Kamera.",
+    "allowCamera": "Kamera erlauben",
+    "frameItem": "Vintage-Artikel einrahmen",
+    "aiWillAnalyze": "KI analysiert Marke, Zustand und Preis",
+    "analyzing": "Wird analysiert...",
+    "preparingImage": "Bild wird vorbereitet",
+    "analysisFailed": "Analyse fehlgeschlagen",
+    "retry": "Wiederholen",
+    "result": "Analyseergebnis",
+    "addToStock": "Zum Bestand hinzufügen",
+    "scanAnother": "Weiteren scannen",
+    "identification": "Identifikation",
+    "brand": "Marke",
+    "category": "Kategorie",
+    "model": "Modell",
+    "era": "Epoche",
+    "condition": "Zustand",
+    "colors": "Farben",
+    "priceEstimate": "Preisschätzung",
+    "quickSale": "Schnellverkauf",
+    "marketPrice": "Marktpreis",
+    "collector": "Sammler",
+    "confidence": "Vertrauen",
+    "suggestedBuyPrice": "Empfohlener Max. Kaufpreis",
+    "recommendedPlatforms": "Empfohlene Plattformen",
+    "marketAnalysis": "Marktanalyse",
+    "demand": "Nachfrage",
+    "trend": "Trend",
+    "rarity": "Seltenheit",
+    "target": "Zielgruppe",
+    "keyPoints": "Wichtige Punkte",
+    "analyzedBy": "Analysiert von",
+    "recommendation": {
+      "strong_buy": "KAUFEN 🔥",
+      "buy": "KAUFEN ✓",
+      "consider": "ÜBERLEGEN",
+      "pass": "ÜBERSPRINGEN",
+      "strong_pass": "VERMEIDEN ✗"
+    }
+  },
   "accessibility": {
     "back": "Zurück",
     "close": "Schließen",
@@ -310,6 +353,10 @@
     "openDetails": "Details öffnen",
     "sellItem": "Artikel verkaufen",
     "deleteItem": "Artikel löschen",
-    "editItem": "Artikel bearbeiten"
+    "editItem": "Artikel bearbeiten",
+    "takePhoto": "Foto aufnehmen",
+    "pickFromGallery": "Aus Galerie wählen",
+    "flashOn": "Blitz an",
+    "flashOff": "Blitz aus"
   }
 }
