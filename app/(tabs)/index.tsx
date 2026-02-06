@@ -13,6 +13,7 @@
  */
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
+import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
 import {
     VantaScreen,
     useIsDarkMode,
@@ -21,9 +22,15 @@ import {
 import { SkeletonDashboard } from "@/components/ui/Skeleton";
 import { Palette, Spacing } from "@/constants/Theme";
 import { LotsRepository, SalesRepository } from "@/db/repositories";
+import { useSettingsStore } from "@/store/settings";
 import { useTrackScreen } from "@/utils/analytics";
 import { computeLotSummary } from "@/utils/engine/calculations";
 import { Haptic } from "@/utils/haptics";
+import {
+    formatCurrency as i18nFormatCurrency,
+    formatCurrencyCompact,
+    useLocale,
+} from "@/utils/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -105,11 +112,11 @@ interface PeriodOption {
 }
 
 const PERIOD_OPTIONS: PeriodOption[] = [
-  { key: "7d", label: "7 jours", shortLabel: "7J", days: 7 },
-  { key: "30d", label: "30 jours", shortLabel: "30J", days: 30 },
-  { key: "3m", label: "3 mois", shortLabel: "3M", days: 90 },
-  { key: "1y", label: "1 an", shortLabel: "1A", days: 365 },
-  { key: "all", label: "Tout", shortLabel: "∞", days: null },
+  { key: "7d", label: "7d", shortLabel: "7J", days: 7 },
+  { key: "30d", label: "30d", shortLabel: "30J", days: 30 },
+  { key: "3m", label: "3m", shortLabel: "3M", days: 90 },
+  { key: "1y", label: "1y", shortLabel: "1A", days: 365 },
+  { key: "all", label: "all", shortLabel: "∞", days: null },
 ];
 
 function getDateThreshold(days: number | null): Date | null {
@@ -120,18 +127,18 @@ function getDateThreshold(days: number | null): Date | null {
   return date;
 }
 
-function formatCurrency(value: number, compact = false): string {
-  const prefix = value < 0 ? "-" : "";
-  const absValue = Math.abs(value);
-  if (compact) {
-    if (absValue >= 1000000)
-      return `${prefix}${(absValue / 1000000).toFixed(1)}M€`;
-    if (absValue >= 1000) return `${prefix}${(absValue / 1000).toFixed(1)}k€`;
-  }
-  return `${prefix}${absValue.toLocaleString("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}€`;
+// Currency symbol helper — uses store currency
+function useCurrencySymbol(): string {
+  const currency = useSettingsStore((s) => s.currency);
+  const map: Record<string, string> = {
+    EUR: "€",
+    USD: "$",
+    GBP: "£",
+    CHF: "CHF",
+    JPY: "¥",
+    CAD: "CA$",
+  };
+  return map[currency] ?? "€";
 }
 
 function formatNumber(value: number): string {
@@ -141,99 +148,6 @@ function formatNumber(value: number): string {
 function formatPercent(value: number): string {
   const prefix = value >= 0 ? "+" : "";
   return `${prefix}${value.toFixed(1)}%`;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🌌 OBSIDIAN BLOCK - Base Component (like template's obsidian-block)
-// "Polished Obsidian with surgical reflections"
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface ObsidianBlockProps {
-  children: React.ReactNode;
-  style?: any;
-  glowPosition?: "bottom-right" | "top-left" | "center";
-  hasTopShine?: boolean;
-}
-
-function ObsidianBlock({
-  children,
-  style,
-  glowPosition = "bottom-right",
-  hasTopShine = true,
-}: ObsidianBlockProps) {
-  const isDark = useIsDarkMode();
-
-  // Position for internal light leak
-  const glowStyles = {
-    "bottom-right": { bottom: -20, right: -20 },
-    "top-left": { top: -20, left: -20 },
-    center: {
-      top: "50%",
-      left: "50%",
-      transform: [{ translateX: -40 }, { translateY: -40 }],
-    },
-  };
-
-  if (!isDark) {
-    // Light mode: use Ivory styling
-    return (
-      <View
-        style={[
-          {
-            backgroundColor: Palette.ivory.pearl,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: `${Palette.metal.champagne}15`,
-            overflow: "hidden",
-          },
-          style,
-        ]}
-      >
-        {children}
-      </View>
-    );
-  }
-
-  return (
-    <View
-      style={[
-        {
-          backgroundColor: VANTA.obsidian,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: "rgba(255, 255, 255, 0.06)",
-          overflow: "hidden",
-        },
-        style,
-      ]}
-    >
-      {/* Top shine line (surgical reflection) */}
-      {hasTopShine && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 1,
-          }}
-        >
-          <LinearGradient
-            colors={[
-              "rgba(255,255,255,0)",
-              "rgba(255,255,255,0.08)",
-              "rgba(255,255,255,0)",
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{ flex: 1 }}
-          />
-        </View>
-      )}
-
-      {children}
-    </View>
-  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -673,6 +587,7 @@ function MonolithCard({
   const content = (
     <Animated.View style={animatedStyle}>
       <ObsidianBlock
+        variant="premium"
         style={{
           padding: Spacing.lg,
           height: 140,
@@ -794,6 +709,17 @@ function VantaSingularity({
   onDetailPress,
 }: VantaSingularityProps) {
   const isDark = useIsDarkMode();
+  const { t, locale } = useLocale();
+  const currency = useSettingsStore((s) => s.currency) as "EUR" | "USD" | "GBP" | "CHF" | "JPY";
+  const currencySymbol = useCurrencySymbol();
+
+  const formatCurrencyLocal = useCallback(
+    (value: number, compact = false) => {
+      if (compact) return formatCurrencyCompact(value, currency, locale);
+      return i18nFormatCurrency(value, currency, locale);
+    },
+    [currency, locale],
+  );
 
   const isProfitable = profit >= 0;
   const isPositiveROI = roi >= 0;
@@ -805,14 +731,18 @@ function VantaSingularity({
   const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
   const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
 
+  // Strip currency symbols for display value
+  const stripSymbol = (s: string) =>
+    s.replace(/[€$£¥]/g, "").replace(/CHF/g, "").replace(/CA\$/g, "").trim();
+
   return (
     <View style={{ paddingHorizontal: Spacing.lg }}>
       {/* Gravity Disk with Revenue */}
       <GravityDisk
         percentage={roiPercentage}
-        value={formatCurrency(revenue, true).replace("€", "")}
-        label="Chiffre d'Affaires"
-        sublabel="€"
+        value={stripSymbol(formatCurrencyLocal(revenue, true))}
+        label={t("dashboard.hero.revenue")}
+        sublabel={currencySymbol}
       />
 
       {/* Sub-label */}
@@ -828,7 +758,7 @@ function VantaSingularity({
           marginBottom: Spacing.lg,
         }}
       >
-        Optimal Flow
+        {t("dashboard.hero.optimalFlow")}
       </Text>
 
       {/* Metrics Row - Obsidian Monoliths */}
@@ -836,10 +766,10 @@ function VantaSingularity({
         {/* Profit Monolith */}
         <MonolithCard
           icon="trending-up"
-          label="Profit"
-          value={formatCurrency(profit, true).replace("€", "")}
-          unit="€"
-          badge={isProfitable ? formatPercent(roi) : "DÉFICIT"}
+          label={t("dashboard.hero.profit")}
+          value={stripSymbol(formatCurrencyLocal(profit, true))}
+          unit={currencySymbol}
+          badge={isProfitable ? formatPercent(roi) : t("dashboard.hero.deficit")}
           badgeVariant={isProfitable ? "success" : "gold"}
           onPress={onDetailPress}
         >
@@ -876,10 +806,10 @@ function VantaSingularity({
         {/* Investment Monolith */}
         <MonolithCard
           icon="account-balance-wallet"
-          label="Investissement"
-          value={formatCurrency(investment, true).replace("€", "")}
-          unit="€"
-          badge="CAPITAL"
+          label={t("dashboard.hero.investment")}
+          value={stripSymbol(formatCurrencyLocal(investment, true))}
+          unit={currencySymbol}
+          badge={t("dashboard.hero.capital")}
           badgeVariant="info"
         >
           {/* Cryptic hash lines like template */}
@@ -982,6 +912,7 @@ function VantaMetricOrb({
     >
       <Animated.View style={animatedStyle}>
         <ObsidianBlock
+          variant="premium"
           style={{
             padding: Spacing.md,
             alignItems: "center",
@@ -1088,6 +1019,7 @@ function VantaActionSlab({
     >
       <Animated.View style={animatedStyle}>
         <ObsidianBlock
+          variant="premium"
           style={{
             alignItems: "center",
             justifyContent: "center",
@@ -1149,6 +1081,8 @@ function VantaTopLotCard({
   onPress,
 }: VantaTopLotProps) {
   const isDark = useIsDarkMode();
+  const { t, locale } = useLocale();
+  const currency = useSettingsStore((s) => s.currency) as "EUR" | "USD" | "GBP" | "CHF" | "JPY";
   const isProfitable = profit >= 0;
   const scale = useSharedValue(1);
 
@@ -1209,6 +1143,7 @@ function VantaTopLotCard({
     >
       <Animated.View style={animatedStyle}>
         <ObsidianBlock
+          variant="premium"
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -1260,7 +1195,7 @@ function VantaTopLotCard({
                 color: mutedColor,
               }}
             >
-              {soldCount} vente{soldCount > 1 ? "s" : ""}
+              {soldCount} {soldCount > 1 ? t("dashboard.topPerformers.sales") : t("dashboard.topPerformers.sale")}
             </Text>
           </View>
 
@@ -1273,7 +1208,7 @@ function VantaTopLotCard({
                 color: textColor,
               }}
             >
-              {formatCurrency(revenue)}
+              {i18nFormatCurrency(revenue, currency, locale)}
             </Text>
             <View
               style={{
@@ -1307,7 +1242,7 @@ function VantaTopLotCard({
                 }}
               >
                 {isProfitable ? "+" : ""}
-                {formatCurrency(profit)}
+                {i18nFormatCurrency(profit, currency, locale)}
               </Text>
             </View>
           </View>
@@ -1326,6 +1261,34 @@ export default function VantaDashboard() {
   const theme = useVantaTheme();
   const isDark = useIsDarkMode();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>("30d");
+  const { t, locale } = useLocale();
+  const currency = useSettingsStore((s) => s.currency) as "EUR" | "USD" | "GBP" | "CHF" | "JPY";
+  const currencySymbol = useCurrencySymbol();
+
+  // Locale-aware formatCurrency for dashboard
+  const formatCurrency = useCallback(
+    (value: number, compact = false) => {
+      if (compact) {
+        return formatCurrencyCompact(value, currency, locale);
+      }
+      return i18nFormatCurrency(value, currency, locale);
+    },
+    [currency, locale],
+  );
+
+  // Locale-aware formatCurrencyRaw (number only, no symbol)
+  const formatCurrencyRaw = useCallback(
+    (value: number, compact = false) => {
+      const formatted = formatCurrency(value, compact);
+      // Strip currency symbol for hero display
+      return formatted
+        .replace(/[€$£¥]/g, "")
+        .replace(/CHF/g, "")
+        .replace(/CA\$/g, "")
+        .trim();
+    },
+    [formatCurrency],
+  );
 
   useTrackScreen("dashboard");
 
@@ -1521,7 +1484,7 @@ export default function VantaDashboard() {
                 color: isDark ? VANTA.textGhost : Palette.neutral[400],
               }}
             >
-              CONNECTED
+              {t("dashboard.status.connected")}
             </Text>
           </View>
         </Animated.View>
@@ -1585,7 +1548,7 @@ export default function VantaDashboard() {
                   color: isDark ? VANTA.textMuted : Palette.neutral[400],
                 }}
               >
-                {lots.length} lots • {stats.stockCount} articles
+                {lots.length} {t("dashboard.status.lots")} • {stats.stockCount} {t("dashboard.status.items")}
               </Text>
             </View>
           </View>
@@ -1626,7 +1589,7 @@ export default function VantaDashboard() {
         >
           <VantaMetricOrb
             icon="inventory-2"
-            label="En stock"
+            label={t("dashboard.metrics.inStock")}
             value={formatNumber(stats.stockCount)}
             accentColor={accentGold}
             accentGlow={accentGoldGlow}
@@ -1634,7 +1597,7 @@ export default function VantaDashboard() {
           />
           <VantaMetricOrb
             icon="receipt"
-            label="Ventes"
+            label={t("dashboard.metrics.sales")}
             value={formatNumber(stats.salesCount)}
             accentColor={Palette.semantic.info}
             accentGlow={`${Palette.semantic.info}50`}
@@ -1642,7 +1605,7 @@ export default function VantaDashboard() {
           />
           <VantaMetricOrb
             icon="folder"
-            label="Lots actifs"
+            label={t("dashboard.metrics.activeLots")}
             value={formatNumber(stats.activeLots)}
             accentColor={Palette.semantic.success}
             accentGlow={`${Palette.semantic.success}50`}
@@ -1666,7 +1629,7 @@ export default function VantaDashboard() {
                 marginBottom: 8,
               }}
             >
-              TIER 2 // COMMANDES
+              {t("dashboard.quickActions.tier")}
             </Text>
             <Text
               style={{
@@ -1676,7 +1639,7 @@ export default function VantaDashboard() {
                 color: isDark ? VANTA.textPrimary : Palette.neutral.anthracite,
               }}
             >
-              Actions Rapides
+              {t("dashboard.quickActions.title")}
             </Text>
             {/* Gold accent line */}
             <View
@@ -1697,21 +1660,21 @@ export default function VantaDashboard() {
           >
             <VantaActionSlab
               icon="add"
-              label="Nouveau lot"
+              label={t("dashboard.quickActions.newLot")}
               accentColor={Palette.semantic.success}
               accentGlow={`${Palette.semantic.success}40`}
               onPress={() => router.push("/lots/new")}
             />
             <VantaActionSlab
               icon="sell"
-              label="Vendre"
+              label={t("dashboard.quickActions.sell")}
               accentColor={isDark ? VANTA.gold : Palette.metal.champagne}
               accentGlow={isDark ? VANTA.goldGlow : Palette.metal.champagneGlow}
               onPress={() => router.push("/sales/new")}
             />
             <VantaActionSlab
               icon="auto-awesome"
-              label="Scanner IA"
+              label={t("dashboard.quickActions.aiScanner")}
               accentColor={Palette.sky[400]}
               accentGlow={`${Palette.sky[400]}50`}
               onPress={() => router.push("/scanner")}
@@ -1744,7 +1707,7 @@ export default function VantaDashboard() {
                     marginBottom: 8,
                   }}
                 >
-                  TIER 3 // PERFORMANCE
+                  {t("dashboard.topPerformers.tier")}
                 </Text>
                 <Text
                   style={{
@@ -1756,7 +1719,7 @@ export default function VantaDashboard() {
                       : Palette.neutral.anthracite,
                   }}
                 >
-                  Top Performers
+                  {t("dashboard.topPerformers.title")}
                 </Text>
                 {/* Gold accent line */}
                 <View
@@ -1787,7 +1750,7 @@ export default function VantaDashboard() {
                     textDecorationLine: "underline",
                   }}
                 >
-                  Voir tout
+                  {t("dashboard.topPerformers.viewAll")}
                 </Text>
               </Pressable>
             </View>

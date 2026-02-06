@@ -6,6 +6,7 @@
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
+import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import {
@@ -21,6 +22,7 @@ import { Item, ItemsRepository, Lot, LotsRepository } from "@/db/repositories";
 import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
+import { useSettingsStore } from "@/store/settings";
 import { useLocale } from "@/utils/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -68,36 +70,6 @@ if (isAndroid && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🌌 OBSIDIAN BLOCK - Base Component
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function ObsidianBlock({
-  children,
-  style,
-}: {
-  children: React.ReactNode;
-  style?: any;
-}) {
-  const theme = useVantaTheme();
-  return (
-    <View
-      style={[
-        {
-          backgroundColor: theme.surface,
-          borderRadius: 20,
-          borderWidth: 1,
-          borderColor: theme.borderGlass,
-          borderCurve: "continuous",
-        },
-        style,
-      ]}
-    >
-      {children}
-    </View>
-  );
-}
-
 // ============ TYPES ============
 
 type SortOption = "newest" | "oldest" | "cost_high" | "cost_low" | "lot";
@@ -120,6 +92,15 @@ interface LotCarouselData {
 const ITEMS_PER_CAROUSEL = 10; // Items shown per lot carousel
 const ANIMATION_STAGGER = 30; // ms between each item animation
 const MAX_ANIMATED_ITEMS = 10; // Only animate first N items for performance
+
+const CURRENCY_MAP: Record<string, string> = {
+  EUR: "€",
+  USD: "$",
+  GBP: "£",
+  CHF: "CHF",
+  JPY: "¥",
+  CAD: "CA$",
+};
 
 const SORT_OPTIONS_KEYS: { key: SortOption; icon: string }[] = [
   { key: "newest", icon: "schedule" },
@@ -194,6 +175,7 @@ interface ItemCardProps {
     sellA11yLabel: string;
     costLabel: string;
     openDetailsHint: string;
+    currencySymbol: string;
   };
 }
 
@@ -245,7 +227,7 @@ const ItemCard = React.memo(function ItemCard({
         <Pressable
           onPress={onPress}
           accessibilityRole="button"
-          accessibilityLabel={`${displayBrand}. ${displayType}. ${translations.costLabel}: €${unitCost.toFixed(2)}.`}
+          accessibilityLabel={`${displayBrand}. ${displayType}. ${translations.costLabel}: ${translations.currencySymbol}${unitCost.toFixed(2)}.`}
           accessibilityHint={translations.openDetailsHint}
           onPressIn={() => {
             scale.value = withSpring(0.97, SPRING_GRAVITY);
@@ -317,7 +299,7 @@ const ItemCard = React.memo(function ItemCard({
                     color: colors.gold,
                   }}
                 >
-                  €{unitCost.toFixed(2)}
+                  {translations.currencySymbol}{unitCost.toFixed(2)}
                 </Text>
                 <Pressable
                   onPress={onSell}
@@ -351,7 +333,7 @@ const ItemCard = React.memo(function ItemCard({
         <Pressable
           onPress={onPress}
           accessibilityRole="button"
-          accessibilityLabel={`${displayBrand}. ${displayType}. ${translations.costLabel}: €${unitCost.toFixed(2)}.`}
+          accessibilityLabel={`${displayBrand}. ${displayType}. ${translations.costLabel}: ${translations.currencySymbol}${unitCost.toFixed(2)}.`}
           accessibilityHint={translations.openDetailsHint}
           onPressIn={() => {
             scale.value = withSpring(0.98, SPRING_GRAVITY);
@@ -418,7 +400,7 @@ const ItemCard = React.memo(function ItemCard({
                 marginRight: 12,
               }}
             >
-              €{unitCost.toFixed(2)}
+              {translations.currencySymbol}{unitCost.toFixed(2)}
             </Text>
 
             <Pressable
@@ -450,7 +432,7 @@ const ItemCard = React.memo(function ItemCard({
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${displayBrand}. ${displayType}. ${translations.costLabel}: €${unitCost.toFixed(2)}.`}
+        accessibilityLabel={`${displayBrand}. ${displayType}. ${translations.costLabel}: ${translations.currencySymbol}${unitCost.toFixed(2)}.`}
         accessibilityHint={translations.openDetailsHint}
         onPressIn={() => {
           scale.value = withSpring(0.98, SPRING_GRAVITY);
@@ -573,7 +555,7 @@ const ItemCard = React.memo(function ItemCard({
                     color: colors.gold,
                   }}
                 >
-                  {translations.costLabel}: €{unitCost.toFixed(2)}
+                  {translations.costLabel}: {translations.currencySymbol}{unitCost.toFixed(2)}
                 </Text>
               </View>
             </View>
@@ -607,7 +589,7 @@ const ItemCard = React.memo(function ItemCard({
 // 📊 VANTA KPI SECTION - Monolith Style
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
+function StatsBar({ stats, t, currencySymbol }: { stats: StockStats; t: TFunction; currencySymbol: string }) {
   const theme = useVantaTheme();
 
   // Barres de visualisation pour le capital
@@ -635,7 +617,7 @@ function StatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
           icon="account-balance-wallet"
           topLabel={t("dashboard.capital", "Capital")}
           label={t("dashboard.stockValue")}
-          value={`€${stats.totalValue >= 1000 ? (stats.totalValue / 1000).toFixed(1) + "k" : stats.totalValue.toFixed(0)}`}
+          value={`${currencySymbol}${stats.totalValue >= 1000 ? (stats.totalValue / 1000).toFixed(1) + "k" : stats.totalValue.toFixed(0)}`}
           bars={valueBars}
           style={{ flex: 1 }}
         />
@@ -646,7 +628,7 @@ function StatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
         <MonolithCard
           icon="analytics"
           label={t("dashboard.stats.avgMargin", "Coût Moyen")}
-          value={`€${stats.avgCost.toFixed(2)}`}
+          value={`${currencySymbol}${stats.avgCost.toFixed(2)}`}
           trend={t("items.unitCost", "par article")}
           trendPositive
           style={{ flex: 1 }}
@@ -666,7 +648,7 @@ function StatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
 }
 
 // Legacy stats bar kept for reference
-function _LegacyStatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
+function _LegacyStatsBar({ stats, t, currencySymbol }: { stats: StockStats; t: TFunction; currencySymbol: string }) {
   const theme = useVantaTheme();
   const colors = {
     background: theme.surface,
@@ -726,7 +708,7 @@ function _LegacyStatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
               color: theme.success,
             }}
           >
-            €{stats.totalValue.toFixed(0)}
+            {currencySymbol}{stats.totalValue.toFixed(0)}
           </Text>
           <Text
             style={{
@@ -755,7 +737,7 @@ function _LegacyStatsBar({ stats, t }: { stats: StockStats; t: TFunction }) {
               color: colors.text,
             }}
           >
-            €{stats.avgCost.toFixed(2)}
+            {currencySymbol}{stats.avgCost.toFixed(2)}
           </Text>
           <Text
             style={{
@@ -839,6 +821,8 @@ export default function StockScreen() {
   const theme = useVantaTheme();
   const { isReduceMotionEnabled } = useAccessibility();
   const { t } = useLocale();
+  const currency = useSettingsStore((state) => state.currency);
+  const currencySymbol = CURRENCY_MAP[currency] || currency;
 
   // Screen tracking
   useTrackScreen("stock");
@@ -1009,7 +993,7 @@ export default function StockScreen() {
   }, []);
 
   const handleItemPress = useCallback((item: CarouselItem) => {
-    router.push(`/items/edit/${item.id}`);
+    router.push(`/items/${item.id}`);
   }, []);
 
   const handleSeeAllPress = useCallback((lotId: number) => {
@@ -1335,7 +1319,7 @@ export default function StockScreen() {
         )}
 
         {/* Stats Bar */}
-        {allItems.length > 0 && <StatsBar stats={stats} t={t} />}
+        {allItems.length > 0 && <StatsBar stats={stats} t={t} currencySymbol={currencySymbol} />}
 
         {/* Loading State */}
         {loading && !refreshing ? (

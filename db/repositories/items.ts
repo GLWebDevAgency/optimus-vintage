@@ -42,6 +42,11 @@ export const ItemsRepository = {
     return result[0];
   },
 
+  // DELETE
+  async delete(id: number) {
+    return await db.delete(items).where(eq(items.id, id));
+  },
+
   // Custom: Update Status
   async updateStatus(id: number, status: string) {
     return await this.update(id, { status });

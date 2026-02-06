@@ -11,6 +11,7 @@ import {
     VantaScreen
 } from "@/components/ui/PremiumUI";
 import { ItemsRepository, SalesRepository } from "@/db/repositories";
+import { useSettingsStore } from "@/store/settings";
 import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -50,6 +51,9 @@ export default function SaleDetailScreen() {
   };
   const queryClient = useQueryClient();
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = { EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" }[currency] || "€";
+  const locale = useSettingsStore((s) => s.locale);
 
   const saleId = id ? parseInt(id, 10) : null;
 
@@ -87,29 +91,29 @@ export default function SaleDetailScreen() {
 
   const handleCancel = () => {
     if (saleQuery.data?.status !== "COMPLETED") {
-      Alert.alert("Info", "This sale is already cancelled or refunded.");
+      Alert.alert(t("common.error"), t("sales.alreadyCancelled"));
       return;
     }
 
     Alert.alert(
-      "Cancel Sale",
-      "Are you sure you want to cancel this sale? The item will be returned to stock.",
+      t("sales.cancelSale"),
+      t("sales.cancelSaleConfirm"),
       [
-        { text: "Keep Sale", style: "cancel" },
+        { text: t("sales.keepSale"), style: "cancel" },
         {
-          text: "Cancel Sale",
+          text: t("sales.cancelSale"),
           style: "destructive",
           onPress: async () => {
             try {
               await cancelSale.mutateAsync();
               Alert.alert(
-                "Sale Cancelled",
-                "The item has been returned to stock.",
+                t("sales.saleCancelled"),
+                t("sales.itemReturnedToStock"),
                 [{ text: "OK", onPress: () => router.back() }],
               );
             } catch (e) {
               console.error(e);
-              Alert.alert("Error", "Could not cancel the sale.");
+              Alert.alert(t("common.error"), t("sales.cancelError"));
             }
           },
         },
@@ -132,7 +136,7 @@ export default function SaleDetailScreen() {
         <ActivityIndicator size="large" color={colors.gold} />
         <Text
           style={{
-            fontFamily: "Manrope-Regular",
+            fontFamily: "Manrope_400Regular",
             fontSize: 14,
             color: colors.textMuted,
             marginTop: 16,
@@ -172,7 +176,7 @@ export default function SaleDetailScreen() {
         </View>
         <Text
           style={{
-            fontFamily: "Manrope-Bold",
+            fontFamily: "Manrope_700Bold",
             fontSize: 20,
             color: colors.text,
           }}
@@ -191,7 +195,7 @@ export default function SaleDetailScreen() {
         >
           <Text
             style={{
-              fontFamily: "Manrope-SemiBold",
+              fontFamily: "Manrope_600SemiBold",
               fontSize: 14,
               color: colors.gold,
             }}
@@ -213,6 +217,8 @@ export default function SaleDetailScreen() {
   const shippingFees = parseFloat(String(sale.shippingFees || 0));
   const miscFees = parseFloat(String(sale.miscFees || 0));
   const priceNet = parseFloat(String(sale.priceNet));
+  const itemCost = item ? parseFloat(String(item.unitCost || 0)) : 0;
+  const realProfit = priceNet - itemCost;
 
   return (
     <VantaScreen>
@@ -280,7 +286,7 @@ export default function SaleDetailScreen() {
           </View>
           <Text
             style={{
-              fontFamily: "Manrope-Bold",
+              fontFamily: "Manrope_700Bold",
               fontSize: 24,
               color: colors.text,
             }}
@@ -289,12 +295,12 @@ export default function SaleDetailScreen() {
           </Text>
           <Text
             style={{
-              fontFamily: "Manrope-Regular",
+              fontFamily: "Manrope_400Regular",
               fontSize: 14,
               color: colors.textMuted,
             }}
           >
-            {new Date(sale.saleDate).toLocaleDateString("en-US", {
+            {new Date(sale.saleDate).toLocaleDateString(locale === "fr" ? "fr-FR" : locale === "de" ? "de-DE" : "en-US", {
               weekday: "long",
               day: "numeric",
               month: "long",
@@ -314,7 +320,7 @@ export default function SaleDetailScreen() {
           >
             <Text
               style={{
-                fontFamily: "Manrope-Medium",
+                fontFamily: "Manrope_500Medium",
                 fontSize: 11,
                 letterSpacing: 0.5,
                 textTransform: "uppercase",
@@ -325,13 +331,13 @@ export default function SaleDetailScreen() {
             </Text>
             <Text
               style={{
-                fontFamily: "Manrope-Bold",
+                fontFamily: "Manrope_700Bold",
                 fontSize: 48,
                 color: isCompleted ? colors.success : colors.textMuted,
                 textDecorationLine: isCancelled ? "line-through" : "none",
               }}
             >
-              €{priceNet.toFixed(2)}
+              {currencySymbol}{priceNet.toFixed(2)}
             </Text>
             <View
               style={{
@@ -349,7 +355,7 @@ export default function SaleDetailScreen() {
               <AppIcon name="store" size={14} color={colors.gold} />
               <Text
                 style={{
-                  fontFamily: "Manrope-Medium",
+                  fontFamily: "Manrope_500Medium",
                   fontSize: 11,
                   letterSpacing: 0.5,
                   color: colors.gold,
@@ -369,7 +375,7 @@ export default function SaleDetailScreen() {
           <Text
             style={{
               fontSize: 12,
-              fontFamily: "Manrope-SemiBold",
+              fontFamily: "Manrope_600SemiBold",
               textTransform: "uppercase",
               letterSpacing: 0.5,
               marginBottom: 8,
@@ -389,7 +395,7 @@ export default function SaleDetailScreen() {
             >
               <Text
                 style={{
-                  fontFamily: "Manrope-Regular",
+                  fontFamily: "Manrope_400Regular",
                   fontSize: 16,
                   color: colors.text,
                 }}
@@ -398,13 +404,13 @@ export default function SaleDetailScreen() {
               </Text>
               <Text
                 style={{
-                  fontFamily: "Manrope-SemiBold",
+                  fontFamily: "Manrope_600SemiBold",
                   fontSize: 16,
                   fontVariant: ["tabular-nums"],
                   color: colors.text,
                 }}
               >
-                €{priceGross.toFixed(2)}
+                {currencySymbol}{priceGross.toFixed(2)}
               </Text>
             </View>
             <View
@@ -424,7 +430,7 @@ export default function SaleDetailScreen() {
             >
               <Text
                 style={{
-                  fontFamily: "Manrope-Regular",
+                  fontFamily: "Manrope_400Regular",
                   fontSize: 14,
                   color: colors.textMuted,
                 }}
@@ -433,13 +439,13 @@ export default function SaleDetailScreen() {
               </Text>
               <Text
                 style={{
-                  fontFamily: "Manrope-SemiBold",
+                  fontFamily: "Manrope_600SemiBold",
                   fontSize: 14,
                   fontVariant: ["tabular-nums"],
                   color: colors.danger,
                 }}
               >
-                -€{platformFees.toFixed(2)}
+                -{currencySymbol}{platformFees.toFixed(2)}
               </Text>
             </View>
             <View
@@ -452,7 +458,7 @@ export default function SaleDetailScreen() {
             >
               <Text
                 style={{
-                  fontFamily: "Manrope-Regular",
+                  fontFamily: "Manrope_400Regular",
                   fontSize: 14,
                   color: colors.textMuted,
                 }}
@@ -461,13 +467,13 @@ export default function SaleDetailScreen() {
               </Text>
               <Text
                 style={{
-                  fontFamily: "Manrope-SemiBold",
+                  fontFamily: "Manrope_600SemiBold",
                   fontSize: 14,
                   fontVariant: ["tabular-nums"],
                   color: colors.danger,
                 }}
               >
-                -€{shippingFees.toFixed(2)}
+                -{currencySymbol}{shippingFees.toFixed(2)}
               </Text>
             </View>
             {miscFees > 0 && (
@@ -481,7 +487,7 @@ export default function SaleDetailScreen() {
               >
                 <Text
                   style={{
-                    fontFamily: "Manrope-Regular",
+                    fontFamily: "Manrope_400Regular",
                     fontSize: 14,
                     color: colors.textMuted,
                   }}
@@ -490,13 +496,13 @@ export default function SaleDetailScreen() {
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "Manrope-SemiBold",
+                    fontFamily: "Manrope_600SemiBold",
                     fontSize: 14,
                     fontVariant: ["tabular-nums"],
                     color: colors.danger,
                   }}
                 >
-                  -€{miscFees.toFixed(2)}
+                  -{currencySymbol}{miscFees.toFixed(2)}
                 </Text>
               </View>
             )}
@@ -517,7 +523,7 @@ export default function SaleDetailScreen() {
             >
               <Text
                 style={{
-                  fontFamily: "Manrope-Bold",
+                  fontFamily: "Manrope_700Bold",
                   fontSize: 16,
                   color: colors.text,
                 }}
@@ -526,13 +532,13 @@ export default function SaleDetailScreen() {
               </Text>
               <Text
                 style={{
-                  fontFamily: "Manrope-Bold",
+                  fontFamily: "Manrope_700Bold",
                   fontSize: 16,
                   fontVariant: ["tabular-nums"],
-                  color: colors.success,
+                  color: realProfit >= 0 ? colors.success : colors.danger,
                 }}
               >
-                €{priceNet.toFixed(2)}
+                {realProfit >= 0 ? "+" : ""}{currencySymbol}{realProfit.toFixed(2)}
               </Text>
             </View>
           </View>
@@ -547,7 +553,7 @@ export default function SaleDetailScreen() {
             <Text
               style={{
                 fontSize: 12,
-                fontFamily: "Manrope-SemiBold",
+                fontFamily: "Manrope_600SemiBold",
                 textTransform: "uppercase",
                 letterSpacing: 0.5,
                 marginBottom: 8,
@@ -575,7 +581,7 @@ export default function SaleDetailScreen() {
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    fontFamily: "Manrope-Bold",
+                    fontFamily: "Manrope_700Bold",
                     fontSize: 14,
                     color: colors.text,
                   }}
@@ -584,22 +590,22 @@ export default function SaleDetailScreen() {
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "Manrope-Regular",
+                    fontFamily: "Manrope_400Regular",
                     fontSize: 14,
                     color: colors.textMuted,
                   }}
                 >
-                  {item.type || "Clothing"} • {item.size || "OS"} •{" "}
-                  {item.condition || "Good"}
+                  {item.type || t("items.defaultType")} • {item.size || t("items.defaultSize")} •{" "}
+                  {item.condition || t("items.conditions.good")}
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "Manrope-Regular",
+                    fontFamily: "Manrope_400Regular",
                     fontSize: 12,
                     color: colors.textMuted,
                   }}
                 >
-                  Cost: €{parseFloat(String(item.unitCost)).toFixed(2)}
+                  {t("items.unitCost")}: {currencySymbol}{parseFloat(String(item.unitCost)).toFixed(2)}
                 </Text>
               </View>
               <View
@@ -618,7 +624,7 @@ export default function SaleDetailScreen() {
               >
                 <Text
                   style={{
-                    fontFamily: "Manrope-Medium",
+                    fontFamily: "Manrope_500Medium",
                     fontSize: 11,
                     letterSpacing: 0.5,
                     color:
@@ -644,7 +650,7 @@ export default function SaleDetailScreen() {
           <Text
             style={{
               fontSize: 12,
-              fontFamily: "Manrope-SemiBold",
+              fontFamily: "Manrope_600SemiBold",
               textTransform: "uppercase",
               letterSpacing: 0.5,
               marginBottom: 8,
@@ -671,7 +677,7 @@ export default function SaleDetailScreen() {
               <AppIcon name="inventory-2" size={16} color={colors.gold} />
               <Text
                 style={{
-                  fontFamily: "Manrope-Medium",
+                  fontFamily: "Manrope_500Medium",
                   fontSize: 11,
                   letterSpacing: 0.5,
                   color: colors.text,
@@ -697,13 +703,13 @@ export default function SaleDetailScreen() {
               <AppIcon name="receipt" size={16} color={colors.textMuted} />
               <Text
                 style={{
-                  fontFamily: "Manrope-Medium",
+                  fontFamily: "Manrope_500Medium",
                   fontSize: 11,
                   letterSpacing: 0.5,
                   color: colors.text,
                 }}
               >
-                Sale #{sale.id}
+                {t("sales.title")} #{sale.id}
               </Text>
             </View>
           </View>
@@ -741,7 +747,7 @@ export default function SaleDetailScreen() {
             <AppIcon name="cancel" size={20} color="#FFF" />
             <Text
               style={{
-                fontFamily: "Manrope-Bold",
+                fontFamily: "Manrope_700Bold",
                 fontSize: 16,
                 color: "#FFF",
               }}

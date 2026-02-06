@@ -6,6 +6,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { Radius, Spacing } from "@/constants/Theme";
 import { ItemsRepository, LotsRepository } from "@/db/repositories";
+import { useSettingsStore } from "@/store/settings";
 import { useLocale } from "@/utils/i18n";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
@@ -58,6 +59,8 @@ export default function AddLotScreen() {
     warningSubtle: theme.warningSubtle,
   };
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
 
   // Form state
   const [provider, setProvider] = useState("");
@@ -473,7 +476,7 @@ export default function AddLotScreen() {
                 ]}
               >
                 <Text style={[styles.currencySymbol, { color: colors.gold }]}>
-                  €
+                  {currencySymbol}
                 </Text>
                 <TextInput
                   style={[styles.currencyValue, { color: colors.text }]}
@@ -501,7 +504,7 @@ export default function AddLotScreen() {
                 ]}
               >
                 <Text style={[styles.currencySymbol, { color: colors.gold }]}>
-                  €
+                  {currencySymbol}
                 </Text>
                 <TextInput
                   style={[styles.currencyValue, { color: colors.text }]}
@@ -570,7 +573,7 @@ export default function AddLotScreen() {
               {t("lots.perItem")}
             </Text>
             <Text style={[styles.estimatedValue, { color: colors.text }]}>
-              €{unitCost}
+              {currencySymbol}{unitCost}
             </Text>
           </View>
         </Animated.View>
@@ -707,7 +710,7 @@ export default function AddLotScreen() {
           />
           <View style={styles.footerSummaryItem}>
             <Text style={[styles.footerSummaryValue, { color: colors.gold }]}>
-              €{unitCost}
+              {currencySymbol}{unitCost}
             </Text>
             <Text
               style={[styles.footerSummaryLabel, { color: colors.textMuted }]}

@@ -10,6 +10,7 @@ import { ItemPhotoPicker } from "@/components/ui/ItemPhotoPicker";
 import { useVantaTheme, VantaScreen } from "@/components/ui/PremiumUI";
 import { Palette, Radius, Spacing } from "@/constants/Theme";
 import { ItemsRepository, LotsRepository } from "@/db/repositories";
+import { useSettingsStore } from "@/store/settings";
 import { Haptic } from "@/utils/haptics";
 import { useLocale } from "@/utils/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -172,6 +173,8 @@ export default function AddToStockScreen() {
   const theme = useVantaTheme();
   const isDark = theme.dark;
   const { t } = useLocale();
+  const currency = useSettingsStore((s) => s.currency);
+  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
   const queryClient = useQueryClient();
 
   const colors = {
@@ -350,7 +353,7 @@ export default function AddToStockScreen() {
                     {t("scanner.marketPrice")}
                   </Text>
                   <Text style={[styles.aiPriceValue, { color: colors.gold }]}>
-                    €{midPrice}
+                    {currencySymbol}{midPrice}
                   </Text>
                 </View>
               )}
@@ -607,7 +610,7 @@ export default function AddToStockScreen() {
               ]}
             >
               <Text style={[styles.currencySymbol, { color: colors.gold }]}>
-                €
+                {currencySymbol}
               </Text>
               <TextInput
                 style={[styles.currencyValue, { color: colors.text }]}
@@ -620,7 +623,7 @@ export default function AddToStockScreen() {
             </View>
             {midPrice != null && (
               <Text style={[styles.priceHint, { color: colors.textMuted }]}>
-                💡 {t("scanner.suggestedSellPrice")}: €{midPrice}
+                💡 {t("scanner.suggestedSellPrice")}: {currencySymbol}{midPrice}
               </Text>
             )}
           </Animated.View>
