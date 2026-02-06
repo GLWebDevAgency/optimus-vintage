@@ -21,7 +21,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.gl_dev.optimusvintage"
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +37,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "562c27ef-4444-46c6-b22b-f442ca54d35c"
+      }
     }
   }
 }
