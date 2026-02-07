@@ -6,6 +6,8 @@ import { useColorScheme } from "@/components/useColorScheme";
 import { Theme, Typography } from "@/constants/Theme";
 import { Stack } from "expo-router";
 
+export { ScreenErrorBoundary as ErrorBoundary } from "@/components/ui/ErrorBoundary";
+
 export default function SalesLayout() {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Theme[colorScheme];

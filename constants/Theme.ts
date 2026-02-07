@@ -28,7 +28,7 @@ export const Palette = {
   // ─── AETHER (Dark Mode Bases) ──────────────────────────────────────────────
   // "The interface floats in an infinite void"
   vanta: {
-    black: "#4e726064", // Absolute Zero - The Void
+    black: "#37514464", // Absolute Zero - The Void
     obsidian: "#0A0A0A", // Polished Obsidian
     titanium: "#111111", // Brushed Black Titanium
     carbon: "#1C1C1C", // Carbon Glass Surface
@@ -41,7 +41,7 @@ export const Palette = {
   ivory: {
     base: "#FAF9F6", // Organic Ivory (Silk Paper) - opaque
     cream: "#FDFCF9", // Warm Cream Highlight
-    sand: "#4e726064", // Warm Sand
+    sand: "#37514464", // Warm Sand
     linen: "#E8E5DD", // Linen Texture
     pearl: "#FFFFFF", // Mother of Pearl Accent
     parchment: "#F5F2EB", // Noble Paper

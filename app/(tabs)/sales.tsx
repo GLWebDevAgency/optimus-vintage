@@ -85,8 +85,8 @@ function filterSalesByPeriod(sales: Sale[], period: PeriodFilter): Sale[] {
   return sales.filter((sale) => new Date(sale.saleDate) >= threshold);
 }
 
-// Animated Period Selector - Vanta Design
-function AnimatedPeriodSelector({
+// Animated Period Selector - Vanta Design (memoized for perf)
+const AnimatedPeriodSelector = React.memo(function AnimatedPeriodSelector({
   options,
   activeKey,
   onSelect,
@@ -187,7 +187,7 @@ function AnimatedPeriodSelector({
       </View>
     </View>
   );
-}
+});
 
 const periodStyles = StyleSheet.create({
   container: {
@@ -427,12 +427,120 @@ export default function SalesScreen() {
     [currency, isReduceMotionEnabled, locale, t, theme],
   );
 
+  const listHeader = useMemo(
+    () => (
+      <View style={{ paddingTop: insets.top + Spacing.sm }}>
+        <View style={styles.header}>
+          <PremiumHeader
+            title={t("sales.title")}
+            subtitle={t("dashboard.revenue")}
+            rightAction={
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("sales.newSale")}
+                onPress={() => {
+                  Haptic.impactMedium();
+                  router.push("/sales/new");
+                }}
+                style={[styles.addButton, { backgroundColor: theme.primary }]}
+              >
+                <AppIcon name="add" size={22} color={theme.textOnAccent} />
+              </Pressable>
+            }
+          />
+        </View>
+
+        <Animated.View
+          entering={
+            isReduceMotionEnabled
+              ? undefined
+              : FadeInDown.delay(100).duration(350)
+          }
+        >
+          <AnimatedPeriodSelector
+            options={PERIOD_OPTIONS}
+            activeKey={selectedPeriod}
+            onSelect={handlePeriodChange}
+            isDark={isDark}
+            colors={theme}
+          />
+        </Animated.View>
+
+        <View style={styles.statsGrid}>
+          <PremiumStatCard
+            label={t("dashboard.revenue").toUpperCase()}
+            value={formatCurrencyCompact(totalRevenue, currency, locale)}
+            subtitle={t(
+              PERIOD_OPTIONS_CONFIG.find((p) => p.key === selectedPeriod)
+                ?.translationKey ?? "dashboard.period.30d",
+            )}
+            icon="payments"
+            variant="accent"
+            trend={
+              selectedPeriod === "all"
+                ? undefined
+                : {
+                    value: `${previousPeriodComparison >= 0 ? "+" : ""}${previousPeriodComparison.toFixed(0)}%`,
+                    isPositive: previousPeriodComparison >= 0,
+                  }
+            }
+          />
+          <PremiumStatCard
+            label={t("sales.title").toUpperCase()}
+            value={salesCount}
+            subtitle={t("sales.title").toLowerCase()}
+            icon="receipt"
+          />
+        </View>
+
+        <View style={styles.statsGrid}>
+          <PremiumStatCard
+            label={t("sales.stats.avgSale").toUpperCase()}
+            value={formatCurrency(avgSaleValue, currency, locale)}
+            subtitle={t("sales.priceNet")}
+            icon="account-balance-wallet"
+          />
+          <PremiumStatCard
+            label={t("sales.stats.deltaPrev").toUpperCase()}
+            value={`${previousPeriodComparison >= 0 ? "+" : ""}${previousPeriodComparison.toFixed(0)}%`}
+            subtitle={t("common.previous")}
+            icon={
+              previousPeriodComparison >= 0 ? "trending-up" : "trending-down"
+            }
+          />
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>
+            {t("sales.saleDetails").toUpperCase()}
+          </Text>
+        </View>
+      </View>
+    ),
+    [
+      currency,
+      insets.top,
+      isDark,
+      isReduceMotionEnabled,
+      locale,
+      previousPeriodComparison,
+      salesCount,
+      selectedPeriod,
+      t,
+      theme,
+      totalRevenue,
+      avgSaleValue,
+      handlePeriodChange,
+    ],
+  );
+
   return (
     <VantaScreen>
       <FlashList
         data={sales}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
+        estimatedItemSize={80}
         contentInsetAdjustmentBehavior="automatic"
         refreshControl={
           <RefreshControl
@@ -442,100 +550,7 @@ export default function SalesScreen() {
             colors={[theme.primary]}
           />
         }
-        ListHeaderComponent={
-          <View style={{ paddingTop: insets.top + Spacing.sm }}>
-            <View style={styles.header}>
-              <PremiumHeader
-                title={t("sales.title")}
-                subtitle={t("dashboard.revenue")}
-                rightAction={
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t("sales.newSale")}
-                    onPress={() => {
-                      Haptic.impactMedium();
-                      router.push("/sales/new");
-                    }}
-                    style={[
-                      styles.addButton,
-                      { backgroundColor: theme.primary },
-                    ]}
-                  >
-                    <AppIcon name="add" size={22} color={theme.textOnAccent} />
-                  </Pressable>
-                }
-              />
-            </View>
-
-            <Animated.View
-              entering={
-                isReduceMotionEnabled
-                  ? undefined
-                  : FadeInDown.delay(100).duration(350)
-              }
-            >
-              <AnimatedPeriodSelector
-                options={PERIOD_OPTIONS}
-                activeKey={selectedPeriod}
-                onSelect={handlePeriodChange}
-                isDark={isDark}
-                colors={theme}
-              />
-            </Animated.View>
-
-            <View style={styles.statsGrid}>
-              <PremiumStatCard
-                label={t("dashboard.revenue").toUpperCase()}
-                value={formatCurrencyCompact(totalRevenue, currency, locale)}
-                subtitle={t(
-                  PERIOD_OPTIONS_CONFIG.find((p) => p.key === selectedPeriod)
-                    ?.translationKey ?? "dashboard.period.30d",
-                )}
-                icon="payments"
-                variant="accent"
-                trend={
-                  selectedPeriod === "all"
-                    ? undefined
-                    : {
-                        value: `${previousPeriodComparison >= 0 ? "+" : ""}${previousPeriodComparison.toFixed(0)}%`,
-                        isPositive: previousPeriodComparison >= 0,
-                      }
-                }
-              />
-              <PremiumStatCard
-                label={t("sales.title").toUpperCase()}
-                value={salesCount}
-                subtitle={t("sales.title").toLowerCase()}
-                icon="receipt"
-              />
-            </View>
-
-            <View style={styles.statsGrid}>
-              <PremiumStatCard
-                label={t("sales.stats.avgSale").toUpperCase()}
-                value={formatCurrency(avgSaleValue, currency, locale)}
-                subtitle={t("sales.priceNet")}
-                icon="account-balance-wallet"
-              />
-              <PremiumStatCard
-                label={t("sales.stats.deltaPrev").toUpperCase()}
-                value={`${previousPeriodComparison >= 0 ? "+" : ""}${previousPeriodComparison.toFixed(0)}%`}
-                subtitle={t("common.previous")}
-                icon={
-                  previousPeriodComparison >= 0
-                    ? "trending-up"
-                    : "trending-down"
-                }
-              />
-            </View>
-
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>
-                {t("sales.saleDetails").toUpperCase()}
-              </Text>
-            </View>
-          </View>
-        }
+        ListHeaderComponent={listHeader}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           loading ? (

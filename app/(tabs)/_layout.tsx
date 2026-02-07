@@ -20,7 +20,7 @@ import { useLocale } from "@/utils/i18n";
 import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
 import React, { useCallback, useEffect, useMemo } from "react";
-import { Dimensions, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, {
     FadeInUp,
     interpolate,
@@ -35,7 +35,6 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const isIOS = process.env.EXPO_OS === "ios";
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🎯 VANTA PHYSICS CONFIGURATION
@@ -245,9 +244,10 @@ function VantaDock({ state, descriptors, navigation }: VantaDockProps) {
   const isDark = useIsDarkMode();
   const activeIndex = useSharedValue(state.index);
   const { t } = useLocale();
+  const { width: screenWidth } = useWindowDimensions();
 
   // Calculate dimensions
-  const containerWidth = SCREEN_WIDTH - TAB_BAR_MARGIN * 2;
+  const containerWidth = screenWidth - TAB_BAR_MARGIN * 2;
   const containerPadding = 10;
   const tabWidth = (containerWidth - containerPadding * 2) / TAB_COUNT;
 

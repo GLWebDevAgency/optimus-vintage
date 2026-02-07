@@ -480,36 +480,46 @@ export const MIN_TIMEOUT_INTERACTIVE = 20000; // 20 secondes
 /** Animation duration maximum pour reduce motion */
 export const MAX_ANIMATION_DURATION_REDUCED = 0;
 
-/** Labels communs pour l'application */
-export const A11Y_LABELS = {
+/** Labels communs pour l'application — Utilisez useLocale().t() directement */
+export const A11Y_KEYS = {
   // Navigation
-  back: "Retour",
-  close: "Fermer",
-  menu: "Menu",
-  search: "Rechercher",
-  settings: "Paramètres",
+  back: "accessibility.back",
+  close: "accessibility.close",
+  menu: "accessibility.menu",
+  search: "accessibility.search",
 
   // Actions
-  add: "Ajouter",
-  edit: "Modifier",
-  delete: "Supprimer",
-  save: "Enregistrer",
-  cancel: "Annuler",
-  confirm: "Confirmer",
-  refresh: "Actualiser",
+  add: "common.add",
+  edit: "common.edit",
+  delete: "common.delete",
+  save: "common.save",
+  cancel: "common.cancel",
+  confirm: "common.confirm",
+  refresh: "common.refresh",
 
   // Status
-  loading: "Chargement en cours",
-  error: "Erreur",
-  success: "Succès",
-  empty: "Aucun élément",
+  loading: "accessibility.loading",
+  error: "common.error",
+  success: "common.success",
+  empty: "common.empty",
 
   // Domain specific
-  lot: "Lot",
-  item: "Article",
-  sale: "Vente",
-  stock: "Stock",
-  dashboard: "Tableau de bord",
-  profit: "Bénéfice",
-  loss: "Perte",
+  lot: "navigation.lots",
+  item: "items.title",
+  sale: "sales.title",
+  stock: "navigation.stock",
+  dashboard: "navigation.dashboard",
+  profit: "dashboard.profit",
+  loss: "dashboard.loss",
+
+  // Images
+  itemPhoto: "accessibility.itemPhoto",
+  noPhoto: "accessibility.noPhoto",
+  photoGallery: "accessibility.photoGallery",
+  photoIndex: "accessibility.photoIndex",
+
+  // Sorting & filtering
+  sortItems: "accessibility.sortItems",
+  filterPeriod: "accessibility.filterPeriod",
+  manageLotVisibility: "accessibility.manageLotVisibility",
 } as const;

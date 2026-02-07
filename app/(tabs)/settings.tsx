@@ -11,14 +11,15 @@
 import appConfig from "@/app.json";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import {
-  PremiumCard,
-  PremiumHeader,
-  VantaScreen,
-  useVantaTheme,
-  type VantaTheme,
+    PremiumCard,
+    PremiumHeader,
+    VantaScreen,
+    useVantaTheme,
+    type VantaTheme,
 } from "@/components/ui/PremiumUI";
 import { Radius, Spacing } from "@/constants/Theme";
 import { THEME_MODE_OPTIONS, useSettingsStore } from "@/store/settings";
+import { useSubscriptionStore } from "@/store/subscription";
 import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { exportDataToCSV } from "@/utils/data/export";
@@ -26,22 +27,22 @@ import { Haptic } from "@/utils/haptics";
 import { SUPPORTED_LOCALES, useLocale } from "@/utils/i18n";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActionSheetIOS,
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
+    ActionSheetIOS,
+    Alert,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import Animated, {
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
+    FadeInDown,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -455,6 +456,7 @@ function IdentityNode({
   appName: string;
   version: string;
 }) {
+  const { t } = useLocale();
   return (
     <PremiumCard padding="lg" style={styles.identityCard}>
       <View style={styles.identityHeader}>
@@ -802,6 +804,44 @@ export default function SettingsScreen() {
               theme={theme}
               appName="Optimus Vintage"
               version={`VER: ${version}`}
+            />
+          </Animated.View>
+
+          {/* Subscription / Customer Center */}
+          <Animated.View entering={getEnter(isReduceMotionEnabled, 110)}>
+            <SectionHeader
+              title={t("settings.subscription").toUpperCase()}
+              theme={theme}
+            />
+
+            <VantaRow
+              icon="verified"
+              label={t("settings.manageSub").toUpperCase()}
+              sublabel={t("settings.manageSubDescription")}
+              value={
+                <Text style={[styles.valueAccent, { color: theme.primary }]}>
+                  {useSubscriptionStore.getState().isPro ? "PRO" : "FREE"}
+                </Text>
+              }
+              onPress={() => {
+                useSubscriptionStore.getState().presentCustomerCenter();
+              }}
+              theme={theme}
+              isReduceMotionEnabled={isReduceMotionEnabled}
+              accessibilityLabel={t("settings.manageSub")}
+              accessibilityHint={t("settings.manageSubDescription")}
+            />
+
+            <VantaRow
+              icon="auto-awesome"
+              label={t("settings.upgrade").toUpperCase()}
+              sublabel={t("settings.upgradeDescription")}
+              onPress={() => {
+                useSubscriptionStore.getState().presentPaywall();
+              }}
+              theme={theme}
+              isReduceMotionEnabled={isReduceMotionEnabled}
+              accessibilityLabel={t("settings.upgrade")}
             />
           </Animated.View>
 

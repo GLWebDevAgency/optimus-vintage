@@ -21,27 +21,21 @@ import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   Alert,
-  Dimensions,
-  FlatList,
   Pressable,
   ScrollView,
   Text,
+  useWindowDimensions,
   View,
-  type ViewToken,
+  type ViewToken
 } from "react-native";
 import Animated, {
-  FadeIn,
   FadeInDown,
   FadeInUp,
-  interpolate,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
+  useSharedValue
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
 const isIOS = process.env.EXPO_OS === "ios";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -66,6 +60,8 @@ function useCurrencySymbol() {
 // 📸 PHOTO GALLERY
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const PHOTO_HEIGHT = 420;
+
 function PhotoGallery({
   photos,
   theme,
@@ -75,6 +71,8 @@ function PhotoGallery({
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollX = useSharedValue(0);
+  const { t } = useLocale();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -110,7 +108,13 @@ function PhotoGallery({
   }
 
   return (
-    <View>
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={t("accessibility.photoGallery", {
+        count: photos.length,
+      })}
+    >
       <Animated.FlatList
         data={photos}
         horizontal
@@ -120,7 +124,7 @@ function PhotoGallery({
         scrollEventThrottle={16}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig.current}
-        renderItem={({ item: uri }) => (
+        renderItem={({ item: uri, index: photoIdx }) => (
           <Image
             source={{ uri }}
             style={{
@@ -129,6 +133,13 @@ function PhotoGallery({
             }}
             contentFit="cover"
             transition={200}
+            cachePolicy="memory-disk"
+            recyclingKey={`photo-${photoIdx}`}
+            placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
+            accessibilityLabel={t("accessibility.photoIndex", {
+              current: photoIdx + 1,
+              total: photos.length,
+            })}
           />
         )}
         keyExtractor={(_, i) => `photo-${i}`}
@@ -157,9 +168,7 @@ function PhotoGallery({
                 height: 6,
                 borderRadius: 3,
                 backgroundColor:
-                  activeIndex === i
-                    ? "#FFFFFF"
-                    : "rgba(255, 255, 255, 0.4)",
+                  activeIndex === i ? "#FFFFFF" : "rgba(255, 255, 255, 0.4)",
                 borderCurve: "continuous",
               }}
             />
@@ -201,11 +210,7 @@ function StatPill({
         borderColor: theme.borderGlass,
       }}
     >
-      <AppIcon
-        name={icon}
-        size={20}
-        color={color || theme.primary}
-      />
+      <AppIcon name={icon} size={20} color={color || theme.primary} />
       <Text
         style={{
           fontFamily: "Manrope_700Bold",
@@ -426,18 +431,14 @@ export default function ItemDetailScreen() {
   }, [itemId, itemQuery.data?.lotId]);
 
   const handleDelete = useCallback(() => {
-    Alert.alert(
-      t("items.deleteItem"),
-      t("items.confirmDelete"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: () => deleteItem.mutateAsync(),
-        },
-      ],
-    );
+    Alert.alert(t("items.deleteItem"), t("items.confirmDelete"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("common.delete"),
+        style: "destructive",
+        onPress: () => deleteItem.mutateAsync(),
+      },
+    ]);
   }, [t, deleteItem]);
 
   const handleViewLot = useCallback(() => {
@@ -556,20 +557,16 @@ export default function ItemDetailScreen() {
 
   const item = itemQuery.data;
   const lot = lotQuery.data;
-  const photos: string[] = item.photos
-    ? JSON.parse(item.photos as string)
-    : [];
+  const photos: string[] = item.photos ? JSON.parse(item.photos as string) : [];
   const unitCost = parseFloat(String(item.unitCost || 0));
   const isSold = item.status === "SOLD";
   const isOnline = item.status === "ONLINE";
 
   // Calculate profit if sold
-  const salePrice = itemSale
-    ? parseFloat(String(itemSale.priceNet))
-    : 0;
+  const salePrice = itemSale ? parseFloat(String(itemSale.priceNet)) : 0;
   const profit = itemSale ? salePrice - unitCost : 0;
   const profitPercent =
-    itemSale && unitCost > 0 ? ((profit / unitCost) * 100) : 0;
+    itemSale && unitCost > 0 ? (profit / unitCost) * 100 : 0;
 
   // Status config
   const statusConfig = {
@@ -917,11 +914,7 @@ export default function ItemDetailScreen() {
                     borderCurve: "continuous",
                   }}
                 >
-                  <AppIcon
-                    name="inventory-2"
-                    size={22}
-                    color={theme.primary}
-                  />
+                  <AppIcon name="inventory-2" size={22} color={theme.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -1013,8 +1006,7 @@ export default function ItemDetailScreen() {
                       color: theme.text,
                     }}
                   >
-                    {itemSale.platform || "Vinted"} •{" "}
-                    {currencySymbol}
+                    {itemSale.platform || "Vinted"} • {currencySymbol}
                     {parseFloat(String(itemSale.priceNet)).toFixed(2)}
                   </Text>
                   <Text
@@ -1029,8 +1021,7 @@ export default function ItemDetailScreen() {
                     •{" "}
                     <Text
                       style={{
-                        color:
-                          profit >= 0 ? theme.success : theme.danger,
+                        color: profit >= 0 ? theme.success : theme.danger,
                         fontFamily: "Manrope_600SemiBold",
                       }}
                     >

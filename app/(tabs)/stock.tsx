@@ -10,12 +10,12 @@ import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import {
-    CarouselItem,
-    LotVisibilityController,
-    LotVisibilityItem,
-    MonolithCard,
-    NetflixCarousel,
-    VantaSectionHeader,
+  CarouselItem,
+  LotVisibilityController,
+  LotVisibilityItem,
+  MonolithCard,
+  NetflixCarousel,
+  VantaSectionHeader,
 } from "@/components/ui/VantaComponents";
 import { Palette, Radius, Spacing } from "@/constants/Theme";
 import { Item, ItemsRepository, Lot, LotsRepository } from "@/db/repositories";
@@ -28,31 +28,26 @@ import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
 import type { TFunction } from "i18next";
-import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useState
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    Keyboard,
-    LayoutAnimation,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    UIManager,
-    View
+  Keyboard,
+  LayoutAnimation,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  UIManager,
+  View,
 } from "react-native";
 import Animated, {
-    FadeIn,
-    FadeInDown,
-    FadeOut,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeIn,
+  FadeInDown,
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -252,6 +247,12 @@ const ItemCard = React.memo(function ItemCard({
                   style={styles.gridImage}
                   contentFit="cover"
                   transition={200}
+                  cachePolicy="memory-disk"
+                  recyclingKey={`grid-${item.id}`}
+                  placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
+                  accessibilityLabel={t("accessibility.itemPhoto", {
+                    brand: displayBrand,
+                  })}
                 />
               ) : (
                 <AppIcon name="checkroom" size={32} color={colors.textMuted} />
@@ -299,7 +300,8 @@ const ItemCard = React.memo(function ItemCard({
                     color: colors.gold,
                   }}
                 >
-                  {translations.currencySymbol}{unitCost.toFixed(2)}
+                  {translations.currencySymbol}
+                  {unitCost.toFixed(2)}
                 </Text>
                 <Pressable
                   onPress={onSell}
@@ -364,6 +366,9 @@ const ItemCard = React.memo(function ItemCard({
                   source={{ uri: photoUri }}
                   style={{ width: "100%", height: "100%" }}
                   contentFit="cover"
+                  cachePolicy="memory-disk"
+                  recyclingKey={`compact-${item.id}`}
+                  placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
                 />
               ) : (
                 <AppIcon name="checkroom" size={18} color={colors.textMuted} />
@@ -400,7 +405,8 @@ const ItemCard = React.memo(function ItemCard({
                 marginRight: 12,
               }}
             >
-              {translations.currencySymbol}{unitCost.toFixed(2)}
+              {translations.currencySymbol}
+              {unitCost.toFixed(2)}
             </Text>
 
             <Pressable
@@ -462,6 +468,9 @@ const ItemCard = React.memo(function ItemCard({
                 style={{ width: "100%", height: "100%" }}
                 contentFit="cover"
                 transition={200}
+                cachePolicy="memory-disk"
+                recyclingKey={`list-${item.id}`}
+                placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
               />
             ) : (
               <AppIcon name="checkroom" size={28} color={colors.textMuted} />
@@ -555,7 +564,8 @@ const ItemCard = React.memo(function ItemCard({
                     color: colors.gold,
                   }}
                 >
-                  {translations.costLabel}: {translations.currencySymbol}{unitCost.toFixed(2)}
+                  {translations.costLabel}: {translations.currencySymbol}
+                  {unitCost.toFixed(2)}
                 </Text>
               </View>
             </View>
@@ -589,7 +599,15 @@ const ItemCard = React.memo(function ItemCard({
 // 📊 VANTA KPI SECTION - Monolith Style
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StatsBar({ stats, t, currencySymbol }: { stats: StockStats; t: TFunction; currencySymbol: string }) {
+function StatsBar({
+  stats,
+  t,
+  currencySymbol,
+}: {
+  stats: StockStats;
+  t: TFunction;
+  currencySymbol: string;
+}) {
   const theme = useVantaTheme();
 
   // Barres de visualisation pour le capital
@@ -648,7 +666,15 @@ function StatsBar({ stats, t, currencySymbol }: { stats: StockStats; t: TFunctio
 }
 
 // Legacy stats bar kept for reference
-function _LegacyStatsBar({ stats, t, currencySymbol }: { stats: StockStats; t: TFunction; currencySymbol: string }) {
+function _LegacyStatsBar({
+  stats,
+  t,
+  currencySymbol,
+}: {
+  stats: StockStats;
+  t: TFunction;
+  currencySymbol: string;
+}) {
   const theme = useVantaTheme();
   const colors = {
     background: theme.surface,
@@ -708,7 +734,8 @@ function _LegacyStatsBar({ stats, t, currencySymbol }: { stats: StockStats; t: T
               color: theme.success,
             }}
           >
-            {currencySymbol}{stats.totalValue.toFixed(0)}
+            {currencySymbol}
+            {stats.totalValue.toFixed(0)}
           </Text>
           <Text
             style={{
@@ -737,7 +764,8 @@ function _LegacyStatsBar({ stats, t, currencySymbol }: { stats: StockStats; t: T
               color: colors.text,
             }}
           >
-            {currencySymbol}{stats.avgCost.toFixed(2)}
+            {currencySymbol}
+            {stats.avgCost.toFixed(2)}
           </Text>
           <Text
             style={{
@@ -827,17 +855,29 @@ export default function StockScreen() {
   // Screen tracking
   useTrackScreen("stock");
 
-  // Vanta theme colors
-  const colors = {
-    background: theme.background,
-    surface: theme.surface,
-    border: theme.borderGlass,
-    text: theme.text,
-    textSecondary: theme.textSecondary,
-    textMuted: theme.textMuted,
-    gold: theme.primary,
-    goldSubtle: theme.primarySubtle,
-  };
+  // Vanta theme colors — memoized to stabilize useCallback deps
+  const colors = useMemo(
+    () => ({
+      background: theme.background,
+      surface: theme.surface,
+      border: theme.borderGlass,
+      text: theme.text,
+      textSecondary: theme.textSecondary,
+      textMuted: theme.textMuted,
+      gold: theme.primary,
+      goldSubtle: theme.primarySubtle,
+    }),
+    [
+      theme.background,
+      theme.surface,
+      theme.borderGlass,
+      theme.text,
+      theme.textSecondary,
+      theme.textMuted,
+      theme.primary,
+      theme.primarySubtle,
+    ],
+  );
 
   // Data state
   const itemsQuery = useQuery({
@@ -974,14 +1014,23 @@ export default function StockScreen() {
   }, [allItems]);
 
   // Lot visibility items for controller
+  // Pre-compute item count per lot — O(n) instead of O(lots × items)
+  const itemCountByLot = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const item of allItems) {
+      map.set(item.lotId, (map.get(item.lotId) ?? 0) + 1);
+    }
+    return map;
+  }, [allItems]);
+
   const lotVisibilityItems = useMemo<LotVisibilityItem[]>(() => {
     return lots.map((lot) => ({
       id: lot.id,
       name: lot.name || `Lot #${lot.id}`,
-      itemCount: allItems.filter((i) => i.lotId === lot.id).length,
+      itemCount: itemCountByLot.get(lot.id) ?? 0,
       isVisible: !hiddenLotIds.has(lot.id),
     }));
-  }, [lots, allItems, hiddenLotIds]);
+  }, [lots, itemCountByLot, hiddenLotIds]);
 
   // ============ HANDLERS ============
 
@@ -1213,7 +1262,10 @@ export default function StockScreen() {
                 Haptic.selection();
                 setShowVisibilityController(true);
               }}
-              accessibilityLabel={`Gérer la visibilité des lots. ${visibleLotCount} sur ${lots.length} affichés`}
+              accessibilityLabel={t("accessibility.manageLotVisibility", {
+                visible: visibleLotCount,
+                total: lots.length,
+              })}
               accessibilityRole="button"
             >
               <AppIcon
@@ -1262,7 +1314,7 @@ export default function StockScreen() {
               Haptic.selection();
               setShowSortMenu(!showSortMenu);
             }}
-            accessibilityLabel="Trier les articles"
+            accessibilityLabel={t("accessibility.sortItems")}
             accessibilityRole="button"
           >
             <AppIcon
@@ -1319,7 +1371,9 @@ export default function StockScreen() {
         )}
 
         {/* Stats Bar */}
-        {allItems.length > 0 && <StatsBar stats={stats} t={t} currencySymbol={currencySymbol} />}
+        {allItems.length > 0 && (
+          <StatsBar stats={stats} t={t} currencySymbol={currencySymbol} />
+        )}
 
         {/* Loading State */}
         {loading && !refreshing ? (
@@ -1345,9 +1399,7 @@ export default function StockScreen() {
                 photoUri: getItemFirstPhoto(item),
                 lotId: item.lotId,
               }))}
-              itemCount={
-                allItems.filter((i) => i.lotId === carouselData.lot.id).length
-              }
+              itemCount={itemCountByLot.get(carouselData.lot.id) ?? 0}
               onItemPress={handleItemPress}
               onSellPress={handleSell}
               onSeeAllPress={() => handleSeeAllPress(carouselData.lot.id)}
