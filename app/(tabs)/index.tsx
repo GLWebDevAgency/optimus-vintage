@@ -23,6 +23,7 @@ import { SkeletonDashboard } from "@/components/ui/Skeleton";
 import { Palette, Spacing } from "@/constants/Theme";
 import { LotsRepository, SalesRepository } from "@/db/repositories";
 import { useSettingsStore } from "@/store/settings";
+import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { computeLotSummary } from "@/utils/engine/calculations";
 import { Haptic } from "@/utils/haptics";
@@ -881,6 +882,7 @@ function VantaMetricOrb({
   onPress,
 }: VantaMetricOrbProps) {
   const isDark = useIsDarkMode();
+  const { t } = useLocale();
   const scale = useSharedValue(1);
 
   const handlePressIn = useCallback(() => {
@@ -909,6 +911,9 @@ function VantaMetricOrb({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={{ flex: 1 }}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${value}`}
+      accessibilityHint={t("vanta.tapForDetails")}
     >
       <Animated.View style={animatedStyle}>
         <ObsidianBlock
@@ -1016,6 +1021,8 @@ function VantaActionSlab({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={{ flex: 1 }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
     >
       <Animated.View style={animatedStyle}>
         <ObsidianBlock
@@ -1140,6 +1147,9 @@ function VantaTopLotCard({
       }}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      accessibilityRole="button"
+      accessibilityLabel={`${t("accessibility.lotRank", { rank })}. ${name}. ${i18nFormatCurrency(revenue, currency, locale)}`}
+      accessibilityHint={t("vanta.tapForDetails")}
     >
       <Animated.View style={animatedStyle}>
         <ObsidianBlock
@@ -1291,6 +1301,7 @@ export default function VantaDashboard() {
   );
 
   useTrackScreen("dashboard");
+  const { isReduceMotionEnabled } = useAccessibility();
 
   // ─── Data Queries ────────────────────────────────────────────────────
   const lotsQuery = useQuery({
@@ -1334,9 +1345,23 @@ export default function VantaDashboard() {
       soldCount: number;
     }[] = [];
 
+    // Pre-group sales by lotId for O(1) lookup instead of O(n) filter per lot
+    const salesByLotId = new Map<number, typeof sales>();
+    const allSalesByLotId = new Map<number, typeof allSales>();
+    for (const s of sales) {
+      const arr = salesByLotId.get(s.lotId) ?? [];
+      arr.push(s);
+      salesByLotId.set(s.lotId, arr);
+    }
+    for (const s of allSales) {
+      const arr = allSalesByLotId.get(s.lotId) ?? [];
+      arr.push(s);
+      allSalesByLotId.set(s.lotId, arr);
+    }
+
     for (const lot of lots) {
-      const lotSales = sales.filter((s) => s.lotId === lot.id);
-      const allLotSales = allSales.filter((s) => s.lotId === lot.id);
+      const lotSales = salesByLotId.get(lot.id) ?? [];
+      const allLotSales = allSalesByLotId.get(lot.id) ?? [];
       const summary = computeLotSummary(lot, [], allLotSales);
 
       totalInvest += summary.totalInvestment;
@@ -1446,7 +1471,7 @@ export default function VantaDashboard() {
       >
         {/* ═══ VANTA STATUS BAR ═══ */}
         <Animated.View
-          entering={FadeInDown.duration(400)}
+          entering={isReduceMotionEnabled ? undefined : FadeInDown.duration(400)}
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
@@ -1491,7 +1516,7 @@ export default function VantaDashboard() {
 
         {/* ═══ HEADER ═══ */}
         <Animated.View
-          entering={FadeInDown.delay(50).duration(400)}
+          entering={isReduceMotionEnabled ? undefined : FadeInDown.delay(50).duration(400)}
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
@@ -1559,7 +1584,7 @@ export default function VantaDashboard() {
         </Animated.View>
 
         {/* ═══ PERIOD SELECTOR ═══ */}
-        <Animated.View entering={FadeInDown.delay(50).duration(400)}>
+        <Animated.View entering={isReduceMotionEnabled ? undefined : FadeInDown.delay(50).duration(400)}>
           <VantaPeriodSelector
             options={PERIOD_OPTIONS}
             selectedKey={selectedPeriod}
@@ -1568,7 +1593,7 @@ export default function VantaDashboard() {
         </Animated.View>
 
         {/* ═══ HERO SINGULARITY ═══ */}
-        <Animated.View entering={FadeInUp.delay(100).duration(500)}>
+        <Animated.View entering={isReduceMotionEnabled ? undefined : FadeInUp.delay(100).duration(500)}>
           <VantaSingularity
             revenue={stats.revenue}
             profit={stats.profit}
@@ -1580,7 +1605,7 @@ export default function VantaDashboard() {
 
         {/* ═══ METRIC ORBS (3 columns) ═══ */}
         <Animated.View
-          entering={FadeInUp.delay(150).duration(500)}
+          entering={isReduceMotionEnabled ? undefined : FadeInUp.delay(150).duration(500)}
           style={{
             flexDirection: "row",
             gap: Spacing.md,
@@ -1615,7 +1640,7 @@ export default function VantaDashboard() {
 
         {/* ═══ QUICK ACTIONS ═══ */}
         <Animated.View
-          entering={FadeInUp.delay(200).duration(500)}
+          entering={isReduceMotionEnabled ? undefined : FadeInUp.delay(200).duration(500)}
           style={{ paddingHorizontal: Spacing.lg }}
         >
           <View style={{ marginBottom: Spacing.md }}>
@@ -1685,7 +1710,7 @@ export default function VantaDashboard() {
         {/* ═══ TOP PERFORMERS ═══ */}
         {stats.topLots.length > 0 && (
           <Animated.View
-            entering={FadeInUp.delay(300).duration(500)}
+            entering={isReduceMotionEnabled ? undefined : FadeInUp.delay(300).duration(500)}
             style={{ paddingHorizontal: Spacing.lg }}
           >
             <View

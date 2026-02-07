@@ -676,8 +676,8 @@ export default function LotsScreen() {
   // Screen tracking
   useTrackScreen("lots");
 
-  // Vanta theme colors
-  const colors = {
+  // Vanta theme colors — memoized to stabilize useCallback deps
+  const colors = useMemo(() => ({
     background: theme.background,
     surface: theme.surface,
     border: theme.borderGlass,
@@ -686,7 +686,7 @@ export default function LotsScreen() {
     textMuted: theme.textMuted,
     gold: theme.primary,
     goldSubtle: theme.primarySubtle,
-  };
+  }), [theme.background, theme.surface, theme.borderGlass, theme.text, theme.textSecondary, theme.textMuted, theme.primary, theme.primarySubtle]);
 
   // Data state
   const lotsQuery = useQuery({
@@ -1113,6 +1113,7 @@ export default function LotsScreen() {
             data={processedLots}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
+            estimatedItemSize={200}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
