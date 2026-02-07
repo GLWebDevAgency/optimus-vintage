@@ -449,7 +449,22 @@
     "flashOff": "Blitz aus",
     "euros": "Euro",
     "dollars": "Dollar",
-    "thousand": "Tausend"
+    "thousand": "Tausend",
+    "sortItems": "Artikel sortieren",
+    "manageLotVisibility": "Lot-Sichtbarkeit verwalten. {{visible}} von {{total}} angezeigt",
+    "itemPhoto": "Foto von {{brand}}",
+    "noPhoto": "Kein Foto",
+    "filterPeriod": "Nach Zeitraum filtern",
+    "refreshData": "Daten aktualisieren",
+    "viewAllItems": "Alle Artikel anzeigen",
+    "lotRank": "Lot auf Platz {{rank}}",
+    "photoGallery": "Fotogalerie, {{count}} Fotos",
+    "photoIndex": "Foto {{current}} von {{total}}",
+    "statsSection": "Statistikbereich",
+    "actionsSection": "Schnellaktionen",
+    "sectionHeader": "Bereich {{label}}",
+    "categoryCard": "{{title}}, {{count}} Elemente",
+    "progressBar": "Fortschritt {{percentage}} Prozent"
   },
   "vanta": {
     "progress": "Fortschritt: {{percentage}} Prozent",

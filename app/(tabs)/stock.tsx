@@ -252,6 +252,10 @@ const ItemCard = React.memo(function ItemCard({
                   style={styles.gridImage}
                   contentFit="cover"
                   transition={200}
+                  cachePolicy="memory-disk"
+                  recyclingKey={`grid-${item.id}`}
+                  placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
+                  accessibilityLabel={t("accessibility.itemPhoto", { brand: displayBrand })}
                 />
               ) : (
                 <AppIcon name="checkroom" size={32} color={colors.textMuted} />
@@ -364,6 +368,9 @@ const ItemCard = React.memo(function ItemCard({
                   source={{ uri: photoUri }}
                   style={{ width: "100%", height: "100%" }}
                   contentFit="cover"
+                  cachePolicy="memory-disk"
+                  recyclingKey={`compact-${item.id}`}
+                  placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
                 />
               ) : (
                 <AppIcon name="checkroom" size={18} color={colors.textMuted} />
@@ -462,6 +469,9 @@ const ItemCard = React.memo(function ItemCard({
                 style={{ width: "100%", height: "100%" }}
                 contentFit="cover"
                 transition={200}
+                cachePolicy="memory-disk"
+                recyclingKey={`list-${item.id}`}
+                placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
               />
             ) : (
               <AppIcon name="checkroom" size={28} color={colors.textMuted} />
@@ -827,8 +837,8 @@ export default function StockScreen() {
   // Screen tracking
   useTrackScreen("stock");
 
-  // Vanta theme colors
-  const colors = {
+  // Vanta theme colors — memoized to stabilize useCallback deps
+  const colors = useMemo(() => ({
     background: theme.background,
     surface: theme.surface,
     border: theme.borderGlass,
@@ -837,7 +847,7 @@ export default function StockScreen() {
     textMuted: theme.textMuted,
     gold: theme.primary,
     goldSubtle: theme.primarySubtle,
-  };
+  }), [theme.background, theme.surface, theme.borderGlass, theme.text, theme.textSecondary, theme.textMuted, theme.primary, theme.primarySubtle]);
 
   // Data state
   const itemsQuery = useQuery({
@@ -974,14 +984,23 @@ export default function StockScreen() {
   }, [allItems]);
 
   // Lot visibility items for controller
+  // Pre-compute item count per lot — O(n) instead of O(lots × items)
+  const itemCountByLot = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const item of allItems) {
+      map.set(item.lotId, (map.get(item.lotId) ?? 0) + 1);
+    }
+    return map;
+  }, [allItems]);
+
   const lotVisibilityItems = useMemo<LotVisibilityItem[]>(() => {
     return lots.map((lot) => ({
       id: lot.id,
       name: lot.name || `Lot #${lot.id}`,
-      itemCount: allItems.filter((i) => i.lotId === lot.id).length,
+      itemCount: itemCountByLot.get(lot.id) ?? 0,
       isVisible: !hiddenLotIds.has(lot.id),
     }));
-  }, [lots, allItems, hiddenLotIds]);
+  }, [lots, itemCountByLot, hiddenLotIds]);
 
   // ============ HANDLERS ============
 
@@ -1213,7 +1232,7 @@ export default function StockScreen() {
                 Haptic.selection();
                 setShowVisibilityController(true);
               }}
-              accessibilityLabel={`Gérer la visibilité des lots. ${visibleLotCount} sur ${lots.length} affichés`}
+              accessibilityLabel={t("accessibility.manageLotVisibility", { visible: visibleLotCount, total: lots.length })}
               accessibilityRole="button"
             >
               <AppIcon
@@ -1262,7 +1281,7 @@ export default function StockScreen() {
               Haptic.selection();
               setShowSortMenu(!showSortMenu);
             }}
-            accessibilityLabel="Trier les articles"
+            accessibilityLabel={t("accessibility.sortItems")}
             accessibilityRole="button"
           >
             <AppIcon
@@ -1345,9 +1364,7 @@ export default function StockScreen() {
                 photoUri: getItemFirstPhoto(item),
                 lotId: item.lotId,
               }))}
-              itemCount={
-                allItems.filter((i) => i.lotId === carouselData.lot.id).length
-              }
+              itemCount={itemCountByLot.get(carouselData.lot.id) ?? 0}
               onItemPress={handleItemPress}
               onSellPress={handleSell}
               onSeeAllPress={() => handleSeeAllPress(carouselData.lot.id)}

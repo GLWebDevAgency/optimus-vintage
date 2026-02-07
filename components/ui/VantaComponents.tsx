@@ -442,6 +442,10 @@ export function GoldFissureProgress({
           styles.progressTrack,
           { height, backgroundColor: theme.borderGlass },
         ]}
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel={t("accessibility.progressBar", { percentage: Math.round(percentage) })}
+        accessibilityValue={{ min: 0, max: 100, now: Math.round(percentage) }}
       >
         <Animated.View
           style={[
@@ -584,12 +588,22 @@ export function VantaSectionHeader({
   const theme = useVantaTheme();
 
   return (
-    <View style={[styles.sectionHeader, style]}>
+    <View
+      style={[styles.sectionHeader, style]}
+      accessible
+      accessibilityRole="header"
+      accessibilityLabel={t("accessibility.sectionHeader", { label })}
+    >
       <Text style={[styles.sectionHeaderLabel, { color: theme.textMuted }]}>
         {label.toUpperCase()}
       </Text>
       {action && (
-        <Pressable onPress={action.onPress} hitSlop={8}>
+        <Pressable
+          onPress={action.onPress}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={action.label}
+        >
           <Text
             style={[styles.sectionHeaderAction, { color: theme.textSecondary }]}
           >
@@ -651,6 +665,9 @@ export function VantaCategoryCard({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={{ flex: 1 }}
+      accessibilityRole="button"
+      accessibilityLabel={t("accessibility.categoryCard", { title, count })}
+      accessibilityHint={t("vanta.tapForDetails")}
     >
       <Animated.View
         style={[
@@ -709,7 +726,12 @@ export function VantaStatusBadge({
   const theme = useVantaTheme();
 
   return (
-    <View style={[styles.statusBadge, style]}>
+    <View
+      style={[styles.statusBadge, style]}
+      accessible
+      accessibilityRole="text"
+      accessibilityLabel={label}
+    >
       <AppIcon name={icon} size={14} color={Palette.metal.gold} />
       <Text style={[styles.statusBadgeLabel, { color: theme.textMuted }]}>
         {label.toUpperCase()}
@@ -771,6 +793,8 @@ export function VantaCTAButton({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      accessibilityRole="button"
+      accessibilityLabel={label}
     >
       <Animated.View
         style={[

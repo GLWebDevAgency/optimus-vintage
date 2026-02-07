@@ -75,6 +75,7 @@ function PhotoGallery({
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollX = useSharedValue(0);
+  const { t } = useLocale();
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -110,7 +111,11 @@ function PhotoGallery({
   }
 
   return (
-    <View>
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={t("accessibility.photoGallery", { count: photos.length })}
+    >
       <Animated.FlatList
         data={photos}
         horizontal
@@ -120,7 +125,7 @@ function PhotoGallery({
         scrollEventThrottle={16}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig.current}
-        renderItem={({ item: uri }) => (
+        renderItem={({ item: uri, index: photoIdx }) => (
           <Image
             source={{ uri }}
             style={{
@@ -129,6 +134,10 @@ function PhotoGallery({
             }}
             contentFit="cover"
             transition={200}
+            cachePolicy="memory-disk"
+            recyclingKey={`photo-${photoIdx}`}
+            placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
+            accessibilityLabel={t("accessibility.photoIndex", { current: photoIdx + 1, total: photos.length })}
           />
         )}
         keyExtractor={(_, i) => `photo-${i}`}
