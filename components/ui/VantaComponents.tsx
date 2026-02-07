@@ -22,25 +22,26 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect } from "react";
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-    type ViewStyle,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
 } from "react-native";
 import Animated, {
-    Easing,
-    FadeIn,
-    FadeInDown,
-    useAnimatedProps,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withSequence,
-    withSpring,
-    withTiming,
+  Easing,
+  FadeIn,
+  FadeInDown,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
+import { useLocale } from "@/utils/i18n";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -79,6 +80,7 @@ export function GravityDisk({
   floating = true,
 }: GravityDiskProps) {
   const theme = useVantaTheme();
+  const { t } = useLocale();
   const progress = useSharedValue(0);
   const floatY = useSharedValue(0);
 
@@ -125,7 +127,7 @@ export function GravityDisk({
       ]}
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={`Progression: ${Math.round(percentage)} pour cent${sublabel ? `. ${sublabel}` : ""}`}
+      accessibilityLabel={`${t("vanta.progress", { percentage: Math.round(percentage) })}${sublabel ? `. ${sublabel}` : ""}`}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(percentage) }}
     >
       {/* Glow Background */}
@@ -235,6 +237,7 @@ export function MonolithCard({
   onPress,
 }: MonolithCardProps) {
   const theme = useVantaTheme();
+  const { t } = useLocale();
   const scale = useSharedValue(1);
 
   const handlePressIn = () => {
@@ -255,9 +258,9 @@ export function MonolithCard({
     typeof value === "number"
       ? value.toString()
       : value
-          .replace("€", "euros ")
-          .replace("$", "dollars ")
-          .replace("k", " mille");
+          .replace("€", `${t("accessibility.euros")} `)
+          .replace("$", `${t("accessibility.dollars")} `)
+          .replace("k", ` ${t("accessibility.thousand")}`);
 
   const content = (
     <Animated.View
@@ -270,7 +273,7 @@ export function MonolithCard({
       ]}
       accessible
       accessibilityRole={onPress ? "button" : "text"}
-      accessibilityLabel={`${label}: ${accessibleValue}${unit ? ` ${unit}` : ""}${trend ? `. Tendance: ${trend}` : ""}`}
+      accessibilityLabel={`${label}: ${accessibleValue}${unit ? ` ${unit}` : ""}${trend ? `. ${t("vanta.trend", { trend })}` : ""}`}
     >
       {/* Light Leak Effect */}
       <View style={styles.monolithLightLeak} pointerEvents="none">
@@ -490,6 +493,7 @@ export function ItemListRow({
   style,
 }: ItemListRowProps) {
   const theme = useVantaTheme();
+  const { t } = useLocale();
   const scale = useSharedValue(1);
 
   const handlePressIn = () => {
@@ -506,7 +510,9 @@ export function ItemListRow({
   }));
 
   // Accessibility: format price for screen readers
-  const accessiblePrice = price.replace("€", "euros ").replace("$", "dollars ");
+  const accessiblePrice = price
+    .replace("€", `${t("accessibility.euros")} `)
+    .replace("$", `${t("accessibility.dollars")} `);
 
   return (
     <Pressable
@@ -515,7 +521,7 @@ export function ItemListRow({
       onPressOut={handlePressOut}
       accessibilityRole="button"
       accessibilityLabel={`${name}. ${description || ""}. ${accessiblePrice}`}
-      accessibilityHint="Appuyez pour voir les détails"
+      accessibilityHint={t("vanta.tapForDetails")}
     >
       <Animated.View
         style={[
@@ -622,6 +628,7 @@ export function VantaCategoryCard({
   style,
 }: VantaCategoryCardProps) {
   const theme = useVantaTheme();
+  const { t } = useLocale();
   const scale = useSharedValue(1);
   const accent = accentColor || Palette.metal.gold;
 
@@ -658,7 +665,7 @@ export function VantaCategoryCard({
           <AppIcon name={icon} size={24} color={accent} />
           <Text style={[styles.categoryCardCount, { color: theme.textMuted }]}>
             {String(count).padStart(2, "0")}{" "}
-            {countLabel?.toUpperCase() || "ITEMS"}
+            {countLabel?.toUpperCase() || t("vanta.items")}
           </Text>
         </View>
 
@@ -824,6 +831,7 @@ export function NetflixCarousel({
   style,
 }: NetflixCarouselProps) {
   const theme = useVantaTheme();
+  const { t } = useLocale();
 
   const renderCarouselItem = ({ item }: { item: CarouselItem }) => {
     const cost =
@@ -842,7 +850,7 @@ export function NetflixCarousel({
         ]}
         onPress={() => onItemPress(item)}
         accessibilityRole="button"
-        accessibilityLabel={`${item.brand || "Article"} ${item.type || ""}, ${cost.toFixed(2)} euros`}
+        accessibilityLabel={`${item.brand || t("vanta.article")} ${item.type || ""}, ${cost.toFixed(2)} ${t("accessibility.euros")}`}
       >
         {/* Image / Placeholder */}
         <View
@@ -862,13 +870,14 @@ export function NetflixCarousel({
             style={[styles.carouselItemBrand, { color: theme.text }]}
             numberOfLines={1}
           >
-            {item.brand || "Marque"}
+            {item.brand || t("vanta.brand")}
           </Text>
           <Text
             style={[styles.carouselItemType, { color: theme.textMuted }]}
             numberOfLines={1}
           >
-            {item.type || "Article"} · {item.size || "TU"}
+            {item.type || t("vanta.article")} ·{" "}
+            {item.size || t("vanta.oneSize")}
           </Text>
 
           <View style={styles.carouselItemFooter}>
@@ -889,7 +898,7 @@ export function NetflixCarousel({
                 onSellPress(item);
               }}
               accessibilityRole="button"
-              accessibilityLabel="Vendre"
+              accessibilityLabel={t("vanta.sell")}
             >
               <AppIcon name="sell" size={14} color={Palette.metal.gold} />
             </Pressable>
@@ -927,12 +936,12 @@ export function NetflixCarousel({
           style={styles.carouselSeeAll}
           onPress={onSeeAllPress}
           accessibilityRole="button"
-          accessibilityLabel={`Voir tous les articles du ${lotName}`}
+          accessibilityLabel={t("vanta.seeAllItems", { name: lotName })}
         >
           <Text
             style={[styles.carouselSeeAllText, { color: Palette.metal.gold }]}
           >
-            Voir tout
+            {t("vanta.seeAll")}
           </Text>
           <AppIcon name="chevron-right" size={16} color={Palette.metal.gold} />
         </Pressable>
@@ -983,6 +992,7 @@ export function LotVisibilityController({
   onHideAll,
 }: LotVisibilityControllerProps) {
   const theme = useVantaTheme();
+  const { t } = useLocale();
 
   if (!visible) return null;
 
@@ -1006,12 +1016,15 @@ export function LotVisibilityController({
         <View style={styles.visibilityHeader}>
           <View>
             <Text style={[styles.visibilityTitle, { color: theme.text }]}>
-              Lots visibles
+              {t("vanta.visibleLots")}
             </Text>
             <Text
               style={[styles.visibilitySubtitle, { color: theme.textMuted }]}
             >
-              {visibleCount} sur {lots.length} lots affichés
+              {t("vanta.lotsDisplayed", {
+                count: visibleCount,
+                total: lots.length,
+              })}
             </Text>
           </View>
 
@@ -1022,7 +1035,7 @@ export function LotVisibilityController({
                 styles.visibilityClose,
                 { backgroundColor: Palette.metal.goldSubtle },
               ]}
-              accessibilityLabel="Afficher tous les lots"
+              accessibilityLabel={t("vanta.showAllLots")}
             >
               <AppIcon name="visibility" size={18} color={Palette.metal.gold} />
             </Pressable>
@@ -1032,7 +1045,7 @@ export function LotVisibilityController({
                 styles.visibilityClose,
                 { backgroundColor: theme.background },
               ]}
-              accessibilityLabel="Masquer tous les lots"
+              accessibilityLabel={t("vanta.hideAllLots")}
             >
               <AppIcon
                 name="visibility-off"
@@ -1046,7 +1059,7 @@ export function LotVisibilityController({
                 styles.visibilityClose,
                 { backgroundColor: theme.background },
               ]}
-              accessibilityLabel="Fermer"
+              accessibilityLabel={t("common.close")}
             >
               <AppIcon name="close" size={18} color={theme.textMuted} />
             </Pressable>
@@ -1072,7 +1085,7 @@ export function LotVisibilityController({
               }}
               accessibilityRole="switch"
               accessibilityState={{ checked: lot.isVisible }}
-              accessibilityLabel={`${lot.name}, ${lot.itemCount} articles`}
+              accessibilityLabel={`${lot.name}, ${t("vanta.lotItems", { count: lot.itemCount })}`}
             >
               <View
                 style={[
@@ -1106,7 +1119,7 @@ export function LotVisibilityController({
                     { color: theme.textMuted },
                   ]}
                 >
-                  {lot.itemCount} articles
+                  {t("vanta.lotItems", { count: lot.itemCount })}
                 </Text>
               </View>
 

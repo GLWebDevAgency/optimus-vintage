@@ -7,17 +7,18 @@ import { useColorScheme } from "@/components/useColorScheme";
 import { Radius, Spacing } from "@/constants/Theme";
 import { useSettingsStore } from "@/store/settings";
 import { Haptic } from "@/utils/haptics";
+import { useLocale } from "@/utils/i18n";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import {
-    KeyboardAvoidingView,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -79,6 +80,7 @@ export default function OnboardingScreen() {
     useSettingsStore();
   const [currencyInput, setCurrencyInput] = React.useState("EUR");
   const [marginInput, setMarginInput] = React.useState("10");
+  const { t } = useLocale();
 
   const handleFinish = () => {
     Haptic.success();
@@ -132,7 +134,7 @@ export default function OnboardingScreen() {
               letterSpacing: 2,
             }}
           >
-            Bienvenue sur
+            {t("onboarding.welcome")}
           </Text>
           <Text
             style={{
@@ -142,7 +144,7 @@ export default function OnboardingScreen() {
               marginTop: Spacing.xs,
             }}
           >
-            Optimus Vintage
+            {t("onboarding.appName")}
           </Text>
           <Text
             style={{
@@ -153,8 +155,9 @@ export default function OnboardingScreen() {
               marginTop: Spacing.md,
             }}
           >
-            Gérez vos reventes vintage avec élégance.{"\n"}Gestion d'inventaire
-            premium pour revendeurs.
+            {t("onboarding.tagline")}
+            {"\n"}
+            {t("onboarding.description")}
           </Text>
         </Animated.View>
 
@@ -187,7 +190,7 @@ export default function OnboardingScreen() {
                   color: colors.text,
                 }}
               >
-                Quick Setup
+                {t("onboarding.quickSetup")}
               </Text>
             </View>
 
@@ -201,7 +204,7 @@ export default function OnboardingScreen() {
                   letterSpacing: 1,
                 }}
               >
-                CURRENCY
+                {t("onboarding.currency").toUpperCase()}
               </Text>
               <TextInput
                 style={[
@@ -230,7 +233,7 @@ export default function OnboardingScreen() {
                   letterSpacing: 1,
                 }}
               >
-                TARGET MARGIN / ITEM
+                {t("onboarding.targetMargin").toUpperCase()}
               </Text>
               <TextInput
                 style={[
@@ -272,7 +275,7 @@ export default function OnboardingScreen() {
                 color: colors.textMuted,
               }}
             >
-              Real-time profit tracking
+              {t("onboarding.feature1")}
             </Text>
           </View>
           <View style={styles.featureRow}>
@@ -291,7 +294,7 @@ export default function OnboardingScreen() {
                 color: colors.textMuted,
               }}
             >
-              Smart lot management
+              {t("onboarding.feature2")}
             </Text>
           </View>
           <View style={styles.featureRow}>
@@ -310,7 +313,7 @@ export default function OnboardingScreen() {
                 color: colors.textMuted,
               }}
             >
-              Offline-first storage
+              {t("onboarding.feature3")}
             </Text>
           </View>
         </Animated.View>
@@ -338,7 +341,7 @@ export default function OnboardingScreen() {
                 marginRight: Spacing.sm,
               }}
             >
-              Get Started
+              {t("onboarding.start")}
             </Text>
             <AppIcon name="arrow-forward" size={20} color={VANTA.black} />
           </Pressable>

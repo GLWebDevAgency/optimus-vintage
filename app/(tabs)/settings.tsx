@@ -50,18 +50,48 @@ const SPRING_CONFIG = { damping: 20, stiffness: 300 };
 type CurrencyOption = {
   code: string;
   symbol: string;
-  name: string;
+  nameKey: string;
   flag: string;
 };
 
 const SUPPORTED_CURRENCIES: CurrencyOption[] = [
-  { code: "EUR", symbol: "€", name: "Euro", flag: "🇪🇺" },
-  { code: "USD", symbol: "$", name: "US Dollar", flag: "🇺🇸" },
-  { code: "GBP", symbol: "£", name: "British Pound", flag: "🇬🇧" },
-  { code: "CHF", symbol: "Fr", name: "Swiss Franc", flag: "🇨🇭" },
-  { code: "CAD", symbol: "C$", name: "Canadian Dollar", flag: "🇨🇦" },
-  { code: "JPY", symbol: "¥", name: "Japanese Yen", flag: "🇯🇵" },
-  { code: "AUD", symbol: "A$", name: "Australian Dollar", flag: "🇦🇺" },
+  { code: "EUR", symbol: "€", nameKey: "settings.currencies.euro", flag: "🇪🇺" },
+  {
+    code: "USD",
+    symbol: "$",
+    nameKey: "settings.currencies.usDollar",
+    flag: "🇺🇸",
+  },
+  {
+    code: "GBP",
+    symbol: "£",
+    nameKey: "settings.currencies.britishPound",
+    flag: "🇬🇧",
+  },
+  {
+    code: "CHF",
+    symbol: "Fr",
+    nameKey: "settings.currencies.swissFranc",
+    flag: "🇨🇭",
+  },
+  {
+    code: "CAD",
+    symbol: "C$",
+    nameKey: "settings.currencies.canadianDollar",
+    flag: "🇨🇦",
+  },
+  {
+    code: "JPY",
+    symbol: "¥",
+    nameKey: "settings.currencies.japaneseYen",
+    flag: "🇯🇵",
+  },
+  {
+    code: "AUD",
+    symbol: "A$",
+    nameKey: "settings.currencies.australianDollar",
+    flag: "🇦🇺",
+  },
 ];
 
 function getEnter(isReduceMotionEnabled: boolean, delayMs: number) {
@@ -72,7 +102,9 @@ function getEnter(isReduceMotionEnabled: boolean, delayMs: number) {
 
 function SectionHeader({ title, theme }: { title: string; theme: VantaTheme }) {
   return (
-    <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>{title}</Text>
+    <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+      {title}
+    </Text>
   );
 }
 
@@ -148,7 +180,9 @@ function VantaRow({
             <RowIcon icon={icon} theme={theme} />
 
             <View style={styles.rowText}>
-              <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
+              <Text style={[styles.rowLabel, { color: theme.text }]}>
+                {label}
+              </Text>
               {sublabel ? (
                 <Text style={[styles.rowSublabel, { color: theme.textMuted }]}>
                   {sublabel}
@@ -226,7 +260,9 @@ function VantaToggleRow({
             <RowIcon icon={icon} theme={theme} />
 
             <View style={styles.rowText}>
-              <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
+              <Text style={[styles.rowLabel, { color: theme.text }]}>
+                {label}
+              </Text>
               {sublabel ? (
                 <Text style={[styles.rowSublabel, { color: theme.textMuted }]}>
                   {sublabel}
@@ -237,8 +273,13 @@ function VantaToggleRow({
             <Switch
               value={value}
               onValueChange={onValueChange}
-              trackColor={{ false: theme.surfaceHighlight, true: theme.primary }}
-              thumbColor={Platform.OS === "android" ? theme.textOnAccent : undefined}
+              trackColor={{
+                false: theme.surfaceHighlight,
+                true: theme.primary,
+              }}
+              thumbColor={
+                Platform.OS === "android" ? theme.textOnAccent : undefined
+              }
               ios_backgroundColor={theme.surfaceHighlight}
               style={styles.switch}
               pointerEvents="none"
@@ -343,9 +384,11 @@ function VantaStepperRow({
               },
             ]}
           >
-          <TextInput
+            <TextInput
               value={inputValue}
-              onChangeText={(text) => setInputValue(text.replace(/[^0-9]/g, ""))}
+              onChangeText={(text) =>
+                setInputValue(text.replace(/[^0-9]/g, ""))
+              }
               onBlur={() => {
                 const num = parseInt(inputValue, 10);
                 Haptic.impactLight();
@@ -428,7 +471,7 @@ function IdentityNode({
 
         <View style={styles.identityText}>
           <Text style={[styles.identityLabel, { color: theme.primary }]}>
-            IDENTITY NODE
+            {t("settings.identityNode")}
           </Text>
           <Text style={[styles.identityTitle, { color: theme.text }]}>
             {appName}
@@ -461,9 +504,9 @@ function IdentityNode({
 
       <View style={styles.identityStatus}>
         <Text style={[styles.identityStatusLabel, { color: theme.textMuted }]}>
-          CURRENT STATUS
+          {t("settings.currentStatus")}
         </Text>
-        <AetherBadge text="AETHER TIER IV" theme={theme} />
+        <AetherBadge text={t("settings.aetherTier")} theme={theme} />
       </View>
     </PremiumCard>
   );
@@ -508,8 +551,16 @@ function ActionButton({
 
   const isGold = variant === "gold";
   const isDanger = variant === "danger";
-  const borderColor = isDanger ? theme.danger : isGold ? theme.primary : theme.border;
-  const textColor = isDanger ? theme.danger : isGold ? theme.primary : theme.text;
+  const borderColor = isDanger
+    ? theme.danger
+    : isGold
+      ? theme.primary
+      : theme.border;
+  const textColor = isDanger
+    ? theme.danger
+    : isGold
+      ? theme.primary
+      : theme.text;
 
   return (
     <Pressable
@@ -535,9 +586,7 @@ function ActionButton({
       >
         <View style={styles.actionLeft}>
           <AppIcon name={icon} size={18} color={textColor} />
-          <Text style={[styles.actionText, { color: textColor }]}>
-            {label}
-          </Text>
+          <Text style={[styles.actionText, { color: textColor }]}>{label}</Text>
         </View>
         <AppIcon name="arrow-forward" size={18} color={textColor} />
       </Animated.View>
@@ -566,18 +615,22 @@ export default function SettingsScreen() {
   const [exporting, setExporting] = useState(false);
 
   const currentLang = useMemo(
-    () => SUPPORTED_LOCALES.find((l) => l.code === locale) ?? SUPPORTED_LOCALES[0],
+    () =>
+      SUPPORTED_LOCALES.find((l) => l.code === locale) ?? SUPPORTED_LOCALES[0],
     [locale],
   );
 
   const currentCurrency = useMemo(
     () =>
-      SUPPORTED_CURRENCIES.find((c) => c.code === currency) ?? SUPPORTED_CURRENCIES[0],
+      SUPPORTED_CURRENCIES.find((c) => c.code === currency) ??
+      SUPPORTED_CURRENCIES[0],
     [currency],
   );
 
   const currentTheme = useMemo(
-    () => THEME_MODE_OPTIONS.find((o) => o.key === themeMode) ?? THEME_MODE_OPTIONS[0],
+    () =>
+      THEME_MODE_OPTIONS.find((o) => o.key === themeMode) ??
+      THEME_MODE_OPTIONS[0],
     [themeMode],
   );
 
@@ -617,7 +670,9 @@ export default function SettingsScreen() {
     const cancelLabel = t("common.cancel");
     if (Platform.OS === "ios") {
       const options = [
-        ...SUPPORTED_CURRENCIES.map((c) => `${c.flag}  ${c.symbol}  ${c.name}`),
+        ...SUPPORTED_CURRENCIES.map(
+          (c) => `${c.flag}  ${c.symbol}  ${t(c.nameKey)}`,
+        ),
         cancelLabel,
       ];
       ActionSheetIOS.showActionSheetWithOptions(
@@ -638,7 +693,7 @@ export default function SettingsScreen() {
 
     Alert.alert(t("settings.currency"), undefined, [
       ...SUPPORTED_CURRENCIES.map((c) => ({
-        text: `${c.flag} ${c.symbol} ${c.name}`,
+        text: `${c.flag} ${c.symbol} ${t(c.nameKey)}`,
         onPress: () => setCurrency(c.code),
       })),
       { text: cancelLabel, style: "cancel" },
@@ -647,8 +702,17 @@ export default function SettingsScreen() {
 
   const showThemePicker = useCallback(() => {
     const cancelLabel = t("common.cancel");
+    const themeLabels: Record<string, string> = {
+      system: t("settings.themes.system"),
+      light: t("settings.themes.light"),
+      dark: t("settings.themes.dark"),
+    };
+    const getThemeLabel = (key: string) => themeLabels[key] || key;
     if (Platform.OS === "ios") {
-      const options = [...THEME_MODE_OPTIONS.map((o) => o.label), cancelLabel];
+      const options = [
+        ...THEME_MODE_OPTIONS.map((o) => getThemeLabel(o.key)),
+        cancelLabel,
+      ];
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options,
@@ -667,7 +731,7 @@ export default function SettingsScreen() {
 
     Alert.alert(t("settings.theme"), undefined, [
       ...THEME_MODE_OPTIONS.map((o) => ({
-        text: o.label,
+        text: getThemeLabel(o.key),
         onPress: () => setThemeMode(o.key),
       })),
       { text: cancelLabel, style: "cancel" },
@@ -734,11 +798,18 @@ export default function SettingsScreen() {
 
         <View>
           <Animated.View entering={getEnter(isReduceMotionEnabled, 80)}>
-            <IdentityNode theme={theme} appName="Optimus Vintage" version={`VER: ${version}`} />
+            <IdentityNode
+              theme={theme}
+              appName="Optimus Vintage"
+              version={`VER: ${version}`}
+            />
           </Animated.View>
 
           <Animated.View entering={getEnter(isReduceMotionEnabled, 140)}>
-            <SectionHeader title={t("settings.appearance").toUpperCase()} theme={theme} />
+            <SectionHeader
+              title={t("settings.appearance").toUpperCase()}
+              theme={theme}
+            />
 
             <VantaRow
               icon={themeIcon}
@@ -777,7 +848,10 @@ export default function SettingsScreen() {
           </Animated.View>
 
           <Animated.View entering={getEnter(isReduceMotionEnabled, 200)}>
-            <SectionHeader title={t("settings.preferences").toUpperCase()} theme={theme} />
+            <SectionHeader
+              title={t("settings.preferences").toUpperCase()}
+              theme={theme}
+            />
 
             <VantaRow
               icon="currency-exchange"
@@ -795,7 +869,9 @@ export default function SettingsScreen() {
                       },
                     ]}
                   >
-                    <Text style={[styles.currencySymbol, { color: theme.primary }]}>
+                    <Text
+                      style={[styles.currencySymbol, { color: theme.primary }]}
+                    >
                       {currentCurrency.symbol}
                     </Text>
                   </View>
@@ -842,7 +918,9 @@ export default function SettingsScreen() {
 
             <ActionButton
               icon="download"
-              label={exporting ? t("settings.exporting") : t("settings.exportData")}
+              label={
+                exporting ? t("settings.exporting") : t("settings.exportData")
+              }
               onPress={handleExport}
               loading={exporting}
               variant="gold"
