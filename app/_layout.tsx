@@ -10,7 +10,7 @@ import {
 import { ThemeProvider } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
-import { router } from "expo-router";
+import { router, useSegments } from "expo-router";
 import { Stack } from "expo-router/stack";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -101,6 +101,7 @@ function RootLayoutNav() {
   const { isAuthenticated, fetchMe } = useAuthStore();
   const { initialize: initSubscriptions } = useSubscriptionStore();
   const [isReady, setIsReady] = useState(false);
+  const segments = useSegments();
 
   // Check hydration / initial redirect
   useEffect(() => {
@@ -126,12 +127,17 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!isReady) return;
 
+    // Don't redirect if user is on a public route (landing, onboarding, auth)
+    const currentRoute = segments[0];
+    const publicRoutes = ["landing", "onboarding", "auth"];
+    if (publicRoutes.includes(currentRoute)) return;
+
     if (!isOnboardingDone) {
       router.replace("/onboarding");
     } else if (!isAuthenticated) {
       router.replace("/auth");
     }
-  }, [isReady, isOnboardingDone, isAuthenticated]);
+  }, [isReady, isOnboardingDone, isAuthenticated, segments]);
 
   if (!isReady) return null; // Or a splash
 
