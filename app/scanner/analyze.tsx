@@ -9,36 +9,31 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { useVantaTheme, VantaScreen } from "@/components/ui/PremiumUI";
 import { Palette, Radius, Spacing } from "@/constants/Theme";
 import {
-    analyzeImage,
-    getCategoryLabel,
-    getConditionLabel,
-    getDemandEmoji,
-    getRecommendationColor,
-    getRecommendationLabel,
-    type ScannerUIState
+  analyzeImage,
+  getCategoryLabel,
+  getConditionLabel,
+  getDemandEmoji,
+  getRecommendationColor,
+  getRecommendationLabel,
+  type ScannerUIState,
 } from "@/utils/ai";
 import { useSettingsStore } from "@/store/settings";
 import { Haptic } from "@/utils/haptics";
+import { useLocale } from "@/utils/i18n";
 import { Image } from "expo-image";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
-import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, {
-    Easing,
-    FadeIn,
-    FadeInDown,
-    FadeInUp,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withTiming,
+  Easing,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -52,7 +47,18 @@ export default function AnalyzeScreen() {
   const theme = useVantaTheme();
   const isDark = theme.dark;
   const currency = useSettingsStore((s) => s.currency);
-  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
+  const currencySymbol =
+    (
+      {
+        EUR: "€",
+        USD: "$",
+        GBP: "£",
+        CHF: "CHF",
+        JPY: "¥",
+        CAD: "CA$",
+      } as Record<string, string>
+    )[currency] || "€";
+  const { t } = useLocale();
 
   const [scanState, setScanState] = useState<ScannerUIState>({
     state: "analyzing",
@@ -100,7 +106,7 @@ export default function AnalyzeScreen() {
       setScanState((prev) => ({
         ...prev,
         state: "error",
-        error: "Aucune image fournie",
+        error: t("scanner.noImage"),
       }));
       return;
     }
@@ -120,7 +126,7 @@ export default function AnalyzeScreen() {
           state: "error",
           progress: 0,
           currentModel: null,
-          error: error.message || "Erreur d'analyse",
+          error: error.message || t("scanner.analysisError"),
           result: null,
         });
       });
@@ -164,7 +170,8 @@ export default function AnalyzeScreen() {
         condition: result.identification.condition || "",
         colors: result.identification.colors?.join(", ") || "",
         size: result.identification.size || "",
-        suggestedBuyPrice: result.recommendation.suggestedBuyPrice?.toString() || "",
+        suggestedBuyPrice:
+          result.recommendation.suggestedBuyPrice?.toString() || "",
         midPrice: result.pricing.midPrice?.toString() || "",
         era: result.identification.era || "",
       },
@@ -194,10 +201,10 @@ export default function AnalyzeScreen() {
           <AppIcon name="auto-awesome" size={32} color={colors.gold} />
         </Animated.View>
         <Text style={[styles.loadingTitle, { color: colors.text }]}>
-          Analyse en cours...
+          {t("scanner.analyzing")}
         </Text>
         <Text style={[styles.loadingSubtitle, { color: colors.textMuted }]}>
-          {scanState.currentModel || "Préparation de l'image"}
+          {scanState.currentModel || t("scanner.preparingImage")}
         </Text>
 
         {/* Progress bar */}
@@ -227,17 +234,17 @@ export default function AnalyzeScreen() {
         <AppIcon name="error-outline" size={48} color={colors.danger} />
       </View>
       <Text style={[styles.errorTitle, { color: colors.text }]}>
-        Analyse échouée
+        {t("scanner.analysisFailed")}
       </Text>
       <Text style={[styles.errorMessage, { color: colors.textMuted }]}>
-        {scanState.error || "Une erreur est survenue"}
+        {scanState.error || t("errors.generic")}
       </Text>
       <Pressable
         style={[styles.retryButton, { backgroundColor: colors.gold }]}
         onPress={handleRetry}
       >
         <AppIcon name="refresh" size={20} color="#000000" />
-        <Text style={styles.retryButtonText}>Réessayer</Text>
+        <Text style={styles.retryButtonText}>{t("common.retry")}</Text>
       </Pressable>
     </View>
   );
@@ -285,17 +292,17 @@ export default function AnalyzeScreen() {
           <View style={styles.cardHeader}>
             <AppIcon name="checkroom" size={20} color={colors.gold} />
             <Text style={[styles.cardTitle, { color: colors.text }]}>
-              Identification
+              {t("scanner.identification")}
             </Text>
           </View>
 
           {/* Brand */}
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-              Marque
+              {t("scanner.brand")}
             </Text>
             <Text style={[styles.infoValue, { color: colors.text }]}>
-              {result.identification.brand || "Non identifiée"}
+              {result.identification.brand || t("scanner.unidentified")}
               {result.identification.brandConfidence > 0 && (
                 <Text style={{ color: colors.textMuted }}>
                   {" "}
@@ -308,7 +315,7 @@ export default function AnalyzeScreen() {
           {/* Category */}
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-              Catégorie
+              {t("scanner.category")}
             </Text>
             <Text style={[styles.infoValue, { color: colors.text }]}>
               {getCategoryLabel(result.identification.category)}
@@ -319,7 +326,7 @@ export default function AnalyzeScreen() {
           {result.identification.model && (
             <View style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-                Modèle
+                {t("scanner.model")}
               </Text>
               <Text style={[styles.infoValue, { color: colors.text }]}>
                 {result.identification.model}
@@ -330,7 +337,7 @@ export default function AnalyzeScreen() {
           {/* Era */}
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-              Époque
+              {t("scanner.era")}
             </Text>
             <View style={styles.tagRow}>
               <View
@@ -358,7 +365,7 @@ export default function AnalyzeScreen() {
           {/* Condition */}
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-              État
+              {t("scanner.condition")}
             </Text>
             <Text style={[styles.infoValue, { color: colors.text }]}>
               {getConditionLabel(result.identification.condition)}
@@ -369,7 +376,7 @@ export default function AnalyzeScreen() {
           {result.identification.colors.length > 0 && (
             <View style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-                Couleurs
+                {t("scanner.colors")}
               </Text>
               <Text style={[styles.infoValue, { color: colors.text }]}>
                 {result.identification.colors.join(", ")}
@@ -389,13 +396,14 @@ export default function AnalyzeScreen() {
           <View style={styles.cardHeader}>
             <AppIcon name="attach-money" size={20} color={colors.gold} />
             <Text style={[styles.cardTitle, { color: colors.text }]}>
-              Estimation prix
+              {t("scanner.priceEstimate")}
             </Text>
             <View style={styles.confidenceBadge}>
               <Text
                 style={[styles.confidenceText, { color: colors.textMuted }]}
               >
-                {Math.round(result.pricing.confidence * 100)}% confiance
+                {Math.round(result.pricing.confidence * 100)}%{" "}
+                {t("scanner.confidence")}
               </Text>
             </View>
           </View>
@@ -404,26 +412,29 @@ export default function AnalyzeScreen() {
           <View style={styles.priceGrid}>
             <View style={styles.priceItem}>
               <Text style={[styles.priceLabel, { color: colors.textMuted }]}>
-                Vente rapide
+                {t("scanner.quickSale")}
               </Text>
               <Text style={[styles.priceValue, { color: colors.text }]}>
-                {currencySymbol}{result.pricing.lowPrice}
+                {currencySymbol}
+                {result.pricing.lowPrice}
               </Text>
             </View>
             <View style={[styles.priceItem, styles.priceItemMain]}>
               <Text style={[styles.priceLabel, { color: colors.gold }]}>
-                Prix marché
+                {t("scanner.marketPrice")}
               </Text>
               <Text style={[styles.priceValueMain, { color: colors.gold }]}>
-                {currencySymbol}{result.pricing.midPrice}
+                {currencySymbol}
+                {result.pricing.midPrice}
               </Text>
             </View>
             <View style={styles.priceItem}>
               <Text style={[styles.priceLabel, { color: colors.textMuted }]}>
-                Collectionneur
+                {t("scanner.collector")}
               </Text>
               <Text style={[styles.priceValue, { color: colors.text }]}>
-                {currencySymbol}{result.pricing.highPrice}
+                {currencySymbol}
+                {result.pricing.highPrice}
               </Text>
             </View>
           </View>
@@ -438,7 +449,7 @@ export default function AnalyzeScreen() {
             >
               <AppIcon name="lightbulb" size={16} color={colors.gold} />
               <Text style={[styles.suggestedPriceText, { color: colors.gold }]}>
-                Prix d'achat max suggéré: {currencySymbol}
+                {t("scanner.suggestedBuyPrice")}: {currencySymbol}
                 {result.recommendation.suggestedBuyPrice}
               </Text>
             </View>
@@ -450,7 +461,7 @@ export default function AnalyzeScreen() {
               <Text
                 style={[styles.platformsTitle, { color: colors.textMuted }]}
               >
-                Plateformes recommandées
+                {t("scanner.recommendedPlatforms")}
               </Text>
               {result.pricing.recommendedPlatforms.map((platform, idx) => (
                 <View
@@ -467,12 +478,14 @@ export default function AnalyzeScreen() {
                     <Text
                       style={[styles.platformPrice, { color: colors.success }]}
                     >
-                      {currencySymbol}{platform.estimatedPrice}
+                      {currencySymbol}
+                      {platform.estimatedPrice}
                     </Text>
                     <Text
                       style={[styles.platformDays, { color: colors.textMuted }]}
                     >
-                      ~{platform.estimatedDays}j
+                      ~{platform.estimatedDays}
+                      {t("common.daysShort")}
                     </Text>
                   </View>
                 </View>
@@ -492,14 +505,14 @@ export default function AnalyzeScreen() {
           <View style={styles.cardHeader}>
             <AppIcon name="analytics" size={20} color={colors.gold} />
             <Text style={[styles.cardTitle, { color: colors.text }]}>
-              Analyse marché
+              {t("scanner.marketAnalysis")}
             </Text>
           </View>
 
           <View style={styles.marketGrid}>
             <View style={styles.marketItem}>
               <Text style={[styles.marketLabel, { color: colors.textMuted }]}>
-                Demande
+                {t("scanner.demand")}
               </Text>
               <Text style={[styles.marketValue, { color: colors.text }]}>
                 {getDemandEmoji(result.market.demandLevel)}{" "}
@@ -508,7 +521,7 @@ export default function AnalyzeScreen() {
             </View>
             <View style={styles.marketItem}>
               <Text style={[styles.marketLabel, { color: colors.textMuted }]}>
-                Tendance
+                {t("scanner.trend")}
               </Text>
               <Text style={[styles.marketValue, { color: colors.text }]}>
                 {result.market.trend === "rising"
@@ -521,7 +534,7 @@ export default function AnalyzeScreen() {
             </View>
             <View style={styles.marketItem}>
               <Text style={[styles.marketLabel, { color: colors.textMuted }]}>
-                Rareté
+                {t("scanner.rarity")}
               </Text>
               <Text style={[styles.marketValue, { color: colors.text }]}>
                 {result.market.rarityScore}/10
@@ -532,7 +545,7 @@ export default function AnalyzeScreen() {
           {result.market.targetAudience.length > 0 && (
             <View style={styles.audienceSection}>
               <Text style={[styles.audienceLabel, { color: colors.textMuted }]}>
-                Cible
+                {t("scanner.target")}
               </Text>
               <View style={styles.tagRow}>
                 {result.market.targetAudience
@@ -572,7 +585,7 @@ export default function AnalyzeScreen() {
             <View style={styles.cardHeader}>
               <AppIcon name="lightbulb" size={20} color={colors.gold} />
               <Text style={[styles.cardTitle, { color: colors.text }]}>
-                Points clés
+                {t("scanner.keyPoints")}
               </Text>
             </View>
 
@@ -591,7 +604,7 @@ export default function AnalyzeScreen() {
 
         {/* Processing info */}
         <Text style={[styles.processingInfo, { color: colors.textMuted }]}>
-          Analysé par {result.model} en {result.processingTimeMs}ms
+          {t("scanner.analyzedBy")} {result.model} — {result.processingTimeMs}ms
         </Text>
       </ScrollView>
     );
@@ -602,7 +615,9 @@ export default function AnalyzeScreen() {
       <Stack.Screen
         options={{
           title:
-            scanState.state === "success" ? "Résultat analyse" : "Analyse IA",
+            scanState.state === "success"
+              ? t("scanner.result")
+              : t("scanner.title"),
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerShadowVisible: false,
@@ -636,7 +651,7 @@ export default function AnalyzeScreen() {
             onPress={handleAddToStock}
           >
             <AppIcon name="add" size={24} color="#000000" />
-            <Text style={styles.addButtonText}>Ajouter au stock</Text>
+            <Text style={styles.addButtonText}>{t("scanner.addToStock")}</Text>
           </Pressable>
           <Pressable
             style={[styles.scanAgainButton, { borderColor: colors.border }]}
@@ -644,7 +659,7 @@ export default function AnalyzeScreen() {
           >
             <AppIcon name="camera-add" size={20} color={colors.text} />
             <Text style={[styles.scanAgainText, { color: colors.text }]}>
-              Scanner autre
+              {t("scanner.scanAnother")}
             </Text>
           </Pressable>
         </Animated.View>

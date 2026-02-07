@@ -16,21 +16,22 @@
  */
 
 import { Palette, Radius, Spacing } from "@/constants/Theme";
+import { useLocale } from "@/utils/i18n";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo } from "react";
 import {
-    AccessibilityInfo,
-    StyleSheet,
-    View,
-    type ViewStyle,
+  AccessibilityInfo,
+  StyleSheet,
+  View,
+  type ViewStyle,
 } from "react-native";
 import Animated, {
-    Easing,
-    interpolate,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withTiming,
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
 } from "react-native-reanimated";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -83,6 +84,7 @@ export function Skeleton({
 }: SkeletonProps) {
   const shimmerPosition = useSharedValue(-1);
   const colors = SkeletonColors[mode];
+  const { t } = useLocale();
 
   // Check for reduced motion preference
   const [reduceMotion, setReduceMotion] = React.useState(false);
@@ -153,7 +155,7 @@ export function Skeleton({
         style,
       ]}
       accessibilityRole="progressbar"
-      accessibilityLabel="Chargement en cours"
+      accessibilityLabel={t("accessibility.loading")}
     >
       <Animated.View style={[styles.shimmerContainer, animatedStyle]}>
         <LinearGradient

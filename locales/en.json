@@ -166,8 +166,13 @@
       "profitable": "Profitable"
     },
     "types": {
-      "bulk": "Bulk",
+      "bulk": "Bulk / Kilo",
       "piecewise": "Piecewise"
+    },
+    "providers": {
+      "eureka": "Eureka",
+      "fleek": "Fleek",
+      "personnel": "Personal"
     },
     "sort": {
       "newest": "Newest",
@@ -230,7 +235,23 @@
       "title": "No items",
       "description": "Add items to your lots"
     },
-    "confirmDelete": "Are you sure you want to delete this item?"
+    "confirmDelete": "Are you sure you want to delete this item?",
+    "types": {
+      "clothing": "Clothing",
+      "shoes": "Shoes",
+      "accessories": "Accessories",
+      "bags": "Bags",
+      "jewelry": "Jewelry",
+      "other": "Other"
+    },
+    "sizes": {
+      "oneSize": "One Size",
+      "na": "N/A"
+    },
+    "placeholders": {
+      "brand": "e.g., Nike, Levi's, Zara...",
+      "color": "e.g., Black, Navy Blue..."
+    }
   },
   "sales": {
     "title": "Sales",
@@ -280,7 +301,8 @@
     "saleCancelled": "Sale Cancelled",
     "itemReturnedToStock": "The item has been returned to stock.",
     "cancelError": "Could not cancel the sale.",
-    "alreadyCancelled": "This sale is already cancelled or refunded."
+    "alreadyCancelled": "This sale is already cancelled or refunded.",
+    "lotItem": "Lot #{{lotId}} • Item #{{itemId}}"
   },
   "settings": {
     "title": "Settings",
@@ -317,7 +339,19 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "contact": "Contact Us",
-    "rateApp": "Rate App"
+    "rateApp": "Rate App",
+    "identityNode": "IDENTITY NODE",
+    "currentStatus": "CURRENT STATUS",
+    "aetherTier": "AETHER TIER IV",
+    "currencies": {
+      "euro": "Euro",
+      "usDollar": "US Dollar",
+      "britishPound": "British Pound",
+      "swissFranc": "Swiss Franc",
+      "canadianDollar": "Canadian Dollar",
+      "japaneseYen": "Japanese Yen",
+      "australianDollar": "Australian Dollar"
+    }
   },
   "onboarding": {
     "welcome": "Welcome to",
@@ -327,7 +361,11 @@
     "quickSetup": "Quick Setup",
     "currency": "Currency",
     "targetMargin": "Target Margin (%)",
-    "start": "Get Started"
+    "start": "Get Started",
+    "feature1": "Real-time profit tracking",
+    "feature2": "Smart lot management",
+    "feature3": "Offline-first storage",
+    "dataOnDevice": "Your data stays on your device"
   },
   "errors": {
     "generic": "Something went wrong",
@@ -375,6 +413,9 @@
     "target": "Target",
     "keyPoints": "Key Points",
     "analyzedBy": "Analyzed by",
+    "noImage": "No image provided",
+    "analysisError": "Analysis error",
+    "unidentified": "Unidentified",
     "selectLot": "Select a lot",
     "selectLotRequired": "Please select a lot to add the item.",
     "enterCost": "Please enter a valid buy price.",
@@ -405,6 +446,41 @@
     "takePhoto": "Take a photo",
     "pickFromGallery": "Pick from gallery",
     "flashOn": "Flash on",
-    "flashOff": "Flash off"
+    "flashOff": "Flash off",
+    "euros": "euros",
+    "dollars": "dollars",
+    "thousand": "thousand"
+  },
+  "vanta": {
+    "progress": "Progress: {{percentage}} percent",
+    "trend": "Trend: {{trend}}",
+    "tapForDetails": "Tap to view details",
+    "items": "ITEMS",
+    "article": "Item",
+    "brand": "Brand",
+    "oneSize": "OS",
+    "sell": "Sell",
+    "seeAllItems": "See all items from {{name}}",
+    "seeAll": "See all",
+    "visibleLots": "Visible lots",
+    "lotsDisplayed": "{{count}} of {{total}} lots displayed",
+    "showAllLots": "Show all lots",
+    "hideAllLots": "Hide all lots",
+    "lotItems": "{{count}} items"
+  },
+  "photos": {
+    "limitReached": "Limit Reached",
+    "maxPhotosMessage": "You can only add up to {{max}} photos.",
+    "addPhoto": "Add Photo",
+    "chooseSource": "Choose a source",
+    "camera": "Camera",
+    "gallery": "Gallery",
+    "permissionDenied": "Permission Denied",
+    "cameraRequired": "Camera access is required.",
+    "galleryRequired": "Gallery access is required.",
+    "removePhoto": "Remove Photo",
+    "removeConfirm": "Are you sure?",
+    "remove": "Remove",
+    "tapToRemove": "Tap photo to remove"
   }
 }
