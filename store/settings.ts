@@ -1,4 +1,8 @@
-import "expo-sqlite/localStorage/install";
+// Platform-specific localStorage polyfill
+// - Native: installs expo-sqlite backed localStorage (install-storage.native.ts)
+// - Web: no-op, localStorage exists natively (install-storage.ts)
+import "./install-storage";
+
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 

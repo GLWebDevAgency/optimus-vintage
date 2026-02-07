@@ -3,8 +3,8 @@
  * Only triggers haptics on iOS devices
  */
 
-import * as Haptics from "expo-haptics";
 import { useSettingsStore } from "@/store/settings";
+import * as Haptics from "expo-haptics";
 
 const isIOS = process.env.EXPO_OS === "ios";
 
@@ -88,6 +88,47 @@ export function useHaptics() {
     notificationWarning,
     notificationError,
   };
+}
+
+/**
+ * Quick-fire haptic trigger for use outside React components.
+ * Accepts a shorthand type: "light" | "medium" | "heavy" | "success" | "error" | "warning" | "selection"
+ */
+export function triggerHaptic(
+  type:
+    | "light"
+    | "medium"
+    | "heavy"
+    | "success"
+    | "error"
+    | "warning"
+    | "selection" = "medium",
+): void {
+  if (!isIOS || !useSettingsStore.getState().hapticsEnabled) return;
+
+  switch (type) {
+    case "light":
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      break;
+    case "medium":
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      break;
+    case "heavy":
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      break;
+    case "success":
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      break;
+    case "error":
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      break;
+    case "warning":
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      break;
+    case "selection":
+      Haptics.selectionAsync();
+      break;
+  }
 }
 
 /**

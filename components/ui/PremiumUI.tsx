@@ -25,7 +25,6 @@ import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
 import { useAccessibility } from "@/utils/accessibility";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback } from "react";
 import {
     ActivityIndicator,
@@ -46,7 +45,7 @@ import Animated, {
     useAnimatedStyle,
     useSharedValue,
     withSpring,
-    withTiming
+    withTiming,
 } from "react-native-reanimated";
 
 const isIOS = process.env.EXPO_OS === "ios";
@@ -96,27 +95,23 @@ export function PremiumScreen({ children, style }: VantaScreenProps) {
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         {isDark ? (
           // AETHER: Absolute void with subtle gradient
-          <LinearGradient
-            colors={[
-              Palette.vanta.black,
-              Palette.vanta.obsidian,
-              Palette.vanta.black,
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                experimental_backgroundImage: `linear-gradient(135deg, ${Palette.vanta.black} 0%, ${Palette.vanta.obsidian} 50%, ${Palette.vanta.black} 100%)`,
+              },
             ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
           />
         ) : (
           // IVORY: Organic gradient (paper/silk feel)
-          <LinearGradient
-            colors={[
-              Palette.ivory.cream,
-              Palette.ivory.base,
-              Palette.ivory.sand,
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                experimental_backgroundImage: `linear-gradient(135deg, ${Palette.ivory.cream} 0%, ${Palette.ivory.base} 50%, ${Palette.ivory.sand} 100%)`,
+              },
             ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
           />
         )}
       </View>
@@ -154,10 +149,7 @@ export function PremiumHeader({
     : FadeInDown.duration(400).springify();
 
   return (
-    <Animated.View
-      entering={entering}
-      style={[styles.headerContainer, style]}
-    >
+    <Animated.View entering={entering} style={[styles.headerContainer, style]}>
       <View style={styles.headerTextContainer}>
         {subtitle && (
           <Text

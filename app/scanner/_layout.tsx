@@ -4,6 +4,8 @@
 
 import { Stack } from "expo-router";
 
+export { ScreenErrorBoundary as ErrorBoundary } from "@/components/ui/ErrorBoundary";
+
 export default function ScannerLayout() {
   return (
     <Stack

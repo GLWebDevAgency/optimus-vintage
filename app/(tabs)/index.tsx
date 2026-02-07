@@ -28,12 +28,11 @@ import { useTrackScreen } from "@/utils/analytics";
 import { computeLotSummary } from "@/utils/engine/calculations";
 import { Haptic } from "@/utils/haptics";
 import {
-    formatCurrency as i18nFormatCurrency,
     formatCurrencyCompact,
+    formatCurrency as i18nFormatCurrency,
     useLocale,
 } from "@/utils/i18n";
 import { useQuery } from "@tanstack/react-query";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -711,7 +710,12 @@ function VantaSingularity({
 }: VantaSingularityProps) {
   const isDark = useIsDarkMode();
   const { t, locale } = useLocale();
-  const currency = useSettingsStore((s) => s.currency) as "EUR" | "USD" | "GBP" | "CHF" | "JPY";
+  const currency = useSettingsStore((s) => s.currency) as
+    | "EUR"
+    | "USD"
+    | "GBP"
+    | "CHF"
+    | "JPY";
   const currencySymbol = useCurrencySymbol();
 
   const formatCurrencyLocal = useCallback(
@@ -734,7 +738,11 @@ function VantaSingularity({
 
   // Strip currency symbols for display value
   const stripSymbol = (s: string) =>
-    s.replace(/[€$£¥]/g, "").replace(/CHF/g, "").replace(/CA\$/g, "").trim();
+    s
+      .replace(/[€$£¥]/g, "")
+      .replace(/CHF/g, "")
+      .replace(/CA\$/g, "")
+      .trim();
 
   return (
     <View style={{ paddingHorizontal: Spacing.lg }}>
@@ -770,7 +778,9 @@ function VantaSingularity({
           label={t("dashboard.hero.profit")}
           value={stripSymbol(formatCurrencyLocal(profit, true))}
           unit={currencySymbol}
-          badge={isProfitable ? formatPercent(roi) : t("dashboard.hero.deficit")}
+          badge={
+            isProfitable ? formatPercent(roi) : t("dashboard.hero.deficit")
+          }
           badgeVariant={isProfitable ? "success" : "gold"}
           onPress={onDetailPress}
         >
@@ -1089,7 +1099,12 @@ function VantaTopLotCard({
 }: VantaTopLotProps) {
   const isDark = useIsDarkMode();
   const { t, locale } = useLocale();
-  const currency = useSettingsStore((s) => s.currency) as "EUR" | "USD" | "GBP" | "CHF" | "JPY";
+  const currency = useSettingsStore((s) => s.currency) as
+    | "EUR"
+    | "USD"
+    | "GBP"
+    | "CHF"
+    | "JPY";
   const isProfitable = profit >= 0;
   const scale = useSharedValue(1);
 
@@ -1205,7 +1220,10 @@ function VantaTopLotCard({
                 color: mutedColor,
               }}
             >
-              {soldCount} {soldCount > 1 ? t("dashboard.topPerformers.sales") : t("dashboard.topPerformers.sale")}
+              {soldCount}{" "}
+              {soldCount > 1
+                ? t("dashboard.topPerformers.sales")
+                : t("dashboard.topPerformers.sale")}
             </Text>
           </View>
 
@@ -1272,7 +1290,12 @@ export default function VantaDashboard() {
   const isDark = useIsDarkMode();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>("30d");
   const { t, locale } = useLocale();
-  const currency = useSettingsStore((s) => s.currency) as "EUR" | "USD" | "GBP" | "CHF" | "JPY";
+  const currency = useSettingsStore((s) => s.currency) as
+    | "EUR"
+    | "USD"
+    | "GBP"
+    | "CHF"
+    | "JPY";
   const currencySymbol = useCurrencySymbol();
 
   // Locale-aware formatCurrency for dashboard
@@ -1471,7 +1494,9 @@ export default function VantaDashboard() {
       >
         {/* ═══ VANTA STATUS BAR ═══ */}
         <Animated.View
-          entering={isReduceMotionEnabled ? undefined : FadeInDown.duration(400)}
+          entering={
+            isReduceMotionEnabled ? undefined : FadeInDown.duration(400)
+          }
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
@@ -1516,7 +1541,11 @@ export default function VantaDashboard() {
 
         {/* ═══ HEADER ═══ */}
         <Animated.View
-          entering={isReduceMotionEnabled ? undefined : FadeInDown.delay(50).duration(400)}
+          entering={
+            isReduceMotionEnabled
+              ? undefined
+              : FadeInDown.delay(50).duration(400)
+          }
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
@@ -1573,7 +1602,8 @@ export default function VantaDashboard() {
                   color: isDark ? VANTA.textMuted : Palette.neutral[400],
                 }}
               >
-                {lots.length} {t("dashboard.status.lots")} • {stats.stockCount} {t("dashboard.status.items")}
+                {lots.length} {t("dashboard.status.lots")} • {stats.stockCount}{" "}
+                {t("dashboard.status.items")}
               </Text>
             </View>
           </View>
@@ -1584,7 +1614,13 @@ export default function VantaDashboard() {
         </Animated.View>
 
         {/* ═══ PERIOD SELECTOR ═══ */}
-        <Animated.View entering={isReduceMotionEnabled ? undefined : FadeInDown.delay(50).duration(400)}>
+        <Animated.View
+          entering={
+            isReduceMotionEnabled
+              ? undefined
+              : FadeInDown.delay(50).duration(400)
+          }
+        >
           <VantaPeriodSelector
             options={PERIOD_OPTIONS}
             selectedKey={selectedPeriod}
@@ -1593,7 +1629,13 @@ export default function VantaDashboard() {
         </Animated.View>
 
         {/* ═══ HERO SINGULARITY ═══ */}
-        <Animated.View entering={isReduceMotionEnabled ? undefined : FadeInUp.delay(100).duration(500)}>
+        <Animated.View
+          entering={
+            isReduceMotionEnabled
+              ? undefined
+              : FadeInUp.delay(100).duration(500)
+          }
+        >
           <VantaSingularity
             revenue={stats.revenue}
             profit={stats.profit}
@@ -1605,7 +1647,11 @@ export default function VantaDashboard() {
 
         {/* ═══ METRIC ORBS (3 columns) ═══ */}
         <Animated.View
-          entering={isReduceMotionEnabled ? undefined : FadeInUp.delay(150).duration(500)}
+          entering={
+            isReduceMotionEnabled
+              ? undefined
+              : FadeInUp.delay(150).duration(500)
+          }
           style={{
             flexDirection: "row",
             gap: Spacing.md,
@@ -1640,7 +1686,11 @@ export default function VantaDashboard() {
 
         {/* ═══ QUICK ACTIONS ═══ */}
         <Animated.View
-          entering={isReduceMotionEnabled ? undefined : FadeInUp.delay(200).duration(500)}
+          entering={
+            isReduceMotionEnabled
+              ? undefined
+              : FadeInUp.delay(200).duration(500)
+          }
           style={{ paddingHorizontal: Spacing.lg }}
         >
           <View style={{ marginBottom: Spacing.md }}>
@@ -1710,7 +1760,11 @@ export default function VantaDashboard() {
         {/* ═══ TOP PERFORMERS ═══ */}
         {stats.topLots.length > 0 && (
           <Animated.View
-            entering={isReduceMotionEnabled ? undefined : FadeInUp.delay(300).duration(500)}
+            entering={
+              isReduceMotionEnabled
+                ? undefined
+                : FadeInUp.delay(300).duration(500)
+            }
             style={{ paddingHorizontal: Spacing.lg }}
           >
             <View

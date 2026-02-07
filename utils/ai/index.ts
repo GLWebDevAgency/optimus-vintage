@@ -10,6 +10,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 
 import { ANALYSIS_SETTINGS, isAIConfigured } from "./config";
 import { analyzeWithGemini } from "./gemini-service";
+import { analyzeViaProxy, isProxyAvailable } from "./proxy-client";
 import type { AIAnalysisResult, ScanInput, ScannerUIState } from "./types";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -57,19 +58,12 @@ export async function prepareImageForAnalysis(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Analyze image with primary model (Gemini)
+ * Analyze image — uses server proxy (secure) with fallback to local Gemini
  */
 export async function analyzeImage(
   imageUri: string,
   onProgress?: (state: ScannerUIState) => void,
 ): Promise<AIAnalysisResult> {
-  // Check configuration
-  if (!isAIConfigured()) {
-    throw new Error(
-      "AI not configured. Please add EXPO_PUBLIC_GEMINI_API_KEY to your .env file.",
-    );
-  }
-
   // Update progress
   onProgress?.({
     state: "analyzing",
@@ -90,8 +84,38 @@ export async function analyzeImage(
     result: null,
   });
 
-  // Analyze with Gemini
-  const result = await analyzeWithGemini(input);
+  // Try server proxy first (secure — API key stays server-side)
+  const proxyAvailable = await isProxyAvailable();
+
+  let result: AIAnalysisResult;
+
+  if (proxyAvailable) {
+    onProgress?.({
+      state: "analyzing",
+      progress: 0.5,
+      currentModel: "Gemini Flash (serveur sécurisé)",
+      error: null,
+      result: null,
+    });
+    result = await analyzeViaProxy(input);
+  } else if (isAIConfigured()) {
+    // Fallback to local Gemini (dev only — will be removed in production)
+    console.warn(
+      "[AI] Server proxy unavailable, falling back to local Gemini. This should only happen in development.",
+    );
+    onProgress?.({
+      state: "analyzing",
+      progress: 0.5,
+      currentModel: "Gemini Flash (local)",
+      error: null,
+      result: null,
+    });
+    result = await analyzeWithGemini(input);
+  } else {
+    throw new Error(
+      "AI not available. Server proxy is unreachable and no local API key configured.",
+    );
+  }
 
   onProgress?.({
     state: result.success ? "success" : "error",

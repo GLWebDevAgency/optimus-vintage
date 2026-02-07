@@ -442,10 +442,7 @@ export default function SalesScreen() {
                   Haptic.impactMedium();
                   router.push("/sales/new");
                 }}
-                style={[
-                  styles.addButton,
-                  { backgroundColor: theme.primary },
-                ]}
+                style={[styles.addButton, { backgroundColor: theme.primary }]}
               >
                 <AppIcon name="add" size={22} color={theme.textOnAccent} />
               </Pressable>
@@ -508,9 +505,7 @@ export default function SalesScreen() {
             value={`${previousPeriodComparison >= 0 ? "+" : ""}${previousPeriodComparison.toFixed(0)}%`}
             subtitle={t("common.previous")}
             icon={
-              previousPeriodComparison >= 0
-                ? "trending-up"
-                : "trending-down"
+              previousPeriodComparison >= 0 ? "trending-up" : "trending-down"
             }
           />
         </View>
@@ -522,7 +517,21 @@ export default function SalesScreen() {
         </View>
       </View>
     ),
-    [currency, insets.top, isDark, isReduceMotionEnabled, locale, previousPeriodComparison, salesCount, selectedPeriod, t, theme, totalRevenue, avgSaleValue, handlePeriodChange],
+    [
+      currency,
+      insets.top,
+      isDark,
+      isReduceMotionEnabled,
+      locale,
+      previousPeriodComparison,
+      salesCount,
+      selectedPeriod,
+      t,
+      theme,
+      totalRevenue,
+      avgSaleValue,
+      handlePeriodChange,
+    ],
   );
 
   return (

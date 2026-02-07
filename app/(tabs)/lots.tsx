@@ -10,9 +10,9 @@ import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import {
-    GoldFissureProgress,
-    MonolithCard,
-    VantaStatusBadge,
+  GoldFissureProgress,
+  MonolithCard,
+  VantaStatusBadge,
 } from "@/components/ui/VantaComponents";
 import { Palette, Radius, Spacing } from "@/constants/Theme";
 import { LotSummary, LotsRepository } from "@/db/repositories";
@@ -25,30 +25,30 @@ import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { router, useFocusEffect } from "expo-router";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
-    Keyboard,
-    LayoutAnimation,
-    Pressable,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TextInput,
-    UIManager,
-    View,
+  Keyboard,
+  LayoutAnimation,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  UIManager,
+  View,
 } from "react-native";
 import Animated, {
-    FadeIn,
-    FadeOut,
-    SlideInRight,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeIn,
+  FadeOut,
+  SlideInRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -131,7 +131,17 @@ const LotCard = React.memo(function LotCard({
   const scale = useSharedValue(1);
   const { t } = useLocale();
   const currency = useSettingsStore((s) => s.currency);
-  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
+  const currencySymbol =
+    (
+      {
+        EUR: "€",
+        USD: "$",
+        GBP: "£",
+        CHF: "CHF",
+        JPY: "¥",
+        CAD: "CA$",
+      } as Record<string, string>
+    )[currency] || "€";
 
   // Theme tokens
   const colors = {
@@ -307,7 +317,8 @@ const LotCard = React.memo(function LotCard({
                   marginTop: 4,
                 }}
               >
-                {currencySymbol}{investment.toFixed(0)}
+                {currencySymbol}
+                {investment.toFixed(0)}
               </Text>
             </View>
             <View style={styles.statItem}>
@@ -329,7 +340,8 @@ const LotCard = React.memo(function LotCard({
                   marginTop: 4,
                 }}
               >
-                {currencySymbol}{revenue.toFixed(0)}
+                {currencySymbol}
+                {revenue.toFixed(0)}
               </Text>
             </View>
             <View style={styles.statItem}>
@@ -351,7 +363,8 @@ const LotCard = React.memo(function LotCard({
                   marginTop: 4,
                 }}
               >
-                {isProfitable ? "+" : "-"}{currencySymbol}
+                {isProfitable ? "+" : "-"}
+                {currencySymbol}
                 {Math.abs(revenue - investment).toFixed(0)}
               </Text>
             </View>
@@ -405,7 +418,17 @@ function StatsBar({ stats }: { stats: LotsStats }) {
   const theme = useVantaTheme();
   const { t } = useLocale();
   const currency = useSettingsStore((s) => s.currency);
-  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
+  const currencySymbol =
+    (
+      {
+        EUR: "€",
+        USD: "$",
+        GBP: "£",
+        CHF: "CHF",
+        JPY: "¥",
+        CAD: "CA$",
+      } as Record<string, string>
+    )[currency] || "€";
   const profit = stats.totalRevenue - stats.totalInvestment;
   const profitPercent =
     stats.totalInvestment > 0
@@ -495,7 +518,17 @@ function _LegacyStatsBar({ stats }: { stats: LotsStats }) {
   const theme = useVantaTheme();
   const { t } = useLocale();
   const currency = useSettingsStore((s) => s.currency);
-  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
+  const currencySymbol =
+    (
+      {
+        EUR: "€",
+        USD: "$",
+        GBP: "£",
+        CHF: "CHF",
+        JPY: "¥",
+        CAD: "CA$",
+      } as Record<string, string>
+    )[currency] || "€";
   const profit = stats.totalRevenue - stats.totalInvestment;
 
   const colors = {
@@ -556,7 +589,8 @@ function _LegacyStatsBar({ stats }: { stats: LotsStats }) {
               color: colors.text,
             }}
           >
-            {currencySymbol}{stats.totalInvestment.toFixed(0)}
+            {currencySymbol}
+            {stats.totalInvestment.toFixed(0)}
           </Text>
           <Text
             style={{
@@ -589,7 +623,9 @@ function _LegacyStatsBar({ stats }: { stats: LotsStats }) {
               color: profit >= 0 ? theme.success : theme.danger,
             }}
           >
-            {profit >= 0 ? "+" : ""}{currencySymbol}{profit.toFixed(0)}
+            {profit >= 0 ? "+" : ""}
+            {currencySymbol}
+            {profit.toFixed(0)}
           </Text>
           <Text
             style={{
@@ -677,16 +713,28 @@ export default function LotsScreen() {
   useTrackScreen("lots");
 
   // Vanta theme colors — memoized to stabilize useCallback deps
-  const colors = useMemo(() => ({
-    background: theme.background,
-    surface: theme.surface,
-    border: theme.borderGlass,
-    text: theme.text,
-    textSecondary: theme.textSecondary,
-    textMuted: theme.textMuted,
-    gold: theme.primary,
-    goldSubtle: theme.primarySubtle,
-  }), [theme.background, theme.surface, theme.borderGlass, theme.text, theme.textSecondary, theme.textMuted, theme.primary, theme.primarySubtle]);
+  const colors = useMemo(
+    () => ({
+      background: theme.background,
+      surface: theme.surface,
+      border: theme.borderGlass,
+      text: theme.text,
+      textSecondary: theme.textSecondary,
+      textMuted: theme.textMuted,
+      gold: theme.primary,
+      goldSubtle: theme.primarySubtle,
+    }),
+    [
+      theme.background,
+      theme.surface,
+      theme.borderGlass,
+      theme.text,
+      theme.textSecondary,
+      theme.textMuted,
+      theme.primary,
+      theme.primarySubtle,
+    ],
+  );
 
   // Data state
   const lotsQuery = useQuery({

@@ -18,30 +18,29 @@
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { useVantaTheme } from "@/components/ui/PremiumUI";
 import { Palette, Radius, Spacing } from "@/constants/Theme";
+import { useLocale } from "@/utils/i18n";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect } from "react";
 import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type ViewStyle,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+    type ViewStyle,
 } from "react-native";
 import Animated, {
-  Easing,
-  FadeIn,
-  FadeInDown,
-  useAnimatedProps,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
+    Easing,
+    FadeIn,
+    FadeInDown,
+    useAnimatedProps,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
-import { useLocale } from "@/utils/i18n";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -276,14 +275,15 @@ export function MonolithCard({
       accessibilityLabel={`${label}: ${accessibleValue}${unit ? ` ${unit}` : ""}${trend ? `. ${t("vanta.trend", { trend })}` : ""}`}
     >
       {/* Light Leak Effect */}
-      <View style={styles.monolithLightLeak} pointerEvents="none">
-        <LinearGradient
-          colors={[Palette.metal.goldSubtle, "transparent"]}
-          start={{ x: 1, y: 1 }}
-          end={{ x: 0, y: 0 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
+      <View
+        style={[
+          styles.monolithLightLeak,
+          {
+            experimental_backgroundImage: `linear-gradient(315deg, ${Palette.metal.goldSubtle} 0%, transparent 100%)`,
+          },
+        ]}
+        pointerEvents="none"
+      />
 
       {/* Top Edge Highlight */}
       <View style={styles.monolithEdgeHighlight} />
@@ -422,6 +422,7 @@ export function GoldFissureProgress({
   style,
 }: GoldFissureProgressProps) {
   const theme = useVantaTheme();
+  const { t } = useLocale();
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -444,7 +445,9 @@ export function GoldFissureProgress({
         ]}
         accessible
         accessibilityRole="progressbar"
-        accessibilityLabel={t("accessibility.progressBar", { percentage: Math.round(percentage) })}
+        accessibilityLabel={t("accessibility.progressBar", {
+          percentage: Math.round(percentage),
+        })}
         accessibilityValue={{ min: 0, max: 100, now: Math.round(percentage) }}
       >
         <Animated.View
@@ -586,6 +589,7 @@ export function VantaSectionHeader({
   style,
 }: VantaSectionHeaderProps) {
   const theme = useVantaTheme();
+  const { t } = useLocale();
 
   return (
     <View
@@ -882,9 +886,13 @@ export function NetflixCarousel({
         >
           <AppIcon name="checkroom" size={40} color={theme.textMuted} />
           {/* Gradient Overlay */}
-          <LinearGradient
-            colors={["transparent", theme.background]}
-            style={styles.carouselItemGradient}
+          <View
+            style={[
+              styles.carouselItemGradient,
+              {
+                experimental_backgroundImage: `linear-gradient(to bottom, transparent 0%, ${theme.background} 100%)`,
+              },
+            ]}
           />
         </View>
 
