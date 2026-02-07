@@ -166,8 +166,13 @@
       "profitable": "Profit"
     },
     "types": {
-      "bulk": "En gros",
+      "bulk": "En gros / Kilo",
       "piecewise": "À la pièce"
+    },
+    "providers": {
+      "eureka": "Eureka",
+      "fleek": "Fleek",
+      "personnel": "Personnel"
     },
     "sort": {
       "newest": "Plus récent",
@@ -230,7 +235,23 @@
       "title": "Aucun article",
       "description": "Ajoutez des articles à vos lots"
     },
-    "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet article ?"
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet article ?",
+    "types": {
+      "clothing": "Vêtements",
+      "shoes": "Chaussures",
+      "accessories": "Accessoires",
+      "bags": "Sacs",
+      "jewelry": "Bijoux",
+      "other": "Autre"
+    },
+    "sizes": {
+      "oneSize": "Taille unique",
+      "na": "N/A"
+    },
+    "placeholders": {
+      "brand": "ex. Nike, Levi's, Zara...",
+      "color": "ex. Noir, Bleu marine..."
+    }
   },
   "sales": {
     "title": "Ventes",
@@ -280,7 +301,8 @@
     "saleCancelled": "Vente annulée",
     "itemReturnedToStock": "L'article a été remis en stock.",
     "cancelError": "Impossible d'annuler la vente.",
-    "alreadyCancelled": "Cette vente est déjà annulée ou remboursée."
+    "alreadyCancelled": "Cette vente est déjà annulée ou remboursée.",
+    "lotItem": "Lot #{{lotId}} • Article #{{itemId}}"
   },
   "settings": {
     "title": "Réglages",
@@ -317,7 +339,19 @@
     "privacyPolicy": "Politique de confidentialité",
     "termsOfService": "Conditions d'utilisation",
     "contact": "Nous contacter",
-    "rateApp": "Noter l'application"
+    "rateApp": "Noter l'application",
+    "identityNode": "NŒUD IDENTITÉ",
+    "currentStatus": "STATUT ACTUEL",
+    "aetherTier": "AETHER TIER IV",
+    "currencies": {
+      "euro": "Euro",
+      "usDollar": "Dollar US",
+      "britishPound": "Livre Sterling",
+      "swissFranc": "Franc Suisse",
+      "canadianDollar": "Dollar Canadien",
+      "japaneseYen": "Yen Japonais",
+      "australianDollar": "Dollar Australien"
+    }
   },
   "onboarding": {
     "welcome": "Bienvenue sur",
@@ -327,7 +361,11 @@
     "quickSetup": "Configuration Rapide",
     "currency": "Devise",
     "targetMargin": "Marge Cible (%)",
-    "start": "Commencer"
+    "start": "Commencer",
+    "feature1": "Suivi des profits en temps réel",
+    "feature2": "Gestion intelligente des lots",
+    "feature3": "Stockage hors-ligne",
+    "dataOnDevice": "Vos données restent sur votre appareil"
   },
   "errors": {
     "generic": "Une erreur s'est produite",
@@ -375,6 +413,9 @@
     "target": "Cible",
     "keyPoints": "Points clés",
     "analyzedBy": "Analysé par",
+    "noImage": "Aucune image fournie",
+    "analysisError": "Erreur d'analyse",
+    "unidentified": "Non identifiée",
     "selectLot": "Sélectionner un lot",
     "selectLotRequired": "Veuillez sélectionner un lot pour ajouter l'article.",
     "enterCost": "Veuillez saisir un prix d'achat valide.",
@@ -405,6 +446,41 @@
     "takePhoto": "Prendre une photo",
     "pickFromGallery": "Choisir depuis la galerie",
     "flashOn": "Flash activé",
-    "flashOff": "Flash désactivé"
+    "flashOff": "Flash désactivé",
+    "euros": "euros",
+    "dollars": "dollars",
+    "thousand": "mille"
+  },
+  "vanta": {
+    "progress": "Progression : {{percentage}} pour cent",
+    "trend": "Tendance : {{trend}}",
+    "tapForDetails": "Appuyez pour voir les détails",
+    "items": "ARTICLES",
+    "article": "Article",
+    "brand": "Marque",
+    "oneSize": "TU",
+    "sell": "Vendre",
+    "seeAllItems": "Voir tous les articles de {{name}}",
+    "seeAll": "Voir tout",
+    "visibleLots": "Lots visibles",
+    "lotsDisplayed": "{{count}} sur {{total}} lots affichés",
+    "showAllLots": "Afficher tous les lots",
+    "hideAllLots": "Masquer tous les lots",
+    "lotItems": "{{count}} articles"
+  },
+  "photos": {
+    "limitReached": "Limite atteinte",
+    "maxPhotosMessage": "Vous pouvez ajouter jusqu'à {{max}} photos.",
+    "addPhoto": "Ajouter photo",
+    "chooseSource": "Choisir une source",
+    "camera": "Caméra",
+    "gallery": "Galerie",
+    "permissionDenied": "Permission refusée",
+    "cameraRequired": "L'accès à la caméra est requis.",
+    "galleryRequired": "L'accès à la galerie est requis.",
+    "removePhoto": "Supprimer la photo",
+    "removeConfirm": "Êtes-vous sûr ?",
+    "remove": "Supprimer",
+    "tapToRemove": "Appuyez sur la photo pour supprimer"
   }
 }

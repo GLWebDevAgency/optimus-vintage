@@ -7,11 +7,11 @@
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import {
-    PremiumCard,
-    PremiumHeader,
-    PremiumStatCard,
-    useVantaTheme,
-    VantaScreen,
+  PremiumCard,
+  PremiumHeader,
+  PremiumStatCard,
+  useVantaTheme,
+  VantaScreen,
 } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { useColorScheme } from "@/components/useColorScheme";
@@ -22,28 +22,28 @@ import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { Haptic } from "@/utils/haptics";
 import {
-    formatCurrency,
-    formatCurrencyCompact,
-    formatDateShort,
-    useLocale,
+  formatCurrency,
+  formatCurrencyCompact,
+  formatDateShort,
+  useLocale,
 } from "@/utils/i18n";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    Pressable,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import Animated, {
-    FadeInDown,
-    SlideInRight,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeInDown,
+  SlideInRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -372,7 +372,10 @@ export default function SalesScreen() {
                       style={[styles.saleTitle, { color: theme.text }]}
                       numberOfLines={1}
                     >
-                      Lot #{item.lotId} • Article #{item.itemId}
+                      {t("sales.lotItem", {
+                        lotId: item.lotId,
+                        itemId: item.itemId,
+                      })}
                     </Text>
                     <Text style={[styles.saleMeta, { color: theme.textMuted }]}>
                       {dateLabel}

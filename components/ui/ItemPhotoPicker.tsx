@@ -6,16 +6,17 @@
 import { AppIcon } from "@/components/ui/AppIcon";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Radius, Spacing, Theme } from "@/constants/Theme";
+import { useLocale } from "@/utils/i18n";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import React from "react";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import Animated, { FadeIn, FadeOut, Layout } from "react-native-reanimated";
 
@@ -34,23 +35,27 @@ export function ItemPhotoPicker({
 }: ItemPhotoPickerProps) {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Theme[colorScheme];
+  const { t } = useLocale();
 
   const pickImage = async () => {
     if (photos.length >= maxPhotos) {
       Alert.alert(
-        "Limit Reached",
-        `You can only add up to ${maxPhotos} photos.`,
+        t("photos.limitReached"),
+        t("photos.maxPhotosMessage", { max: maxPhotos }),
       );
       return;
     }
 
-    Alert.alert("Add Photo", "Choose a source", [
+    Alert.alert(t("photos.addPhoto"), t("photos.chooseSource"), [
       {
-        text: "Camera",
+        text: t("photos.camera"),
         onPress: async () => {
           const permission = await ImagePicker.requestCameraPermissionsAsync();
           if (!permission.granted) {
-            Alert.alert("Permission Denied", "Camera access is required.");
+            Alert.alert(
+              t("photos.permissionDenied"),
+              t("photos.cameraRequired"),
+            );
             return;
           }
 
@@ -67,14 +72,14 @@ export function ItemPhotoPicker({
         },
       },
       {
-        text: "Gallery",
+        text: t("photos.gallery"),
         onPress: async () => {
           const permission =
             await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (!permission.granted) {
             Alert.alert(
-              "Permission Denied",
-              "Media library access is required.",
+              t("photos.permissionDenied"),
+              t("photos.galleryRequired"),
             );
             return;
           }
@@ -92,15 +97,15 @@ export function ItemPhotoPicker({
           }
         },
       },
-      { text: "Cancel", style: "cancel" },
+      { text: t("common.cancel"), style: "cancel" },
     ]);
   };
 
   const removePhoto = (index: number) => {
-    Alert.alert("Remove Photo", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("photos.removePhoto"), t("photos.removeConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Remove",
+        text: t("photos.remove"),
         style: "destructive",
         onPress: () => {
           const updated = [...photos];
@@ -154,14 +159,14 @@ export function ItemPhotoPicker({
           >
             <AppIcon name="camera-add" size={28} color={theme.primary} />
             <Text style={[styles.addText, { color: theme.textMuted }]}>
-              Add Photo
+              {t("photos.addPhoto")}
             </Text>
           </Pressable>
         )}
       </ScrollView>
 
       <Text style={[styles.hint, { color: theme.textMuted }]}>
-        {photos.length}/{maxPhotos} photos • Tap photo to remove
+        {photos.length}/{maxPhotos} photos • {t("photos.tapToRemove")}
       </Text>
     </View>
   );

@@ -52,10 +52,22 @@ const ITEM_TYPES = [
 ] as const;
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "One Size", "N/A"] as const;
 
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  Clothing: "items.types.clothing",
+  Shoes: "items.types.shoes",
+  Accessories: "items.types.accessories",
+  Bags: "items.types.bags",
+  Jewelry: "items.types.jewelry",
+  Other: "items.types.other",
+};
+
+const SIZE_LABELS: Record<string, string> = {
+  "One Size": "items.sizes.oneSize",
+  "N/A": "items.sizes.na",
+};
+
 // Map AI categories to item types
-function mapCategoryToType(
-  category: string,
-): (typeof ITEM_TYPES)[number] {
+function mapCategoryToType(category: string): (typeof ITEM_TYPES)[number] {
   const mapping: Record<string, (typeof ITEM_TYPES)[number]> = {
     jacket: "Clothing",
     coat: "Clothing",
@@ -81,9 +93,7 @@ function mapCategoryToType(
 }
 
 // Map AI condition to form condition
-function mapCondition(
-  aiCondition: string,
-): (typeof CONDITIONS)[number] {
+function mapCondition(aiCondition: string): (typeof CONDITIONS)[number] {
   const mapping: Record<string, (typeof CONDITIONS)[number]> = {
     mint: "new",
     excellent: "likeNew",
@@ -174,7 +184,17 @@ export default function AddToStockScreen() {
   const isDark = theme.dark;
   const { t } = useLocale();
   const currency = useSettingsStore((s) => s.currency);
-  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
+  const currencySymbol =
+    (
+      {
+        EUR: "€",
+        USD: "$",
+        GBP: "£",
+        CHF: "CHF",
+        JPY: "¥",
+        CAD: "CA$",
+      } as Record<string, string>
+    )[currency] || "€";
   const queryClient = useQueryClient();
 
   const colors = {
@@ -204,14 +224,14 @@ export default function AddToStockScreen() {
   const [type, setType] = useState<(typeof ITEM_TYPES)[number]>(
     mapCategoryToType(params.category || ""),
   );
-  const [color, setColor] = useState(params.colors?.split(",")[0]?.trim() || "");
+  const [color, setColor] = useState(
+    params.colors?.split(",")[0]?.trim() || "",
+  );
   const [size, setSize] = useState(params.size || "");
   const [condition, setCondition] = useState<(typeof CONDITIONS)[number]>(
     mapCondition(params.condition || "good"),
   );
-  const [unitCost, setUnitCost] = useState(
-    params.suggestedBuyPrice || "",
-  );
+  const [unitCost, setUnitCost] = useState(params.suggestedBuyPrice || "");
   const [photos, setPhotos] = useState<string[]>(
     params.imageUri ? [params.imageUri] : [],
   );
@@ -274,20 +294,16 @@ export default function AddToStockScreen() {
     try {
       await createItem.mutateAsync();
       Haptic.success();
-      Alert.alert(
-        t("common.success") + " 🎉",
-        t("scanner.itemAdded"),
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Go back to the root/dashboard
-              router.dismissAll();
-              router.replace("/(tabs)/stock");
-            },
+      Alert.alert(t("common.success") + " 🎉", t("scanner.itemAdded"), [
+        {
+          text: "OK",
+          onPress: () => {
+            // Go back to the root/dashboard
+            router.dismissAll();
+            router.replace("/(tabs)/stock");
           },
-        ],
-      );
+        },
+      ]);
     } catch (e: any) {
       Haptic.error();
       Alert.alert(t("common.error"), e.message || t("errors.saveFailed"));
@@ -329,7 +345,10 @@ export default function AddToStockScreen() {
               entering={FadeInDown.delay(50).duration(400)}
               style={[
                 styles.aiBadge,
-                { backgroundColor: colors.goldSubtle, borderColor: colors.gold },
+                {
+                  backgroundColor: colors.goldSubtle,
+                  borderColor: colors.gold,
+                },
               ]}
             >
               <AppIcon name="auto-awesome" size={18} color={colors.gold} />
@@ -349,11 +368,14 @@ export default function AddToStockScreen() {
               </View>
               {midPrice != null && (
                 <View style={styles.aiPriceBadge}>
-                  <Text style={[styles.aiPriceLabel, { color: colors.textMuted }]}>
+                  <Text
+                    style={[styles.aiPriceLabel, { color: colors.textMuted }]}
+                  >
                     {t("scanner.marketPrice")}
                   </Text>
                   <Text style={[styles.aiPriceValue, { color: colors.gold }]}>
-                    {currencySymbol}{midPrice}
+                    {currencySymbol}
+                    {midPrice}
                   </Text>
                 </View>
               )}
@@ -372,7 +394,10 @@ export default function AddToStockScreen() {
               <View
                 style={[
                   styles.lotPlaceholder,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
                 ]}
               >
                 <Text style={{ color: colors.textMuted }}>
@@ -440,10 +465,7 @@ export default function AddToStockScreen() {
               </ScrollView>
             ) : (
               <Pressable
-                style={[
-                  styles.createLotButton,
-                  { borderColor: colors.gold },
-                ]}
+                style={[styles.createLotButton, { borderColor: colors.gold }]}
                 onPress={() => router.push("/lots/new")}
               >
                 <AppIcon name="add" size={20} color={colors.gold} />
@@ -488,7 +510,7 @@ export default function AddToStockScreen() {
               ]}
               value={brand}
               onChangeText={setBrand}
-              placeholder="Nike, Levi's, Carhartt..."
+              placeholder={t("items.placeholders.brand")}
               placeholderTextColor={colors.textMuted}
             />
           </Animated.View>
@@ -510,7 +532,7 @@ export default function AddToStockScreen() {
               {ITEM_TYPES.map((itemType) => (
                 <AnimatedChip
                   key={itemType}
-                  label={itemType}
+                  label={t(ITEM_TYPE_LABELS[itemType])}
                   isSelected={type === itemType}
                   onPress={() => setType(itemType)}
                   colors={colors}
@@ -538,7 +560,7 @@ export default function AddToStockScreen() {
               ]}
               value={color}
               onChangeText={setColor}
-              placeholder="Noir, Bleu marine..."
+              placeholder={t("items.placeholders.color")}
               placeholderTextColor={colors.textMuted}
             />
           </Animated.View>
@@ -560,7 +582,7 @@ export default function AddToStockScreen() {
               {SIZES.map((s) => (
                 <AnimatedChip
                   key={s}
-                  label={s}
+                  label={SIZE_LABELS[s] ? t(SIZE_LABELS[s]) : s}
                   isSelected={size === s}
                   onPress={() => setSize(s)}
                   colors={colors}
@@ -623,7 +645,8 @@ export default function AddToStockScreen() {
             </View>
             {midPrice != null && (
               <Text style={[styles.priceHint, { color: colors.textMuted }]}>
-                💡 {t("scanner.suggestedSellPrice")}: {currencySymbol}{midPrice}
+                💡 {t("scanner.suggestedSellPrice")}: {currencySymbol}
+                {midPrice}
               </Text>
             )}
           </Animated.View>
@@ -648,9 +671,7 @@ export default function AddToStockScreen() {
               justifyContent: "center",
               gap: Spacing.sm,
               backgroundColor:
-                isSubmitting || !selectedLotId
-                  ? colors.textMuted
-                  : colors.gold,
+                isSubmitting || !selectedLotId ? colors.textMuted : colors.gold,
               paddingVertical: Spacing.md,
               paddingHorizontal: Spacing.xl,
               borderRadius: Radius.lg,
@@ -661,9 +682,7 @@ export default function AddToStockScreen() {
           >
             <AppIcon name="check-circle" size={22} color="#FFF" />
             <Text style={styles.ctaText}>
-              {isSubmitting
-                ? t("common.loading")
-                : t("scanner.addToStock")}
+              {isSubmitting ? t("common.loading") : t("scanner.addToStock")}
             </Text>
           </Pressable>
         </View>

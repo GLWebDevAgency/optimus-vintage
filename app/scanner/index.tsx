@@ -17,20 +17,20 @@ import { router, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import Animated, {
-    FadeInDown,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withSequence,
-    withSpring,
-    withTiming
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -160,7 +160,7 @@ export default function ScannerScreen() {
       <VantaScreen>
         <Stack.Screen
           options={{
-            title: "Scanner IA",
+            title: t("scanner.title"),
             headerStyle: { backgroundColor: colors.background },
             headerTintColor: colors.text,
             headerShadowVisible: false,
@@ -180,11 +180,10 @@ export default function ScannerScreen() {
               <AppIcon name="camera-add" size={48} color={colors.gold} />
             </View>
             <Text style={[styles.permissionTitle, { color: colors.text }]}>
-              Accès à la caméra
+              {t("scanner.cameraAccess")}
             </Text>
             <Text style={[styles.permissionDesc, { color: colors.textMuted }]}>
-              Pour scanner et analyser vos articles vintage, l'application a
-              besoin d'accéder à votre caméra.
+              {t("scanner.cameraAccessDesc")}
             </Text>
             <Pressable
               style={[
@@ -194,7 +193,7 @@ export default function ScannerScreen() {
               onPress={requestPermission}
             >
               <Text style={styles.permissionButtonText}>
-                Autoriser la caméra
+                {t("scanner.allowCamera")}
               </Text>
             </Pressable>
           </Animated.View>
@@ -207,7 +206,7 @@ export default function ScannerScreen() {
     <VantaScreen>
       <Stack.Screen
         options={{
-          title: "Scanner IA",
+          title: t("scanner.title"),
           headerStyle: { backgroundColor: "transparent" },
           headerTintColor: "#FFFFFF",
           headerTransparent: true,
@@ -238,9 +237,9 @@ export default function ScannerScreen() {
         <View style={styles.overlay}>
           {/* Top gradient */}
           <View style={[styles.gradientTop, { paddingTop: insets.top + 60 }]}>
-            <Text style={styles.instructionText}>Cadrez l'article vintage</Text>
+            <Text style={styles.instructionText}>{t("scanner.frameItem")}</Text>
             <Text style={styles.instructionSubtext}>
-              L'IA analysera la marque, l'état et le prix
+              {t("scanner.aiWillAnalyze")}
             </Text>
           </View>
 
@@ -276,7 +275,7 @@ export default function ScannerScreen() {
                 { backgroundColor: "rgba(255,255,255,0.2)" },
               ]}
               onPress={handlePickFromGallery}
-              accessibilityLabel="Choisir depuis la galerie"
+              accessibilityLabel={t("accessibility.pickFromGallery")}
             >
               <AppIcon name="photo" size={24} color="#FFFFFF" />
             </Pressable>
@@ -287,7 +286,7 @@ export default function ScannerScreen() {
                 style={[styles.captureButton, { borderColor: colors.gold }]}
                 onPress={handleCapture}
                 disabled={isCapturing}
-                accessibilityLabel="Prendre une photo"
+                accessibilityLabel={t("accessibility.takePhoto")}
                 accessibilityRole="button"
               >
                 {isCapturing ? (
@@ -313,7 +312,11 @@ export default function ScannerScreen() {
                 },
               ]}
               onPress={toggleFlash}
-              accessibilityLabel={`Flash ${flashMode === "on" ? "activé" : "désactivé"}`}
+              accessibilityLabel={
+                flashMode === "on"
+                  ? t("accessibility.flashOn")
+                  : t("accessibility.flashOff")
+              }
             >
               <AppIcon
                 name="lightbulb"

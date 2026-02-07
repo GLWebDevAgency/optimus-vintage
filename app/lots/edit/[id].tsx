@@ -13,15 +13,15 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -77,15 +77,15 @@ function getColors(isDark: boolean) {
 
 // Provider options
 const PROVIDERS = [
-  { id: "eureka", label: "Eureka", icon: "store" },
-  { id: "fleek", label: "Fleek", icon: "local-shipping" },
-  { id: "personnel", label: "Personnel", icon: "person" },
+  { id: "eureka", labelKey: "lots.providers.eureka", icon: "store" },
+  { id: "fleek", labelKey: "lots.providers.fleek", icon: "local-shipping" },
+  { id: "personnel", labelKey: "lots.providers.personnel", icon: "person" },
 ] as const;
 
 // Lot types
 const LOT_TYPES = [
-  { id: "BULK", label: "Bulk / Kilo" },
-  { id: "PIECEWISE", label: "Piecewise" },
+  { id: "BULK", labelKey: "lots.types.bulk" },
+  { id: "PIECEWISE", labelKey: "lots.types.piecewise" },
 ] as const;
 
 export default function EditLotScreen() {
@@ -95,9 +95,19 @@ export default function EditLotScreen() {
   const isDark = colorScheme === "dark";
   const colors = getColors(isDark);
   const queryClient = useQueryClient();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const currency = useSettingsStore((s) => s.currency);
-  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
+  const currencySymbol =
+    (
+      {
+        EUR: "€",
+        USD: "$",
+        GBP: "£",
+        CHF: "CHF",
+        JPY: "¥",
+        CAD: "CA$",
+      } as Record<string, string>
+    )[currency] || "€";
 
   // Form state
   const [provider, setProvider] = useState("");
@@ -172,7 +182,7 @@ export default function EditLotScreen() {
 
   // Format date
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("fr-FR", {
+    return date.toLocaleDateString(locale, {
       weekday: "short",
       day: "numeric",
       month: "short",
@@ -413,7 +423,7 @@ export default function EditLotScreen() {
                     },
                   ]}
                 >
-                  {p.label}
+                  {p.labelKey ? t(p.labelKey) : p.id}
                 </Text>
               </Pressable>
             ))}
@@ -488,7 +498,7 @@ export default function EditLotScreen() {
                         },
                       ]}
                     >
-                      {date.toLocaleDateString("fr-FR", { weekday: "short" })}
+                      {date.toLocaleDateString(locale, { weekday: "short" })}
                     </Text>
                     <Text
                       style={[
@@ -506,7 +516,7 @@ export default function EditLotScreen() {
                         },
                       ]}
                     >
-                      {date.toLocaleDateString("fr-FR", { month: "short" })}
+                      {date.toLocaleDateString(locale, { month: "short" })}
                     </Text>
                   </Pressable>
                 );
@@ -524,29 +534,30 @@ export default function EditLotScreen() {
             {t("lots.type")}
           </Text>
           <View style={styles.typeSelector}>
-            {LOT_TYPES.map((t) => (
+            {LOT_TYPES.map((lt) => (
               <Pressable
-                key={t.id}
+                key={lt.id}
                 style={[
                   styles.typeButton,
                   styles.typeButtonWide,
                   {
                     backgroundColor:
-                      lotType === t.id ? colors.gold : colors.surface,
-                    borderColor: lotType === t.id ? colors.gold : colors.border,
+                      lotType === lt.id ? colors.gold : colors.surface,
+                    borderColor:
+                      lotType === lt.id ? colors.gold : colors.border,
                   },
                 ]}
-                onPress={() => setLotType(t.id)}
+                onPress={() => setLotType(lt.id)}
               >
                 <Text
                   style={[
                     styles.typeLabel,
                     {
-                      color: lotType === t.id ? "#FFF" : colors.textMuted,
+                      color: lotType === lt.id ? "#FFF" : colors.textMuted,
                     },
                   ]}
                 >
-                  {t.label}
+                  {t(lt.labelKey)}
                 </Text>
               </Pressable>
             ))}
@@ -668,7 +679,8 @@ export default function EditLotScreen() {
               ]}
             >
               <Text style={[styles.unitCostText, { color: colors.success }]}>
-                {t("lots.unitCost")}: {currencySymbol}{unitCost}
+                {t("lots.unitCost")}: {currencySymbol}
+                {unitCost}
               </Text>
             </View>
           )}
