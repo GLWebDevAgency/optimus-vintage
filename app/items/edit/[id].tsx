@@ -18,22 +18,22 @@ import { MotiView } from "moti";
 import { MotiPressable } from "moti/interactions";
 import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import Animated, {
-    FadeInDown,
-    interpolateColor,
-    LinearTransition,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeInDown,
+  interpolateColor,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -99,6 +99,20 @@ const ITEM_TYPES = [
   "Other",
 ] as const;
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "One Size", "N/A"] as const;
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  Clothing: "items.types.clothing",
+  Shoes: "items.types.shoes",
+  Accessories: "items.types.accessories",
+  Bags: "items.types.bags",
+  Jewelry: "items.types.jewelry",
+  Other: "items.types.other",
+};
+
+const SIZE_LABELS: Record<string, string> = {
+  "One Size": "items.sizes.oneSize",
+  "N/A": "items.sizes.na",
+};
 const STATUS_OPTIONS = [
   { id: "STOCK", labelKey: "items.status.stock", color: "success" },
   { id: "SOLD", labelKey: "items.status.sold", color: "primary" },
@@ -261,7 +275,17 @@ export default function EditItemScreen() {
   const queryClient = useQueryClient();
   const { t } = useLocale();
   const currency = useSettingsStore((s) => s.currency);
-  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
+  const currencySymbol =
+    (
+      {
+        EUR: "€",
+        USD: "$",
+        GBP: "£",
+        CHF: "CHF",
+        JPY: "¥",
+        CAD: "CA$",
+      } as Record<string, string>
+    )[currency] || "€";
 
   // Form state
   const [brand, setBrand] = useState("");
@@ -647,7 +671,7 @@ export default function EditItemScreen() {
             ]}
             value={brand}
             onChangeText={setBrand}
-            placeholder="e.g., Nike, Levi's, Zara..."
+            placeholder={t("items.placeholders.brand")}
             placeholderTextColor={colors.textMuted}
           />
         </Animated.View>
@@ -669,7 +693,7 @@ export default function EditItemScreen() {
             {ITEM_TYPES.map((itemType) => (
               <AnimatedChip
                 key={itemType}
-                label={itemType}
+                label={t(ITEM_TYPE_LABELS[itemType])}
                 isSelected={type === itemType}
                 onPress={() => setType(itemType)}
                 colors={colors}
@@ -697,7 +721,7 @@ export default function EditItemScreen() {
             ]}
             value={color}
             onChangeText={setColor}
-            placeholder="e.g., Black, Navy Blue..."
+            placeholder={t("items.placeholders.color")}
             placeholderTextColor={colors.textMuted}
           />
         </Animated.View>
@@ -719,7 +743,7 @@ export default function EditItemScreen() {
             {SIZES.map((s) => (
               <AnimatedChip
                 key={s}
-                label={s}
+                label={SIZE_LABELS[s] ? t(SIZE_LABELS[s]) : s}
                 isSelected={size === s}
                 onPress={() => setSize(s)}
                 colors={colors}

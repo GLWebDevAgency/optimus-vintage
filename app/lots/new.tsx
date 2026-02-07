@@ -13,29 +13,29 @@ import { router, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Provider options
 const PROVIDERS = [
-  { id: "eureka", label: "Eureka", icon: "store" },
-  { id: "fleek", label: "Fleek", icon: "local-shipping" },
-  { id: "personnel", label: "Personnel", icon: "person" },
+  { id: "eureka", labelKey: "lots.providers.eureka", icon: "store" },
+  { id: "fleek", labelKey: "lots.providers.fleek", icon: "local-shipping" },
+  { id: "personnel", labelKey: "lots.providers.personnel", icon: "person" },
 ] as const;
 
 // Lot types - must match API validation: 'BULK' | 'PIECEWISE'
 const LOT_TYPES = [
-  { id: "BULK", label: "Bulk / Kilo" },
-  { id: "PIECEWISE", label: "Piecewise" },
+  { id: "BULK", labelKey: "lots.types.bulk" },
+  { id: "PIECEWISE", labelKey: "lots.types.piecewise" },
 ] as const;
 
 export default function AddLotScreen() {
@@ -58,9 +58,19 @@ export default function AddLotScreen() {
     warning: theme.warning,
     warningSubtle: theme.warningSubtle,
   };
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const currency = useSettingsStore((s) => s.currency);
-  const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
+  const currencySymbol =
+    (
+      {
+        EUR: "€",
+        USD: "$",
+        GBP: "£",
+        CHF: "CHF",
+        JPY: "¥",
+        CAD: "CA$",
+      } as Record<string, string>
+    )[currency] || "€";
 
   // Form state
   const [provider, setProvider] = useState("");
@@ -146,7 +156,7 @@ export default function AddLotScreen() {
   const dateOptions = generateDateOptions();
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(locale, {
       month: "2-digit",
       day: "2-digit",
       year: "numeric",
@@ -154,7 +164,7 @@ export default function AddLotScreen() {
   };
 
   const formatDateFull = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(locale, {
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -197,561 +207,584 @@ export default function AddLotScreen() {
       style={styles.container}
     >
       <VantaScreen style={{ flex: 1 }}>
-      <Stack.Screen
-        options={{
-          title: t("lots.newLot"),
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.text,
-          headerTitleStyle: { fontFamily: "Manrope_700Bold", fontSize: 17 },
-          headerShadowVisible: false,
-          headerLeft: () => (
-            <Pressable onPress={() => router.back()} hitSlop={8}>
-              <AppIcon name="close" size={24} color={colors.text} />
-            </Pressable>
-          ),
-        }}
-      />
+        <Stack.Screen
+          options={{
+            title: t("lots.newLot"),
+            headerShown: true,
+            headerStyle: { backgroundColor: colors.surface },
+            headerTintColor: colors.text,
+            headerTitleStyle: { fontFamily: "Manrope_700Bold", fontSize: 17 },
+            headerShadowVisible: false,
+            headerLeft: () => (
+              <Pressable onPress={() => router.back()} hitSlop={8}>
+                <AppIcon name="close" size={24} color={colors.text} />
+              </Pressable>
+            ),
+          }}
+        />
 
-      {/* Completion Progress Bar */}
-      <View
-        style={[styles.progressContainer, { backgroundColor: colors.surface }]}
-      >
+        {/* Completion Progress Bar */}
         <View
-          style={[styles.progressTrackFull, { backgroundColor: colors.border }]}
+          style={[
+            styles.progressContainer,
+            { backgroundColor: colors.surface },
+          ]}
         >
-          <Animated.View
+          <View
             style={[
-              styles.progressFill,
-              {
-                backgroundColor: colors.gold,
-                width: `${Math.min(100, (provider ? 25 : 0) + (totalCost ? 25 : 0) + (quantity > 0 ? 25 : 0) + (itemSetupMode ? 25 : 0))}%`,
-              },
+              styles.progressTrackFull,
+              { backgroundColor: colors.border },
             ]}
-          />
-        </View>
-        <Text style={[styles.progressLabel, { color: colors.textMuted }]}>
-          {provider && totalCost && quantity > 0 && itemSetupMode
-            ? `✓ ${t("lots.readyToCreate")}`
-            : t("lots.completeInfo")}
-        </Text>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + 120 },
-        ]}
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Section: Informations de base */}
-        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <View style={styles.sectionHeader}>
-            <View
+          >
+            <Animated.View
               style={[
-                styles.sectionIcon,
-                { backgroundColor: colors.goldSubtle },
+                styles.progressFill,
+                {
+                  backgroundColor: colors.gold,
+                  width: `${Math.min(100, (provider ? 25 : 0) + (totalCost ? 25 : 0) + (quantity > 0 ? 25 : 0) + (itemSetupMode ? 25 : 0))}%`,
+                },
               ]}
-            >
-              <AppIcon name="folder" size={18} color={colors.gold} />
-            </View>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {t("lots.basicInfo")}
-            </Text>
+            />
           </View>
-
-          {/* Supplier Selector */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-            {t("lots.provider").toUpperCase()}
+          <Text style={[styles.progressLabel, { color: colors.textMuted }]}>
+            {provider && totalCost && quantity > 0 && itemSetupMode
+              ? `✓ ${t("lots.readyToCreate")}`
+              : t("lots.completeInfo")}
           </Text>
-          <View style={styles.typeSelector}>
-            {PROVIDERS.map((p) => (
-              <Pressable
-                key={p.id}
+        </View>
+
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: insets.bottom + 120 },
+          ]}
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Section: Informations de base */}
+          <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+            <View style={styles.sectionHeader}>
+              <View
                 style={[
-                  styles.providerChip,
+                  styles.sectionIcon,
+                  { backgroundColor: colors.goldSubtle },
+                ]}
+              >
+                <AppIcon name="folder" size={18} color={colors.gold} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t("lots.basicInfo")}
+              </Text>
+            </View>
+
+            {/* Supplier Selector */}
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+              {t("lots.provider").toUpperCase()}
+            </Text>
+            <View style={styles.typeSelector}>
+              {PROVIDERS.map((p) => (
+                <Pressable
+                  key={p.id}
+                  style={[
+                    styles.providerChip,
+                    {
+                      backgroundColor:
+                        provider === p.id ? colors.gold : colors.surface,
+                      borderColor:
+                        provider === p.id ? colors.gold : colors.border,
+                    },
+                  ]}
+                  onPress={() => setProvider(p.id)}
+                >
+                  <AppIcon
+                    name={p.icon as any}
+                    size={18}
+                    color={
+                      provider === p.id ? theme.textOnAccent : colors.textMuted
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.typeLabel,
+                      {
+                        color:
+                          provider === p.id ? theme.textOnAccent : colors.text,
+                      },
+                    ]}
+                  >
+                    {t(p.labelKey)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {/* Date Selector */}
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+              {t("lots.buyDate").toUpperCase()}
+            </Text>
+            <Pressable
+              style={[
+                styles.dateButton,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+              onPress={() => setShowDateSelector(!showDateSelector)}
+            >
+              <Text style={[styles.dateText, { color: colors.text }]}>
+                {formatDate(buyDate)}
+              </Text>
+              <AppIcon
+                name={
+                  showDateSelector ? "keyboard-arrow-up" : "keyboard-arrow-down"
+                }
+                size={24}
+                color={colors.gold}
+              />
+            </Pressable>
+
+            {/* Inline Date Options */}
+            {showDateSelector && (
+              <Animated.View
+                entering={FadeInDown.duration(200)}
+                style={[
+                  styles.inlineDatePicker,
                   {
-                    backgroundColor:
-                      provider === p.id ? colors.gold : colors.surface,
-                    borderColor:
-                      provider === p.id ? colors.gold : colors.border,
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
                   },
                 ]}
-                onPress={() => setProvider(p.id)}
+              >
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.dateChipsContainer}
+                >
+                  {dateOptions.slice(25, 38).map((date, index) => {
+                    const isSelected =
+                      date.toDateString() === buyDate.toDateString();
+                    const isToday =
+                      date.toDateString() === new Date().toDateString();
+                    return (
+                      <Pressable
+                        key={index}
+                        style={[
+                          styles.dateChip,
+                          {
+                            backgroundColor: isSelected
+                              ? colors.gold
+                              : colors.background,
+                            borderColor:
+                              isToday && !isSelected
+                                ? colors.gold
+                                : colors.border,
+                          },
+                        ]}
+                        onPress={() => {
+                          setBuyDate(date);
+                          setShowDateSelector(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.dateChipDay,
+                            {
+                              color: isSelected
+                                ? theme.textOnAccent
+                                : colors.textMuted,
+                            },
+                          ]}
+                        >
+                          {date.toLocaleDateString(locale, {
+                            weekday: "short",
+                          })}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.dateChipNumber,
+                            {
+                              color: isSelected
+                                ? theme.textOnAccent
+                                : colors.text,
+                            },
+                          ]}
+                        >
+                          {date.getDate()}
+                        </Text>
+                        {isToday && (
+                          <View
+                            style={[
+                              styles.todayDot,
+                              {
+                                backgroundColor: isSelected
+                                  ? "#FFF"
+                                  : colors.gold,
+                              },
+                            ]}
+                          />
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </Animated.View>
+            )}
+
+            {/* Lot Type */}
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+              {t("lots.type").toUpperCase()}
+            </Text>
+            <View style={styles.typeSelector}>
+              {LOT_TYPES.map((type) => (
+                <Pressable
+                  key={type.id}
+                  style={[
+                    styles.typeOption,
+                    {
+                      backgroundColor:
+                        lotType === type.id ? colors.gold : colors.surface,
+                      borderColor:
+                        lotType === type.id ? colors.gold : colors.border,
+                    },
+                  ]}
+                  onPress={() => setLotType(type.id)}
+                >
+                  <Text
+                    style={[
+                      styles.typeLabel,
+                      { color: lotType === type.id ? "#FFF" : colors.text },
+                    ]}
+                  >
+                    {t(type.labelKey)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </Animated.View>
+
+          {/* Divider */}
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          {/* Section: Finances */}
+          <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+            <View style={styles.sectionHeader}>
+              <View
+                style={[
+                  styles.sectionIcon,
+                  { backgroundColor: colors.successSubtle },
+                ]}
               >
                 <AppIcon
-                  name={p.icon as any}
+                  name="account-balance-wallet"
                   size={18}
-                  color={
-                    provider === p.id ? theme.textOnAccent : colors.textMuted
-                  }
+                  color={colors.success}
                 />
-                <Text
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t("lots.finances")}
+              </Text>
+            </View>
+
+            <View style={styles.financialsRow}>
+              {/* Total Cost */}
+              <View style={styles.financialField}>
+                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+                  {t("lots.totalCost").toUpperCase()}
+                </Text>
+                <View
                   style={[
-                    styles.typeLabel,
+                    styles.currencyInput,
                     {
-                      color:
-                        provider === p.id
-                          ? theme.textOnAccent
-                          : colors.text,
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
                     },
                   ]}
                 >
-                  {p.label}
+                  <Text style={[styles.currencySymbol, { color: colors.gold }]}>
+                    {currencySymbol}
+                  </Text>
+                  <TextInput
+                    style={[styles.currencyValue, { color: colors.text }]}
+                    value={totalCost}
+                    onChangeText={setTotalCost}
+                    placeholder="0.00"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+              </View>
+
+              {/* Shipping */}
+              <View style={styles.financialField}>
+                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+                  {t("lots.shippingFees").toUpperCase()}
                 </Text>
-              </Pressable>
-            ))}
-          </View>
+                <View
+                  style={[
+                    styles.currencyInput,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.currencySymbol, { color: colors.gold }]}>
+                    {currencySymbol}
+                  </Text>
+                  <TextInput
+                    style={[styles.currencyValue, { color: colors.text }]}
+                    value={shippingCost}
+                    onChangeText={setShippingCost}
+                    placeholder="0.00"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+              </View>
+            </View>
 
-          {/* Date Selector */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-            {t("lots.buyDate").toUpperCase()}
-          </Text>
-          <Pressable
-            style={[
-              styles.dateButton,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            onPress={() => setShowDateSelector(!showDateSelector)}
-          >
-            <Text style={[styles.dateText, { color: colors.text }]}>
-              {formatDate(buyDate)}
+            {/* Item Count with +/- buttons */}
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+              {t("lots.itemCount").toUpperCase()}
             </Text>
-            <AppIcon
-              name={
-                showDateSelector ? "keyboard-arrow-up" : "keyboard-arrow-down"
-              }
-              size={24}
-              color={colors.gold}
-            />
-          </Pressable>
-
-          {/* Inline Date Options */}
-          {showDateSelector && (
-            <Animated.View
-              entering={FadeInDown.duration(200)}
+            <View
               style={[
-                styles.inlineDatePicker,
+                styles.quantityContainer,
                 { backgroundColor: colors.surface, borderColor: colors.border },
               ]}
             >
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.dateChipsContainer}
-              >
-                {dateOptions.slice(25, 38).map((date, index) => {
-                  const isSelected =
-                    date.toDateString() === buyDate.toDateString();
-                  const isToday =
-                    date.toDateString() === new Date().toDateString();
-                  return (
-                    <Pressable
-                      key={index}
-                      style={[
-                        styles.dateChip,
-                        {
-                          backgroundColor: isSelected
-                            ? colors.gold
-                            : colors.background,
-                          borderColor:
-                            isToday && !isSelected
-                              ? colors.gold
-                              : colors.border,
-                        },
-                      ]}
-                      onPress={() => {
-                        setBuyDate(date);
-                        setShowDateSelector(false);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.dateChipDay,
-                          {
-                            color: isSelected
-                              ? theme.textOnAccent
-                              : colors.textMuted,
-                          },
-                        ]}
-                      >
-                        {date.toLocaleDateString("en-US", { weekday: "short" })}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.dateChipNumber,
-                          { color: isSelected ? theme.textOnAccent : colors.text },
-                        ]}
-                      >
-                        {date.getDate()}
-                      </Text>
-                      {isToday && (
-                        <View
-                          style={[
-                            styles.todayDot,
-                            {
-                              backgroundColor: isSelected
-                                ? "#FFF"
-                                : colors.gold,
-                            },
-                          ]}
-                        />
-                      )}
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </Animated.View>
-          )}
-
-          {/* Lot Type */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-            {t("lots.type").toUpperCase()}
-          </Text>
-          <View style={styles.typeSelector}>
-            {LOT_TYPES.map((type) => (
               <Pressable
-                key={type.id}
                 style={[
-                  styles.typeOption,
-                  {
-                    backgroundColor:
-                      lotType === type.id ? colors.gold : colors.surface,
-                    borderColor:
-                      lotType === type.id ? colors.gold : colors.border,
-                  },
+                  styles.quantityButton,
+                  { backgroundColor: colors.goldSubtle },
                 ]}
-                onPress={() => setLotType(type.id)}
+                onPress={decrementQuantity}
               >
-                <Text
-                  style={[
-                    styles.typeLabel,
-                    { color: lotType === type.id ? "#FFF" : colors.text },
-                  ]}
-                >
-                  {type.label}
-                </Text>
+                <AppIcon name="remove" size={24} color={colors.gold} />
               </Pressable>
-            ))}
-          </View>
-        </Animated.View>
 
-        {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        {/* Section: Finances */}
-        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <View style={styles.sectionHeader}>
-            <View
-              style={[
-                styles.sectionIcon,
-                { backgroundColor: colors.successSubtle },
-              ]}
-            >
-              <AppIcon
-                name="account-balance-wallet"
-                size={18}
-                color={colors.success}
+              <TextInput
+                style={[styles.quantityInput, { color: colors.text }]}
+                value={quantity.toString()}
+                onChangeText={(t) => setQuantity(parseInt(t) || 0)}
+                keyboardType="number-pad"
+                textAlign="center"
               />
-            </View>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {t("lots.finances")}
-            </Text>
-          </View>
 
-          <View style={styles.financialsRow}>
-            {/* Total Cost */}
-            <View style={styles.financialField}>
-              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-                {t("lots.totalCost").toUpperCase()}
+              <Pressable
+                style={[
+                  styles.quantityButton,
+                  { backgroundColor: colors.goldSubtle },
+                ]}
+                onPress={incrementQuantity}
+              >
+                <AppIcon name="add" size={24} color={colors.gold} />
+              </Pressable>
+            </View>
+
+            {/* Estimated Cost Card */}
+            <View
+              style={[
+                styles.estimatedCard,
+                { backgroundColor: colors.goldSubtle },
+              ]}
+            >
+              <Text style={[styles.estimatedLabel, { color: colors.gold }]}>
+                {t("lots.estimatedCost").toUpperCase()}
               </Text>
+              <Text
+                style={[styles.estimatedSubLabel, { color: colors.textMuted }]}
+              >
+                {t("lots.perItem")}
+              </Text>
+              <Text style={[styles.estimatedValue, { color: colors.text }]}>
+                {currencySymbol}
+                {unitCost}
+              </Text>
+            </View>
+          </Animated.View>
+
+          {/* Divider */}
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          {/* Section: Configuration des articles */}
+          <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+            <View style={styles.sectionHeader}>
               <View
                 style={[
-                  styles.currencyInput,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
+                  styles.sectionIcon,
+                  { backgroundColor: colors.goldSubtle },
                 ]}
               >
-                <Text style={[styles.currencySymbol, { color: colors.gold }]}>
-                  {currencySymbol}
-                </Text>
-                <TextInput
-                  style={[styles.currencyValue, { color: colors.text }]}
-                  value={totalCost}
-                  onChangeText={setTotalCost}
-                  placeholder="0.00"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="decimal-pad"
-                />
+                <AppIcon name="inventory-2" size={18} color={colors.warning} />
               </View>
-            </View>
-
-            {/* Shipping */}
-            <View style={styles.financialField}>
-              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-                {t("lots.shippingFees").toUpperCase()}
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t("lots.itemsConfig")}
               </Text>
-              <View
-                style={[
-                  styles.currencyInput,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.currencySymbol, { color: colors.gold }]}>
-                  {currencySymbol}
-                </Text>
-                <TextInput
-                  style={[styles.currencyValue, { color: colors.text }]}
-                  value={shippingCost}
-                  onChangeText={setShippingCost}
-                  placeholder="0.00"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="decimal-pad"
-                />
-              </View>
             </View>
-          </View>
 
-          {/* Item Count with +/- buttons */}
-          <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-            {t("lots.itemCount").toUpperCase()}
-          </Text>
-          <View
-            style={[
-              styles.quantityContainer,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
+            {/* Bulk Generate Option */}
             <Pressable
               style={[
-                styles.quantityButton,
-                { backgroundColor: colors.goldSubtle },
-              ]}
-              onPress={decrementQuantity}
-            >
-              <AppIcon name="remove" size={24} color={colors.gold} />
-            </Pressable>
-
-            <TextInput
-              style={[styles.quantityInput, { color: colors.text }]}
-              value={quantity.toString()}
-              onChangeText={(t) => setQuantity(parseInt(t) || 0)}
-              keyboardType="number-pad"
-              textAlign="center"
-            />
-
-            <Pressable
-              style={[
-                styles.quantityButton,
-                { backgroundColor: colors.goldSubtle },
-              ]}
-              onPress={incrementQuantity}
-            >
-              <AppIcon name="add" size={24} color={colors.gold} />
-            </Pressable>
-          </View>
-
-          {/* Estimated Cost Card */}
-          <View
-            style={[
-              styles.estimatedCard,
-              { backgroundColor: colors.goldSubtle },
-            ]}
-          >
-            <Text style={[styles.estimatedLabel, { color: colors.gold }]}>
-              {t("lots.estimatedCost").toUpperCase()}
-            </Text>
-            <Text
-              style={[styles.estimatedSubLabel, { color: colors.textMuted }]}
-            >
-              {t("lots.perItem")}
-            </Text>
-            <Text style={[styles.estimatedValue, { color: colors.text }]}>
-              {currencySymbol}{unitCost}
-            </Text>
-          </View>
-        </Animated.View>
-
-        {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        {/* Section: Configuration des articles */}
-        <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <View style={styles.sectionHeader}>
-            <View
-              style={[
-                styles.sectionIcon,
-                { backgroundColor: colors.goldSubtle },
-              ]}
-            >
-              <AppIcon name="inventory-2" size={18} color={colors.warning} />
-            </View>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {t("lots.itemsConfig")}
-            </Text>
-          </View>
-
-          {/* Bulk Generate Option */}
-          <Pressable
-            style={[
-              styles.setupOption,
-              {
-                backgroundColor: colors.surface,
-                borderColor:
-                  itemSetupMode === "bulk" ? colors.gold : colors.border,
-              },
-            ]}
-            onPress={() => setItemSetupMode("bulk")}
-          >
-            <View
-              style={[styles.setupIcon, { backgroundColor: colors.goldSubtle }]}
-            >
-              <AppIcon name="auto-awesome" size={20} color={colors.gold} />
-            </View>
-            <View style={styles.setupText}>
-              <Text style={[styles.setupTitle, { color: colors.text }]}>
-                {t("lots.autoGenerate")}
-              </Text>
-              <Text style={[styles.setupDesc, { color: colors.textMuted }]}>
-                {t("lots.autoGenerateDesc")}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.radioOuter,
+                styles.setupOption,
                 {
+                  backgroundColor: colors.surface,
                   borderColor:
                     itemSetupMode === "bulk" ? colors.gold : colors.border,
                 },
               ]}
+              onPress={() => setItemSetupMode("bulk")}
             >
-              {itemSetupMode === "bulk" && (
-                <View
-                  style={[styles.radioInner, { backgroundColor: colors.gold }]}
-                />
-              )}
-            </View>
-          </Pressable>
+              <View
+                style={[
+                  styles.setupIcon,
+                  { backgroundColor: colors.goldSubtle },
+                ]}
+              >
+                <AppIcon name="auto-awesome" size={20} color={colors.gold} />
+              </View>
+              <View style={styles.setupText}>
+                <Text style={[styles.setupTitle, { color: colors.text }]}>
+                  {t("lots.autoGenerate")}
+                </Text>
+                <Text style={[styles.setupDesc, { color: colors.textMuted }]}>
+                  {t("lots.autoGenerateDesc")}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.radioOuter,
+                  {
+                    borderColor:
+                      itemSetupMode === "bulk" ? colors.gold : colors.border,
+                  },
+                ]}
+              >
+                {itemSetupMode === "bulk" && (
+                  <View
+                    style={[
+                      styles.radioInner,
+                      { backgroundColor: colors.gold },
+                    ]}
+                  />
+                )}
+              </View>
+            </Pressable>
 
-          {/* Manual Entry Option */}
-          <Pressable
-            style={[
-              styles.setupOption,
-              {
-                backgroundColor: colors.surface,
-                borderColor:
-                  itemSetupMode === "manual" ? colors.gold : colors.border,
-              },
-            ]}
-            onPress={() => setItemSetupMode("manual")}
-          >
-            <View
-              style={[styles.setupIcon, { backgroundColor: colors.goldSubtle }]}
-            >
-              <AppIcon name="edit-note" size={20} color={colors.gold} />
-            </View>
-            <View style={styles.setupText}>
-              <Text style={[styles.setupTitle, { color: colors.text }]}>
-                {t("lots.manualEntry")}
-              </Text>
-              <Text style={[styles.setupDesc, { color: colors.textMuted }]}>
-                {t("lots.manualEntryDesc")}
-              </Text>
-            </View>
-            <View
+            {/* Manual Entry Option */}
+            <Pressable
               style={[
-                styles.radioOuter,
+                styles.setupOption,
                 {
+                  backgroundColor: colors.surface,
                   borderColor:
                     itemSetupMode === "manual" ? colors.gold : colors.border,
                 },
               ]}
+              onPress={() => setItemSetupMode("manual")}
             >
-              {itemSetupMode === "manual" && (
-                <View
-                  style={[styles.radioInner, { backgroundColor: colors.gold }]}
-                />
-              )}
-            </View>
-          </Pressable>
-        </Animated.View>
-      </ScrollView>
+              <View
+                style={[
+                  styles.setupIcon,
+                  { backgroundColor: colors.goldSubtle },
+                ]}
+              >
+                <AppIcon name="edit-note" size={20} color={colors.gold} />
+              </View>
+              <View style={styles.setupText}>
+                <Text style={[styles.setupTitle, { color: colors.text }]}>
+                  {t("lots.manualEntry")}
+                </Text>
+                <Text style={[styles.setupDesc, { color: colors.textMuted }]}>
+                  {t("lots.manualEntryDesc")}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.radioOuter,
+                  {
+                    borderColor:
+                      itemSetupMode === "manual" ? colors.gold : colors.border,
+                  },
+                ]}
+              >
+                {itemSetupMode === "manual" && (
+                  <View
+                    style={[
+                      styles.radioInner,
+                      { backgroundColor: colors.gold },
+                    ]}
+                  />
+                )}
+              </View>
+            </Pressable>
+          </Animated.View>
+        </ScrollView>
 
-      {/* Footer */}
-      <View
-        style={[
-          styles.footer,
-          {
-            backgroundColor: colors.background,
-            paddingBottom: insets.bottom + Spacing.md,
-          },
-        ]}
-      >
-        {/* Summary info */}
-        <View style={styles.footerSummary}>
-          <View style={styles.footerSummaryItem}>
-            <Text style={[styles.footerSummaryValue, { color: colors.text }]}>
-              {quantity > 0 ? quantity : "-"}
-            </Text>
-            <Text
-              style={[styles.footerSummaryLabel, { color: colors.textMuted }]}
-            >
-              {t("items.title").toLowerCase()}
-            </Text>
-          </View>
-          <View
-            style={[styles.footerDivider, { backgroundColor: colors.border }]}
-          />
-          <View style={styles.footerSummaryItem}>
-            <Text style={[styles.footerSummaryValue, { color: colors.gold }]}>
-              {currencySymbol}{unitCost}
-            </Text>
-            <Text
-              style={[styles.footerSummaryLabel, { color: colors.textMuted }]}
-            >
-              /{t("items.title").toLowerCase().slice(0, -1)}
-            </Text>
-          </View>
-        </View>
-        <Pressable
-          onPress={handleCreate}
-          disabled={isSubmitting || !provider || !totalCost || quantity === 0}
-          style={({ pressed }) => [
-            styles.continueButton,
+        {/* Footer */}
+        <View
+          style={[
+            styles.footer,
             {
-              backgroundColor:
-                isSubmitting || !provider || !totalCost || quantity === 0
-                  ? colors.textMuted
-                  : colors.gold,
-              opacity: pressed ? 0.8 : 1,
-              transform: [{ scale: pressed ? 0.98 : 1 }],
+              backgroundColor: colors.background,
+              paddingBottom: insets.bottom + Spacing.md,
             },
           ]}
         >
-          <AppIcon
-            name="check-circle"
-            size={20}
-            color={theme.textOnAccent}
-          />
-          <Text
-            style={{
-              fontSize: 16,
-              fontFamily: "Manrope_700Bold",
-              color: theme.textOnAccent,
-            }}
+          {/* Summary info */}
+          <View style={styles.footerSummary}>
+            <View style={styles.footerSummaryItem}>
+              <Text style={[styles.footerSummaryValue, { color: colors.text }]}>
+                {quantity > 0 ? quantity : "-"}
+              </Text>
+              <Text
+                style={[styles.footerSummaryLabel, { color: colors.textMuted }]}
+              >
+                {t("items.title").toLowerCase()}
+              </Text>
+            </View>
+            <View
+              style={[styles.footerDivider, { backgroundColor: colors.border }]}
+            />
+            <View style={styles.footerSummaryItem}>
+              <Text style={[styles.footerSummaryValue, { color: colors.gold }]}>
+                {currencySymbol}
+                {unitCost}
+              </Text>
+              <Text
+                style={[styles.footerSummaryLabel, { color: colors.textMuted }]}
+              >
+                /{t("items.title").toLowerCase().slice(0, -1)}
+              </Text>
+            </View>
+          </View>
+          <Pressable
+            onPress={handleCreate}
+            disabled={isSubmitting || !provider || !totalCost || quantity === 0}
+            style={({ pressed }) => [
+              styles.continueButton,
+              {
+                backgroundColor:
+                  isSubmitting || !provider || !totalCost || quantity === 0
+                    ? colors.textMuted
+                    : colors.gold,
+                opacity: pressed ? 0.8 : 1,
+                transform: [{ scale: pressed ? 0.98 : 1 }],
+              },
+            ]}
           >
-            {isSubmitting ? t("lots.creating") : t("lots.createLot")}
-          </Text>
-        </Pressable>
-      </View>
+            <AppIcon name="check-circle" size={20} color={theme.textOnAccent} />
+            <Text
+              style={{
+                fontSize: 16,
+                fontFamily: "Manrope_700Bold",
+                color: theme.textOnAccent,
+              }}
+            >
+              {isSubmitting ? t("lots.creating") : t("lots.createLot")}
+            </Text>
+          </Pressable>
+        </View>
 
-      <StatusBar style={theme.dark ? "light" : "dark"} />
+        <StatusBar style={theme.dark ? "light" : "dark"} />
       </VantaScreen>
     </KeyboardAvoidingView>
   );
