@@ -17,21 +17,20 @@
 
 import { Palette, Radius, Spacing } from "@/constants/Theme";
 import { useLocale } from "@/utils/i18n";
-import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo } from "react";
 import {
-  AccessibilityInfo,
-  StyleSheet,
-  View,
-  type ViewStyle,
+    AccessibilityInfo,
+    StyleSheet,
+    View,
+    type ViewStyle,
 } from "react-native";
 import Animated, {
-  Easing,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
+    Easing,
+    interpolate,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withTiming,
 } from "react-native-reanimated";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -158,11 +157,16 @@ export function Skeleton({
       accessibilityLabel={t("accessibility.loading")}
     >
       <Animated.View style={[styles.shimmerContainer, animatedStyle]}>
-        <LinearGradient
-          colors={["transparent", colors.highlight, "transparent"]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.shimmerGradient}
+        <View
+          style={[
+            styles.shimmerGradient,
+            {
+              experimental_backgroundImage:
+                "linear-gradient(to right, transparent 0%, " +
+                colors.highlight +
+                " 50%, transparent 100%)",
+            },
+          ]}
         />
       </Animated.View>
     </View>

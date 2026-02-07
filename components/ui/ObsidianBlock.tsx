@@ -10,7 +10,6 @@
 
 import { useIsDarkMode, useVantaTheme } from "@/components/ui/PremiumUI";
 import { Palette } from "@/constants/Theme";
-import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { View, type ViewStyle } from "react-native";
 
@@ -114,19 +113,10 @@ export function ObsidianBlock({
             left: 0,
             right: 0,
             height: 1,
+            experimental_backgroundImage:
+              "linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%)",
           }}
-        >
-          <LinearGradient
-            colors={[
-              "rgba(255,255,255,0)",
-              "rgba(255,255,255,0.08)",
-              "rgba(255,255,255,0)",
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{ flex: 1 }}
-          />
-        </View>
+        />
       )}
 
       {children}

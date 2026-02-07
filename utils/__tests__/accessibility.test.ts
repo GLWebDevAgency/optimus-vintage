@@ -43,7 +43,10 @@ describe("a11yButton", () => {
   });
 
   it("accepte un hint optionnel", () => {
-    const props = a11yButton("Supprimer", "Supprime cet article définitivement");
+    const props = a11yButton(
+      "Supprimer",
+      "Supprime cet article définitivement",
+    );
 
     expect(props.accessibilityHint).toBe("Supprime cet article définitivement");
   });
@@ -136,7 +139,13 @@ describe("a11yListItem", () => {
 
 describe("a11yProgress", () => {
   it("retourne les props pour une barre de progression", () => {
-    const props = a11yProgress("Progression des ventes", 0, 100, 75, "75% vendu");
+    const props = a11yProgress(
+      "Progression des ventes",
+      0,
+      100,
+      75,
+      "75% vendu",
+    );
 
     expect(props.accessibilityRole).toBe("progressbar");
     expect(props.accessibilityLabel).toBe("Progression des ventes");
@@ -251,10 +260,7 @@ describe("meetsContrastAAA", () => {
 
 describe("announce", () => {
   it("appelle AccessibilityInfo.announceForAccessibility", () => {
-    const spy = jest.spyOn(
-      AccessibilityInfo,
-      "announceForAccessibility",
-    );
+    const spy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
 
     announce("Vente enregistrée");
 
@@ -281,7 +287,10 @@ describe("announcePolite", () => {
     }
 
     spy.mockRestore();
-    Object.defineProperty(Platform, "OS", { value: originalPlatform, writable: true });
+    Object.defineProperty(Platform, "OS", {
+      value: originalPlatform,
+      writable: true,
+    });
   });
 
   it("fallback sur announce standard sur Android", () => {
@@ -291,17 +300,17 @@ describe("announcePolite", () => {
       writable: true,
     });
 
-    const spy = jest.spyOn(
-      AccessibilityInfo,
-      "announceForAccessibility",
-    );
+    const spy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
 
     announcePolite("Terminé");
 
     expect(spy).toHaveBeenCalledWith("Terminé");
 
     spy.mockRestore();
-    Object.defineProperty(Platform, "OS", { value: originalPlatform, writable: true });
+    Object.defineProperty(Platform, "OS", {
+      value: originalPlatform,
+      writable: true,
+    });
   });
 });
 

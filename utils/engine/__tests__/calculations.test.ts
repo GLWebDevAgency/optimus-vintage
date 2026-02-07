@@ -124,9 +124,7 @@ describe("computeLotSummary", () => {
 
   it("calcule le profit (revenue - investment)", () => {
     const lot = createLot({ totalCost: "100.00", additionalFees: "0.00" });
-    const sales = [
-      createSale({ priceNet: "120.00", status: "COMPLETED" }),
-    ];
+    const sales = [createSale({ priceNet: "120.00", status: "COMPLETED" })];
 
     const result = computeLotSummary(lot as any, [], sales as any);
 
@@ -136,9 +134,7 @@ describe("computeLotSummary", () => {
 
   it("calcule une perte correctement", () => {
     const lot = createLot({ totalCost: "200.00", additionalFees: "50.00" });
-    const sales = [
-      createSale({ priceNet: "50.00", status: "COMPLETED" }),
-    ];
+    const sales = [createSale({ priceNet: "50.00", status: "COMPLETED" })];
 
     const result = computeLotSummary(lot as any, [], sales as any);
 
@@ -148,9 +144,7 @@ describe("computeLotSummary", () => {
 
   it("calcule le delta (manque à gagner pour break-even)", () => {
     const lot = createLot({ totalCost: "100.00", additionalFees: "0.00" });
-    const sales = [
-      createSale({ priceNet: "30.00", status: "COMPLETED" }),
-    ];
+    const sales = [createSale({ priceNet: "30.00", status: "COMPLETED" })];
 
     const result = computeLotSummary(lot as any, [], sales as any);
 
@@ -160,9 +154,7 @@ describe("computeLotSummary", () => {
 
   it("delta est 0 quand rentabilisé", () => {
     const lot = createLot({ totalCost: "100.00", additionalFees: "0.00" });
-    const sales = [
-      createSale({ priceNet: "150.00", status: "COMPLETED" }),
-    ];
+    const sales = [createSale({ priceNet: "150.00", status: "COMPLETED" })];
 
     const result = computeLotSummary(lot as any, [], sales as any);
 
@@ -172,9 +164,7 @@ describe("computeLotSummary", () => {
 
   it("calcule le ROI correctement", () => {
     const lot = createLot({ totalCost: "100.00", additionalFees: "0.00" });
-    const sales = [
-      createSale({ priceNet: "150.00", status: "COMPLETED" }),
-    ];
+    const sales = [createSale({ priceNet: "150.00", status: "COMPLETED" })];
 
     const result = computeLotSummary(lot as any, [], sales as any);
 
@@ -184,9 +174,7 @@ describe("computeLotSummary", () => {
 
   it("ROI est 0 quand investissement est 0 (lot gratuit)", () => {
     const lot = createLot({ totalCost: "0.00", additionalFees: "0.00" });
-    const sales = [
-      createSale({ priceNet: "100.00", status: "COMPLETED" }),
-    ];
+    const sales = [createSale({ priceNet: "100.00", status: "COMPLETED" })];
 
     const result = computeLotSummary(lot as any, [], sales as any);
 
@@ -196,9 +184,7 @@ describe("computeLotSummary", () => {
 
   it("ROI négatif quand en perte", () => {
     const lot = createLot({ totalCost: "200.00", additionalFees: "0.00" });
-    const sales = [
-      createSale({ priceNet: "100.00", status: "COMPLETED" }),
-    ];
+    const sales = [createSale({ priceNet: "100.00", status: "COMPLETED" })];
 
     const result = computeLotSummary(lot as any, [], sales as any);
 
@@ -242,7 +228,11 @@ describe("computeLotSummary", () => {
   });
 
   it("lot sans ventes: tout en négatif", () => {
-    const lot = createLot({ totalCost: "100.00", additionalFees: "0.00", initialQuantity: 10 });
+    const lot = createLot({
+      totalCost: "100.00",
+      additionalFees: "0.00",
+      initialQuantity: 10,
+    });
 
     const result = computeLotSummary(lot as any, [], []);
 

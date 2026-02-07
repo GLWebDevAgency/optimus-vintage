@@ -20,7 +20,9 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/components/useColorScheme";
 import { NavigationTheme } from "@/constants/Theme";
 import { ensureTables } from "@/db/migrate";
+import { useAuthStore } from "@/store/auth";
 import { useSettingsStore } from "@/store/settings";
+import { useSubscriptionStore } from "@/store/subscription";
 import { analytics } from "@/utils/analytics";
 import "@/utils/i18n"; // Initialize i18n
 
@@ -96,6 +98,8 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { isOnboardingDone } = useSettingsStore();
+  const { isAuthenticated, fetchMe } = useAuthStore();
+  const { initialize: initSubscriptions } = useSubscriptionStore();
   const [isReady, setIsReady] = useState(false);
 
   // Check hydration / initial redirect
@@ -104,6 +108,10 @@ function RootLayoutNav() {
 
     const hydrate = async () => {
       await useSettingsStore.persist.rehydrate();
+      // Try to restore auth session
+      await fetchMe();
+      // Initialize RevenueCat (after auth so user ID can be set)
+      await initSubscriptions();
       if (isMounted) {
         setIsReady(true);
       }
@@ -120,8 +128,10 @@ function RootLayoutNav() {
 
     if (!isOnboardingDone) {
       router.replace("/onboarding");
+    } else if (!isAuthenticated) {
+      router.replace("/auth");
     }
-  }, [isReady, isOnboardingDone]);
+  }, [isReady, isOnboardingDone, isAuthenticated]);
 
   if (!isReady) return null; // Or a splash
 
@@ -143,17 +153,31 @@ function RootLayoutNav() {
           name="sales"
           options={{ headerShown: false, presentation: "modal" }}
         />
-        <Stack.Screen
-          name="scanner"
-          options={{ headerShown: false }}
-        />
+        <Stack.Screen name="scanner" options={{ headerShown: false }} />
         <Stack.Screen
           name="items"
           options={{ headerShown: false, presentation: "modal" }}
         />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         <Stack.Screen
+          name="paywall"
+          options={{
+            presentation: "formSheet",
+            headerShown: false,
+            sheetGrabberVisible: true,
+            sheetAllowedDetents: [0.85, 1.0],
+          }}
+        />
+        <Stack.Screen
           name="onboarding"
+          options={{ headerShown: false, animation: "fade" }}
+        />
+        <Stack.Screen
+          name="auth"
+          options={{ headerShown: false, animation: "fade" }}
+        />
+        <Stack.Screen
+          name="landing"
           options={{ headerShown: false, animation: "fade" }}
         />
       </Stack>
