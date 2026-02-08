@@ -17,8 +17,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export default defineConfig({
-  // Schema source
-  schema: "./src/schema.ts",
+  // Schema source — include all schema files
+  schema: ["./src/schema.ts", "./src/auth-schema.ts"],
 
   // Output directory for generated migrations
   out: "./drizzle",
