@@ -20,6 +20,7 @@ import {
 import { useSettingsStore } from "@/store/settings";
 import { Haptic } from "@/utils/haptics";
 import { useLocale } from "@/utils/i18n";
+import { checkFeatureAccess } from "@/utils/plan-access";
 import { Image } from "expo-image";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -108,6 +109,18 @@ export default function AnalyzeScreen() {
         state: "error",
         error: t("scanner.noImage"),
       }));
+      return;
+    }
+
+    // Check if AI pricing feature is accessible on current plan
+    if (!checkFeatureAccess("iaPricing")) {
+      setScanState({
+        state: "error",
+        progress: 0,
+        currentModel: null,
+        error: t("scanner.featureLocked", "Cette fonctionnalité nécessite un abonnement Premium ou supérieur."),
+        result: null,
+      });
       return;
     }
 

@@ -9,6 +9,7 @@
  */
 
 import { config } from '../constants/Config';
+import { getAccessToken } from '../store/auth';
 
 // Backend API URL - Read from environment
 export const API_URL = config.api.url;
@@ -24,8 +25,16 @@ export const USE_REMOTE_DB = true; // Always use remote DB through API
 // import { api } from './api-client';
 
 // Legacy API Helper functions (deprecated - use api-client.ts)
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = await getAccessToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+}
+
 export async function apiGet<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${API_URL}${endpoint}`);
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}${endpoint}`, { headers });
   if (!response.ok) {
     throw new Error(`API Error: ${response.status}`);
   }
@@ -33,9 +42,10 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
 }
 
 export async function apiPost<T>(endpoint: string, data: unknown): Promise<T> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -45,9 +55,10 @@ export async function apiPost<T>(endpoint: string, data: unknown): Promise<T> {
 }
 
 export async function apiPut<T>(endpoint: string, data: unknown): Promise<T> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -57,8 +68,10 @@ export async function apiPut<T>(endpoint: string, data: unknown): Promise<T> {
 }
 
 export async function apiDelete(endpoint: string): Promise<void> {
+  const headers = await getAuthHeaders();
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: 'DELETE',
+    headers,
   });
   if (!response.ok) {
     throw new Error(`API Error: ${response.status}`);

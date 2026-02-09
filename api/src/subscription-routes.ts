@@ -249,7 +249,7 @@ subscriptionRouter.post(
   "/sync",
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { plan, entitlements, expirationDate, isTrialing, productId } =
       req.body;
 
@@ -306,7 +306,7 @@ subscriptionRouter.get(
   "/status",
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     const [user] = await db
       .select({ plan: users.plan })

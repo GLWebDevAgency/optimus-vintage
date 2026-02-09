@@ -10,6 +10,7 @@
 
 import appConfig from "@/app.json";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
+import { FeatureGate } from "@/components/ui/feature-gate";
 import {
     PremiumCard,
     PremiumHeader,
@@ -956,18 +957,20 @@ export default function SettingsScreen() {
               theme={theme}
             />
 
-            <ActionButton
-              icon="download"
-              label={
-                exporting ? t("settings.exporting") : t("settings.exportData")
-              }
-              onPress={handleExport}
-              loading={exporting}
-              variant="gold"
-              theme={theme}
-              isReduceMotionEnabled={isReduceMotionEnabled}
-              accessibilityLabel={t("settings.exportData")}
-            />
+            <FeatureGate feature="csvExport">
+              <ActionButton
+                icon="download"
+                label={
+                  exporting ? t("settings.exporting") : t("settings.exportData")
+                }
+                onPress={handleExport}
+                loading={exporting}
+                variant="gold"
+                theme={theme}
+                isReduceMotionEnabled={isReduceMotionEnabled}
+                accessibilityLabel={t("settings.exportData")}
+              />
+            </FeatureGate>
 
             <ActionButton
               icon="refresh"

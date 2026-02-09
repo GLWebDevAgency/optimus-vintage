@@ -19,6 +19,8 @@ import { z } from "zod";
 import {
     PLAN_QUOTAS,
     refreshTokens,
+    subscriptions,
+    TRIAL_CONFIG,
     users,
     type PlanName,
 } from "./auth-schema";
@@ -231,7 +233,10 @@ authRouter.post(
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Create user
+    // Create user with trial plan
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + TRIAL_CONFIG.durationDays);
+
     const [user] = await db
       .insert(users)
       .values({
@@ -239,9 +244,21 @@ authRouter.post(
         passwordHash,
         displayName: displayName || email.split("@")[0],
         authProvider: "email",
-        plan: "starter",
+        plan: TRIAL_CONFIG.trialPlan,
       })
       .returning();
+
+    // Create subscription record for the trial
+    await db.insert(subscriptions).values({
+      userId: user.id,
+      plan: TRIAL_CONFIG.trialPlan,
+      status: "trialing",
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: trialEnd,
+      trialEnd,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     // Generate tokens
     const accessToken = generateAccessToken(
@@ -263,6 +280,12 @@ authRouter.post(
       accessToken,
       refreshToken,
       quotas: PLAN_QUOTAS[user.plan as PlanName],
+      trial: {
+        isTrialing: true,
+        trialEnd: trialEnd.toISOString(),
+        daysRemaining: TRIAL_CONFIG.durationDays,
+        trialPlan: TRIAL_CONFIG.trialPlan,
+      },
     });
   }),
 );
@@ -318,11 +341,49 @@ authRouter.post(
       .set({ lastLoginAt: new Date() })
       .where(eq(users.id, user.id));
 
+    // Check trial status
+    const [subscription] = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, user.id))
+      .limit(1);
+
+    let trial = null;
+    if (subscription?.status === "trialing" && subscription.trialEnd) {
+      const now = new Date();
+      const trialEnd = new Date(subscription.trialEnd);
+
+      if (now >= trialEnd) {
+        // Trial expired — downgrade
+        await db
+          .update(users)
+          .set({ plan: TRIAL_CONFIG.fallbackPlan, updatedAt: new Date() })
+          .where(eq(users.id, user.id));
+        await db
+          .update(subscriptions)
+          .set({ status: "expired", plan: TRIAL_CONFIG.fallbackPlan, updatedAt: new Date() })
+          .where(eq(subscriptions.userId, user.id));
+        user.plan = TRIAL_CONFIG.fallbackPlan;
+        trial = { isTrialing: false, expired: true };
+      } else {
+        const daysRemaining = Math.ceil(
+          (trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+        );
+        trial = {
+          isTrialing: true,
+          trialEnd: trialEnd.toISOString(),
+          daysRemaining,
+          trialPlan: TRIAL_CONFIG.trialPlan,
+        };
+      }
+    }
+
     res.json({
       user: sanitizeUser(user),
       accessToken,
       refreshToken,
       quotas: PLAN_QUOTAS[user.plan as PlanName],
+      trial,
     });
   }),
 );
@@ -410,9 +471,48 @@ authRouter.get(
       throw ApiError.notFound("Utilisateur introuvable");
     }
 
+    // Check trial status
+    const [subscription] = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, user.id))
+      .limit(1);
+
+    let trial = null;
+    if (subscription?.status === "trialing" && subscription.trialEnd) {
+      const now = new Date();
+      const trialEnd = new Date(subscription.trialEnd);
+
+      if (now >= trialEnd) {
+        // Trial expired — downgrade to starter
+        await db
+          .update(users)
+          .set({ plan: TRIAL_CONFIG.fallbackPlan, updatedAt: new Date() })
+          .where(eq(users.id, user.id));
+        await db
+          .update(subscriptions)
+          .set({ status: "expired", plan: TRIAL_CONFIG.fallbackPlan, updatedAt: new Date() })
+          .where(eq(subscriptions.userId, user.id));
+
+        user.plan = TRIAL_CONFIG.fallbackPlan;
+        trial = { isTrialing: false, expired: true };
+      } else {
+        const daysRemaining = Math.ceil(
+          (trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+        );
+        trial = {
+          isTrialing: true,
+          trialEnd: trialEnd.toISOString(),
+          daysRemaining,
+          trialPlan: TRIAL_CONFIG.trialPlan,
+        };
+      }
+    }
+
     res.json({
       user: sanitizeUser(user),
       quotas: PLAN_QUOTAS[user.plan as PlanName],
+      trial,
     });
   }),
 );

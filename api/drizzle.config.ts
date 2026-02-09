@@ -11,8 +11,8 @@
  *   npx drizzle-kit introspect → Generate schema from existing database
  */
 
-import { defineConfig } from "drizzle-kit";
 import dotenv from "dotenv";
+import { defineConfig } from "drizzle-kit";
 
 dotenv.config();
 
@@ -33,9 +33,10 @@ export default defineConfig({
     user: process.env.PGUSER || "postgres",
     password: process.env.PGPASSWORD || "",
     database: process.env.PGDATABASE || "optimus_vintage",
-    ssl: process.env.PGSSLMODE === "require"
-      ? { rejectUnauthorized: false }
-      : false,
+    ssl:
+      process.env.PGSSLMODE === "require"
+        ? { rejectUnauthorized: false }
+        : false,
   },
 
   // Verbose logging

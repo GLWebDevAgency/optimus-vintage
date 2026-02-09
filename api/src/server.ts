@@ -18,7 +18,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { aiRouter } from "./ai-routes";
-import { authRouter, requireAuth } from "./auth-routes";
+import { authRouter, optionalAuth, requireAuth } from "./auth-routes";
 import { config, validateEnv } from "./config";
 import { db, testConnection } from "./db";
 import {
@@ -31,6 +31,11 @@ import {
   validateParams,
   validateQuery,
 } from "./middleware";
+import {
+  checkItemQuota,
+  checkLotQuota,
+  checkSaleQuota,
+} from "./quota-middleware";
 import { items, lots, sales } from "./schema";
 import { subscriptionRouter } from "./subscription-routes";
 import {
@@ -117,6 +122,7 @@ app.get(
 // GET all lots with pre-computed summaries (optimized single query)
 app.get(
   "/api/lots/summary",
+  requireAuth,
   asyncHandler(async (req, res) => {
     const result = await db.execute(sql`
     SELECT 
@@ -160,6 +166,7 @@ app.get(
 
 app.get(
   "/api/lots",
+  requireAuth,
   asyncHandler(async (req, res) => {
     const result = await db.select().from(lots).orderBy(desc(lots.buyDate));
     res.json({ data: result, count: result.length });
@@ -168,6 +175,7 @@ app.get(
 
 app.get(
   "/api/lots/:id",
+  requireAuth,
   validateParams(lotIdSchema),
   asyncHandler(async (req, res) => {
     const { id } = (res.locals.params || req.params) as { id: number };
@@ -183,6 +191,8 @@ app.get(
 
 app.post(
   "/api/lots",
+  requireAuth,
+  checkLotQuota,
   validateBody(createLotSchema),
   asyncHandler(async (req, res) => {
     const result = await db.insert(lots).values(req.body).returning();
@@ -194,6 +204,7 @@ app.post(
 
 app.put(
   "/api/lots/:id",
+  requireAuth,
   validateParams(lotIdSchema),
   validateBody(updateLotSchema),
   asyncHandler(async (req, res) => {
@@ -214,6 +225,7 @@ app.put(
 
 app.delete(
   "/api/lots/:id",
+  requireAuth,
   validateParams(lotIdSchema),
   asyncHandler(async (req, res) => {
     const { id } = (res.locals.params || req.params) as { id: number };
@@ -231,6 +243,7 @@ app.delete(
 
 app.get(
   "/api/items",
+  requireAuth,
   validateQuery(itemQuerySchema),
   asyncHandler(async (req, res) => {
     const { lotId, status } = (res.locals.query || req.query) as {
@@ -253,6 +266,7 @@ app.get(
 
 app.get(
   "/api/items/:id",
+  requireAuth,
   validateParams(itemIdSchema),
   asyncHandler(async (req, res) => {
     const { id } = (res.locals.params || req.params) as { id: number };
@@ -268,6 +282,8 @@ app.get(
 
 app.post(
   "/api/items",
+  requireAuth,
+  checkItemQuota,
   validateBody(createItemSchema),
   asyncHandler(async (req, res) => {
     // Verify lot exists
@@ -288,6 +304,8 @@ app.post(
 
 app.post(
   "/api/items/batch",
+  requireAuth,
+  checkItemQuota,
   validateBody(createItemBatchSchema),
   asyncHandler(async (req, res) => {
     const itemsData = req.body;
@@ -317,6 +335,7 @@ app.post(
 
 app.put(
   "/api/items/:id",
+  requireAuth,
   validateParams(itemIdSchema),
   validateBody(updateItemSchema),
   asyncHandler(async (req, res) => {
@@ -337,6 +356,7 @@ app.put(
 
 app.patch(
   "/api/items/:id/status",
+  requireAuth,
   validateParams(itemIdSchema),
   validateBody(updateItemStatusSchema),
   asyncHandler(async (req, res) => {
@@ -359,6 +379,7 @@ app.patch(
 
 app.delete(
   "/api/items/:id",
+  requireAuth,
   validateParams(itemIdSchema),
   asyncHandler(async (req, res) => {
     const { id } = (res.locals.params || req.params) as { id: number };
@@ -376,6 +397,7 @@ app.delete(
 
 app.get(
   "/api/sales",
+  requireAuth,
   validateQuery(saleQuerySchema),
   asyncHandler(async (req, res) => {
     const { lotId } = (res.locals.query || req.query) as { lotId?: number };
@@ -397,6 +419,7 @@ app.get(
 
 app.get(
   "/api/sales/revenue",
+  requireAuth,
   validateQuery(saleQuerySchema),
   asyncHandler(async (req, res) => {
     const { lotId } = (res.locals.query || req.query) as { lotId?: number };
@@ -422,6 +445,7 @@ app.get(
 
 app.get(
   "/api/sales/:id",
+  requireAuth,
   validateParams(saleIdSchema),
   asyncHandler(async (req, res) => {
     const { id } = (res.locals.params || req.params) as { id: number };
@@ -437,6 +461,8 @@ app.get(
 
 app.post(
   "/api/sales",
+  requireAuth,
+  checkSaleQuota,
   validateBody(createSaleSchema),
   asyncHandler(async (req, res) => {
     // Verify lot exists
@@ -471,6 +497,7 @@ app.post(
 
 app.delete(
   "/api/sales/:id",
+  requireAuth,
   validateParams(saleIdSchema),
   asyncHandler(async (req, res) => {
     const { id } = (res.locals.params || req.params) as { id: number };

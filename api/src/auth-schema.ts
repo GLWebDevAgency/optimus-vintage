@@ -202,3 +202,16 @@ export const PLAN_QUOTAS = {
 } as const;
 
 export type PlanName = keyof typeof PLAN_QUOTAS;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ⏱️ TRIAL CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const TRIAL_CONFIG = {
+  /** Trial duration in days */
+  durationDays: 14,
+  /** Plan granted during trial */
+  trialPlan: "premium" as PlanName,
+  /** Plan after trial expires (if no purchase) */
+  fallbackPlan: "starter" as PlanName,
+} as const;

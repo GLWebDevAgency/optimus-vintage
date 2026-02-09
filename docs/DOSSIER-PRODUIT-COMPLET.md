@@ -1,8 +1,9 @@
 # 📋 OPTIMUS VINTAGE — DOSSIER PRODUIT COMPLET
 
-> **Version** : 3.0 — 7 février 2026
+> **Version** : 3.1 — 9 février 2026
 > **Auteur** : Product & CTO Review
 > **Objet** : Audit 360°, personas, plans d'abonnement, roadmap produit, stratégie marketing & growth
+> **Changelog v3.1** : Déploiement Railway production ✅, Migrations DB (users/subscriptions/refresh_tokens) ✅, JWT secrets configurés ✅, Fix redirect landing ✅, Privacy Policy + CGU ✅, Sentry intégré ✅
 > **Changelog v3.0** : Auth ✅, Landing page ✅, Paywall RevenueCat ✅, API sécurisée (JWT + rate-limit + quotas) ✅, Système d'abonnement ✅
 
 ---
@@ -453,14 +454,16 @@ Ce sont les **bloquants absolus** avant tout lancement public.
 | 1.7 | **API auth middleware** — JWT + refresh tokens + requirePlan | 3j | P0 | ✅ FAIT |
 | 1.8 | **Rate limiting API** — Helmet + express-rate-limit + CORS | 0.5j | P0 | ✅ FAIT |
 | 1.4 | **Tests critiques** — Engine, API, écrans principaux (coverage 40%) | 5j | P0 | ❌ À faire |
-| 1.5 | **Sentry** — Crash reporting + performance monitoring | 1j | P0 | ❌ À faire |
+| 1.5 | **Sentry** — Crash reporting + performance monitoring | 1j | P0 | ✅ FAIT |
 | 1.6 | **CI/CD pipeline** — GitHub Actions + EAS Build | 2j | P0 | ❌ À faire |
 | 1.9 | **App Store / Play Store submission** — Screenshots, descriptions | 3j | P0 | ❌ À faire |
-| 1.10 | **Privacy policy + CGU** | 1j | P0 | ❌ À faire |
+| 1.10 | **Privacy policy + CGU** | 1j | P0 | ✅ FAIT |
 | 1.11 | **Dev build** — Sortir d'Expo Go pour RevenueCat plein fonctionnement | 1j | P0 | ❌ À faire |
+| — | **Déploiement Railway** — Build Nixpacks Node 20 + DB migrations | 2j | P0 | ✅ FAIT |
+| — | **Configuration production** — JWT secrets + env vars + CORS | 0.5j | P0 | ✅ FAIT |
 
-**Progression Phase 1 : 5/11 items ✅ (~45% complété)**
-**Reste estimé : ~12 jours**
+**Progression Phase 1 : 8/13 items ✅ (~62% complété)**
+**Reste estimé : ~11 jours (Tests 5j + CI/CD 2j + App Store 3j + Dev build 1j)**
 
 ---
 
@@ -988,9 +991,12 @@ SEMAINE 1-2 : FONDATIONS SÉCURITÉ ✅ TERMINÉ
 ✅ Auth : table users + inscription email
 ✅ JWT middleware API + refresh tokens
 ✅ Rate limiting Express + Helmet + CORS
+✅ Déploiement Railway (Nixpacks Node 20 + DB migrations)
+✅ Configuration production (JWT secrets + env vars)
+✅ Fix redirect landing page (routes publiques)
 □ Proxy Gemini via API (retirer clé du client)
-□ Sentry setup (mobile + API)
-□ Privacy policy + CGU (templates)
+✅ Sentry setup (mobile + API)
+✅ Privacy policy + CGU
 
 SEMAINE 3-4 : PAYWALL & MONETISATION ✅ TERMINÉ
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1061,8 +1067,10 @@ SEMAINE 11-12 : GROWTH FEATURES
 - [x] Paywall RevenueCat fonctionnel
 - [x] Landing page live
 - [x] API sécurisée (JWT + rate limit + Helmet + CORS + quotas)
-- [ ] Privacy policy + CGU publiés
-- [ ] Sentry intégré (mobile + API)
+- [x] Déploiement Railway production (API live)
+- [x] DB migrations (users, subscriptions, refresh_tokens)
+- [x] Privacy policy + CGU publiés
+- [x] Sentry intégré (mobile + API)
 - [ ] CI/CD opérationnel
 - [ ] Tests coverage > 40%
 - [ ] Dev build créé (sortir Expo Go)
@@ -1094,6 +1102,6 @@ SEMAINE 11-12 : GROWTH FEATURES
 
 ---
 
-*Document mis à jour le 7 février 2026*
-*Optimus Vintage v1.0.0 — Branch: feature/performance-accessibility*
-*Prochaine mise à jour : après Phase 1 complète (Tests + Sentry + CI/CD)*
+*Document mis à jour le 9 février 2026*
+*Optimus Vintage v1.0.0 — Branch: main*
+*Prochaine mise à jour : après Phase 1 complète (Tests + CI/CD + App Store)*

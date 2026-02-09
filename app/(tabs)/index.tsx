@@ -19,7 +19,9 @@ import {
     useIsDarkMode,
     useVantaTheme,
 } from "@/components/ui/PremiumUI";
+import { QuotaIndicator } from "@/components/ui/quota-indicator";
 import { SkeletonDashboard } from "@/components/ui/Skeleton";
+import { TrialBanner } from "@/components/ui/trial-banner";
 import { Palette, Spacing } from "@/constants/Theme";
 import { LotsRepository, SalesRepository } from "@/db/repositories";
 import { useSettingsStore } from "@/store/settings";
@@ -1477,6 +1479,8 @@ export default function VantaDashboard() {
 
   return (
     <VantaScreen>
+      {/* ═══ TRIAL BANNER ═══ */}
+      <TrialBanner />
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + Spacing.sm,
@@ -1682,6 +1686,27 @@ export default function VantaDashboard() {
             accentGlow={`${Palette.semantic.success}50`}
             onPress={() => router.push("/(tabs)/lots")}
           />
+        </Animated.View>
+
+        {/* ═══ QUOTA INDICATORS (starter plan only) ═══ */}
+        <Animated.View
+          entering={
+            isReduceMotionEnabled
+              ? undefined
+              : FadeInUp.delay(175).duration(500)
+          }
+          style={{
+            flexDirection: "row",
+            gap: Spacing.sm,
+            paddingHorizontal: Spacing.lg,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <QuotaIndicator resource="lots" current={stats.activeLots} compact />
+          </View>
+          <View style={{ flex: 1 }}>
+            <QuotaIndicator resource="items" current={stats.stockCount} compact />
+          </View>
         </Animated.View>
 
         {/* ═══ QUICK ACTIONS ═══ */}

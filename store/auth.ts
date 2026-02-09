@@ -31,6 +31,14 @@ export interface AuthUser {
   createdAt: string;
 }
 
+export interface TrialInfo {
+  isTrialing: boolean;
+  trialEnd?: string;
+  daysRemaining?: number;
+  trialPlan?: PlanName;
+  expired?: boolean;
+}
+
 export interface PlanQuotas {
   maxLots: number;
   maxItems: number;
@@ -44,6 +52,7 @@ interface AuthState {
   // State
   user: AuthUser | null;
   quotas: PlanQuotas | null;
+  trial: TrialInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -154,6 +163,7 @@ async function authFetchWithToken(
 export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
   quotas: null,
+  trial: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
@@ -181,6 +191,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({
         user: data.user,
         quotas: data.quotas,
+        trial: data.trial ?? null,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -215,6 +226,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({
         user: data.user,
         quotas: data.quotas,
+        trial: data.trial ?? null,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -236,6 +248,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     set({
       user: null,
       quotas: null,
+      trial: null,
       isAuthenticated: false,
       error: null,
     });
@@ -280,6 +293,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         set({
           user: data.user,
           quotas: data.quotas,
+          trial: data.trial ?? null,
           isAuthenticated: true,
         });
       } else if (res.status === 401) {
@@ -293,6 +307,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             set({
               user: retryData.user,
               quotas: retryData.quotas,
+              trial: retryData.trial ?? null,
               isAuthenticated: true,
             });
           }

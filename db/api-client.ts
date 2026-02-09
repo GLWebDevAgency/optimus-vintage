@@ -6,7 +6,11 @@
  * - Request timeout
  * - Detailed error handling
  * - Response type safety
+ * - Automatic JWT token injection
+ * - 403 QUOTA_EXCEEDED / FEATURE_LOCKED handling
  */
+
+import { getAccessToken } from "@/store/auth";
 
 // Configuration
 const API_CONFIG = {
@@ -61,6 +65,18 @@ export class ApiError extends Error {
 
   get isRetryable() {
     return this.isNetworkError || this.isServerError;
+  }
+
+  get isQuotaExceeded() {
+    return this.statusCode === 403 && this.code === 'QUOTA_EXCEEDED';
+  }
+
+  get isFeatureLocked() {
+    return this.statusCode === 403 && this.code === 'FEATURE_LOCKED';
+  }
+
+  get isUnauthorized() {
+    return this.statusCode === 401;
   }
 }
 
@@ -161,6 +177,12 @@ async function request<T>(
       'Accept': 'application/json',
     },
   };
+
+  // Inject auth token if available
+  const token = await getAccessToken();
+  if (token) {
+    (fetchOptions.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
 
   if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
     fetchOptions.body = JSON.stringify(data);
