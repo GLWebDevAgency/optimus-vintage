@@ -84,8 +84,8 @@ export function ObsidianBlock({
             overflow: "hidden",
             // Multi-layer shadow for floating card effect
             boxShadow: [
-              "0 1px 3px rgba(0, 0, 0, 0.04)",   // tight contact shadow
-              "0 4px 12px rgba(0, 0, 0, 0.03)",   // medium lift
+              "0 1px 3px rgba(0, 0, 0, 0.04)", // tight contact shadow
+              "0 4px 12px rgba(0, 0, 0, 0.03)", // medium lift
               "0 12px 32px rgba(201, 169, 97, 0.06)", // wide ambient glow
             ].join(", "),
           },

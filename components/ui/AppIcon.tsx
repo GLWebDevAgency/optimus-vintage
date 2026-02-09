@@ -35,7 +35,10 @@ const ICON_MAP = {
     symbol: "dollarsign.circle.fill",
     feather: "dollar-sign",
   },
-  warning: { symbol: "exclamationmark.triangle.fill", feather: "alert-triangle" },
+  warning: {
+    symbol: "exclamationmark.triangle.fill",
+    feather: "alert-triangle",
+  },
   sort: { symbol: "arrow.up.arrow.down", feather: "filter" },
   schedule: { symbol: "clock", feather: "clock" },
   "keyboard-arrow-up": { symbol: "chevron.up", feather: "chevron-up" },
