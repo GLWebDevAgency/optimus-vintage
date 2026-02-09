@@ -96,6 +96,15 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
     }
 
     try {
+      // Skip RevenueCat if using test key in non-dev build
+      if (REVENUECAT_API_KEY.startsWith("test_") && !__DEV__) {
+        console.warn(
+          "[Subscription] Skipping RevenueCat init — test key detected in release build",
+        );
+        set({ isInitialized: true });
+        return;
+      }
+
       // Enable debug logs in development
       if (__DEV__) {
         Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
