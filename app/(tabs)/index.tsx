@@ -16,8 +16,7 @@ import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
 import {
     VantaScreen,
-    useIsDarkMode,
-    useVantaTheme,
+    useIsDarkMode
 } from "@/components/ui/PremiumUI";
 import { QuotaIndicator } from "@/components/ui/quota-indicator";
 import { SkeletonDashboard } from "@/components/ui/Skeleton";
@@ -38,13 +37,14 @@ import {
 import { usePlanAccess } from "@/utils/plan-access";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-    Pressable,
-    RefreshControl,
-    Text,
-    View,
-} from "react-native";
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { Pressable, RefreshControl, Text, View } from "react-native";
 import Animated, {
     Easing,
     FadeInDown,
@@ -507,7 +507,12 @@ interface VantaSlabButtonProps {
   accessibilityLabel?: string;
 }
 
-function VantaSlabButton({ icon, onPress, size = 20, accessibilityLabel }: VantaSlabButtonProps) {
+function VantaSlabButton({
+  icon,
+  onPress,
+  size = 20,
+  accessibilityLabel,
+}: VantaSlabButtonProps) {
   const isDark = useIsDarkMode();
   const scale = useSharedValue(1);
 
@@ -720,7 +725,11 @@ function MonolithCard({
     );
   }
 
-  return <View style={{ flex: 1 }} accessibilityLabel={label}>{content}</View>;
+  return (
+    <View style={{ flex: 1 }} accessibilityLabel={label}>
+      {content}
+    </View>
+  );
 }
 
 // ─── Vanta Singularity - Hero Section with Gravity Disk ──────────────────────
@@ -1455,7 +1464,6 @@ export default function VantaDashboard() {
     let totalRev = 0;
     let totalStock = 0;
     let activeLots = 0;
-    let stockValue = 0;
 
     const lotStats: {
       id: number;
@@ -1492,7 +1500,6 @@ export default function VantaDashboard() {
         lot.totalCost && lot.initialQuantity
           ? Number(lot.totalCost) / lot.initialQuantity
           : 0;
-      stockValue += summary.remainingQuantity * avgCost;
 
       const periodRevenue = lotSales.reduce(
         (sum, s) => sum + parseFloat(String(s.priceNet)),
@@ -1511,8 +1518,6 @@ export default function VantaDashboard() {
 
     const profit = totalRev - totalInvest;
     const roi = totalInvest > 0 ? (profit / totalInvest) * 100 : 0;
-    const avgSaleValue = sales.length > 0 ? totalRev / sales.length : 0;
-    const avgMargin = sales.length > 0 ? profit / sales.length : 0;
 
     const topLots = lotStats
       .filter((l) => l.soldCount > 0)
@@ -1525,10 +1530,7 @@ export default function VantaDashboard() {
       investment: totalInvest,
       roi,
       stockCount: totalStock,
-      stockValue,
       salesCount: sales.length,
-      avgSaleValue,
-      avgMargin,
       activeLots,
       topLots,
     };
@@ -1818,49 +1820,6 @@ export default function VantaDashboard() {
           />
         </Animated.View>
 
-        {/* ═══ METRIC ORBS ROW 2 (Stock Value, Avg Sale, Avg Margin) ═══ */}
-        <Animated.View
-          entering={
-            isReduceMotionEnabled
-              ? undefined
-              : FadeInUp.delay(175).duration(500)
-          }
-          layout={
-            isReduceMotionEnabled ? undefined : LinearTransition.springify()
-          }
-          style={{
-            flexDirection: "row",
-            gap: Spacing.md,
-            paddingHorizontal: Spacing.lg,
-          }}
-        >
-          <VantaMetricOrb
-            icon="account-balance-wallet"
-            label={t("dashboard.metrics.stockValue")}
-            value={formatCurrency(stats.stockValue, true)}
-            accentColor={accentGold}
-            accentGlow={accentGoldGlow}
-          />
-          <VantaMetricOrb
-            icon="add-shopping-cart"
-            label={t("dashboard.metrics.avgSale")}
-            value={formatCurrency(stats.avgSaleValue, true)}
-            accentColor={Palette.semantic.info}
-            accentGlow={`${Palette.semantic.info}50`}
-          />
-          <VantaMetricOrb
-            icon={stats.avgMargin >= 0 ? "trending-up" : "trending-down"}
-            label={t("dashboard.metrics.avgMargin")}
-            value={formatCurrency(stats.avgMargin, true)}
-            accentColor={
-              stats.avgMargin >= 0
-                ? Palette.semantic.success
-                : Palette.semantic.danger
-            }
-            accentGlow={`${stats.avgMargin >= 0 ? Palette.semantic.success : Palette.semantic.danger}50`}
-          />
-        </Animated.View>
-
         {/* ═══ QUICK ACTIONS ═══ */}
         <Animated.View
           entering={
@@ -2018,9 +1977,7 @@ export default function VantaDashboard() {
                 style={{
                   fontSize: 15,
                   fontWeight: "600",
-                  color: isDark
-                    ? VANTA.textSecondary
-                    : Palette.neutral[500],
+                  color: isDark ? VANTA.textSecondary : Palette.neutral[500],
                   textAlign: "center",
                 }}
               >
