@@ -72,7 +72,10 @@
     "metrics": {
       "inStock": "En stock",
       "sales": "Ventes",
-      "activeLots": "Lots actifs"
+      "activeLots": "Lots actifs",
+      "stockValue": "Valeur stock",
+      "avgSale": "Vente moy.",
+      "avgMargin": "Marge moy."
     },
     "quickActions": {
       "title": "Actions Rapides",
@@ -86,7 +89,9 @@
       "tier": "TIER 3 // PERFORMANCE",
       "viewAll": "Voir tout",
       "sale": "vente",
-      "sales": "ventes"
+      "sales": "ventes",
+      "emptyTitle": "Aucune vente sur cette période",
+      "emptySubtitle": "Commencez à vendre pour voir vos meilleurs lots ici."
     },
     "status": {
       "connected": "CONNECTÉ",
@@ -470,6 +475,11 @@
     "lotRank": "Lot classé numéro {{rank}}",
     "photoGallery": "Galerie photos, {{count}} photos",
     "photoIndex": "Photo {{current}} sur {{total}}",
+    "statusOnline": "Statut : connecté",
+    "gravityDisk": "Chiffre d'affaires : {{value}}",
+    "periodSelector": "Sélecteur de période",
+    "settingsButton": "Ouvrir les paramètres",
+    "settingsButton": "Ouvrir les paramètres",
     "statsSection": "Section statistiques",
     "actionsSection": "Actions rapides",
     "sectionHeader": "Section {{label}}",

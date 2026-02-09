@@ -72,7 +72,10 @@
     "metrics": {
       "inStock": "Auf Lager",
       "sales": "Verkäufe",
-      "activeLots": "Aktive Posten"
+      "activeLots": "Aktive Posten",
+      "stockValue": "Lagerwert",
+      "avgSale": "Durchschn. Verk.",
+      "avgMargin": "Durchschn. Marge"
     },
     "quickActions": {
       "title": "Schnellaktionen",
@@ -86,7 +89,9 @@
       "tier": "TIER 3 // LEISTUNG",
       "viewAll": "Alle anzeigen",
       "sale": "Verkauf",
-      "sales": "Verkäufe"
+      "sales": "Verkäufe",
+      "emptyTitle": "Keine Verkäufe in diesem Zeitraum",
+      "emptySubtitle": "Beginnen Sie zu verkaufen, um Ihre besten Posten hier zu sehen."
     },
     "status": {
       "connected": "VERBUNDEN",
@@ -470,6 +475,7 @@
     "lotRank": "Lot auf Platz {{rank}}",
     "photoGallery": "Fotogalerie, {{count}} Fotos",
     "photoIndex": "Foto {{current}} von {{total}}",
+    "settingsButton": "Einstellungen öffnen",
     "statsSection": "Statistikbereich",
     "actionsSection": "Schnellaktionen",
     "sectionHeader": "Bereich {{label}}",

@@ -72,7 +72,10 @@
     "metrics": {
       "inStock": "In stock",
       "sales": "Sales",
-      "activeLots": "Active lots"
+      "activeLots": "Active lots",
+      "stockValue": "Stock value",
+      "avgSale": "Avg sale",
+      "avgMargin": "Avg margin"
     },
     "quickActions": {
       "title": "Quick Actions",
@@ -86,7 +89,9 @@
       "tier": "TIER 3 // PERFORMANCE",
       "viewAll": "View all",
       "sale": "sale",
-      "sales": "sales"
+      "sales": "sales",
+      "emptyTitle": "No sales in this period",
+      "emptySubtitle": "Start selling to see your best lots here."
     },
     "status": {
       "connected": "CONNECTED",
@@ -470,6 +475,7 @@
     "lotRank": "Lot ranked number {{rank}}",
     "photoGallery": "Photo gallery, {{count}} photos",
     "photoIndex": "Photo {{current}} of {{total}}",
+    "settingsButton": "Open settings",
     "statsSection": "Statistics section",
     "actionsSection": "Quick actions",
     "sectionHeader": "Section {{label}}",
