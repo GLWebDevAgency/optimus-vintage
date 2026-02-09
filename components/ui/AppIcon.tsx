@@ -1,7 +1,8 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import React from "react";
 import type { StyleProp, ViewStyle } from "react-native";
-import { Text } from "react-native";
+import { Platform, Text } from "react-native";
 
 const ICON_MAP = {
   home: { symbol: "house.fill", material: "home" },
@@ -142,6 +143,21 @@ export function AppIcon({
   accessibilityLabel,
 }: AppIconProps) {
   const icon = ICON_MAP[name];
+
+  // Android & Web: use MaterialIcons (SF Symbols not available)
+  if (Platform.OS !== "ios") {
+    return (
+      <MaterialIcons
+        name={icon.material as keyof typeof MaterialIcons.glyphMap}
+        size={size}
+        color={color}
+        style={style}
+        accessibilityLabel={accessibilityLabel}
+      />
+    );
+  }
+
+  // iOS: use native SF Symbols via SymbolView
   const fallbackLabel = icon.material
     .replace(/[^a-z0-9]/gi, "")
     .slice(0, 1)
