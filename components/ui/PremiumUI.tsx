@@ -114,6 +114,50 @@ export function PremiumScreen({ children, style }: VantaScreenProps) {
             ]}
           />
         )}
+
+        {/* Ambient Depth Orbs — subtle nebula glow for spatial feel */}
+        {/* Top-right warm orb */}
+        <View
+          style={{
+            position: "absolute",
+            top: -60,
+            right: -40,
+            width: 280,
+            height: 280,
+            borderRadius: 140,
+            backgroundColor: isDark
+              ? "rgba(244, 192, 37, 0.03)"
+              : "rgba(201, 169, 97, 0.08)",
+          }}
+        />
+        {/* Bottom-left cool orb */}
+        <View
+          style={{
+            position: "absolute",
+            bottom: 120,
+            left: -60,
+            width: 320,
+            height: 320,
+            borderRadius: 160,
+            backgroundColor: isDark
+              ? "rgba(232, 232, 232, 0.02)"
+              : "rgba(201, 169, 97, 0.05)",
+          }}
+        />
+        {/* Center-right accent orb */}
+        <View
+          style={{
+            position: "absolute",
+            top: "40%",
+            right: -80,
+            width: 200,
+            height: 200,
+            borderRadius: 100,
+            backgroundColor: isDark
+              ? "rgba(244, 192, 37, 0.02)"
+              : "rgba(201, 169, 97, 0.04)",
+          }}
+        />
       </View>
       {children}
     </View>

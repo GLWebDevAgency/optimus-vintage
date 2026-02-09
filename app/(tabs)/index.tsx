@@ -14,10 +14,7 @@
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
-import {
-    VantaScreen,
-    useIsDarkMode
-} from "@/components/ui/PremiumUI";
+import { VantaScreen, useIsDarkMode } from "@/components/ui/PremiumUI";
 import { QuotaIndicator } from "@/components/ui/quota-indicator";
 import { SkeletonDashboard } from "@/components/ui/Skeleton";
 import { TrialBanner } from "@/components/ui/trial-banner";
@@ -283,7 +280,19 @@ function GravityDisk({ percentage, value, label, sublabel }: GravityDiskProps) {
 
       {/* Mercury Ring Container */}
       <Animated.View
-        style={[{ position: "relative", width: 256, height: 256 }, floatStyle]}
+        style={[
+          {
+            position: "relative",
+            width: 256,
+            height: 256,
+            // Floating shadow beneath the disk
+            boxShadow: isDark
+              ? "0 20px 60px rgba(244, 192, 37, 0.08), 0 8px 24px rgba(0, 0, 0, 0.4)"
+              : "0 16px 48px rgba(201, 169, 97, 0.12), 0 6px 20px rgba(0, 0, 0, 0.06)",
+            borderRadius: 128,
+          },
+          floatStyle,
+        ]}
       >
         {/* Outer faint ring */}
         <View
