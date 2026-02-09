@@ -1,128 +1,128 @@
-import { MaterialIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import React from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import { Platform, Text } from "react-native";
 
 const ICON_MAP = {
-  home: { symbol: "house.fill", material: "home" },
-  "inventory-2": { symbol: "shippingbox.fill", material: "inventory-2" },
-  checkroom: { symbol: "tshirt.fill", material: "checkroom" },
-  "point-of-sale": { symbol: "creditcard.fill", material: "point-of-sale" },
-  settings: { symbol: "gearshape.fill", material: "settings" },
+  home: { symbol: "house.fill", feather: "home" },
+  "inventory-2": { symbol: "shippingbox.fill", feather: "package" },
+  checkroom: { symbol: "tshirt.fill", feather: "tag" },
+  "point-of-sale": { symbol: "creditcard.fill", feather: "credit-card" },
+  settings: { symbol: "gearshape.fill", feather: "settings" },
   "account-balance-wallet": {
     symbol: "wallet.pass.fill",
-    material: "account-balance-wallet",
+    feather: "credit-card",
   },
-  add: { symbol: "plus", material: "add" },
-  "arrow-forward": { symbol: "arrow.right", material: "arrow-forward" },
-  "arrow-back": { symbol: "arrow.left", material: "arrow-back" },
-  "check-circle": { symbol: "checkmark.circle.fill", material: "check-circle" },
-  "emoji-events": { symbol: "trophy.fill", material: "emoji-events" },
-  insights: { symbol: "chart.line.uptrend.xyaxis", material: "insights" },
+  add: { symbol: "plus", feather: "plus" },
+  "arrow-forward": { symbol: "arrow.right", feather: "arrow-right" },
+  "arrow-back": { symbol: "arrow.left", feather: "arrow-left" },
+  "check-circle": { symbol: "checkmark.circle.fill", feather: "check-circle" },
+  "emoji-events": { symbol: "trophy.fill", feather: "award" },
+  insights: { symbol: "chart.line.uptrend.xyaxis", feather: "trending-up" },
   "keyboard-arrow-down": {
     symbol: "chevron.down",
-    material: "keyboard-arrow-down",
+    feather: "chevron-down",
   },
-  lightbulb: { symbol: "lightbulb.fill", material: "lightbulb" },
-  "local-shipping": { symbol: "truck.box.fill", material: "local-shipping" },
+  lightbulb: { symbol: "lightbulb.fill", feather: "zap" },
+  "local-shipping": { symbol: "truck.box.fill", feather: "truck" },
   "priority-high": {
     symbol: "exclamationmark.triangle.fill",
-    material: "priority-high",
+    feather: "alert-triangle",
   },
-  history: { symbol: "clock.arrow.circlepath", material: "history" },
+  history: { symbol: "clock.arrow.circlepath", feather: "clock" },
   "attach-money": {
     symbol: "dollarsign.circle.fill",
-    material: "attach-money",
+    feather: "dollar-sign",
   },
-  warning: { symbol: "exclamationmark.triangle.fill", material: "warning" },
-  sort: { symbol: "arrow.up.arrow.down", material: "sort" },
-  schedule: { symbol: "clock", material: "schedule" },
-  "keyboard-arrow-up": { symbol: "chevron.up", material: "keyboard-arrow-up" },
-  speed: { symbol: "speedometer", material: "speed" },
+  warning: { symbol: "exclamationmark.triangle.fill", feather: "alert-triangle" },
+  sort: { symbol: "arrow.up.arrow.down", feather: "filter" },
+  schedule: { symbol: "clock", feather: "clock" },
+  "keyboard-arrow-up": { symbol: "chevron.up", feather: "chevron-up" },
+  speed: { symbol: "speedometer", feather: "activity" },
   "trending-up": {
     symbol: "chart.line.uptrend.xyaxis",
-    material: "trending-up",
+    feather: "trending-up",
   },
   "trending-down": {
     symbol: "chart.line.downtrend.xyaxis",
-    material: "trending-down",
+    feather: "trending-down",
   },
-  close: { symbol: "xmark", material: "close" },
-  folder: { symbol: "folder.fill", material: "folder" },
-  search: { symbol: "magnifyingglass", material: "search" },
-  "search-off": { symbol: "magnifyingglass", material: "search-off" },
-  analytics: { symbol: "chart.bar.fill", material: "analytics" },
-  inventory: { symbol: "shippingbox", material: "inventory" },
-  sell: { symbol: "tag.fill", material: "sell" },
-  receipt: { symbol: "doc.text", material: "receipt" },
-  store: { symbol: "building.2.fill", material: "store" },
-  person: { symbol: "person.fill", material: "person" },
-  "chevron-right": { symbol: "chevron.right", material: "chevron-right" },
-  download: { symbol: "arrow.down.circle.fill", material: "download" },
-  refresh: { symbol: "arrow.clockwise", material: "refresh" },
-  storage: { symbol: "externaldrive.fill", material: "storage" },
-  tune: { symbol: "slider.horizontal.3", material: "tune" },
-  edit: { symbol: "pencil", material: "edit" },
+  close: { symbol: "xmark", feather: "x" },
+  folder: { symbol: "folder.fill", feather: "folder" },
+  search: { symbol: "magnifyingglass", feather: "search" },
+  "search-off": { symbol: "magnifyingglass", feather: "search" },
+  analytics: { symbol: "chart.bar.fill", feather: "bar-chart-2" },
+  inventory: { symbol: "shippingbox", feather: "box" },
+  sell: { symbol: "tag.fill", feather: "tag" },
+  receipt: { symbol: "doc.text", feather: "file-text" },
+  store: { symbol: "building.2.fill", feather: "shopping-bag" },
+  person: { symbol: "person.fill", feather: "user" },
+  "chevron-right": { symbol: "chevron.right", feather: "chevron-right" },
+  download: { symbol: "arrow.down.circle.fill", feather: "download" },
+  refresh: { symbol: "arrow.clockwise", feather: "refresh-cw" },
+  storage: { symbol: "externaldrive.fill", feather: "hard-drive" },
+  tune: { symbol: "slider.horizontal.3", feather: "sliders" },
+  edit: { symbol: "pencil", feather: "edit-2" },
   "error-outline": {
     symbol: "exclamationmark.circle",
-    material: "error-outline",
+    feather: "alert-circle",
   },
-  shield: { symbol: "shield.fill", material: "shield" },
-  "auto-awesome": { symbol: "sparkles", material: "auto-awesome" },
-  "edit-note": { symbol: "square.and.pencil", material: "edit-note" },
-  remove: { symbol: "minus", material: "remove" },
-  "offline-bolt": { symbol: "bolt.slash", material: "offline-bolt" },
-  cancel: { symbol: "xmark.circle.fill", material: "cancel" },
-  "view-stream": { symbol: "list.bullet", material: "view-stream" },
-  "view-agenda": { symbol: "rectangle.grid.1x2", material: "view-agenda" },
-  "grid-view": { symbol: "square.grid.2x2", material: "grid-view" },
-  "camera-add": { symbol: "camera.badge.plus", material: "add-a-photo" },
-  photo: { symbol: "photo", material: "photo" },
-  // New icons for Warm Luxury theme
-  "expand-more": { symbol: "chevron.down", material: "expand-more" },
-  "expand-less": { symbol: "chevron.up", material: "expand-less" },
-  today: { symbol: "calendar", material: "today" },
-  "date-range": { symbol: "calendar", material: "date-range" },
-  "event-note": { symbol: "calendar.badge.clock", material: "event-note" },
-  "calendar-today": { symbol: "calendar.circle", material: "calendar-today" },
-  "all-inclusive": { symbol: "infinity", material: "all-inclusive" },
-  payments: { symbol: "banknote", material: "payments" },
-  "add-box": { symbol: "plus.rectangle.fill", material: "add-box" },
+  shield: { symbol: "shield.fill", feather: "shield" },
+  "auto-awesome": { symbol: "sparkles", feather: "star" },
+  "edit-note": { symbol: "square.and.pencil", feather: "edit-3" },
+  remove: { symbol: "minus", feather: "minus" },
+  "offline-bolt": { symbol: "bolt.slash", feather: "zap-off" },
+  cancel: { symbol: "xmark.circle.fill", feather: "x-circle" },
+  "view-stream": { symbol: "list.bullet", feather: "list" },
+  "view-agenda": { symbol: "rectangle.grid.1x2", feather: "layout" },
+  "grid-view": { symbol: "square.grid.2x2", feather: "grid" },
+  "camera-add": { symbol: "camera.badge.plus", feather: "camera" },
+  photo: { symbol: "photo", feather: "image" },
+  // Warm Luxury theme icons
+  "expand-more": { symbol: "chevron.down", feather: "chevron-down" },
+  "expand-less": { symbol: "chevron.up", feather: "chevron-up" },
+  today: { symbol: "calendar", feather: "calendar" },
+  "date-range": { symbol: "calendar", feather: "calendar" },
+  "event-note": { symbol: "calendar.badge.clock", feather: "calendar" },
+  "calendar-today": { symbol: "calendar.circle", feather: "calendar" },
+  "all-inclusive": { symbol: "infinity", feather: "repeat" },
+  payments: { symbol: "banknote", feather: "credit-card" },
+  "add-box": { symbol: "plus.rectangle.fill", feather: "plus-square" },
   "add-shopping-cart": {
     symbol: "cart.badge.plus",
-    material: "add-shopping-cart",
+    feather: "shopping-cart",
   },
   // Additional utility icons
-  "arrow-upward": { symbol: "arrow.up", material: "arrow-upward" },
-  "arrow-downward": { symbol: "arrow.down", material: "arrow-downward" },
-  "receipt-long": { symbol: "doc.text.fill", material: "receipt-long" },
+  "arrow-upward": { symbol: "arrow.up", feather: "arrow-up" },
+  "arrow-downward": { symbol: "arrow.down", feather: "arrow-down" },
+  "receipt-long": { symbol: "doc.text.fill", feather: "file-text" },
   // Theme mode icons
-  "dark-mode": { symbol: "moon.fill", material: "dark-mode" },
-  "light-mode": { symbol: "sun.max.fill", material: "light-mode" },
-  smartphone: { symbol: "iphone", material: "smartphone" },
+  "dark-mode": { symbol: "moon.fill", feather: "moon" },
+  "light-mode": { symbol: "sun.max.fill", feather: "sun" },
+  smartphone: { symbol: "iphone", feather: "smartphone" },
   // Settings icons
-  language: { symbol: "globe", material: "language" },
-  euro: { symbol: "eurosign.circle.fill", material: "euro-symbol" },
+  language: { symbol: "globe", feather: "globe" },
+  euro: { symbol: "eurosign.circle.fill", feather: "dollar-sign" },
   "currency-exchange": {
     symbol: "arrow.triangle.2.circlepath",
-    material: "currency-exchange",
+    feather: "refresh-cw",
   },
-  vibration: { symbol: "waveform", material: "vibration" },
-  lock: { symbol: "lock.fill", material: "lock" },
-  fingerprint: { symbol: "touchid", material: "fingerprint" },
+  vibration: { symbol: "waveform", feather: "smartphone" },
+  lock: { symbol: "lock.fill", feather: "lock" },
+  fingerprint: { symbol: "touchid", feather: "key" },
   // Visibility icons for lot controller
-  visibility: { symbol: "eye.fill", material: "visibility" },
-  "visibility-off": { symbol: "eye.slash.fill", material: "visibility-off" },
+  visibility: { symbol: "eye.fill", feather: "eye" },
+  "visibility-off": { symbol: "eye.slash.fill", feather: "eye-off" },
   // Item detail icons
-  "shopping-bag": { symbol: "bag.fill", material: "shopping-bag" },
-  palette: { symbol: "paintpalette.fill", material: "palette" },
-  straighten: { symbol: "ruler.fill", material: "straighten" },
-  verified: { symbol: "checkmark.seal.fill", material: "verified" },
-  event: { symbol: "calendar", material: "event" },
-  delete: { symbol: "trash.fill", material: "delete" },
-  public: { symbol: "globe", material: "public" },
-  replay: { symbol: "arrow.counterclockwise", material: "replay" },
+  "shopping-bag": { symbol: "bag.fill", feather: "shopping-bag" },
+  palette: { symbol: "paintpalette.fill", feather: "droplet" },
+  straighten: { symbol: "ruler.fill", feather: "maximize-2" },
+  verified: { symbol: "checkmark.seal.fill", feather: "check-circle" },
+  event: { symbol: "calendar", feather: "calendar" },
+  delete: { symbol: "trash.fill", feather: "trash-2" },
+  public: { symbol: "globe", feather: "globe" },
+  replay: { symbol: "arrow.counterclockwise", feather: "rotate-ccw" },
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;
@@ -144,11 +144,11 @@ export function AppIcon({
 }: AppIconProps) {
   const icon = ICON_MAP[name];
 
-  // Android & Web: use MaterialIcons (SF Symbols not available)
+  // Android & Web: use Feather icons (SF Symbols not available)
   if (Platform.OS !== "ios") {
     return (
-      <MaterialIcons
-        name={icon.material as keyof typeof MaterialIcons.glyphMap}
+      <Feather
+        name={icon.feather as keyof typeof Feather.glyphMap}
         size={size}
         color={color}
         style={style}
@@ -158,7 +158,7 @@ export function AppIcon({
   }
 
   // iOS: use native SF Symbols via SymbolView
-  const fallbackLabel = icon.material
+  const fallbackLabel = icon.feather
     .replace(/[^a-z0-9]/gi, "")
     .slice(0, 1)
     .toUpperCase();
