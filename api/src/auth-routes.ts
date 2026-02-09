@@ -10,6 +10,7 @@
  */
 
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { eq } from "drizzle-orm";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
@@ -79,20 +80,24 @@ function generateAccessToken(
 }
 
 function generateRefreshToken(userId: number): string {
-  return jwt.sign({ userId, type: "refresh" }, JWT_REFRESH_SECRET, {
-    expiresIn: `${REFRESH_TOKEN_EXPIRY_DAYS}d`,
-  });
+  return jwt.sign(
+    { userId, type: "refresh", jti: crypto.randomUUID() },
+    JWT_REFRESH_SECRET,
+    { expiresIn: `${REFRESH_TOKEN_EXPIRY_DAYS}d` },
+  );
 }
 
 async function storeRefreshToken(userId: number, token: string): Promise<void> {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
 
-  await db.insert(refreshTokens).values({
-    userId,
-    token,
-    expiresAt,
-  });
+  await db
+    .insert(refreshTokens)
+    .values({ userId, token, expiresAt })
+    .onConflictDoUpdate({
+      target: refreshTokens.token,
+      set: { expiresAt, userId },
+    });
 }
 
 function sanitizeUser(user: typeof users.$inferSelect) {
