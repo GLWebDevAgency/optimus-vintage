@@ -41,7 +41,9 @@ export function TrialBanner() {
         borderBottomColor: bannerColor + "30",
       }}
     >
-      <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View
+        style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}
+      >
         <Text style={{ fontSize: 16 }}>{isUrgent ? "⚠️" : "✨"}</Text>
         <Text
           style={{

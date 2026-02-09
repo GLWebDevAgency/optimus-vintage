@@ -8,16 +8,16 @@
 import { AppIcon } from "@/components/ui/AppIcon";
 import { useVantaTheme, VantaScreen } from "@/components/ui/PremiumUI";
 import { Palette, Radius, Spacing } from "@/constants/Theme";
-import {
-  analyzeImage,
-  getCategoryLabel,
-  getConditionLabel,
-  getDemandEmoji,
-  getRecommendationColor,
-  getRecommendationLabel,
-  type ScannerUIState,
-} from "@/utils/ai";
 import { useSettingsStore } from "@/store/settings";
+import {
+    analyzeImage,
+    getCategoryLabel,
+    getConditionLabel,
+    getDemandEmoji,
+    getRecommendationColor,
+    getRecommendationLabel,
+    type ScannerUIState,
+} from "@/utils/ai";
 import { Haptic } from "@/utils/haptics";
 import { useLocale } from "@/utils/i18n";
 import { checkFeatureAccess } from "@/utils/plan-access";
@@ -27,14 +27,14 @@ import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, {
-  Easing,
-  FadeIn,
-  FadeInDown,
-  FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
+    Easing,
+    FadeIn,
+    FadeInDown,
+    FadeInUp,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -118,7 +118,10 @@ export default function AnalyzeScreen() {
         state: "error",
         progress: 0,
         currentModel: null,
-        error: t("scanner.featureLocked", "Cette fonctionnalité nécessite un abonnement Premium ou supérieur."),
+        error: t(
+          "scanner.featureLocked",
+          "Cette fonctionnalité nécessite un abonnement Premium ou supérieur.",
+        ),
         result: null,
       });
       return;

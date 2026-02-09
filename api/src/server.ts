@@ -18,7 +18,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { aiRouter } from "./ai-routes";
-import { authRouter, optionalAuth, requireAuth } from "./auth-routes";
+import { authRouter, requireAuth } from "./auth-routes";
 import { config, validateEnv } from "./config";
 import { db, testConnection } from "./db";
 import {

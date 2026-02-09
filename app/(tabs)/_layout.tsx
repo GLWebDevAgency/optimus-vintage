@@ -20,7 +20,7 @@ import { useLocale } from "@/utils/i18n";
 import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
 import React, { useCallback, useEffect, useMemo } from "react";
-import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
     FadeInUp,
     interpolate,
@@ -257,16 +257,17 @@ function VantaDock({ state, descriptors, navigation }: VantaDockProps) {
   }, [state.index]);
 
   // Route configuration with i18n labels
-  const routeConfigMap: Record<string, { name: AppIconName; label: string }> = useMemo(
-    () => ({
-      index: { name: "home", label: t("navigation.dashboard") },
-      lots: { name: "inventory-2", label: t("navigation.lots") },
-      stock: { name: "checkroom", label: t("navigation.stock") },
-      sales: { name: "point-of-sale", label: t("navigation.sales") },
-      settings: { name: "settings", label: t("navigation.settings") },
-    }),
-    [t],
-  );
+  const routeConfigMap: Record<string, { name: AppIconName; label: string }> =
+    useMemo(
+      () => ({
+        index: { name: "home", label: t("navigation.dashboard") },
+        lots: { name: "inventory-2", label: t("navigation.lots") },
+        stock: { name: "checkroom", label: t("navigation.stock") },
+        sales: { name: "point-of-sale", label: t("navigation.sales") },
+        settings: { name: "settings", label: t("navigation.settings") },
+      }),
+      [t],
+    );
 
   // Filter valid routes
   const validRoutes = useMemo(
@@ -493,10 +494,10 @@ const styles = StyleSheet.create({
   },
 
   glyphLabel: {
-    fontSize: 10,
+    fontSize: 8,
     fontFamily: "Manrope_600SemiBold",
     fontWeight: "600",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
     marginTop: 2,
     textTransform: "uppercase",
   },

@@ -31,7 +31,11 @@ export type FeatureName =
   | "multiDevice"
   | "customBranding";
 
-export type ResourceName = "lots" | "items" | "salesPerMonth" | "aiScansPerMonth";
+export type ResourceName =
+  | "lots"
+  | "items"
+  | "salesPerMonth"
+  | "aiScansPerMonth";
 
 interface PlanQuotaConfig {
   maxLots: number;
@@ -185,8 +189,7 @@ export interface PlanAccessResult {
 export function usePlanAccess(): PlanAccessResult {
   const user = useAuthStore((s) => s.user);
   const quotas = useAuthStore((s) => s.quotas);
-  const { isTrialing, expirationDate, presentPaywall } =
-    useSubscriptionStore();
+  const { isTrialing, expirationDate, presentPaywall } = useSubscriptionStore();
 
   const planName: PlanName = user?.plan ?? "starter";
   const planConfig = PLAN_QUOTAS[planName];
@@ -231,7 +234,9 @@ export function usePlanAccess(): PlanAccessResult {
     if (!isTrialing || !expirationDate) return null;
     const now = new Date();
     const end = new Date(expirationDate);
-    const days = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil(
+      (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    );
     return Math.max(0, days);
   }, [isTrialing, expirationDate]);
 

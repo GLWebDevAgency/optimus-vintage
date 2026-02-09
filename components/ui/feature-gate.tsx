@@ -16,10 +16,10 @@ import { useColorScheme } from "@/components/useColorScheme";
 import { Theme } from "@/constants/Theme";
 import { useSubscriptionStore } from "@/store/subscription";
 import {
-  FEATURE_REQUIRED_PLAN,
-  PLAN_DISPLAY_NAMES,
-  usePlanAccess,
-  type FeatureName,
+    FEATURE_REQUIRED_PLAN,
+    PLAN_DISPLAY_NAMES,
+    usePlanAccess,
+    type FeatureName,
 } from "@/utils/plan-access";
 
 interface FeatureGateProps {
@@ -57,8 +57,7 @@ export function FeatureGate({
 
   const requiredPlan = FEATURE_REQUIRED_PLAN[feature];
   const planName = PLAN_DISPLAY_NAMES[requiredPlan];
-  const message =
-    lockedMessage ?? `Disponible avec le plan ${planName}`;
+  const message = lockedMessage ?? `Disponible avec le plan ${planName}`;
 
   return (
     <View style={{ position: "relative" }}>

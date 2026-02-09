@@ -24,6 +24,7 @@ import { SkeletonDashboard } from "@/components/ui/Skeleton";
 import { TrialBanner } from "@/components/ui/trial-banner";
 import { Palette, Spacing } from "@/constants/Theme";
 import { LotsRepository, SalesRepository } from "@/db/repositories";
+import { useAuthStore } from "@/store/auth";
 import { useSettingsStore } from "@/store/settings";
 import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
@@ -34,6 +35,7 @@ import {
     formatCurrency as i18nFormatCurrency,
     useLocale,
 } from "@/utils/i18n";
+import { usePlanAccess } from "@/utils/plan-access";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -48,7 +50,12 @@ import Animated, {
     Easing,
     FadeInDown,
     FadeInUp,
+    FadeOut,
+    LinearTransition,
+    interpolate,
     useAnimatedStyle,
+    useAnimatedRef,
+    useScrollViewOffset,
     useSharedValue,
     withRepeat,
     withSpring,
@@ -281,10 +288,14 @@ function GravityDisk({ percentage, value, label, sublabel }: GravityDiskProps) {
             right: 0,
             bottom: 0,
             borderRadius: 128,
+            borderCurve: "continuous",
             borderWidth: 1,
             borderColor: isDark
               ? "rgba(255, 255, 255, 0.05)"
               : Palette.ivory.linen,
+            boxShadow: isDark
+              ? `0 0 40px ${VANTA.goldGlow}, 0 0 80px rgba(244, 192, 37, 0.1)`
+              : `0 0 40px ${Palette.metal.champagneGlow}`,
           }}
         />
 
@@ -331,11 +342,13 @@ function GravityDisk({ percentage, value, label, sublabel }: GravityDiskProps) {
         >
           <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
             <Text
+              selectable
               style={{
                 fontSize: 64,
                 fontWeight: "700",
                 color: textColor,
                 letterSpacing: -3,
+                fontVariant: ["tabular-nums"],
               }}
             >
               {value}
@@ -398,6 +411,7 @@ function VantaPeriodSelector({
         style={{
           height: 44,
           borderRadius: 14,
+          borderCurve: "continuous",
           backgroundColor: isDark ? VANTA.obsidian : Palette.ivory.sand,
           borderWidth: 1,
           borderColor: isDark
@@ -423,6 +437,7 @@ function VantaPeriodSelector({
             style={{
               flex: 1,
               borderRadius: 10,
+              borderCurve: "continuous",
               backgroundColor: isDark
                 ? VANTA.obsidianLight
                 : Palette.ivory.pearl,
@@ -516,6 +531,7 @@ function VantaSlabButton({ icon, onPress, size = 20 }: VantaSlabButtonProps) {
             width: 44,
             height: 44,
             borderRadius: 14,
+            borderCurve: "continuous",
             justifyContent: "center",
             alignItems: "center",
             backgroundColor: isDark ? VANTA.obsidian : Palette.ivory.pearl,
@@ -651,10 +667,12 @@ function MonolithCard({
             style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}
           >
             <Text
+              selectable
               style={{
                 fontSize: 28,
                 fontWeight: "500",
                 color: textColor,
+                fontVariant: ["tabular-nums"],
               }}
             >
               {value}
@@ -944,6 +962,7 @@ function VantaMetricOrb({
               width: 44,
               height: 44,
               borderRadius: 14,
+              borderCurve: "continuous",
               justifyContent: "center",
               alignItems: "center",
               marginBottom: Spacing.sm,
@@ -962,6 +981,7 @@ function VantaMetricOrb({
               letterSpacing: -0.5,
               color: textColor,
               zIndex: 1,
+              fontVariant: ["tabular-nums"],
             }}
             numberOfLines={1}
             adjustsFontSizeToFit
@@ -1232,10 +1252,12 @@ function VantaTopLotCard({
           {/* Stats */}
           <View style={{ alignItems: "flex-end", gap: 4, zIndex: 1 }}>
             <Text
+              selectable
               style={{
                 fontSize: 16,
                 fontWeight: "700",
                 color: textColor,
+                fontVariant: ["tabular-nums"],
               }}
             >
               {i18nFormatCurrency(revenue, currency, locale)}
@@ -1248,6 +1270,7 @@ function VantaTopLotCard({
                 paddingHorizontal: 8,
                 paddingVertical: 3,
                 borderRadius: 20,
+                borderCurve: "continuous",
                 backgroundColor: isProfitable
                   ? `${Palette.semantic.success}20`
                   : `${Palette.semantic.danger}20`,
@@ -1266,6 +1289,7 @@ function VantaTopLotCard({
                 style={{
                   fontSize: 11,
                   fontWeight: "700",
+                  fontVariant: ["tabular-nums"],
                   color: isProfitable
                     ? Palette.semantic.success
                     : Palette.semantic.danger,
@@ -1327,6 +1351,46 @@ export default function VantaDashboard() {
 
   useTrackScreen("dashboard");
   const { isReduceMotionEnabled } = useAccessibility();
+
+  // User info for header
+  const user = useAuthStore((s) => s.user);
+  const { planDisplayName } = usePlanAccess();
+
+  // Scroll-driven animations (world-class header effect)
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollOffset = useScrollViewOffset(scrollRef);
+
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollOffset.value,
+      [0, 80, 160],
+      [1, 0.8, 0],
+      "clamp",
+    );
+    const translateY = interpolate(
+      scrollOffset.value,
+      [0, 160],
+      [0, -20],
+      "clamp",
+    );
+    const scale = interpolate(
+      scrollOffset.value,
+      [0, 160],
+      [1, 0.95],
+      "clamp",
+    );
+    return { opacity, transform: [{ translateY }, { scale }] };
+  });
+
+  const statusBarAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollOffset.value,
+      [0, 60],
+      [1, 0],
+      "clamp",
+    );
+    return { opacity };
+  });
 
   // ─── Data Queries ────────────────────────────────────────────────────
   const lotsQuery = useQuery({
@@ -1464,6 +1528,7 @@ export default function VantaDashboard() {
     return (
       <VantaScreen>
         <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{
             paddingTop: insets.top + Spacing.sm,
             paddingBottom: insets.bottom + 120,
@@ -1481,7 +1546,9 @@ export default function VantaDashboard() {
     <VantaScreen>
       {/* ═══ TRIAL BANNER ═══ */}
       <TrialBanner />
-      <ScrollView
+      <Animated.ScrollView
+        ref={scrollRef}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingTop: insets.top + Spacing.sm,
           paddingBottom: insets.bottom + 120,
@@ -1501,13 +1568,16 @@ export default function VantaDashboard() {
           entering={
             isReduceMotionEnabled ? undefined : FadeInDown.duration(400)
           }
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingHorizontal: Spacing.lg,
-            paddingBottom: Spacing.sm,
-          }}
+          style={[
+            {
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: Spacing.lg,
+              paddingBottom: Spacing.sm,
+            },
+            statusBarAnimatedStyle,
+          ]}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <AppIcon
@@ -1524,7 +1594,7 @@ export default function VantaDashboard() {
                 color: isDark ? VANTA.textGhost : Palette.neutral[400],
               }}
             >
-              NEXUS-01
+              OPTIMUS VINTAGE — {planDisplayName.toUpperCase()}
             </Text>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -1550,12 +1620,15 @@ export default function VantaDashboard() {
               ? undefined
               : FadeInDown.delay(50).duration(400)
           }
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingHorizontal: Spacing.lg,
-          }}
+          style={[
+            {
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: Spacing.lg,
+            },
+            headerAnimatedStyle,
+          ]}
         >
           <View
             style={{
@@ -1587,7 +1660,7 @@ export default function VantaDashboard() {
                 OV
               </Text>
             </View>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text
                 style={{
                   fontSize: 22,
@@ -1598,17 +1671,27 @@ export default function VantaDashboard() {
                     : Palette.neutral.anthracite,
                 }}
               >
-                Optimus Vintage
+                {t("dashboard.welcome", "Bienvenue")}
+                {user?.displayName ? ` ${user.displayName}` : ""}
               </Text>
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: isDark ? VANTA.textMuted : Palette.neutral[400],
-                }}
+              <View
+                style={{ flexDirection: "row", gap: Spacing.sm, marginTop: 6 }}
               >
-                {lots.length} {t("dashboard.status.lots")} • {stats.stockCount}{" "}
-                {t("dashboard.status.items")}
-              </Text>
+                <View style={{ flex: 1 }}>
+                  <QuotaIndicator
+                    resource="lots"
+                    current={lots.length}
+                    compact
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <QuotaIndicator
+                    resource="items"
+                    current={stats.stockCount}
+                    compact
+                  />
+                </View>
+              </View>
             </View>
           </View>
           <VantaSlabButton
@@ -1656,6 +1739,7 @@ export default function VantaDashboard() {
               ? undefined
               : FadeInUp.delay(150).duration(500)
           }
+          layout={isReduceMotionEnabled ? undefined : LinearTransition.springify()}
           style={{
             flexDirection: "row",
             gap: Spacing.md,
@@ -1686,27 +1770,6 @@ export default function VantaDashboard() {
             accentGlow={`${Palette.semantic.success}50`}
             onPress={() => router.push("/(tabs)/lots")}
           />
-        </Animated.View>
-
-        {/* ═══ QUOTA INDICATORS (starter plan only) ═══ */}
-        <Animated.View
-          entering={
-            isReduceMotionEnabled
-              ? undefined
-              : FadeInUp.delay(175).duration(500)
-          }
-          style={{
-            flexDirection: "row",
-            gap: Spacing.sm,
-            paddingHorizontal: Spacing.lg,
-          }}
-        >
-          <View style={{ flex: 1 }}>
-            <QuotaIndicator resource="lots" current={stats.activeLots} compact />
-          </View>
-          <View style={{ flex: 1 }}>
-            <QuotaIndicator resource="items" current={stats.stockCount} compact />
-          </View>
         </Animated.View>
 
         {/* ═══ QUICK ACTIONS ═══ */}
@@ -1858,22 +1921,36 @@ export default function VantaDashboard() {
                 </Text>
               </Pressable>
             </View>
-            <View style={{ gap: Spacing.sm }}>
+            <Animated.View
+              style={{ gap: Spacing.sm }}
+              layout={isReduceMotionEnabled ? undefined : LinearTransition.springify()}
+            >
               {stats.topLots.map((lot, index) => (
-                <VantaTopLotCard
+                <Animated.View
                   key={lot.id}
-                  rank={index + 1}
-                  name={lot.name}
-                  revenue={lot.revenue}
-                  profit={lot.profit}
-                  soldCount={lot.soldCount}
-                  onPress={() => router.push(`/lots/${lot.id}`)}
-                />
+                  entering={
+                    isReduceMotionEnabled
+                      ? undefined
+                      : FadeInUp.delay(index * 80)
+                          .duration(400)
+                          .springify()
+                  }
+                  exiting={isReduceMotionEnabled ? undefined : FadeOut.duration(200)}
+                >
+                  <VantaTopLotCard
+                    rank={index + 1}
+                    name={lot.name}
+                    revenue={lot.revenue}
+                    profit={lot.profit}
+                    soldCount={lot.soldCount}
+                    onPress={() => router.push(`/lots/${lot.id}`)}
+                  />
+                </Animated.View>
               ))}
-            </View>
+            </Animated.View>
           </Animated.View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </VantaScreen>
   );
 }

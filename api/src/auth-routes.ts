@@ -361,7 +361,11 @@ authRouter.post(
           .where(eq(users.id, user.id));
         await db
           .update(subscriptions)
-          .set({ status: "expired", plan: TRIAL_CONFIG.fallbackPlan, updatedAt: new Date() })
+          .set({
+            status: "expired",
+            plan: TRIAL_CONFIG.fallbackPlan,
+            updatedAt: new Date(),
+          })
           .where(eq(subscriptions.userId, user.id));
         user.plan = TRIAL_CONFIG.fallbackPlan;
         trial = { isTrialing: false, expired: true };
@@ -491,7 +495,11 @@ authRouter.get(
           .where(eq(users.id, user.id));
         await db
           .update(subscriptions)
-          .set({ status: "expired", plan: TRIAL_CONFIG.fallbackPlan, updatedAt: new Date() })
+          .set({
+            status: "expired",
+            plan: TRIAL_CONFIG.fallbackPlan,
+            updatedAt: new Date(),
+          })
           .where(eq(subscriptions.userId, user.id));
 
         user.plan = TRIAL_CONFIG.fallbackPlan;
