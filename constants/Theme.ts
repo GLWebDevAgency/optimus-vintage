@@ -28,7 +28,7 @@ export const Palette = {
   // ─── AETHER (Dark Mode Bases) ──────────────────────────────────────────────
   // "The interface floats in an infinite void"
   vanta: {
-    black: "#05a35993", // Absolute Zero - The Void
+    black: "#07a75d61", // Absolute Zero - The Void
     obsidian: "#0A0A0A", // Polished Obsidian
     titanium: "#111111", // Brushed Black Titanium
     carbon: "#1C1C1C", // Carbon Glass Surface
