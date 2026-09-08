@@ -1,5 +1,5 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "rootDir": ".", "noEmit": true, "declaration": false, "declarationMap": false, "sourceMap": false },
+  "compilerOptions": { "rootDir": ".", "noEmit": true, "lib": ["ES2023", "DOM", "DOM.Iterable"], "declaration": false, "declarationMap": false, "sourceMap": false },
   "include": ["src", "test"]
 }
