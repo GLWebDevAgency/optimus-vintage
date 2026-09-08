@@ -3,18 +3,27 @@
 import {
   CATEGORIES,
   type Category,
-  type Condition,
   CONDITIONS,
-  type Era,
+  type Condition,
   ERAS,
-  type Gender,
+  type Era,
   GENDERS,
+  type Gender,
   type ItemDto,
   type MeasurementsDto,
   type UpdateItemCommand,
 } from "@chine/contract";
 import type { MessageKey } from "@chine/i18n";
-import { BigButton, ChipGroup, Field, MoneyInput, SectionHeader, Textarea, TextInput, useToast } from "@chine/ui";
+import {
+  BigButton,
+  ChipGroup,
+  Field,
+  MoneyInput,
+  SectionHeader,
+  Textarea,
+  TextInput,
+  useToast,
+} from "@chine/ui";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { useUpdateItem } from "@/hooks/api";
@@ -22,7 +31,14 @@ import { useT } from "@/hooks/i18n";
 import { useErrorMessage } from "../common/ErrorState";
 import { label, SIZE_PRESETS } from "../common/labels";
 
-const MEASURES: (keyof MeasurementsDto)[] = ["chestCm", "lengthCm", "shoulderCm", "sleeveCm", "waistCm", "inseamCm"];
+const MEASURES: (keyof MeasurementsDto)[] = [
+  "chestCm",
+  "lengthCm",
+  "shoulderCm",
+  "sleeveCm",
+  "waistCm",
+  "inseamCm",
+];
 
 interface FormState {
   title: string;
@@ -58,7 +74,10 @@ const fromItem = (item: ItemDto): FormState => ({
   bin: item.bin ?? "",
   notes: item.notes ?? "",
   measurements: Object.fromEntries(
-    MEASURES.map((k) => [k, item.measurements?.[k] !== undefined ? String(item.measurements[k]) : ""]),
+    MEASURES.map((k) => [
+      k,
+      item.measurements?.[k] !== undefined ? String(item.measurements[k]) : "",
+    ]),
   ) as Record<keyof MeasurementsDto, string>,
 });
 
@@ -104,7 +123,9 @@ export function ItemForm({ item }: { item: ItemDto }) {
       colors: splitTags(f.colors),
       materials: splitTags(f.materials),
       measurements: Object.keys(measurements).length ? measurements : null,
-      ...(f.acquisitionMinor !== null ? { acquisitionCost: { minor: f.acquisitionMinor, currency } } : {}),
+      ...(f.acquisitionMinor !== null
+        ? { acquisitionCost: { minor: f.acquisitionMinor, currency } }
+        : {}),
       retailPrice: f.retailMinor ? { minor: f.retailMinor, currency } : null,
       targetPrice: f.targetMinor ? { minor: f.targetMinor, currency } : null,
       bin: f.bin.trim() || null,
@@ -124,10 +145,20 @@ export function ItemForm({ item }: { item: ItemDto }) {
   return (
     <form onSubmit={(e) => void submit(e)} className="grid gap-5" noValidate>
       <Field label={t("items.itemTitle")} required error={error ?? undefined}>
-        <TextInput value={f.title} onChange={(e) => set("title", e.target.value)} maxLength={140} data-testid="item-title" />
+        <TextInput
+          value={f.title}
+          onChange={(e) => set("title", e.target.value)}
+          maxLength={140}
+          data-testid="item-title"
+        />
       </Field>
       <Field label={t("items.brand")}>
-        <TextInput value={f.brand} onChange={(e) => set("brand", e.target.value)} maxLength={120} autoCapitalize="words" />
+        <TextInput
+          value={f.brand}
+          onChange={(e) => set("brand", e.target.value)}
+          maxLength={120}
+          autoCapitalize="words"
+        />
       </Field>
 
       <div className="grid gap-2">
@@ -198,23 +229,44 @@ export function ItemForm({ item }: { item: ItemDto }) {
 
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("items.colors")} hint={t("items.tagsHint")}>
-          <TextInput value={f.colors} onChange={(e) => set("colors", e.target.value)} placeholder={t("items.colorsPlaceholder")} />
+          <TextInput
+            value={f.colors}
+            onChange={(e) => set("colors", e.target.value)}
+            placeholder={t("items.colorsPlaceholder")}
+          />
         </Field>
         <Field label={t("items.materials")}>
-          <TextInput value={f.materials} onChange={(e) => set("materials", e.target.value)} placeholder={t("items.materialsPlaceholder")} />
+          <TextInput
+            value={f.materials}
+            onChange={(e) => set("materials", e.target.value)}
+            placeholder={t("items.materialsPlaceholder")}
+          />
         </Field>
       </div>
 
       <SectionHeader title={t("items.acquisitionCost")} as="h3" />
       <div className="grid grid-cols-3 gap-3">
         <Field label={t("items.acquisitionCost")}>
-          <MoneyInput valueMinor={f.acquisitionMinor} onChangeMinor={(m) => set("acquisitionMinor", m)} currency={currency} />
+          <MoneyInput
+            valueMinor={f.acquisitionMinor}
+            onChangeMinor={(m) => set("acquisitionMinor", m)}
+            currency={currency}
+          />
         </Field>
         <Field label={t("items.retailShort")}>
-          <MoneyInput valueMinor={f.retailMinor} onChangeMinor={(m) => set("retailMinor", m)} currency={currency} />
+          <MoneyInput
+            valueMinor={f.retailMinor}
+            onChangeMinor={(m) => set("retailMinor", m)}
+            currency={currency}
+          />
         </Field>
         <Field label={t("items.targetPrice")}>
-          <MoneyInput valueMinor={f.targetMinor} onChangeMinor={(m) => set("targetMinor", m)} currency={currency} data-testid="item-target" />
+          <MoneyInput
+            valueMinor={f.targetMinor}
+            onChangeMinor={(m) => set("targetMinor", m)}
+            currency={currency}
+            data-testid="item-target"
+          />
         </Field>
       </div>
 
@@ -225,7 +277,9 @@ export function ItemForm({ item }: { item: ItemDto }) {
             <TextInput
               inputMode="decimal"
               value={f.measurements[k]}
-              onChange={(e) => setF((s) => ({ ...s, measurements: { ...s.measurements, [k]: e.target.value } }))}
+              onChange={(e) =>
+                setF((s) => ({ ...s, measurements: { ...s.measurements, [k]: e.target.value } }))
+              }
               unit={t("items.measurement.unit")}
               maxLength={6}
             />
@@ -235,10 +289,20 @@ export function ItemForm({ item }: { item: ItemDto }) {
 
       <div className="grid grid-cols-[1fr_2fr] gap-3">
         <Field label={t("items.bin")}>
-          <TextInput value={f.bin} onChange={(e) => set("bin", e.target.value)} maxLength={24} placeholder="B-07" />
+          <TextInput
+            value={f.bin}
+            onChange={(e) => set("bin", e.target.value)}
+            maxLength={24}
+            placeholder="B-07"
+          />
         </Field>
         <Field label={t("common.notes")}>
-          <Textarea value={f.notes} onChange={(e) => set("notes", e.target.value)} rows={2} maxLength={2000} />
+          <Textarea
+            value={f.notes}
+            onChange={(e) => set("notes", e.target.value)}
+            rows={2}
+            maxLength={2000}
+          />
         </Field>
       </div>
 

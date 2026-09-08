@@ -92,13 +92,15 @@ export function fail(error: unknown, init?: ResponseInit): NextResponse<ApiError
   }
   if (isErrorShape(error)) {
     const status = statusFor(error.code);
-    if (status >= 500) log.error("erreur métier non mappée", { code: error.code, status });
+    // Un code inconnu (500) ne fuit ni message ni détails ; un 502/503 attendu garde son message.
+    const masked = status === 500;
+    if (masked) log.error("erreur métier non mappée", { code: error.code, status });
     return NextResponse.json(
       {
         error: {
           code: error.code,
-          message: status >= 500 ? "Erreur interne." : error.message,
-          ...(error.details !== undefined && status < 500 ? { details: error.details } : {}),
+          message: masked ? "Erreur interne." : error.message,
+          ...(error.details !== undefined && !masked ? { details: error.details } : {}),
         },
       },
       { ...init, status },

@@ -41,7 +41,11 @@ async function decode(file: Blob): Promise<ImageBitmap | HTMLImageElement> {
 
 function toBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Encodage impossible"))), type, quality);
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("Encodage impossible"))),
+      type,
+      quality,
+    );
   });
 }
 

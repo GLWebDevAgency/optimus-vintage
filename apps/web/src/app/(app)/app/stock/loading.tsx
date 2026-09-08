@@ -5,7 +5,7 @@ import { TopBar } from "@/components/shell/TopBar";
 export default function Loading() {
   return (
     <>
-      <TopBar title="Stock"  />
+      <TopBar title="Stock" />
       <Screen>
         <PageSkeleton variant="list" />
       </Screen>

@@ -2,7 +2,16 @@
 
 import { ITEM_SORTS, type ItemSort } from "@chine/contract";
 import type { MessageKey } from "@chine/i18n";
-import { AppIcon, Button, EmptyState, List, Segmented, Select, SkeletonRow, TextInput } from "@chine/ui";
+import {
+  AppIcon,
+  Button,
+  EmptyState,
+  List,
+  Segmented,
+  Select,
+  SkeletonRow,
+  TextInput,
+} from "@chine/ui";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -94,7 +103,11 @@ export function StockScreen() {
             : t("common.loading")
         }
         actions={
-          <Link href="/app/chiner" className="avatar !bg-btn !text-btn-ink" aria-label={t("items.new")}>
+          <Link
+            href="/app/chiner"
+            className="avatar !bg-btn !text-btn-ink"
+            aria-label={t("items.new")}
+          >
             <IconPlus />
           </Link>
         }
@@ -134,7 +147,10 @@ export function StockScreen() {
             onChange={setSort}
             aria-label={t("items.sortLabel")}
             className="!min-h-[38px] w-auto max-w-[220px] !py-0 !text-[13px]"
-            options={ITEM_SORTS.map((s) => ({ value: s, label: t(`items.sort.${s}` as MessageKey) }))}
+            options={ITEM_SORTS.map((s) => ({
+              value: s,
+              label: t(`items.sort.${s}` as MessageKey),
+            }))}
           />
         </div>
 
@@ -153,11 +169,21 @@ export function StockScreen() {
               body={filtered ? undefined : t("items.emptyBody")}
               action={
                 filtered ? (
-                  <Button variant="ghost" onClick={() => { setSearch(""); changeFilter("all"); }}>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setSearch("");
+                      changeFilter("all");
+                    }}
+                  >
                     {t("common.reset")}
                   </Button>
                 ) : (
-                  <Button href="/app/chiner" Link={NextLink} leading={<AppIcon name="camera" size={18} />}>
+                  <Button
+                    href="/app/chiner"
+                    Link={NextLink}
+                    leading={<AppIcon name="camera" size={18} />}
+                  >
                     {t("nav.chine")}
                   </Button>
                 )

@@ -1,7 +1,16 @@
 "use client";
 
 import type { SaleDto } from "@chine/contract";
-import { AppIcon, BigButton, Receipt, SectionHeader, Stamp, StatusPill, StitchProgress, Tally } from "@chine/ui";
+import {
+  AppIcon,
+  BigButton,
+  Receipt,
+  SectionHeader,
+  Stamp,
+  StatusPill,
+  StitchProgress,
+  Tally,
+} from "@chine/ui";
 import { useRouter } from "next/navigation";
 import { useDashboard } from "@/hooks/api";
 import { useFormat, useLocale, useT } from "@/hooks/i18n";
@@ -23,14 +32,22 @@ export function SoldState({ sale, pending, onNewSale }: SoldStateProps) {
   const eco = sale.economics;
   const goal = dashboard.data?.goal;
   const pct = (r: number) =>
-    new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0, signDisplay: "exceptZero" }).format(r);
-  const neg = (m: { minor: number; currency: string }) => ({ minor: -Math.abs(m.minor), currency: m.currency });
+    new Intl.NumberFormat(intl, {
+      style: "percent",
+      maximumFractionDigits: 0,
+      signDisplay: "exceptZero",
+    }).format(r);
+  const neg = (m: { minor: number; currency: string }) => ({
+    minor: -Math.abs(m.minor),
+    currency: m.currency,
+  });
 
   return (
     <div className="grid flex-1 content-start gap-4" data-testid="sold-state">
       <div className="sale-hero enter d2">
         <div className="ring overflow-hidden">
           {sale.item?.thumbnailUrl ? (
+            // biome-ignore lint/performance/noImgElement: photo distante ou URL d'objet, hors next/image
             <img src={sale.item.thumbnailUrl} alt="" className="h-full w-full object-cover" />
           ) : (
             <AppIcon name="shirt" size={56} className="text-indigo" />
@@ -40,7 +57,8 @@ export function SoldState({ sale, pending, onNewSale }: SoldStateProps) {
           {t("sales.stampSold")}
         </Stamp>
         <p className="caption">
-          <b className="text-ink">{sale.item?.title ?? t("items.one")}</b> · {fmt.money(sale.grossPrice)}
+          <b className="text-ink">{sale.item?.title ?? t("items.one")}</b> ·{" "}
+          {fmt.money(sale.grossPrice)}
           {sale.buyer ? ` · ${t("sales.buyer").toLowerCase()} ${sale.buyer}` : ""}
         </p>
         {pending ? <StatusPill status="pending" label={t("common.syncLater")} /> : null}
@@ -67,11 +85,23 @@ export function SoldState({ sale, pending, onNewSale }: SoldStateProps) {
           rows={[
             { key: "gross", label: t("sales.grossShort"), value: eco.gross },
             ...(eco.fees.minor > 0
-              ? [{ key: "fees", label: t("sales.platformFees", { platform: label.platform(t, sale.platform) }), value: neg(eco.fees) }]
+              ? [
+                  {
+                    key: "fees",
+                    label: t("sales.platformFees", { platform: label.platform(t, sale.platform) }),
+                    value: neg(eco.fees),
+                  },
+                ]
               : []),
-            ...(sale.shippingCost.minor > 0 ? [{ key: "ship", label: t("sales.shipping"), value: neg(sale.shippingCost) }] : []),
-            ...(sale.packagingCost.minor > 0 ? [{ key: "pack", label: t("sales.packaging"), value: neg(sale.packagingCost) }] : []),
-            ...(sale.otherCosts.minor > 0 ? [{ key: "other", label: t("sales.otherCosts"), value: neg(sale.otherCosts) }] : []),
+            ...(sale.shippingCost.minor > 0
+              ? [{ key: "ship", label: t("sales.shipping"), value: neg(sale.shippingCost) }]
+              : []),
+            ...(sale.packagingCost.minor > 0
+              ? [{ key: "pack", label: t("sales.packaging"), value: neg(sale.packagingCost) }]
+              : []),
+            ...(sale.otherCosts.minor > 0
+              ? [{ key: "other", label: t("sales.otherCosts"), value: neg(sale.otherCosts) }]
+              : []),
             { key: "acq", label: t("sales.acquisition"), value: neg(sale.acquisitionCost) },
           ]}
         />
@@ -79,7 +109,11 @@ export function SoldState({ sale, pending, onNewSale }: SoldStateProps) {
 
       <SectionHeader
         title={t("sales.monthInProgress")}
-        action={dashboard.data ? t("dashboard.salesShort", { count: dashboard.data.current.salesCount }) : undefined}
+        action={
+          dashboard.data
+            ? t("dashboard.salesShort", { count: dashboard.data.current.salesCount })
+            : undefined
+        }
         className="enter d4"
       />
       <div className="enter d5">
@@ -87,8 +121,16 @@ export function SoldState({ sale, pending, onNewSale }: SoldStateProps) {
           <StitchProgress
             value={Math.min(1, goal.progress)}
             tone={goal.progress >= 1 ? "brass" : "thread"}
-            label={t("dashboard.goalOf", { amount: fmt.money({ minor: goal.targetMinor, currency: goal.currency }, { compact: true }) })}
-            valueLabel={new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0 }).format(goal.progress)}
+            label={t("dashboard.goalOf", {
+              amount: fmt.money(
+                { minor: goal.targetMinor, currency: goal.currency },
+                { compact: true },
+              ),
+            })}
+            valueLabel={new Intl.NumberFormat(intl, {
+              style: "percent",
+              maximumFractionDigits: 0,
+            }).format(goal.progress)}
             delay={0.4}
           />
         ) : dashboard.data ? (
@@ -101,7 +143,11 @@ export function SoldState({ sale, pending, onNewSale }: SoldStateProps) {
       </div>
 
       <div className="two-btn enter d6">
-        <BigButton variant="secondary" onClick={() => router.push(`/app/stock/${sale.itemId}`)} data-testid="sold-view-item">
+        <BigButton
+          variant="secondary"
+          onClick={() => router.push(`/app/stock/${sale.itemId}`)}
+          data-testid="sold-view-item"
+        >
           {t("sales.viewItem")}
         </BigButton>
         <BigButton onClick={onNewSale} data-testid="sold-new">

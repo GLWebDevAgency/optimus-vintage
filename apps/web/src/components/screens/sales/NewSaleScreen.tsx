@@ -82,10 +82,23 @@ export function NewSaleScreen() {
         ...(shipping ? { shipping: { minor: shipping, currency } } : {}),
         ...(packaging ? { packaging: { minor: packaging, currency } } : {}),
         ...(other ? { other: { minor: other, currency } } : {}),
-        ...(manualFees && feesOverride !== null ? { feesOverride: { minor: feesOverride, currency } } : {}),
+        ...(manualFees && feesOverride !== null
+          ? { feesOverride: { minor: feesOverride, currency } }
+          : {}),
         schedules,
       }),
-    [platform, gross, currency, item, shipping, packaging, other, manualFees, feesOverride, schedules],
+    [
+      platform,
+      gross,
+      currency,
+      item,
+      shipping,
+      packaging,
+      other,
+      manualFees,
+      feesOverride,
+      schedules,
+    ],
   );
 
   const submit = async () => {
@@ -107,7 +120,9 @@ export function NewSaleScreen() {
       ...(shipping ? { shippingCost: { minor: shipping, currency } } : {}),
       ...(packaging ? { packagingCost: { minor: packaging, currency } } : {}),
       ...(other ? { otherCosts: { minor: other, currency } } : {}),
-      ...(manualFees && feesOverride !== null ? { platformFeesOverride: { minor: feesOverride, currency } } : {}),
+      ...(manualFees && feesOverride !== null
+        ? { platformFeesOverride: { minor: feesOverride, currency } }
+        : {}),
       ...(buyer.trim() ? { buyer: buyer.trim() } : {}),
     };
     try {
@@ -148,7 +163,7 @@ export function NewSaleScreen() {
             ? done.sale.number
               ? t("sales.number", { number: done.sale.number })
               : t("sales.soldOnPlatform", { platform: label.platform(t, done.sale.platform) })
-            : item?.sku ?? t("sales.title")
+            : (item?.sku ?? t("sales.title"))
         }
         back="/app/ventes"
         avatar={false}
@@ -180,7 +195,9 @@ export function NewSaleScreen() {
                 >
                   <span className="inline-flex items-center gap-2">
                     <AppIcon name="tag" size={18} className="text-ink-3" />
-                    {itemParam && fromParam.isPending ? t("common.loading") : t("sales.pickItemPlaceholder")}
+                    {itemParam && fromParam.isPending
+                      ? t("common.loading")
+                      : t("sales.pickItemPlaceholder")}
                   </span>
                   <AppIcon name="chevronRight" size={16} className="text-ink-3" />
                 </button>
@@ -206,11 +223,25 @@ export function NewSaleScreen() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 enter d3">
-              <Field label={t("sales.grossPrice")} required error={error && item && (!gross || gross <= 0) ? error : undefined}>
-                <MoneyInput valueMinor={gross} onChangeMinor={setGross} currency={currency} data-testid="sale-gross" />
+              <Field
+                label={t("sales.grossPrice")}
+                required
+                error={error && item && (!gross || gross <= 0) ? error : undefined}
+              >
+                <MoneyInput
+                  valueMinor={gross}
+                  onChangeMinor={setGross}
+                  currency={currency}
+                  data-testid="sale-gross"
+                />
               </Field>
               <Field label={t("sales.soldAt")}>
-                <TextInput type="date" value={soldAt} max={isoDay()} onChange={(e) => setSoldAt(e.target.value)} />
+                <TextInput
+                  type="date"
+                  value={soldAt}
+                  max={isoDay()}
+                  onChange={(e) => setSoldAt(e.target.value)}
+                />
               </Field>
             </div>
 
@@ -229,10 +260,18 @@ export function NewSaleScreen() {
               <div className="grid gap-3 enter">
                 <div className="grid grid-cols-3 gap-3">
                   <Field label={t("sales.shipping")}>
-                    <MoneyInput valueMinor={shipping} onChangeMinor={setShipping} currency={currency} />
+                    <MoneyInput
+                      valueMinor={shipping}
+                      onChangeMinor={setShipping}
+                      currency={currency}
+                    />
                   </Field>
                   <Field label={t("sales.packaging")}>
-                    <MoneyInput valueMinor={packaging} onChangeMinor={setPackaging} currency={currency} />
+                    <MoneyInput
+                      valueMinor={packaging}
+                      onChangeMinor={setPackaging}
+                      currency={currency}
+                    />
                   </Field>
                   <Field label={t("sales.otherCosts")}>
                     <MoneyInput valueMinor={other} onChangeMinor={setOther} currency={currency} />
@@ -246,11 +285,20 @@ export function NewSaleScreen() {
                 />
                 {manualFees ? (
                   <Field label={t("sales.platformFees", { platform: label.platform(t, platform) })}>
-                    <MoneyInput valueMinor={feesOverride} onChangeMinor={setFeesOverride} currency={currency} />
+                    <MoneyInput
+                      valueMinor={feesOverride}
+                      onChangeMinor={setFeesOverride}
+                      currency={currency}
+                    />
                   </Field>
                 ) : null}
                 <Field label={t("sales.buyer")} trailing={t("common.optional")}>
-                  <TextInput value={buyer} onChange={(e) => setBuyer(e.target.value)} placeholder={t("sales.buyerPlaceholder")} maxLength={120} />
+                  <TextInput
+                    value={buyer}
+                    onChange={(e) => setBuyer(e.target.value)}
+                    placeholder={t("sales.buyerPlaceholder")}
+                    maxLength={120}
+                  />
                 </Field>
               </div>
             ) : null}
@@ -260,20 +308,44 @@ export function NewSaleScreen() {
                 locale={locale}
                 rows={[
                   { key: "gross", label: t("sales.grossPrice"), value: eco.gross },
-                  { key: "fees", label: t("sales.platformFees", { platform: label.platform(t, platform) }), value: neg(eco.fees.minor) },
-                  ...(shipping ? [{ key: "ship", label: t("sales.shipping"), value: neg(shipping) }] : []),
-                  ...(packaging ? [{ key: "pack", label: t("sales.packaging"), value: neg(packaging) }] : []),
-                  ...(other ? [{ key: "other", label: t("sales.otherCosts"), value: neg(other) }] : []),
+                  {
+                    key: "fees",
+                    label: t("sales.platformFees", { platform: label.platform(t, platform) }),
+                    value: neg(eco.fees.minor),
+                  },
+                  ...(shipping
+                    ? [{ key: "ship", label: t("sales.shipping"), value: neg(shipping) }]
+                    : []),
+                  ...(packaging
+                    ? [{ key: "pack", label: t("sales.packaging"), value: neg(packaging) }]
+                    : []),
+                  ...(other
+                    ? [{ key: "other", label: t("sales.otherCosts"), value: neg(other) }]
+                    : []),
                   { key: "net", label: t("sales.net"), value: eco.net },
-                  { key: "acq", label: t("sales.acquisition"), value: neg(item?.acquisitionCost.minor ?? 0) },
-                  { key: "margin", label: t("sales.netMargin"), value: eco.margin, total: true, signed: true },
+                  {
+                    key: "acq",
+                    label: t("sales.acquisition"),
+                    value: neg(item?.acquisitionCost.minor ?? 0),
+                  },
+                  {
+                    key: "margin",
+                    label: t("sales.netMargin"),
+                    value: eco.margin,
+                    total: true,
+                    signed: true,
+                  },
                   { key: "roi", label: t("sales.roi"), value: { ratio: eco.roi } },
                 ]}
               />
             </div>
 
             <div className="mt-auto pt-2 enter d5">
-              <BigButton onClick={() => void submit()} loading={record.isPending} data-testid="sale-submit">
+              <BigButton
+                onClick={() => void submit()}
+                loading={record.isPending}
+                data-testid="sale-submit"
+              >
                 {t("sales.record")}
               </BigButton>
             </div>

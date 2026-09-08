@@ -14,11 +14,10 @@ export function effectiveSchedules(
   return out;
 }
 
-const money = (minor: number, currency: string): MoneyDto =>
-  ({ minor, currency }) as MoneyDto;
+const money = (minor: number, currency: string): MoneyDto => ({ minor, currency }) as MoneyDto;
 
 /** Frais vendeur d'une plateforme pour un prix brut (pourcentage + fixe, minimum, plafonné au brut). */
-export function feesFor(platform: Platform, gross: MoneyDto, schedule: FeeSchedule): MoneyDto {
+export function feesFor(gross: MoneyDto, schedule: FeeSchedule): MoneyDto {
   if (gross.minor <= 0) return money(0, gross.currency);
   let fees = Math.round((gross.minor * schedule.percent) / 100) + schedule.fixedMinor;
   if (schedule.minMinor !== undefined) fees = Math.max(fees, schedule.minMinor);
@@ -42,12 +41,13 @@ export function computeSaleEconomics(input: SaleInputs): SaleEconomicsDto & {
 } {
   const cur = input.gross.currency;
   const schedules = input.schedules ?? DEFAULT_FEE_SCHEDULES;
-  const fees = input.feesOverride ?? feesFor(input.platform, input.gross, schedules[input.platform]);
+  const fees = input.feesOverride ?? feesFor(input.gross, schedules[input.platform]);
   const costsMinor =
     (input.shipping?.minor ?? 0) + (input.packaging?.minor ?? 0) + (input.other?.minor ?? 0);
   const netMinor = input.gross.minor - fees.minor - costsMinor;
   const marginMinor = netMinor - input.acquisitionCost.minor;
-  const roi = input.acquisitionCost.minor > 0 ? marginMinor / input.acquisitionCost.minor : undefined;
+  const roi =
+    input.acquisitionCost.minor > 0 ? marginMinor / input.acquisitionCost.minor : undefined;
   const marginRate = input.gross.minor > 0 ? marginMinor / input.gross.minor : undefined;
   return {
     gross: input.gross,
@@ -78,7 +78,7 @@ export function simulateAcross(
   extraCostsMinor = 0,
 ): PriceSimulationRow[] {
   return platforms.map((platform) => {
-    const fees = feesFor(platform, price, schedules[platform]);
+    const fees = feesFor(price, schedules[platform]);
     const net = money(price.minor - fees.minor - extraCostsMinor, price.currency);
     const margin = money(net.minor - acquisitionCost.minor, price.currency);
     return {

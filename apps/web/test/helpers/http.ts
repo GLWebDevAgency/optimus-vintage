@@ -11,7 +11,7 @@ export interface RequestOptions {
   readonly crossSite?: boolean;
 }
 
-/** Requête `NextRequest` de même origine, corps JSON sérialisé (ou brut). */
+/** Requête `NextRequest` de même origine (chemin ou URL absolue), corps JSON sérialisé (ou brut). */
 export function request(method: string, path: string, options: RequestOptions = {}): NextRequest {
   const headers: Record<string, string> = {
     accept: "application/json",
@@ -29,7 +29,8 @@ export function request(method: string, path: string, options: RequestOptions = 
     body = JSON.stringify(options.body);
     headers["content-type"] = "application/json";
   }
-  return new NextRequest(`${ORIGIN}${path}`, { method, headers, body });
+  const url = /^https?:\/\//.test(path) ? path : `${ORIGIN}${path}`;
+  return new NextRequest(url, { method, headers, body });
 }
 
 export interface CallResult<T = unknown> {

@@ -1,6 +1,12 @@
 "use client";
 
-import { CATEGORIES, type Category, type Condition, CONDITIONS, type SourceDto } from "@chine/contract";
+import {
+  CATEGORIES,
+  type Category,
+  CONDITIONS,
+  type Condition,
+  type SourceDto,
+} from "@chine/contract";
 import {
   AppIcon,
   BigButton,
@@ -22,12 +28,18 @@ import { useState } from "react";
 import { PageSkeleton } from "@/components/shell/PageSkeleton";
 import { Screen } from "@/components/shell/Screen";
 import { TopBar } from "@/components/shell/TopBar";
-import { useDeleteSource, useGeneratePieces, useItems, useReceiveSource, useSource } from "@/hooks/api";
+import {
+  useDeleteSource,
+  useGeneratePieces,
+  useItems,
+  useReceiveSource,
+  useSource,
+} from "@/hooks/api";
 import { useFormat, useLocale, useT } from "@/hooks/i18n";
 import { ConfirmSheet } from "../common/ConfirmSheet";
 import { ErrorState, useErrorMessage } from "../common/ErrorState";
-import { label } from "../common/labels";
 import { LoadMore } from "../common/LoadMore";
+import { label } from "../common/labels";
 import { ItemRow } from "../stock/ItemRow";
 
 /** Détail d'une source : performance, plancher, réception, génération de pièces, pièces rattachées. */
@@ -53,7 +65,11 @@ export function SourceScreen({ id }: { id: string }) {
           <PageSkeleton variant="sources" rows={2} />
         ) : !source ? (
           <div className="card enter d2">
-            <ErrorState error={query.error} onRetry={() => void query.refetch()} title={t("sources.notFound")} />
+            <ErrorState
+              error={query.error}
+              onRetry={() => void query.refetch()}
+              title={t("sources.notFound")}
+            />
           </div>
         ) : (
           <SourceBody source={source} />
@@ -76,16 +92,20 @@ function SourceBody({ source }: { source: SourceDto }) {
   const generate = useGeneratePieces(source.id);
   const del = useDeleteSource(source.id);
   const [open, setOpen] = useState<null | "receive" | "generate" | "delete">(null);
-  const [received, setReceived] = useState(String(source.receivedQuantity ?? source.announcedQuantity ?? ""));
+  const [received, setReceived] = useState(
+    String(source.receivedQuantity ?? source.announcedQuantity ?? ""),
+  );
   const [count, setCount] = useState("10");
   const [prefix, setPrefix] = useState(source.name);
   const [category, setCategory] = useState<Category | "">("");
   const [condition, setCondition] = useState<Condition | "">("");
 
-  const pct = (r: number) => new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0 }).format(r);
+  const pct = (r: number) =>
+    new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0 }).format(r);
   const list = items.data?.pages.flatMap((pg) => pg.items) ?? [];
   const total = items.data?.pages[0]?.total ?? 0;
-  const remaining = (source.effectiveQuantity ?? source.itemCount) - p.soldCount - p.writtenOffCount;
+  const remaining =
+    (source.effectiveQuantity ?? source.itemCount) - p.soldCount - p.writtenOffCount;
   const receivable = source.kind !== "UNIT";
 
   const run = async (fn: () => Promise<unknown>, msg: string) => {
@@ -101,11 +121,22 @@ function SourceBody({ source }: { source: SourceDto }) {
   const perf: { k: string; v: string; tone?: string }[] = [
     { k: t("sources.invested"), v: fmt.money(source.totalInvestment) },
     { k: t("sources.recovered"), v: fmt.money(p.recovered), tone: "text-brass" },
-    { k: t("sources.remaining"), v: fmt.money(p.remainingToRecover), tone: p.isAmortized ? undefined : "text-thread" },
+    {
+      k: t("sources.remaining"),
+      v: fmt.money(p.remainingToRecover),
+      tone: p.isAmortized ? undefined : "text-thread",
+    },
     { k: t("sources.roi"), v: p.roi !== undefined ? fmt.percent(p.roi, { signed: true }) : "—" },
-    ...(p.floorPriceBreakEven ? [{ k: t("sources.floorPriceBreakEven"), v: fmt.money(p.floorPriceBreakEven) }] : []),
-    ...(p.floorPriceTarget ? [{ k: t("sources.floorPriceTarget"), v: fmt.money(p.floorPriceTarget) }] : []),
-    { k: t("sources.averageUnitCost"), v: source.averageUnitCost ? fmt.money(source.averageUnitCost) : "—" },
+    ...(p.floorPriceBreakEven
+      ? [{ k: t("sources.floorPriceBreakEven"), v: fmt.money(p.floorPriceBreakEven) }]
+      : []),
+    ...(p.floorPriceTarget
+      ? [{ k: t("sources.floorPriceTarget"), v: fmt.money(p.floorPriceTarget) }]
+      : []),
+    {
+      k: t("sources.averageUnitCost"),
+      v: source.averageUnitCost ? fmt.money(source.averageUnitCost) : "—",
+    },
     { k: t("sources.stockValue"), v: fmt.money(p.stockValueAtCost) },
   ];
 
@@ -132,11 +163,17 @@ function SourceBody({ source }: { source: SourceDto }) {
           value={Math.min(1, p.recoveryRate)}
           tone={p.isAmortized ? "brass" : "thread"}
           label={t("sources.recoveryRate", { percent: pct(p.recoveryRate) })}
-          valueLabel={t("sources.soldAndStock", { sold: p.soldCount, stock: Math.max(0, remaining) })}
+          valueLabel={t("sources.soldAndStock", {
+            sold: p.soldCount,
+            stock: Math.max(0, remaining),
+          })}
         />
         {!p.isAmortized && p.floorPriceBreakEven && remaining > 0 ? (
           <p className="text-[13px] text-thread font-semibold">
-            {t("sources.floorHint", { count: remaining, amount: fmt.money(p.floorPriceBreakEven, { compact: true }) })}
+            {t("sources.floorHint", {
+              count: remaining,
+              amount: fmt.money(p.floorPriceBreakEven, { compact: true }),
+            })}
           </p>
         ) : null}
       </div>
@@ -153,7 +190,9 @@ function SourceBody({ source }: { source: SourceDto }) {
       <div className="meta enter d3">
         <div>
           <span className="k">{t("sources.supplier")}</span>
-          <span className="v truncate">{source.supplierName ?? label.supplierKind(t, source.supplierKind)}</span>
+          <span className="v truncate">
+            {source.supplierName ?? label.supplierKind(t, source.supplierKind)}
+          </span>
         </div>
         <div>
           <span className="k">{t("sources.location")}</span>
@@ -164,44 +203,80 @@ function SourceBody({ source }: { source: SourceDto }) {
             <span className="k">{t("sources.announcedQuantity")}</span>
             <span className="v">
               {source.announcedQuantity ?? "—"}
-              {source.receivedQuantity !== undefined ? ` · ${t("sources.receivedShort", { count: source.receivedQuantity })}` : ""}
+              {source.receivedQuantity !== undefined
+                ? ` · ${t("sources.receivedShort", { count: source.receivedQuantity })}`
+                : ""}
             </span>
           </div>
         ) : null}
         {source.shrinkageRate !== undefined && source.shrinkageRate > 0 ? (
           <div>
             <span className="k">{t("sources.receive")}</span>
-            <span className="v text-thread">{t("sources.shrinkage", { percent: pct(source.shrinkageRate) })}</span>
+            <span className="v text-thread">
+              {t("sources.shrinkage", { percent: pct(source.shrinkageRate) })}
+            </span>
           </div>
         ) : null}
         <div>
           <span className="k">{t("sources.allocation")}</span>
-          <span className="v">{t(`sources.allocationLabel.${source.allocationPolicy}` as "sources.allocationLabel.EVEN")}</span>
+          <span className="v">
+            {t(
+              `sources.allocationLabel.${source.allocationPolicy}` as "sources.allocationLabel.EVEN",
+            )}
+          </span>
         </div>
         {source.weightKg ? (
           <div>
             <span className="k">{t("sources.weight")}</span>
-            <span className="v">{new Intl.NumberFormat(intl, { style: "unit", unit: "kilogram", maximumFractionDigits: 1 }).format(source.weightKg)}</span>
+            <span className="v">
+              {new Intl.NumberFormat(intl, {
+                style: "unit",
+                unit: "kilogram",
+                maximumFractionDigits: 1,
+              }).format(source.weightKg)}
+            </span>
           </div>
         ) : null}
       </div>
 
       <div className="flex flex-wrap gap-2 enter d4">
         {receivable ? (
-          <Button size="sm" variant="subtle" onClick={() => setOpen("receive")} leading={<AppIcon name="box" size={14} />}>
+          <Button
+            size="sm"
+            variant="subtle"
+            onClick={() => setOpen("receive")}
+            leading={<AppIcon name="box" size={14} />}
+          >
             {t("sources.receive")}
           </Button>
         ) : null}
         {source.kind !== "UNIT" ? (
-          <Button size="sm" variant="subtle" onClick={() => setOpen("generate")} leading={<AppIcon name="plus" size={14} />} data-testid="source-generate">
+          <Button
+            size="sm"
+            variant="subtle"
+            onClick={() => setOpen("generate")}
+            leading={<AppIcon name="plus" size={14} />}
+            data-testid="source-generate"
+          >
             {t("sources.generatePieces")}
           </Button>
         ) : null}
-        <Button size="sm" variant="subtle" onClick={() => router.push(`/app/sources/${source.id}/modifier` as Route)} leading={<AppIcon name="edit" size={14} />}>
+        <Button
+          size="sm"
+          variant="subtle"
+          onClick={() => router.push(`/app/sources/${source.id}/modifier` as Route)}
+          leading={<AppIcon name="edit" size={14} />}
+        >
           {t("common.edit")}
         </Button>
         {source.itemCount === 0 ? (
-          <Button size="sm" variant="subtle" onClick={() => setOpen("delete")} leading={<AppIcon name="trash" size={14} />} className="!text-thread">
+          <Button
+            size="sm"
+            variant="subtle"
+            onClick={() => setOpen("delete")}
+            leading={<AppIcon name="trash" size={14} />}
+            className="!text-thread"
+          >
             {t("common.delete")}
           </Button>
         ) : null}
@@ -210,7 +285,9 @@ function SourceBody({ source }: { source: SourceDto }) {
       <div className="grid gap-2.5 enter d5">
         <div className="sec-h">
           <h2>{t("sources.itemsOfSource")}</h2>
-          <span className="text-ink-2 text-xs font-semibold">{t("common.pieces", { count: total })}</span>
+          <span className="text-ink-2 text-xs font-semibold">
+            {t("common.pieces", { count: total })}
+          </span>
         </div>
         {items.isPending ? (
           <SkeletonRow count={3} />
@@ -229,7 +306,13 @@ function SourceBody({ source }: { source: SourceDto }) {
                 <ItemRow key={it.id} item={it} />
               ))}
             </List>
-            <LoadMore shown={list.length} total={total} hasMore={Boolean(items.hasNextPage)} loading={items.isFetchingNextPage} onMore={() => void items.fetchNextPage()} />
+            <LoadMore
+              shown={list.length}
+              total={total}
+              hasMore={Boolean(items.hasNextPage)}
+              loading={items.isFetchingNextPage}
+              onMore={() => void items.fetchNextPage()}
+            />
           </>
         )}
       </div>
@@ -241,7 +324,9 @@ function SourceBody({ source }: { source: SourceDto }) {
         description={t("sources.receiveHint")}
         footer={
           <BigButton
-            onClick={() => void run(() => receive.mutateAsync(Number(received)), t("sources.received"))}
+            onClick={() =>
+              void run(() => receive.mutateAsync(Number(received)), t("sources.received"))
+            }
             loading={receive.isPending}
             disabled={!/^\d+$/.test(received.trim())}
           >
@@ -250,8 +335,20 @@ function SourceBody({ source }: { source: SourceDto }) {
         }
       >
         <div className="grid gap-4 py-1">
-          <Field label={t("sources.receivedQuantity")} hint={source.announcedQuantity ? t("sources.announcedShort", { count: source.announcedQuantity }) : undefined}>
-            <TextInput inputMode="numeric" value={received} onChange={(e) => setReceived(e.target.value)} data-autofocus />
+          <Field
+            label={t("sources.receivedQuantity")}
+            hint={
+              source.announcedQuantity
+                ? t("sources.announcedShort", { count: source.announcedQuantity })
+                : undefined
+            }
+          >
+            <TextInput
+              inputMode="numeric"
+              value={received}
+              onChange={(e) => setReceived(e.target.value)}
+              data-autofocus
+            />
           </Field>
         </div>
       </Sheet>
@@ -264,15 +361,18 @@ function SourceBody({ source }: { source: SourceDto }) {
         footer={
           <BigButton
             onClick={() =>
-              void run(async () => {
-                const page = await generate.mutateAsync({
-                  count: Number(count),
-                  ...(prefix.trim() ? { titlePrefix: prefix.trim().slice(0, 60) } : {}),
-                  ...(category ? { category } : {}),
-                  ...(condition ? { condition } : {}),
-                });
-                return page;
-              }, t("sources.generated", { count: Number(count) }))
+              void run(
+                async () => {
+                  const page = await generate.mutateAsync({
+                    count: Number(count),
+                    ...(prefix.trim() ? { titlePrefix: prefix.trim().slice(0, 60) } : {}),
+                    ...(category ? { category } : {}),
+                    ...(condition ? { condition } : {}),
+                  });
+                  return page;
+                },
+                t("sources.generated", { count: Number(count) }),
+              )
             }
             loading={generate.isPending}
             disabled={!/^\d+$/.test(count.trim()) || Number(count) < 1 || Number(count) > 500}
@@ -283,18 +383,41 @@ function SourceBody({ source }: { source: SourceDto }) {
         }
       >
         <div className="grid gap-4 py-1">
-          <Field label={t("sources.generateCount")} hint={t("sources.generatePiecesHint", { count: Number(count) || 0 })}>
-            <TextInput inputMode="numeric" value={count} onChange={(e) => setCount(e.target.value)} data-autofocus />
+          <Field
+            label={t("sources.generateCount")}
+            hint={t("sources.generatePiecesHint", { count: Number(count) || 0 })}
+          >
+            <TextInput
+              inputMode="numeric"
+              value={count}
+              onChange={(e) => setCount(e.target.value)}
+              data-autofocus
+            />
           </Field>
           <Field label={t("sources.generatePrefix")}>
-            <TextInput value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder={t("sources.generatePrefixPlaceholder")} maxLength={60} />
+            <TextInput
+              value={prefix}
+              onChange={(e) => setPrefix(e.target.value)}
+              placeholder={t("sources.generatePrefixPlaceholder")}
+              maxLength={60}
+            />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("items.category")} trailing={t("common.optional")}>
-              <Select value={category} onChange={setCategory} placeholder="—" options={CATEGORIES.map((c) => ({ value: c, label: label.category(t, c) }))} />
+              <Select
+                value={category}
+                onChange={setCategory}
+                placeholder="—"
+                options={CATEGORIES.map((c) => ({ value: c, label: label.category(t, c) }))}
+              />
             </Field>
             <Field label={t("items.condition")} trailing={t("common.optional")}>
-              <Select value={condition} onChange={setCondition} placeholder="—" options={CONDITIONS.map((c) => ({ value: c, label: label.condition(t, c) }))} />
+              <Select
+                value={condition}
+                onChange={setCondition}
+                placeholder="—"
+                options={CONDITIONS.map((c) => ({ value: c, label: label.condition(t, c) }))}
+              />
             </Field>
           </div>
         </div>

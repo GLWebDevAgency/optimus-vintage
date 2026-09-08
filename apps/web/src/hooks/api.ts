@@ -614,7 +614,7 @@ function localSale(
             sku: item.sku,
             title: item.title,
             ...(item.brand ? { brand: item.brand } : {}),
-            ...(item.photos[0]?.thumbnailUrl ?? item.photoUrls[0]
+            ...((item.photos[0]?.thumbnailUrl ?? item.photoUrls[0])
               ? { thumbnailUrl: item.photos[0]?.thumbnailUrl ?? item.photoUrls[0] }
               : {}),
             status: "SOLD",

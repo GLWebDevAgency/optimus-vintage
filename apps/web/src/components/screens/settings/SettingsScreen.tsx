@@ -14,15 +14,22 @@ import { useWorkspace } from "@/hooks/api";
 import { useT } from "@/hooks/i18n";
 import { usePrefs } from "@/hooks/prefs";
 import { authClient, useSession } from "@/lib/auth-client";
+import { APP_VERSION } from "@/lib/version";
 import { ErrorState, useErrorMessage } from "../common/ErrorState";
 import { DataSection } from "./DataSection";
 import { FeeOverrides } from "./FeeOverrides";
 import { PlanCard } from "./PlanCard";
 import { WorkspaceForm } from "./WorkspaceForm";
 
-const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.1.0";
-
-function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
+function Section({
+  title,
+  children,
+  id,
+}: {
+  title: string;
+  children: React.ReactNode;
+  id?: string;
+}) {
   return (
     <section className="grid gap-2" id={id}>
       <span className="label">{title}</span>
@@ -187,7 +194,12 @@ export function SettingsScreen() {
         </div>
 
         <div className="mt-auto grid gap-3 pt-4 enter d6">
-          <Link href="/auth/deconnexion" className="btn ghost" prefetch={false} data-testid="sign-out">
+          <Link
+            href="/auth/deconnexion"
+            className="btn ghost"
+            prefetch={false}
+            data-testid="sign-out"
+          >
             {t("nav.logout")}
           </Link>
           <p className="label text-center">{t("settings.version", { version: APP_VERSION })}</p>

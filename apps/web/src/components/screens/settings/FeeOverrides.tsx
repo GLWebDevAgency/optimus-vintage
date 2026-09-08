@@ -2,7 +2,16 @@
 
 import type { FeeScheduleDto, Platform, WorkspaceOverviewDto } from "@chine/contract";
 import { DEFAULT_FEE_SCHEDULES } from "@chine/domain";
-import { AppIcon, BigButton, Button, Field, MoneyInput, Sheet, TextInput, useToast } from "@chine/ui";
+import {
+  AppIcon,
+  BigButton,
+  Button,
+  Field,
+  MoneyInput,
+  Sheet,
+  TextInput,
+  useToast,
+} from "@chine/ui";
 import { useState } from "react";
 import { useUpdateWorkspaceSettings } from "@/hooks/api";
 import { useFormat, useT } from "@/hooks/i18n";
@@ -26,7 +35,9 @@ export function FeeOverrides({ overview }: { overview: WorkspaceOverviewDto }) {
     [
       `${s.percent.toLocaleString()} %`,
       s.fixedMinor ? `+ ${fmt.money({ minor: s.fixedMinor, currency })}` : null,
-      s.minMinor ? t("settings.feeMinNote", { amount: fmt.money({ minor: s.minMinor, currency }) }) : null,
+      s.minMinor
+        ? t("settings.feeMinNote", { amount: fmt.money({ minor: s.minMinor, currency }) })
+        : null,
     ]
       .filter(Boolean)
       .join(" ");
@@ -88,14 +99,25 @@ export function FeeOverrides({ overview }: { overview: WorkspaceOverviewDto }) {
         footer={
           <div className="grid gap-2.5">
             <BigButton
-              onClick={() => void save({ percent: pct, fixedMinor: fixed ?? 0, ...(min ? { minMinor: min } : {}) })}
+              onClick={() =>
+                void save({
+                  percent: pct,
+                  fixedMinor: fixed ?? 0,
+                  ...(min ? { minMinor: min } : {}),
+                })
+              }
               loading={update.isPending}
               disabled={!valid}
             >
               {t("common.save")}
             </BigButton>
             {editing && overview.feeOverrides[editing] ? (
-              <Button variant="ghost" onClick={() => void save(null)} disabled={update.isPending} leading={<AppIcon name="refresh" size={16} />}>
+              <Button
+                variant="ghost"
+                onClick={() => void save(null)}
+                disabled={update.isPending}
+                leading={<AppIcon name="refresh" size={16} />}
+              >
                 {t("settings.feeReset")}
               </Button>
             ) : null}
@@ -106,8 +128,17 @@ export function FeeOverrides({ overview }: { overview: WorkspaceOverviewDto }) {
           {editing && DEFAULT_FEE_SCHEDULES[editing].note ? (
             <p className="text-[12.5px] text-ink-2">{DEFAULT_FEE_SCHEDULES[editing].note}</p>
           ) : null}
-          <Field label={t("settings.feePercent")} error={valid ? undefined : t("errors.field.invalid")}>
-            <TextInput inputMode="decimal" value={percent} onChange={(e) => setPercent(e.target.value)} unit="%" data-autofocus />
+          <Field
+            label={t("settings.feePercent")}
+            error={valid ? undefined : t("errors.field.invalid")}
+          >
+            <TextInput
+              inputMode="decimal"
+              value={percent}
+              onChange={(e) => setPercent(e.target.value)}
+              unit="%"
+              data-autofocus
+            />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("settings.feeFixed")}>

@@ -2,7 +2,7 @@
 
 import type { SupplierKind } from "@chine/contract";
 import { AppIcon, ChipGroup, TextInput } from "@chine/ui";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/hooks/i18n";
 import { CAPTURE_SUPPLIER_KINDS, label } from "../common/labels";
 
@@ -41,7 +41,7 @@ export function LocationField({
   const [editing, setEditing] = useState(false);
   const started = useRef(false);
 
-  const locate = () => {
+  const locate = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       onGeo({ status: "unavailable" });
       return;
@@ -52,15 +52,14 @@ export function LocationField({
       (err) => onGeo({ status: err.code === err.PERMISSION_DENIED ? "denied" : "unavailable" }),
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 },
     );
-  };
+  }, [onGeo]);
 
-  // Une seule tentative automatique au montage ; l'utilisateur peut relancer.
+  // Une seule tentative automatique au montage (garde par ref) ; l'utilisateur peut relancer.
   useEffect(() => {
     if (started.current) return;
     started.current = true;
     if (geo.status === "idle") locate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [geo.status, locate]);
 
   const status =
     geo.status === "locating"
@@ -133,7 +132,10 @@ export function LocationField({
         size="sm"
         scroll
         aria-label={t("chine.supplierKind")}
-        options={CAPTURE_SUPPLIER_KINDS.map((k) => ({ value: k, label: label.supplierKindShort(t, k) }))}
+        options={CAPTURE_SUPPLIER_KINDS.map((k) => ({
+          value: k,
+          label: label.supplierKindShort(t, k),
+        }))}
       />
     </div>
   );

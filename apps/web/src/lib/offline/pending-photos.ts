@@ -162,7 +162,12 @@ export interface SavePendingCaptureInput {
 export async function savePendingCapture(input: SavePendingCaptureInput): Promise<string> {
   const id = input.command.clientId;
   if (!input.photo) {
-    await enqueue({ id, method: "POST", path: "/items", body: { ...input.command, photoKeys: [] } });
+    await enqueue({
+      id,
+      method: "POST",
+      path: "/items",
+      body: { ...input.command, photoKeys: [] },
+    });
     return id;
   }
   const entry: PendingPhoto = {

@@ -3,8 +3,8 @@
 import { ApiClientError } from "@chine/contract";
 import type { MessageKey } from "@chine/i18n";
 import { AppIcon, Button, EmptyState } from "@chine/ui";
-import { useOnline } from "@/lib/offline/network";
 import { useT } from "@/hooks/i18n";
+import { useOnline } from "@/lib/offline/network";
 
 /** Message lisible d'une erreur (code API traduit, sinon message brut). */
 export function useErrorMessage() {
@@ -34,7 +34,8 @@ export function ErrorState({ error, onRetry, compact, title }: ErrorStateProps) 
   const online = useOnline();
   const describe = useErrorMessage();
   const offline =
-    !online || (error instanceof ApiClientError && (error.code === "NETWORK" || error.code === "TIMEOUT"));
+    !online ||
+    (error instanceof ApiClientError && (error.code === "NETWORK" || error.code === "TIMEOUT"));
   const notFound = error instanceof ApiClientError && error.code === "NOT_FOUND";
   return (
     <EmptyState
@@ -45,7 +46,12 @@ export function ErrorState({ error, onRetry, compact, title }: ErrorStateProps) 
         </span>
       }
       title={
-        title ?? (offline ? t("errors.offlineTitle") : notFound ? t("errors.notFoundTitle") : t("errors.title"))
+        title ??
+        (offline
+          ? t("errors.offlineTitle")
+          : notFound
+            ? t("errors.notFoundTitle")
+            : t("errors.title"))
       }
       body={offline ? t("errors.offlineBody") : describe(error)}
       action={

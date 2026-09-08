@@ -1,6 +1,7 @@
 import { AddItemPhoto, DeleteItem, ReorderItemPhotos, UpdateItem } from "@chine/application";
 import { routes } from "@chine/contract";
 import { asItemId, asPhotoId } from "@chine/domain";
+import { type ClearablePrice, clearItemPrices } from "@/lib/api/items";
 import { loadItem, mapContextFor, scopeOf } from "@/lib/api/loaders";
 import { assertOwnedPhotoKeys } from "@/lib/api/photos";
 import { fail } from "@/lib/api/respond";
@@ -11,8 +12,13 @@ export const dynamic = "force-dynamic";
 
 type Params = { id: string };
 
-/** `null` efface le champ (voir `sources/[id]`). */
+/**
+ * `null` efface un champ texte ou énuméré : la valeur traverse le cas d'usage et l'agrégat
+ * l'interprète comme une absence (persistée `NULL`, relue `undefined`). Les montants, eux,
+ * passent par `clearItemPrices` (un montant absent signifie « inchangé » pour le cas d'usage).
+ */
 const clearable = <T>(v: T | null | undefined): T | undefined => v as T | undefined;
+const money = <T>(v: T | null | undefined): T | undefined => (v === null ? undefined : v);
 
 /** Détail d'une pièce : source, annonces actives, dernière expertise. */
 export const GET = withAuth<Params>(async (req, ctx) => {
@@ -46,12 +52,17 @@ export const PATCH = withAuth<Params>(
       materials: body.materials,
       measurements: clearable(body.measurements),
       acquisitionCost: body.acquisitionCost,
-      retailPrice: clearable(body.retailPrice),
-      targetPrice: clearable(body.targetPrice),
+      retailPrice: money(body.retailPrice),
+      targetPrice: money(body.targetPrice),
       bin: clearable(body.bin),
       notes: clearable(body.notes),
     });
     if (!updated.ok) return fail(updated.error);
+
+    const cleared: ClearablePrice[] = [];
+    if (body.retailPrice === null) cleared.push("retailPrice");
+    if (body.targetPrice === null) cleared.push("targetPrice");
+    await clearItemPrices(deps, scope, ctx.params.id, cleared);
 
     for (const key of body.addPhotoKeys ?? []) {
       const added = await new AddItemPhoto(deps).execute({ ...scope, itemId, key });

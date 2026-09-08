@@ -38,7 +38,9 @@ export function ChinerScreen() {
   const currency = workspace.data?.workspace.currency ?? "EUR";
   const [photo, setPhoto] = useState<PreparedImage | null>(null);
   const [appraisal, setAppraisal] = useState<AppraisalState>({ status: "idle" });
-  const [priceMinor, setPriceMinor] = useState<number>(prefs.lastPricePaidMinor ?? DEFAULT_PRICE_MINOR);
+  const [priceMinor, setPriceMinor] = useState<number>(
+    prefs.lastPricePaidMinor ?? DEFAULT_PRICE_MINOR,
+  );
   const priceTouched = useRef(false);
   const [geo, setGeo] = useState<GeoState>({ status: "idle" });
   const [locationLabel, setLocationLabel] = useState(prefs.lastLocationLabel ?? "");
@@ -55,7 +57,8 @@ export function ChinerScreen() {
   useEffect(() => {
     if (prefsApplied.current) return;
     prefsApplied.current = true;
-    if (prefs.lastPricePaidMinor !== null && !priceTouched.current) setPriceMinor(prefs.lastPricePaidMinor);
+    if (prefs.lastPricePaidMinor !== null && !priceTouched.current)
+      setPriceMinor(prefs.lastPricePaidMinor);
     if (prefs.lastLocationLabel) setLocationLabel((v) => v || prefs.lastLocationLabel || "");
     if (prefs.lastSupplierKind) setSupplierKind(prefs.lastSupplierKind as SupplierKind);
   }, [prefs]);
@@ -70,7 +73,8 @@ export function ChinerScreen() {
     const id = a.identification;
     setDetails((d) => ({
       ...d,
-      title: d.title || a.listingCopy?.title || [id.brand, id.model].filter(Boolean).join(" ") || "",
+      title:
+        d.title || a.listingCopy?.title || [id.brand, id.model].filter(Boolean).join(" ") || "",
       brand: d.brand || id.brand || "",
       category: d.category || id.category,
       size: d.size || id.size || "",
@@ -153,8 +157,12 @@ export function ChinerScreen() {
       ...(details.category ? { category: details.category } : {}),
       ...(details.condition ? { condition: details.condition } : {}),
       ...(details.size.trim() ? { size: details.size.trim() } : {}),
-      ...(details.targetPriceMinor ? { targetPrice: { minor: details.targetPriceMinor, currency } } : {}),
-      ...(details.retailPriceMinor ? { retailPrice: { minor: details.retailPriceMinor, currency } } : {}),
+      ...(details.targetPriceMinor
+        ? { targetPrice: { minor: details.targetPriceMinor, currency } }
+        : {}),
+      ...(details.retailPriceMinor
+        ? { retailPrice: { minor: details.retailPriceMinor, currency } }
+        : {}),
       ...(details.notes.trim() ? { notes: details.notes.trim() } : {}),
     };
     try {
@@ -262,7 +270,10 @@ export function ChinerScreen() {
                 <AppIcon name="edit" size={16} className="text-ink-3" />
                 {t("common.details")}
               </span>
-              <span className="label">{filled > 0 ? `${filled} · ` : ""}{t("common.optional")}</span>
+              <span className="label">
+                {filled > 0 ? `${filled} · ` : ""}
+                {t("common.optional")}
+              </span>
             </button>
 
             <div className="mt-auto pt-2 enter d5">

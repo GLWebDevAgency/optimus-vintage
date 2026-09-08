@@ -53,8 +53,10 @@ export function TodayScreen() {
   const workspace = useWorkspace();
   const pending = usePendingCaptures();
 
-  const currency = workspace.data?.workspace.currency ?? dashboard.data?.current.net.currency ?? "EUR";
-  const goalMinor = workspace.data?.workspace.monthlyGoal?.minor ?? dashboard.data?.goal?.targetMinor ?? null;
+  const currency =
+    workspace.data?.workspace.currency ?? dashboard.data?.current.net.currency ?? "EUR";
+  const goalMinor =
+    workspace.data?.workspace.monthlyGoal?.minor ?? dashboard.data?.goal?.targetMinor ?? null;
 
   return (
     <>
@@ -195,14 +197,18 @@ function DashboardBody({
               value={progress}
               tone={goal.progress >= 1 ? "brass" : "thread"}
               label={t("dashboard.goalOf", {
-                amount: fmtMoney({ minor: goal.targetMinor, currency: goal.currency }, { compact: true }),
+                amount: fmtMoney(
+                  { minor: goal.targetMinor, currency: goal.currency },
+                  { compact: true },
+                ),
               })}
               valueLabel={
                 goal.progress >= 1
                   ? t("dashboard.goalReached")
-                  : new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0 }).format(
-                      goal.progress,
-                    )
+                  : new Intl.NumberFormat(intl, {
+                      style: "percent",
+                      maximumFractionDigits: 0,
+                    }).format(goal.progress)
               }
             />
           </button>

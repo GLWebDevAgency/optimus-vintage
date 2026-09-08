@@ -1,6 +1,12 @@
 "use client";
 
-import { CATEGORIES, type Category, type Condition, CONDITIONS, type Currency } from "@chine/contract";
+import {
+  CATEGORIES,
+  type Category,
+  CONDITIONS,
+  type Condition,
+  type Currency,
+} from "@chine/contract";
 import { BigButton, Field, MoneyInput, Select, Sheet, Textarea, TextInput } from "@chine/ui";
 import { useT } from "@/hooks/i18n";
 import { label } from "../common/labels";
@@ -29,7 +35,8 @@ export const EMPTY_DETAILS: CaptureDetails = {
 
 /** Nombre de champs renseignés (pour le compteur du bouton « Détails »). */
 export const filledDetails = (d: CaptureDetails): number =>
-  [d.title, d.brand, d.category, d.size, d.condition, d.notes].filter((v) => v.trim() !== "").length +
+  [d.title, d.brand, d.category, d.size, d.condition, d.notes].filter((v) => v.trim() !== "")
+    .length +
   (d.retailPriceMinor ? 1 : 0) +
   (d.targetPriceMinor ? 1 : 0);
 
@@ -44,7 +51,8 @@ interface DetailsSheetProps {
 /** Champs facultatifs de la capture : titre, marque, catégorie, taille, état, prix neuf, prix cible, notes. */
 export function DetailsSheet({ open, onClose, value, onChange, currency }: DetailsSheetProps) {
   const t = useT();
-  const set = <K extends keyof CaptureDetails>(k: K, v: CaptureDetails[K]) => onChange({ ...value, [k]: v });
+  const set = <K extends keyof CaptureDetails>(k: K, v: CaptureDetails[K]) =>
+    onChange({ ...value, [k]: v });
   return (
     <Sheet
       open={open}

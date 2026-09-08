@@ -7,7 +7,12 @@ import { useOpenBillingPortal, useStartCheckout } from "@/hooks/api";
 import { useFormat, useT } from "@/hooks/i18n";
 import { useErrorMessage } from "../common/ErrorState";
 
-const QUOTAS: (keyof WorkspaceOverviewDto["quotas"])[] = ["items", "sourcesPerMonth", "aiAppraisalsPerMonth", "members"];
+const QUOTAS: (keyof WorkspaceOverviewDto["quotas"])[] = [
+  "items",
+  "sourcesPerMonth",
+  "aiAppraisalsPerMonth",
+  "members",
+];
 
 /** Formule : plan courant, quotas cousus, passer à Premium (Stripe Checkout), portail. */
 export function PlanCard({ overview }: { overview: WorkspaceOverviewDto }) {
@@ -23,7 +28,11 @@ export function PlanCard({ overview }: { overview: WorkspaceOverviewDto }) {
   const upgrade = async () => {
     try {
       show(t("billing.checkoutStarting"), { kind: "info", duration: 2500 });
-      const { url } = await checkout.mutateAsync({ plan: "PREMIUM", interval: "monthly", returnUrl: returnUrl() });
+      const { url } = await checkout.mutateAsync({
+        plan: "PREMIUM",
+        interval: "monthly",
+        returnUrl: returnUrl(),
+      });
       window.location.assign(url);
     } catch (e) {
       show(describe(e), { kind: "error" });
@@ -39,15 +48,21 @@ export function PlanCard({ overview }: { overview: WorkspaceOverviewDto }) {
   };
 
   const usage = (q: QuotaUsageDto) =>
-    q.limit === null ? t("billing.unlimited") : t("billing.quotaUsage", { used: q.used, limit: q.limit });
+    q.limit === null
+      ? t("billing.unlimited")
+      : t("billing.quotaUsage", { used: q.used, limit: q.limit });
 
   return (
     <div className="card grid gap-4" id="plan" data-testid="plan-card">
       <div className="flex items-start justify-between gap-3">
         <div>
           <span className="label">{t("billing.currentPlan")}</span>
-          <div className="font-display italic text-[30px] leading-none">{t(`billing.plan.${plan}` as MessageKey)}</div>
-          <div className="text-[12.5px] text-ink-2">{t(`billing.planTagline.${plan}` as MessageKey)}</div>
+          <div className="font-display italic text-[30px] leading-none">
+            {t(`billing.plan.${plan}` as MessageKey)}
+          </div>
+          <div className="text-[12.5px] text-ink-2">
+            {t(`billing.planTagline.${plan}` as MessageKey)}
+          </div>
         </div>
         <span className={`pill ${plan === "FREE" ? "stock" : "sold"}`}>{plan}</span>
       </div>
@@ -59,7 +74,9 @@ export function PlanCard({ overview }: { overview: WorkspaceOverviewDto }) {
             <StitchProgress
               key={k}
               value={q.limit === null ? 0.08 : ratio}
-              tone={q.limit !== null && ratio >= 1 ? "thread" : q.limit === null ? "brass" : "indigo"}
+              tone={
+                q.limit !== null && ratio >= 1 ? "thread" : q.limit === null ? "brass" : "indigo"
+              }
               height={10}
               label={t(`billing.quota.${k}` as MessageKey)}
               valueLabel={usage(q)}
@@ -76,7 +93,11 @@ export function PlanCard({ overview }: { overview: WorkspaceOverviewDto }) {
       ) : null}
       <div className="grid grid-cols-2 gap-2.5">
         {plan === "FREE" ? (
-          <Button onClick={() => void upgrade()} loading={checkout.isPending} leading={<AppIcon name="sparkle" size={16} />}>
+          <Button
+            onClick={() => void upgrade()}
+            loading={checkout.isPending}
+            leading={<AppIcon name="sparkle" size={16} />}
+          >
             {t("settings.upgrade")}
           </Button>
         ) : null}

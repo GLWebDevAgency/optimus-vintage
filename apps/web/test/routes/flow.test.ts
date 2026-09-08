@@ -18,7 +18,11 @@ import { GET as getSale } from "@/app/api/v1/sales/[id]/route";
 import { GET as listSales, POST as recordSale } from "@/app/api/v1/sales/route";
 import { POST as generatePieces } from "@/app/api/v1/sources/[id]/pieces/route";
 import { POST as receiveSource } from "@/app/api/v1/sources/[id]/receive/route";
-import { DELETE as deleteSource, GET as getSource } from "@/app/api/v1/sources/[id]/route";
+import {
+  DELETE as deleteSource,
+  GET as getSource,
+  PATCH as updateSource,
+} from "@/app/api/v1/sources/[id]/route";
 import { POST as createSource, GET as listSources } from "@/app/api/v1/sources/route";
 import { createTestApp, type TestApp } from "../helpers/app";
 import { api, eur } from "../helpers/http";
@@ -71,6 +75,25 @@ describe("parcours : source → pièces → vente → tableau de bord", () => {
     });
     expect(res.status).toBe(400);
     expect(res.error?.code).toBe("VALIDATION_FAILED");
+  });
+
+  it("PATCH : `null` efface le fournisseur et les notes d'une source", async () => {
+    const res = await api<D<SourceDto>, { id: string }>(
+      updateSource,
+      "PATCH",
+      `/api/v1/sources/${sourceId}`,
+      { params: { id: sourceId }, body: { supplierName: null, notes: null, weightKg: 12.5 } },
+    );
+    expect(res.status).toBe(200);
+    expect(res.data.supplierName).toBeUndefined();
+    expect(res.data.notes).toBeUndefined();
+    expect(res.data.weightKg).toBe(12.5);
+    const invalid = await api(updateSource, "PATCH", `/api/v1/sources/${sourceId}`, {
+      params: { id: sourceId },
+      body: { announcedQuantity: null },
+    });
+    expect(invalid.status).toBe(400);
+    expect(invalid.error?.code).toBe("QUANTITY_REQUIRED");
   });
 
   it("réceptionne 9 pièces sur 10 : taux de casse 10 %", async () => {

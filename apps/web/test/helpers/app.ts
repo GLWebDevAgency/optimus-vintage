@@ -1,8 +1,6 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { EnsureWorkspaceForUser } from "@chine/application";
-import { asUserId } from "@chine/domain";
 import {
   authSchema,
   createIsolatedAppDependencies,
@@ -10,7 +8,7 @@ import {
   UuidV7Generator,
 } from "@chine/infrastructure";
 import { setSessionResolverForTests } from "@/lib/api/with-auth";
-import { forgetWorkspace } from "@/lib/api/workspace";
+import { ensureWorkspace, forgetWorkspace } from "@/lib/api/workspace";
 import { type Session, setAuthForTests } from "@/lib/auth";
 import { setContainerForTests } from "@/lib/container";
 
@@ -59,9 +57,8 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     await deps.database.db
       .insert(authSchema.user)
       .values({ id, name, email, emailVerified: true, image: null });
-    const ws = await new EnsureWorkspaceForUser(deps).execute({ userId: asUserId(id) });
-    if (!ws.ok) throw ws.error;
-    return { id, email, name, workspaceId: ws.value.workspace.id };
+    const ws = await ensureWorkspace(deps, id);
+    return { id, email, name, workspaceId: ws.workspace.id };
   }
 
   const owner = await createUser("Léa");
@@ -107,7 +104,11 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
       setContainerForTests(undefined);
       setAuthForTests(undefined);
       forgetWorkspace();
-      await deps.database.close();
+      try {
+        await deps.database.close();
+      } catch {
+        // Déjà fermée par un test (sonde de santé dégradée).
+      }
       rmSync(dataDir, { recursive: true, force: true });
     },
   };

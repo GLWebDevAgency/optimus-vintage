@@ -13,7 +13,18 @@ import {
   type UpdatePurchaseSourceCommand,
 } from "@chine/contract";
 import type { MessageKey } from "@chine/i18n";
-import { AppIcon, BigButton, ChipGroup, Field, MoneyInput, SectionHeader, Select, Textarea, TextInput, useToast } from "@chine/ui";
+import {
+  AppIcon,
+  BigButton,
+  ChipGroup,
+  Field,
+  MoneyInput,
+  SectionHeader,
+  Select,
+  Textarea,
+  TextInput,
+  useToast,
+} from "@chine/ui";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { useCreateSource, useUpdateSource } from "@/hooks/api";
@@ -77,7 +88,8 @@ export function SourceForm({ source, currency }: { source?: SourceDto; currency:
     if (!f.name.trim()) errs.name = t("errors.field.required");
     if (f.goodsMinor === null) errs.goodsMinor = t("errors.field.required");
     const qty = num(f.announcedQuantity);
-    if (needsQuantity && (!qty || !Number.isInteger(qty))) errs.announcedQuantity = t("errors.code.QUANTITY_REQUIRED");
+    if (needsQuantity && (!qty || !Number.isInteger(qty)))
+      errs.announcedQuantity = t("errors.code.QUANTITY_REQUIRED");
     if (!f.purchasedAt) errs.purchasedAt = t("errors.field.date");
     setErrors(errs);
     if (Object.keys(errs).length) return;
@@ -137,12 +149,20 @@ export function SourceForm({ source, currency }: { source?: SourceDto; currency:
             aria-label={t("sources.kind")}
             options={SOURCE_KINDS.map((k) => ({ value: k, label: label.sourceKind(t, k) }))}
           />
-          <p className="text-[12.5px] text-ink-2">{t(`sources.kindHint.${f.kind}` as MessageKey)}</p>
+          <p className="text-[12.5px] text-ink-2">
+            {t(`sources.kindHint.${f.kind}` as MessageKey)}
+          </p>
         </div>
       ) : null}
 
       <Field label={t("sources.name")} required error={errors.name}>
-        <TextInput value={f.name} onChange={(e) => set("name", e.target.value)} placeholder={t("sources.namePlaceholder")} maxLength={140} data-testid="source-name" />
+        <TextInput
+          value={f.name}
+          onChange={(e) => set("name", e.target.value)}
+          placeholder={t("sources.namePlaceholder")}
+          maxLength={140}
+          data-testid="source-name"
+        />
       </Field>
 
       <SectionHeader title={t("sources.supplier")} as="h3" />
@@ -156,26 +176,49 @@ export function SourceForm({ source, currency }: { source?: SourceDto; currency:
         options={SUPPLIER_KINDS.map((k) => ({ value: k, label: label.supplierKindShort(t, k) }))}
       />
       <Field label={t("sources.supplierName")} trailing={t("common.optional")}>
-        <TextInput value={f.supplierName} onChange={(e) => set("supplierName", e.target.value)} maxLength={120} />
+        <TextInput
+          value={f.supplierName}
+          onChange={(e) => set("supplierName", e.target.value)}
+          maxLength={120}
+        />
       </Field>
 
       <SectionHeader title={t("sources.where")} as="h3" />
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("sources.purchasedAt")} required error={errors.purchasedAt}>
-          <TextInput type="date" value={f.purchasedAt} max={isoDay()} onChange={(e) => set("purchasedAt", e.target.value)} />
+          <TextInput
+            type="date"
+            value={f.purchasedAt}
+            max={isoDay()}
+            onChange={(e) => set("purchasedAt", e.target.value)}
+          />
         </Field>
         <Field label={t("sources.location")} trailing={t("common.optional")}>
-          <TextInput value={f.location} onChange={(e) => set("location", e.target.value)} leading={<AppIcon name="pin" size={16} />} maxLength={160} />
+          <TextInput
+            value={f.location}
+            onChange={(e) => set("location", e.target.value)}
+            leading={<AppIcon name="pin" size={16} />}
+            maxLength={160}
+          />
         </Field>
       </div>
 
       <SectionHeader title={t("sources.costs")} as="h3" />
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("sources.goodsCost")} required error={errors.goodsMinor}>
-          <MoneyInput valueMinor={f.goodsMinor} onChangeMinor={(m) => set("goodsMinor", m)} currency={cur} data-testid="source-goods" />
+          <MoneyInput
+            valueMinor={f.goodsMinor}
+            onChangeMinor={(m) => set("goodsMinor", m)}
+            currency={cur}
+            data-testid="source-goods"
+          />
         </Field>
         <Field label={t("sources.extraCosts")} hint={t("sources.extraCostsHint")}>
-          <MoneyInput valueMinor={f.extraMinor} onChangeMinor={(m) => set("extraMinor", m)} currency={cur} />
+          <MoneyInput
+            valueMinor={f.extraMinor}
+            onChangeMinor={(m) => set("extraMinor", m)}
+            currency={cur}
+          />
         </Field>
       </div>
 
@@ -183,25 +226,48 @@ export function SourceForm({ source, currency }: { source?: SourceDto; currency:
         <>
           <SectionHeader title={t("sources.quantityAndWeight")} as="h3" />
           <div className="grid grid-cols-2 gap-3">
-            <Field label={t("sources.announcedQuantity")} required={needsQuantity} error={errors.announcedQuantity}>
-              <TextInput inputMode="numeric" value={f.announcedQuantity} onChange={(e) => set("announcedQuantity", e.target.value)} maxLength={5} />
+            <Field
+              label={t("sources.announcedQuantity")}
+              required={needsQuantity}
+              error={errors.announcedQuantity}
+            >
+              <TextInput
+                inputMode="numeric"
+                value={f.announcedQuantity}
+                onChange={(e) => set("announcedQuantity", e.target.value)}
+                maxLength={5}
+              />
             </Field>
             <Field label={t("sources.weight")} trailing={t("common.optional")}>
-              <TextInput inputMode="decimal" value={f.weightKg} onChange={(e) => set("weightKg", e.target.value)} unit={t("sources.weightUnit")} maxLength={7} />
+              <TextInput
+                inputMode="decimal"
+                value={f.weightKg}
+                onChange={(e) => set("weightKg", e.target.value)}
+                unit={t("sources.weightUnit")}
+                maxLength={7}
+              />
             </Field>
           </div>
           <Field label={t("sources.allocation")}>
             <Select
               value={f.allocationPolicy}
               onChange={(v) => set("allocationPolicy", v)}
-              options={ALLOCATION_POLICIES.map((p) => ({ value: p, label: t(`sources.allocationLabel.${p}` as MessageKey) }))}
+              options={ALLOCATION_POLICIES.map((p) => ({
+                value: p,
+                label: t(`sources.allocationLabel.${p}` as MessageKey),
+              }))}
             />
           </Field>
         </>
       ) : null}
 
       <Field label={t("common.notes")} trailing={t("common.optional")}>
-        <Textarea value={f.notes} onChange={(e) => set("notes", e.target.value)} rows={2} maxLength={2000} />
+        <Textarea
+          value={f.notes}
+          onChange={(e) => set("notes", e.target.value)}
+          rows={2}
+          maxLength={2000}
+        />
       </Field>
 
       <div className="mt-2 pb-2">

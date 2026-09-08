@@ -24,7 +24,11 @@ export function FlipTag({ item, aiRange }: { item: ItemDto; aiRange?: string }) 
   }, [reduced, item.targetPrice]);
 
   const pct = (r: number) =>
-    new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0, signDisplay: "exceptZero" }).format(r);
+    new Intl.NumberFormat(intl, {
+      style: "percent",
+      maximumFractionDigits: 0,
+      signDisplay: "exceptZero",
+    }).format(r);
   const marginRatio =
     item.targetPrice && item.acquisitionCost.minor > 0
       ? (item.targetPrice.minor - item.acquisitionCost.minor) / item.acquisitionCost.minor
@@ -53,7 +57,9 @@ export function FlipTag({ item, aiRange }: { item: ItemDto; aiRange?: string }) 
                 <s>{fmt.money(item.retailPrice)}</s>
                 {item.discountVsRetail !== undefined ? (
                   <span className="badge-cut">
-                    {t("items.discountVsRetail", { percent: `−${Math.round(item.discountVsRetail * 100)} %` })}
+                    {t("items.discountVsRetail", {
+                      percent: `−${Math.round(item.discountVsRetail * 100)} %`,
+                    })}
                   </span>
                 ) : null}
               </>
@@ -70,7 +76,13 @@ export function FlipTag({ item, aiRange }: { item: ItemDto; aiRange?: string }) 
             <span className="k">{t("items.targetPrice")}</span>
             <div className="v">
               {item.targetPrice ? (
-                <Tally value={item.targetPrice} locale={locale} size="card" compact className="!text-bg" />
+                <Tally
+                  value={item.targetPrice}
+                  locale={locale}
+                  size="card"
+                  compact
+                  className="!text-bg"
+                />
               ) : (
                 <span className="text-[16px] font-semibold opacity-80">{t("items.noTarget")}</span>
               )}
@@ -84,7 +96,9 @@ export function FlipTag({ item, aiRange }: { item: ItemDto; aiRange?: string }) 
               </>
             ) : null}
             {marginRatio !== undefined ? (
-              <span className="badge-cut">{t("items.marginBadge", { percent: pct(marginRatio) })}</span>
+              <span className="badge-cut">
+                {t("items.marginBadge", { percent: pct(marginRatio) })}
+              </span>
             ) : null}
           </div>
         </div>

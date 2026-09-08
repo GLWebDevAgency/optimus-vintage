@@ -1,14 +1,24 @@
 "use client";
 
 import type { ItemDto, Platform } from "@chine/contract";
-import { AppIcon, BigButton, Button, ChipGroup, Field, MoneyInput, Sheet, TextInput, useToast } from "@chine/ui";
+import {
+  AppIcon,
+  BigButton,
+  Button,
+  ChipGroup,
+  Field,
+  MoneyInput,
+  Sheet,
+  TextInput,
+  useToast,
+} from "@chine/ui";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useChangeItemStatus, useDeleteItem } from "@/hooks/api";
 import { useT } from "@/hooks/i18n";
 import { ConfirmSheet } from "../common/ConfirmSheet";
 import { useErrorMessage } from "../common/ErrorState";
-import { MAIN_PLATFORMS, label } from "../common/labels";
+import { label, MAIN_PLATFORMS } from "../common/labels";
 
 type Open = null | "list" | "unlist" | "writeOff" | "delete";
 
@@ -28,7 +38,8 @@ export function ItemActions({ item }: { item: ItemDto }) {
   const [url, setUrl] = useState("");
   const [writeOffReason, setWriteOffReason] = useState<"LOST" | "DONATED">("LOST");
 
-  const sellable = item.status === "IN_STOCK" || item.status === "LISTED" || item.status === "RESERVED";
+  const sellable =
+    item.status === "IN_STOCK" || item.status === "LISTED" || item.status === "RESERVED";
   const currency = item.acquisitionCost.currency;
 
   const run = async (action: () => Promise<unknown>, success: string) => {
@@ -57,7 +68,12 @@ export function ItemActions({ item }: { item: ItemDto }) {
     <>
       <div className="flex flex-wrap gap-2 enter d5">
         {item.status === "LISTED" ? (
-          <Button size="sm" variant="subtle" onClick={() => setOpen("unlist")} leading={<AppIcon name="cloudOff" size={14} />}>
+          <Button
+            size="sm"
+            variant="subtle"
+            onClick={() => setOpen("unlist")}
+            leading={<AppIcon name="cloudOff" size={14} />}
+          >
             {t("items.unlist")}
           </Button>
         ) : null}
@@ -65,7 +81,9 @@ export function ItemActions({ item }: { item: ItemDto }) {
           <Button
             size="sm"
             variant="subtle"
-            onClick={() => void run(() => change.mutateAsync({ action: "reserve" }), t("items.reserved"))}
+            onClick={() =>
+              void run(() => change.mutateAsync({ action: "reserve" }), t("items.reserved"))
+            }
             loading={change.isPending && change.variables?.action === "reserve"}
           >
             {t("items.reserve")}
@@ -75,7 +93,9 @@ export function ItemActions({ item }: { item: ItemDto }) {
           <Button
             size="sm"
             variant="subtle"
-            onClick={() => void run(() => change.mutateAsync({ action: "restock" }), t("items.restocked"))}
+            onClick={() =>
+              void run(() => change.mutateAsync({ action: "restock" }), t("items.restocked"))
+            }
             loading={change.isPending && change.variables?.action === "restock"}
           >
             {t("items.restock")}
@@ -115,7 +135,10 @@ export function ItemActions({ item }: { item: ItemDto }) {
           >
             {t("items.listOnline")}
           </BigButton>
-          <BigButton onClick={() => router.push(`/app/ventes/nouvelle?item=${item.id}`)} data-testid="item-sell">
+          <BigButton
+            onClick={() => router.push(`/app/ventes/nouvelle?item=${item.id}`)}
+            data-testid="item-sell"
+          >
             {t("items.sell")}
           </BigButton>
         </div>
@@ -127,7 +150,11 @@ export function ItemActions({ item }: { item: ItemDto }) {
         title={t("items.listSheetTitle")}
         description={t("items.listSheetBody")}
         footer={
-          <BigButton onClick={() => void publish()} loading={change.isPending} disabled={!priceMinor || priceMinor <= 0}>
+          <BigButton
+            onClick={() => void publish()}
+            loading={change.isPending}
+            disabled={!priceMinor || priceMinor <= 0}
+          >
             {t("items.listConfirm")}
           </BigButton>
         }
@@ -143,10 +170,21 @@ export function ItemActions({ item }: { item: ItemDto }) {
             options={MAIN_PLATFORMS.map((p) => ({ value: p, label: label.platform(t, p) }))}
           />
           <Field label={t("items.listPrice")}>
-            <MoneyInput valueMinor={priceMinor} onChangeMinor={setPriceMinor} currency={currency} data-autofocus />
+            <MoneyInput
+              valueMinor={priceMinor}
+              onChangeMinor={setPriceMinor}
+              currency={currency}
+              data-autofocus
+            />
           </Field>
           <Field label={t("items.listUrl")} trailing={t("common.optional")}>
-            <TextInput type="url" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" />
+            <TextInput
+              type="url"
+              inputMode="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://"
+            />
           </Field>
         </div>
       </Sheet>
@@ -170,7 +208,10 @@ export function ItemActions({ item }: { item: ItemDto }) {
         danger
         loading={change.isPending}
         onConfirm={() =>
-          run(() => change.mutateAsync({ action: "writeOff", reason: writeOffReason }), t("items.writtenOff"))
+          run(
+            () => change.mutateAsync({ action: "writeOff", reason: writeOffReason }),
+            t("items.writtenOff"),
+          )
         }
       >
         <ChipGroup

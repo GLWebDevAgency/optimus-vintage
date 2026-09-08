@@ -36,13 +36,20 @@ function subscribe(l: () => void): () => void {
 
 /** Toutes les mutations en file (lecture seule, mise à jour en direct). */
 export function useOutboxEntries(): readonly OutboxEntry[] {
-  return useSyncExternalStore(subscribe, () => entries, () => EMPTY);
+  return useSyncExternalStore(
+    subscribe,
+    () => entries,
+    () => EMPTY,
+  );
 }
 
 /** Vrai si une mutation attend sur ce chemin (« Sync plus tard » sur une pièce, une vente). */
 export function usePendingPath(path: string | undefined): boolean {
   const all = useOutboxEntries();
-  return useMemo(() => Boolean(path) && all.some((e) => e.path.startsWith(path ?? "")), [all, path]);
+  return useMemo(
+    () => Boolean(path) && all.some((e) => e.path.startsWith(path ?? "")),
+    [all, path],
+  );
 }
 
 /* ────────────────────────────── Captures en attente ────────────────────────────── */
@@ -71,27 +78,15 @@ export function usePendingCaptures(): readonly PendingCapture[] {
   const outbox = useOutboxEntries();
   const [urls, setUrls] = useState<Record<string, string>>({});
 
-  // URLs d'objet pour les vignettes : créées à l'apparition, révoquées à la disparition.
+  // URLs d'objet pour les vignettes : créées à chaque changement de la liste, révoquées ensuite.
   useEffect(() => {
     const next: Record<string, string> = {};
-    for (const p of photos) next[p.id] = urls[p.id] ?? URL.createObjectURL(p.blob);
-    for (const [id, url] of Object.entries(urls)) if (!next[id]) URL.revokeObjectURL(url);
-    const changed =
-      Object.keys(next).length !== Object.keys(urls).length ||
-      Object.keys(next).some((k) => next[k] !== urls[k]);
-    if (changed) setUrls(next);
-    // `urls` est dérivé de `photos` : on ne veut réagir qu'aux photos.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    for (const p of photos) next[p.id] = URL.createObjectURL(p.blob);
+    setUrls(next);
+    return () => {
+      for (const url of Object.values(next)) URL.revokeObjectURL(url);
+    };
   }, [photos]);
-
-  useEffect(
-    () => () => {
-      for (const url of Object.values(urls)) URL.revokeObjectURL(url);
-    },
-    // Révocation au démontage seulement.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
 
   return useMemo(() => {
     const fromPhotos: PendingCapture[] = photos.map((p: PendingPhoto) => ({

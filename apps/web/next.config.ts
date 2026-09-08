@@ -76,20 +76,20 @@ if (r2) {
   }
 }
 
+/** Packages du monorepo exécutés par Node hors bundle (voir `webpack` ci-dessous). */
+const WORKSPACE_SERVER_PACKAGES = ["@chine/domain", "@chine/application", "@chine/infrastructure"];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   reactCompiler: true,
   typedRoutes: true,
   poweredByHeader: false,
-  transpilePackages: [
-    "@chine/ui",
-    "@chine/contract",
-    "@chine/i18n",
-    "@chine/domain",
-    "@chine/application",
-    "@chine/infrastructure",
-  ],
-  serverExternalPackages: ["@electric-sql/pglite", "pg", "sharp"],
+  // Packages livrés en sources TypeScript : transpilés par l'app.
+  transpilePackages: ["@chine/ui", "@chine/contract", "@chine/i18n"],
+  // Dépendances natives ou lourdes chargées par Node hors bundle. `drizzle-orm` reste externe pour
+  // qu'une seule instance partage les tables entre l'app et l'infrastructure. Les packages du
+  // monorepo ne peuvent pas y figurer (hors `node_modules`) : webpack les traite via `externals`.
+  serverExternalPackages: ["@electric-sql/pglite", "pg", "sharp", "drizzle-orm"],
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [390, 430, 640, 750, 828, 1080, 1200],
@@ -99,6 +99,32 @@ const nextConfig: NextConfig = {
   // Turbopack est le bundler par défaut de Next 16 en dev ; Serwist (webpack) n'y est actif qu'au build
   // (`next build --webpack`). Cette clé vide évite l'erreur « webpack config sans turbopack config ».
   turbopack: {},
+  webpack(config, { isServer, nextRuntime }) {
+    // Les packages du monorepo importent leurs modules avec l'extension `.js` (style NodeNext) tout
+    // en étant transpilés depuis les sources `.ts` : webpack doit résoudre `./x.js` vers `./x.ts`.
+    config.resolve.extensionAlias = {
+      ...config.resolve.extensionAlias,
+      ".js": [".ts", ".tsx", ".js"],
+      ".mjs": [".mts", ".mjs"],
+    };
+    // Les packages serveur compilés du monorepo (`dist/`, ESM Node) sont chargés par Node tels quels :
+    // l'infrastructure résout ses migrations via `import.meta.url` et ouvre PGlite/pg. Un package de
+    // workspace n'étant pas sous `node_modules`, `serverExternalPackages` ne s'y applique pas.
+    if (isServer && nextRuntime === "nodejs") {
+      const isWorkspaceServerPackage = (request: string) =>
+        WORKSPACE_SERVER_PACKAGES.some((p) => request === p || request.startsWith(`${p}/`));
+      const existing = Array.isArray(config.externals) ? config.externals : [config.externals];
+      config.externals = [
+        ({ request }: { request?: string }, callback: (err?: null, result?: string) => void) => {
+          if (request && isWorkspaceServerPackage(request))
+            return callback(null, `module ${request}`);
+          return callback();
+        },
+        ...existing,
+      ];
+    }
+    return config;
+  },
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },

@@ -32,9 +32,10 @@ export function AppraisalOverlay({ state }: { state: AppraisalState }) {
   if (state.status !== "done") return null;
   const a = state.data;
   const id = a.identification;
-  const confidence = new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0 }).format(
-    Math.max(id.brandConfidence, a.price.confidence),
-  );
+  const confidence = new Intl.NumberFormat(intl, {
+    style: "percent",
+    maximumFractionDigits: 0,
+  }).format(Math.max(id.brandConfidence, a.price.confidence));
   const parts = [
     id.brand,
     label.category(t, id.category).toLowerCase(),
@@ -43,7 +44,9 @@ export function AppraisalOverlay({ state }: { state: AppraisalState }) {
   return (
     <>
       <span className="l" data-testid="appraisal-recognized">
-        {id.brand || id.brandConfidence > 0.5 ? t("chine.recognized", { confidence }) : t("chine.notRecognized")}
+        {id.brand || id.brandConfidence > 0.5
+          ? t("chine.recognized", { confidence })
+          : t("chine.notRecognized")}
       </span>
       <span className="t">
         {parts.join(" · ")}
@@ -88,7 +91,10 @@ export function AppraisalCard({
             {locked ? t("chine.aiLockedBody") : t("appraisal.quotaReached")}
           </div>
         </div>
-        <Link href="/app/reglages#plan" className="btn ghost !min-h-[36px] !px-3 !text-[12px] shrink-0">
+        <Link
+          href="/app/reglages#plan"
+          className="btn ghost !min-h-[36px] !px-3 !text-[12px] shrink-0"
+        >
           {locked ? t("billing.plan.PREMIUM") : t("billing.upgrade")}
         </Link>
       </div>
@@ -149,7 +155,9 @@ export function AppraisalCard({
         <p className="text-[13px] text-ink-2">{advice.reasons.slice(0, 2).join(" · ")}</p>
       ) : null}
       {a.quota && a.quota.limit !== Number.POSITIVE_INFINITY && Number.isFinite(a.quota.limit) ? (
-        <span className="label">{t("appraisal.quota", { used: a.quota.used, limit: a.quota.limit })}</span>
+        <span className="label">
+          {t("appraisal.quota", { used: a.quota.used, limit: a.quota.limit })}
+        </span>
       ) : null}
     </div>
   );

@@ -1,10 +1,9 @@
-import { EnsureWorkspaceForUser } from "@chine/application";
-import { asUserId } from "@chine/domain";
-import { rateLimitKey } from "@chine/infrastructure";
+import { rateLimitKey, UuidV7Generator } from "@chine/infrastructure";
 import { authSchema } from "@chine/infrastructure/auth-schema";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { ensureWorkspace } from "@/lib/api/workspace";
 import { type Container, getContainer } from "@/lib/container";
 import { type AppEnv, getEnv } from "@/lib/env";
 import { describeError, log, warnOnce } from "@/lib/log";
@@ -37,6 +36,8 @@ export const workspaceNameFor = (userName: string | null | undefined): string | 
 };
 
 const FIFTEEN_MINUTES = 15 * 60;
+/** Identifiants des tables d'auth : UUID v7 (triables), comme le reste du schéma. */
+const authIds = new UuidV7Generator();
 
 export function createAuth({
   deps,
@@ -111,7 +112,7 @@ export function createAuth({
       },
     },
     advanced: {
-      database: { generateId: "uuid" },
+      database: { generateId: () => authIds.next() },
       useSecureCookies: isProd,
       defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: isProd, path: "/" },
     },
@@ -119,14 +120,13 @@ export function createAuth({
       user: {
         create: {
           after: async (user) => {
-            const result = await new EnsureWorkspaceForUser(deps).execute({
-              userId: asUserId(user.id),
-              name: workspaceNameFor(user.name),
-            });
-            if (!result.ok) {
+            try {
+              await ensureWorkspace(deps, user.id, workspaceNameFor(user.name));
+            } catch (e) {
+              // L'inscription reste valide : l'espace sera créé à la première requête API.
               log.error("création de l'espace de travail impossible", {
                 userId: user.id,
-                code: result.error.code,
+                ...describeError(e),
               });
             }
           },

@@ -1,7 +1,16 @@
 "use client";
 
 import type { DashboardPeriod, SaleDto } from "@chine/contract";
-import { AppIcon, Button, EmptyState, List, ListRow, Segmented, SkeletonRow, StatusPill } from "@chine/ui";
+import {
+  AppIcon,
+  Button,
+  EmptyState,
+  List,
+  ListRow,
+  Segmented,
+  SkeletonRow,
+  StatusPill,
+} from "@chine/ui";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Screen } from "@/components/shell/Screen";
@@ -12,8 +21,8 @@ import { useDashboard, useSales } from "@/hooks/api";
 import { useFormat, useLocale, useT } from "@/hooks/i18n";
 import { useOutboxEntries } from "@/hooks/offline";
 import { ErrorState } from "../common/ErrorState";
-import { label, periodLabel, periodRange, salePill } from "../common/labels";
 import { LoadMore } from "../common/LoadMore";
+import { label, periodLabel, periodRange, salePill } from "../common/labels";
 
 const PERIODS: readonly DashboardPeriod[] = ["month", "30d", "3m", "year"];
 
@@ -24,7 +33,9 @@ function groupByDay(sales: readonly SaleDto[]): { day: string; sales: SaleDto[] 
     list.push(s);
     groups.set(s.soldAt, list);
   }
-  return [...groups.entries()].sort(([a], [b]) => (a < b ? 1 : -1)).map(([day, list]) => ({ day, sales: list }));
+  return [...groups.entries()]
+    .sort(([a], [b]) => (a < b ? 1 : -1))
+    .map(([day, list]) => ({ day, sales: list }));
 }
 
 /** Ventes : période, quatre chiffres, liste par jour avec plateforme et marge nette. */
@@ -45,7 +56,11 @@ export function SalesScreen() {
   const stats = dashboard.data?.current;
   const change = dashboard.data?.change.net;
   const pct = (r: number) =>
-    new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0, signDisplay: "exceptZero" }).format(r);
+    new Intl.NumberFormat(intl, {
+      style: "percent",
+      maximumFractionDigits: 0,
+      signDisplay: "exceptZero",
+    }).format(r);
 
   return (
     <>
@@ -53,7 +68,11 @@ export function SalesScreen() {
         title={t("sales.title")}
         kicker={periodLabel(t, period, intl)}
         actions={
-          <Link href="/app/ventes/nouvelle" className="avatar !bg-btn !text-btn-ink" aria-label={t("sales.new")}>
+          <Link
+            href="/app/ventes/nouvelle"
+            className="avatar !bg-btn !text-btn-ink"
+            aria-label={t("sales.new")}
+          >
             <IconPlus />
           </Link>
         }
@@ -72,25 +91,47 @@ export function SalesScreen() {
           <div className="kpi-tile">
             <span className="k">{t("sales.kpiNet")}</span>
             <span className="v">
-              {stats ? fmt.money(stats.net, { compact: true }) : <span className="sk text inline-block w-16" />}
+              {stats ? (
+                fmt.money(stats.net, { compact: true })
+              ) : (
+                <span className="sk text inline-block w-16" />
+              )}
             </span>
           </div>
           <div className="kpi-tile">
             <span className="k">{t("sales.kpiCount")}</span>
             <span className="v">
-              {stats ? stats.salesCount + pendingSales : <span className="sk text inline-block w-10" />}
+              {stats ? (
+                stats.salesCount + pendingSales
+              ) : (
+                <span className="sk text inline-block w-10" />
+              )}
             </span>
           </div>
           <div className="kpi-tile">
             <span className="k">{t("sales.kpiTicket")}</span>
             <span className="v">
-              {stats ? fmt.money(stats.averageTicket, { compact: true }) : <span className="sk text inline-block w-14" />}
+              {stats ? (
+                fmt.money(stats.averageTicket, { compact: true })
+              ) : (
+                <span className="sk text inline-block w-14" />
+              )}
             </span>
           </div>
           <div className="kpi-tile">
             <span className="k">{t("sales.kpiChange")}</span>
-            <span className={`v ${change !== undefined && change < 0 ? "text-thread" : "text-brass"}`}>
-              {stats ? (change !== undefined ? pct(change) : "—") : <span className="sk text inline-block w-12" />}
+            <span
+              className={`v ${change !== undefined && change < 0 ? "text-thread" : "text-brass"}`}
+            >
+              {stats ? (
+                change !== undefined ? (
+                  pct(change)
+                ) : (
+                  "—"
+                )
+              ) : (
+                <span className="sk text inline-block w-12" />
+              )}
             </span>
           </div>
         </div>
@@ -109,7 +150,11 @@ export function SalesScreen() {
               title={t("sales.empty")}
               body={t("sales.emptyBody")}
               action={
-                <Button href="/app/ventes/nouvelle" Link={NextLink} leading={<AppIcon name="receipt" size={18} />}>
+                <Button
+                  href="/app/ventes/nouvelle"
+                  Link={NextLink}
+                  leading={<AppIcon name="receipt" size={18} />}
+                >
                   {t("sales.new")}
                 </Button>
               }
@@ -133,7 +178,10 @@ export function SalesScreen() {
                       locale={locale}
                       trailing={
                         s.status !== "COMPLETED" ? (
-                          <StatusPill status={salePill(s.status)} label={label.saleStatus(t, s.status)} />
+                          <StatusPill
+                            status={salePill(s.status)}
+                            label={label.saleStatus(t, s.status)}
+                          />
                         ) : undefined
                       }
                     />

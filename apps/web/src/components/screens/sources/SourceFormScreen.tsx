@@ -20,7 +20,7 @@ export function SourceFormScreen({ id }: { id?: string }) {
     <>
       <TopBar
         title={editing ? t("common.edit") : t("sources.new")}
-        kicker={editing ? source.data?.name ?? t("sources.one") : t("sources.title")}
+        kicker={editing ? (source.data?.name ?? t("sources.one")) : t("sources.title")}
         back={editing ? (`/app/sources/${id}` as Route) : "/app/sources"}
         avatar={false}
       />
@@ -30,7 +30,11 @@ export function SourceFormScreen({ id }: { id?: string }) {
             <PageSkeleton variant="settings" rows={5} />
           ) : (
             <div className="card enter d2">
-              <ErrorState error={source.error} onRetry={() => void source.refetch()} title={t("sources.notFound")} />
+              <ErrorState
+                error={source.error}
+                onRetry={() => void source.refetch()}
+                title={t("sources.notFound")}
+              />
             </div>
           )
         ) : (

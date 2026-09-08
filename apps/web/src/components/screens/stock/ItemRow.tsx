@@ -12,9 +12,10 @@ export function ItemRow({ item, pendingSync }: { item: ItemDto; pendingSync?: bo
   const t = useT();
   const { locale } = useLocale();
   const pill = itemPill(t, item.status, item.isDormant);
-  const age = item.status === "SOLD" || item.status === "LOST" || item.status === "DONATED"
-    ? label.itemStatus(t, item.status)
-    : t("items.ageShort", { days: item.ageDays });
+  const age =
+    item.status === "SOLD" || item.status === "LOST" || item.status === "DONATED"
+      ? label.itemStatus(t, item.status)
+      : t("items.ageShort", { days: item.ageDays });
   return (
     <ListRow
       href={`/app/stock/${item.id}`}
@@ -42,7 +43,9 @@ export function PendingItemRow({ capture }: { capture: PendingCapture }) {
   const t = useT();
   const fmt = useFormat();
   const c = capture.command;
-  const price = c.pricePaid ? fmt.money({ minor: c.pricePaid.minor, currency: c.pricePaid.currency }, { compact: true }) : "";
+  const price = c.pricePaid
+    ? fmt.money({ minor: c.pricePaid.minor, currency: c.pricePaid.currency }, { compact: true })
+    : "";
   return (
     <ListRow
       thumb={capture.photoUrl ?? <AppIcon name="camera" size={18} />}
@@ -53,7 +56,9 @@ export function PendingItemRow({ capture }: { capture: PendingCapture }) {
       trailing={
         <StatusPill
           status={capture.stage === "failed" ? "dormant" : "pending"}
-          label={capture.stage === "failed" ? t("pwa.failedBanner", { count: 1 }) : t("common.syncLater")}
+          label={
+            capture.stage === "failed" ? t("pwa.failedBanner", { count: 1 }) : t("common.syncLater")
+          }
         />
       }
       className={capture.stage === "failed" ? "opacity-80" : undefined}

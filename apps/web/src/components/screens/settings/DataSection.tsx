@@ -64,13 +64,24 @@ export function DataSection() {
         <div className="text-[14.5px] font-semibold">{t("settings.exportJson")}</div>
         <div className="text-[12.5px] text-ink-2">{t("settings.exportHint")}</div>
       </div>
-      <Button variant="ghost" onClick={() => void exportJson()} loading={exporting} leading={<AppIcon name="share" size={16} />}>
+      <Button
+        variant="ghost"
+        onClick={() => void exportJson()}
+        loading={exporting}
+        leading={<AppIcon name="share" size={16} />}
+      >
         {t("settings.exportJson")}
       </Button>
       <div className="border-t border-line pt-3">
         <span className="label text-thread">{t("settings.dangerZone")}</span>
         <p className="mt-1 text-[12.5px] text-ink-2">{t("settings.deleteAccountConfirm")}</p>
-        <Button variant="ghost" className="mt-2 !text-thread" onClick={() => setOpen(true)} leading={<AppIcon name="trash" size={16} />} data-testid="delete-account">
+        <Button
+          variant="ghost"
+          className="mt-2 !text-thread"
+          onClick={() => setOpen(true)}
+          leading={<AppIcon name="trash" size={16} />}
+          data-testid="delete-account"
+        >
           {t("settings.deleteAccount")}
         </Button>
       </div>

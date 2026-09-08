@@ -30,7 +30,12 @@ export function ItemPhotos({ item }: { item: ItemDto }) {
     setUploading(tempUrl);
     try {
       const img = await prepareImage(file);
-      await add.mutateAsync({ blob: img.blob, mimeType: img.mimeType, width: img.width, height: img.height });
+      await add.mutateAsync({
+        blob: img.blob,
+        mimeType: img.mimeType,
+        width: img.width,
+        height: img.height,
+      });
       URL.revokeObjectURL(img.previewUrl);
       show(t("items.photoAdded"), { kind: "success" });
     } catch (err) {
@@ -93,10 +98,18 @@ export function ItemPhotos({ item }: { item: ItemDto }) {
         title={`${t("items.photos")} · ${index + 1}/${item.photos.length}`}
         footer={
           <div className="grid grid-cols-2 gap-2.5">
-            <BigButton variant="secondary" onClick={() => void removeCurrent()} loading={remove.isPending}>
+            <BigButton
+              variant="secondary"
+              onClick={() => void removeCurrent()}
+              loading={remove.isPending}
+            >
               {t("common.remove")}
             </BigButton>
-            <BigButton onClick={() => void makeFirst()} disabled={index === 0} loading={reorder.isPending}>
+            <BigButton
+              onClick={() => void makeFirst()}
+              disabled={index === 0}
+              loading={reorder.isPending}
+            >
               Principale
             </BigButton>
           </div>
@@ -104,7 +117,12 @@ export function ItemPhotos({ item }: { item: ItemDto }) {
       >
         {current ? (
           <div className="grid gap-3 py-1">
-            <img src={current.url} alt="" className="max-h-[52dvh] w-full rounded-card object-contain bg-surface-2" />
+            {/* biome-ignore lint/performance/noImgElement: photo distante (stockage), hors next/image */}
+            <img
+              src={current.url}
+              alt=""
+              className="max-h-[52dvh] w-full rounded-card object-contain bg-surface-2"
+            />
             <div className="flex justify-between">
               <Button
                 size="sm"

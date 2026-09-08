@@ -1,11 +1,10 @@
-import { EnsureWorkspaceForUser } from "@chine/application";
+import { EnsureWorkspaceForUser, type EnsureWorkspaceForUserOutput } from "@chine/application";
 import { asUserId, type WorkspaceId } from "@chine/domain";
 import type { Container } from "@/lib/container";
 
 /**
- * Résolution de l'espace de travail d'un utilisateur, mémorisée 60 s dans un petit cache LRU :
- * le premier appel crée l'espace s'il n'existe pas encore (inscription concurrente, import…),
- * les suivants évitent une transaction par requête.
+ * Espace de travail d'un utilisateur : création au premier passage, puis résolution mémorisée
+ * 60 s dans un petit cache LRU (une transaction évitée par requête).
  */
 const TTL_MS = 60_000;
 const MAX_ENTRIES = 1_000;
@@ -16,6 +15,29 @@ interface Entry {
 }
 
 const cache = new Map<string, Entry>();
+
+/**
+ * Exécute `EnsureWorkspaceForUser` en lisant le plan courant avant d'ouvrir la transaction.
+ *
+ * Le cas d'usage interroge la facturation depuis l'intérieur de sa transaction ; nos passerelles
+ * (Stripe comme neutre) lisent ce plan dans la colonne `workspaces.plan`, c'est-à-dire la valeur
+ * déjà chargée. PGlite (développement, tests) ne dispose que d'une connexion : une lecture hors
+ * transaction pendant une transaction ouverte bloquerait. On fournit donc le plan tel quel.
+ */
+export async function ensureWorkspace(
+  deps: Container,
+  userId: string,
+  name?: string,
+): Promise<EnsureWorkspaceForUserOutput> {
+  const existing = await deps.workspaces.byOwner(asUserId(userId));
+  const plan = existing?.plan ?? "FREE";
+  const result = await new EnsureWorkspaceForUser({
+    ...deps,
+    billing: { ...deps.billing, currentPlan: async () => plan },
+  }).execute({ userId: asUserId(userId), name });
+  if (!result.ok) throw result.error;
+  return result.value;
+}
 
 function remember(userId: string, workspaceId: WorkspaceId, now: number): void {
   cache.delete(userId);
@@ -35,11 +57,9 @@ export async function resolveWorkspaceId(deps: Container, userId: string): Promi
     cache.set(userId, hit);
     return hit.workspaceId;
   }
-  const result = await new EnsureWorkspaceForUser(deps).execute({ userId: asUserId(userId) });
-  if (!result.ok) throw result.error;
-  const workspaceId = result.value.workspace.id;
-  remember(userId, workspaceId, now);
-  return workspaceId;
+  const { workspace } = await ensureWorkspace(deps, userId);
+  remember(userId, workspace.id, now);
+  return workspace.id;
 }
 
 /** Oublie l'entrée d'un utilisateur (suppression de compte, tests). */

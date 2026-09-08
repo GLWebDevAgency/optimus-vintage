@@ -33,6 +33,7 @@ export function CaptureSuccess({
       <div className="sale-hero enter d1">
         <div className="ring overflow-hidden">
           {previewUrl ? (
+            // biome-ignore lint/performance/noImgElement: photo distante ou URL d'objet, hors next/image
             <img src={previewUrl} alt="" className="h-full w-full object-cover" />
           ) : (
             <AppIcon name="shirt" size={56} className="text-indigo" />
@@ -42,7 +43,8 @@ export function CaptureSuccess({
           {t("chine.stamp")}
         </Stamp>
         <p className="caption">
-          <b className="text-ink">{title}</b> · {fmt.money({ minor: pricePaidMinor, currency }, { compact: true })}
+          <b className="text-ink">{title}</b> ·{" "}
+          {fmt.money({ minor: pricePaidMinor, currency }, { compact: true })}
           {item?.sku ? ` · ${item.sku}` : ""}
         </p>
         {deferred ? (

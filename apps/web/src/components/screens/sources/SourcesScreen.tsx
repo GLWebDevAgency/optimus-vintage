@@ -12,8 +12,8 @@ import { NextLink } from "@/components/ui/NextLink";
 import { useSources } from "@/hooks/api";
 import { useLocale, useT } from "@/hooks/i18n";
 import { ErrorState } from "../common/ErrorState";
-import { label } from "../common/labels";
 import { LoadMore } from "../common/LoadMore";
+import { label } from "../common/labels";
 import { SourceCard } from "./SourceCard";
 
 type Seg = "all" | SourceKind;
@@ -29,7 +29,10 @@ export function SourcesScreen() {
   const total = query.data?.pages[0]?.total ?? 0;
   const month = new Intl.DateTimeFormat(intl, { month: "long" }).format(new Date());
   const kicker = query.data
-    ? t("sources.monthCount", { month: month.charAt(0).toUpperCase() + month.slice(1), count: total })
+    ? t("sources.monthCount", {
+        month: month.charAt(0).toUpperCase() + month.slice(1),
+        count: total,
+      })
     : t("common.loading");
 
   return (
@@ -38,7 +41,12 @@ export function SourcesScreen() {
         title={t("sources.title")}
         kicker={kicker}
         actions={
-          <Link href="/app/sources/nouvelle" className="avatar !bg-btn !text-btn-ink" aria-label={t("sources.new")} data-testid="sources-new">
+          <Link
+            href="/app/sources/nouvelle"
+            className="avatar !bg-btn !text-btn-ink"
+            aria-label={t("sources.new")}
+            data-testid="sources-new"
+          >
             <IconPlus />
           </Link>
         }
@@ -50,7 +58,10 @@ export function SourcesScreen() {
           size="sm"
           aria-label={t("sources.kind")}
           className="enter d2"
-          options={SEGS.map((s) => ({ value: s, label: s === "all" ? t("common.all") : label.sourceKindPlural(t, s) }))}
+          options={SEGS.map((s) => ({
+            value: s,
+            label: s === "all" ? t("common.all") : label.sourceKindPlural(t, s),
+          }))}
         />
         {query.isPending && !query.data ? (
           <PageSkeleton variant="sources" rows={4} />
@@ -64,7 +75,11 @@ export function SourcesScreen() {
               title={t("sources.empty")}
               body={t("sources.emptyBody")}
               action={
-                <Button href="/app/sources/nouvelle" Link={NextLink} leading={<AppIcon name="plus" size={18} />}>
+                <Button
+                  href="/app/sources/nouvelle"
+                  Link={NextLink}
+                  leading={<AppIcon name="plus" size={18} />}
+                >
                   {t("sources.new")}
                 </Button>
               }

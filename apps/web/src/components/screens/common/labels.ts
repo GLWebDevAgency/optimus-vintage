@@ -91,7 +91,10 @@ export function isoDay(d = new Date()): string {
 }
 
 /** Bornes `from` / `to` d'une période du tableau de bord (calendrier local). */
-export function periodRange(period: DashboardPeriod, now = new Date()): { from?: string; to: string } {
+export function periodRange(
+  period: DashboardPeriod,
+  now = new Date(),
+): { from?: string; to: string } {
   const to = isoDay(now);
   const d = new Date(now);
   switch (period) {
@@ -121,4 +124,5 @@ export function periodLabel(t: TFunction, period: DashboardPeriod, intl: string,
 }
 
 /** Nom court d'un fichier de photo (type MIME → extension). */
-export const mimeExt = (mime: string) => (mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg");
+export const mimeExt = (mime: string) =>
+  mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";

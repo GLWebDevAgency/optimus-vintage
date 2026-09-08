@@ -32,13 +32,22 @@ export function ItemScreen({ id }: { id: string }) {
 
   return (
     <>
-      <TopBar title={item?.title ?? t("items.one")} kicker={kicker} back="/app/stock" avatar={false} />
+      <TopBar
+        title={item?.title ?? t("items.one")}
+        kicker={kicker}
+        back="/app/stock"
+        avatar={false}
+      />
       <Screen>
         {!item && query.isPending ? (
           <PageSkeleton variant="item" />
         ) : !item ? (
           <div className="card enter d2">
-            <ErrorState error={query.error} onRetry={() => void query.refetch()} title={t("items.notFound")} />
+            <ErrorState
+              error={query.error}
+              onRetry={() => void query.refetch()}
+              title={t("items.notFound")}
+            />
           </div>
         ) : (
           <ItemBody item={item} pendingSync={pendingStatus || Boolean(item.pendingSync)} />
@@ -71,7 +80,8 @@ function ItemBody({ item, pendingSync }: { item: ItemDto; pendingSync: boolean }
     [workspace.data],
   );
   const sims = useMemo(
-    () => (simPrice ? simulateAcross(SIM_PLATFORMS, simPrice, item.acquisitionCost, schedules) : []),
+    () =>
+      simPrice ? simulateAcross(SIM_PLATFORMS, simPrice, item.acquisitionCost, schedules) : [],
     [simPrice, item.acquisitionCost, schedules],
   );
   const sim = sims.find((s) => s.platform === platform) ?? sims[0];
@@ -134,7 +144,11 @@ function ItemBody({ item, pendingSync }: { item: ItemDto; pendingSync: boolean }
               <Receipt
                 locale={locale}
                 rows={[
-                  { key: "price", label: listing ? t("items.listedPrice") : t("items.targetPrice"), value: sim.price },
+                  {
+                    key: "price",
+                    label: listing ? t("items.listedPrice") : t("items.targetPrice"),
+                    value: sim.price,
+                  },
                   {
                     key: "fees",
                     label: t("sales.platformFees", { platform: label.platform(t, sim.platform) }),
@@ -143,9 +157,18 @@ function ItemBody({ item, pendingSync }: { item: ItemDto; pendingSync: boolean }
                   {
                     key: "cost",
                     label: t("sales.acquisition"),
-                    value: { minor: -item.acquisitionCost.minor, currency: item.acquisitionCost.currency },
+                    value: {
+                      minor: -item.acquisitionCost.minor,
+                      currency: item.acquisitionCost.currency,
+                    },
                   },
-                  { key: "margin", label: t("sales.netMargin"), value: sim.margin, total: true, signed: true },
+                  {
+                    key: "margin",
+                    label: t("sales.netMargin"),
+                    value: sim.margin,
+                    total: true,
+                    signed: true,
+                  },
                   { key: "roi", label: t("sales.roi"), value: { ratio: sim.roi } },
                 ]}
               />
@@ -154,7 +177,10 @@ function ItemBody({ item, pendingSync }: { item: ItemDto; pendingSync: boolean }
         ) : (
           <p className="text-[13px] text-ink-2">
             {t("items.noTarget")} ·{" "}
-            <Link href={`/app/stock/${item.id}/modifier`} className="font-semibold text-ink underline">
+            <Link
+              href={`/app/stock/${item.id}/modifier`}
+              className="font-semibold text-ink underline"
+            >
               {t("common.edit")}
             </Link>
           </p>

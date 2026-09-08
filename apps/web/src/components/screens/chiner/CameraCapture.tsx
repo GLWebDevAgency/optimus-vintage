@@ -60,7 +60,11 @@ export function CameraCapture({
     setState("starting");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1600 }, height: { ideal: 2000 } },
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1600 },
+          height: { ideal: 2000 },
+        },
         audio: false,
       });
       streamRef.current = stream;
@@ -83,9 +87,7 @@ export function CameraCapture({
       return;
     }
     if (state === "idle" || state === "off") void start();
-    // `start` et `stop` sont stables ; on ne veut réagir qu'à la présence d'une photo.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photo]);
+  }, [photo, state, start, stop]);
   useEffect(() => stop, [stop]);
 
   const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -119,8 +121,13 @@ export function CameraCapture({
 
   return (
     <div className="grid gap-2.5">
-      <div className="viewfinder enter d2" data-state={photo ? "photo" : state} data-testid="viewfinder">
+      <div
+        className="viewfinder enter d2"
+        data-state={photo ? "photo" : state}
+        data-testid="viewfinder"
+      >
         {photo ? (
+          // biome-ignore lint/performance/noImgElement: aperçu local (URL d'objet), hors next/image
           <img src={photo.previewUrl} alt={t("chine.photoAlt")} />
         ) : (
           <video
@@ -162,7 +169,9 @@ export function CameraCapture({
                   ? t("chine.cameraUnavailable")
                   : t("chine.takePhoto")}
             </p>
-            {state === "denied" ? <p className="text-[12px] opacity-70">{t("chine.cameraDeniedBody")}</p> : null}
+            {state === "denied" ? (
+              <p className="text-[12px] opacity-70">{t("chine.cameraDeniedBody")}</p>
+            ) : null}
             <div className="flex flex-wrap justify-center gap-2 pt-1">
               <Button
                 size="sm"

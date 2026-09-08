@@ -29,7 +29,11 @@ export function ItemEditScreen({ id }: { id: string }) {
           <PageSkeleton variant="settings" rows={6} />
         ) : (
           <div className="card enter d2">
-            <ErrorState error={query.error} onRetry={() => void query.refetch()} title={t("items.notFound")} />
+            <ErrorState
+              error={query.error}
+              onRetry={() => void query.refetch()}
+              title={t("items.notFound")}
+            />
           </div>
         )}
       </Screen>

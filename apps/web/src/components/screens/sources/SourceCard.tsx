@@ -13,15 +13,24 @@ export function SourceCard({ source, index = 0 }: { source: SourceDto; index?: n
   const { intl } = useLocale();
   const p = source.performance;
   const sub = [
-    source.location?.label ?? source.supplierName ?? label.supplierKindShort(t, source.supplierKind),
-    source.weightKg ? new Intl.NumberFormat(intl, { style: "unit", unit: "kilogram", maximumFractionDigits: 1 }).format(source.weightKg) : null,
+    source.location?.label ??
+      source.supplierName ??
+      label.supplierKindShort(t, source.supplierKind),
+    source.weightKg
+      ? new Intl.NumberFormat(intl, {
+          style: "unit",
+          unit: "kilogram",
+          maximumFractionDigits: 1,
+        }).format(source.weightKg)
+      : null,
     source.kind === "UNIT"
       ? fmt.date(source.purchasedAt, "medium")
       : t("common.pieces", { count: source.effectiveQuantity ?? source.itemCount }),
   ]
     .filter(Boolean)
     .join(" · ");
-  const remaining = (source.effectiveQuantity ?? source.itemCount) - p.soldCount - p.writtenOffCount;
+  const remaining =
+    (source.effectiveQuantity ?? source.itemCount) - p.soldCount - p.writtenOffCount;
 
   return (
     <Link
@@ -44,7 +53,10 @@ export function SourceCard({ source, index = 0 }: { source: SourceDto; index?: n
         </div>
         <div className="amt">
           {fmt.money(source.totalInvestment, { compact: true, symbol: false })}
-          <small> {source.totalInvestment.currency === "EUR" ? "€" : source.totalInvestment.currency}</small>
+          <small>
+            {" "}
+            {source.totalInvestment.currency === "EUR" ? "€" : source.totalInvestment.currency}
+          </small>
         </div>
       </div>
       <StitchProgress
@@ -53,7 +65,10 @@ export function SourceCard({ source, index = 0 }: { source: SourceDto; index?: n
         height={10}
         delay={0.2 + index * 0.1}
         aria-label={t("sources.recoveryRate", {
-          percent: new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0 }).format(p.recoveryRate),
+          percent: new Intl.NumberFormat(intl, {
+            style: "percent",
+            maximumFractionDigits: 0,
+          }).format(p.recoveryRate),
         })}
       />
       <div className="foot">
@@ -62,7 +77,9 @@ export function SourceCard({ source, index = 0 }: { source: SourceDto; index?: n
         </span>
         {!p.isAmortized && p.floorPriceBreakEven && remaining > 0 ? (
           <span className="text-thread">
-            {t("sources.floorPrice", { amount: fmt.money(p.floorPriceBreakEven, { compact: true }) })}
+            {t("sources.floorPrice", {
+              amount: fmt.money(p.floorPriceBreakEven, { compact: true }),
+            })}
           </span>
         ) : (
           <span>

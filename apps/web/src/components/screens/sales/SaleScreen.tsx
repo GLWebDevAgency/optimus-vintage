@@ -1,7 +1,18 @@
 "use client";
 
 import type { SaleDto } from "@chine/contract";
-import { AppIcon, Button, Field, Receipt, SnapToggle, Stamp, StatusPill, Tally, TextInput, useToast } from "@chine/ui";
+import {
+  AppIcon,
+  Button,
+  Field,
+  Receipt,
+  SnapToggle,
+  Stamp,
+  StatusPill,
+  Tally,
+  TextInput,
+  useToast,
+} from "@chine/ui";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PageSkeleton } from "@/components/shell/PageSkeleton";
@@ -25,7 +36,8 @@ export function SaleScreen({ id }: { id: string }) {
         title={
           sale ? (
             <>
-              {t("sales.stampSold")} <em>{t("sales.soldOnPlatform", { platform: label.platform(t, sale.platform) })}</em>
+              {t("sales.stampSold")}{" "}
+              <em>{t("sales.soldOnPlatform", { platform: label.platform(t, sale.platform) })}</em>
             </>
           ) : (
             t("sales.detailTitle")
@@ -40,7 +52,11 @@ export function SaleScreen({ id }: { id: string }) {
           <PageSkeleton variant="sale" />
         ) : !sale ? (
           <div className="card enter d2">
-            <ErrorState error={query.error} onRetry={() => void query.refetch()} title={t("sales.notFound")} />
+            <ErrorState
+              error={query.error}
+              onRetry={() => void query.refetch()}
+              title={t("sales.notFound")}
+            />
           </div>
         ) : (
           <SaleBody sale={sale} />
@@ -64,9 +80,16 @@ function SaleBody({ sale }: { sale: SaleDto }) {
   const [reason, setReason] = useState("");
   const [restock, setRestock] = useState(true);
   const eco = sale.economics;
-  const neg = (m: { minor: number; currency: string }) => ({ minor: -Math.abs(m.minor), currency: m.currency });
+  const neg = (m: { minor: number; currency: string }) => ({
+    minor: -Math.abs(m.minor),
+    currency: m.currency,
+  });
   const pct = (r: number) =>
-    new Intl.NumberFormat(intl, { style: "percent", maximumFractionDigits: 0, signDisplay: "exceptZero" }).format(r);
+    new Intl.NumberFormat(intl, {
+      style: "percent",
+      maximumFractionDigits: 0,
+      signDisplay: "exceptZero",
+    }).format(r);
   const active = sale.status === "COMPLETED" || sale.status === "PENDING";
 
   const run = async (fn: () => Promise<unknown>, msg: string) => {
@@ -84,6 +107,7 @@ function SaleBody({ sale }: { sale: SaleDto }) {
       <div className="sale-hero enter d2">
         <div className="ring overflow-hidden">
           {sale.item?.thumbnailUrl ? (
+            // biome-ignore lint/performance/noImgElement: photo distante ou URL d'objet, hors next/image
             <img src={sale.item.thumbnailUrl} alt="" className="h-full w-full object-cover" />
           ) : (
             <AppIcon name="shirt" size={56} className="text-indigo" />
@@ -95,7 +119,8 @@ function SaleBody({ sale }: { sale: SaleDto }) {
           </Stamp>
         ) : null}
         <p className="caption">
-          <b className="text-ink">{sale.item?.title ?? t("items.one")}</b> · {fmt.money(sale.grossPrice)}
+          <b className="text-ink">{sale.item?.title ?? t("items.one")}</b> ·{" "}
+          {fmt.money(sale.grossPrice)}
           {sale.buyer ? ` · ${t("sales.buyer").toLowerCase()} ${sale.buyer}` : ""}
         </p>
         <div className="flex flex-wrap justify-center gap-2">
@@ -110,7 +135,14 @@ function SaleBody({ sale }: { sale: SaleDto }) {
           <div>
             <span className="k">{t("sales.netMargin")}</span>
             <div className="v">
-              <Tally value={eco.margin} locale={locale} size="card" tone={eco.margin.minor < 0 ? "thread" : "brass"} signed duration={0.8} />
+              <Tally
+                value={eco.margin}
+                locale={locale}
+                size="card"
+                tone={eco.margin.minor < 0 ? "thread" : "brass"}
+                signed
+                duration={0.8}
+              />
             </div>
           </div>
           {eco.roi !== undefined ? (
@@ -124,14 +156,28 @@ function SaleBody({ sale }: { sale: SaleDto }) {
           locale={locale}
           rows={[
             { key: "gross", label: t("sales.grossPrice"), value: eco.gross },
-            { key: "fees", label: t("sales.platformFees", { platform: label.platform(t, sale.platform) }), value: neg(eco.fees) },
+            {
+              key: "fees",
+              label: t("sales.platformFees", { platform: label.platform(t, sale.platform) }),
+              value: neg(eco.fees),
+            },
             { key: "ship", label: t("sales.shipping"), value: neg(sale.shippingCost) },
             { key: "pack", label: t("sales.packaging"), value: neg(sale.packagingCost) },
-            ...(sale.otherCosts.minor > 0 ? [{ key: "other", label: t("sales.otherCosts"), value: neg(sale.otherCosts) }] : []),
+            ...(sale.otherCosts.minor > 0
+              ? [{ key: "other", label: t("sales.otherCosts"), value: neg(sale.otherCosts) }]
+              : []),
             { key: "net", label: t("sales.net"), value: eco.net },
             { key: "acq", label: t("sales.acquisition"), value: neg(sale.acquisitionCost) },
-            { key: "margin", label: t("sales.netMargin"), value: eco.margin, total: true, signed: true },
-            ...(eco.marginRate !== undefined ? [{ key: "rate", label: t("sales.marginRate"), value: { ratio: eco.marginRate } }] : []),
+            {
+              key: "margin",
+              label: t("sales.netMargin"),
+              value: eco.margin,
+              total: true,
+              signed: true,
+            },
+            ...(eco.marginRate !== undefined
+              ? [{ key: "rate", label: t("sales.marginRate"), value: { ratio: eco.marginRate } }]
+              : []),
           ]}
         />
       </div>
@@ -139,7 +185,12 @@ function SaleBody({ sale }: { sale: SaleDto }) {
       {sale.notes ? <p className="text-[13.5px] text-ink-2 enter d4">{sale.notes}</p> : null}
 
       <div className="flex flex-wrap gap-2 enter d4">
-        <Button size="sm" variant="subtle" onClick={() => router.push(`/app/stock/${sale.itemId}`)} leading={<AppIcon name="tag" size={14} />}>
+        <Button
+          size="sm"
+          variant="subtle"
+          onClick={() => router.push(`/app/stock/${sale.itemId}`)}
+          leading={<AppIcon name="tag" size={14} />}
+        >
           {t("sales.viewItem")}
         </Button>
         {active ? (
@@ -148,7 +199,12 @@ function SaleBody({ sale }: { sale: SaleDto }) {
           </Button>
         ) : null}
         {sale.status === "COMPLETED" ? (
-          <Button size="sm" variant="subtle" onClick={() => setOpen("refund")} className="!text-thread">
+          <Button
+            size="sm"
+            variant="subtle"
+            onClick={() => setOpen("refund")}
+            className="!text-thread"
+          >
             {t("sales.refund")}
           </Button>
         ) : null}
@@ -162,10 +218,20 @@ function SaleBody({ sale }: { sale: SaleDto }) {
         confirmLabel={t("sales.cancel")}
         danger
         loading={cancel.isPending}
-        onConfirm={() => run(() => cancel.mutateAsync(reason.trim() ? { reason: reason.trim() } : {}), t("sales.cancelled"))}
+        onConfirm={() =>
+          run(
+            () => cancel.mutateAsync(reason.trim() ? { reason: reason.trim() } : {}),
+            t("sales.cancelled"),
+          )
+        }
       >
         <Field label={t("sales.reason")} trailing={t("common.optional")}>
-          <TextInput value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t("sales.reasonPlaceholder")} maxLength={120} />
+          <TextInput
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={t("sales.reasonPlaceholder")}
+            maxLength={120}
+          />
         </Field>
       </ConfirmSheet>
 
@@ -178,12 +244,21 @@ function SaleBody({ sale }: { sale: SaleDto }) {
         danger
         loading={refund.isPending}
         onConfirm={() =>
-          run(() => refund.mutateAsync({ restock, ...(reason.trim() ? { reason: reason.trim() } : {}) }), t("sales.refunded"))
+          run(
+            () =>
+              refund.mutateAsync({ restock, ...(reason.trim() ? { reason: reason.trim() } : {}) }),
+            t("sales.refunded"),
+          )
         }
       >
         <SnapToggle checked={restock} onChange={setRestock} label={t("sales.refundRestock")} />
         <Field label={t("sales.reason")} trailing={t("common.optional")}>
-          <TextInput value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t("sales.reasonPlaceholder")} maxLength={120} />
+          <TextInput
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={t("sales.reasonPlaceholder")}
+            maxLength={120}
+          />
         </Field>
       </ConfirmSheet>
     </>
