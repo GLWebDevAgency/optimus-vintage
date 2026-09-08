@@ -63,6 +63,15 @@ export interface UploadedPhoto {
   readonly publicUrl?: string;
 }
 
+const isSameOrigin = (url: string): boolean => {
+  if (url.startsWith("/")) return true;
+  try {
+    return new URL(url).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+};
+
 /** `POST /uploads` puis `PUT`/`POST` direct des octets sur l'URL signée. */
 export async function uploadPhoto(
   client: ApiClient,
@@ -81,8 +90,8 @@ export async function uploadPhoto(
       headers: { "content-type": mimeType, ...(target.headers ?? {}) },
       body: blob,
       signal,
-      // L'URL peut être signée sur un autre hôte (R2) : pas de cookie.
-      credentials: target.uploadUrl.startsWith("/") ? "same-origin" : "omit",
+      // Même origine (stockage local) : cookie de session ; hôte tiers signé (R2) : pas de cookie.
+      credentials: isSameOrigin(target.uploadUrl) ? "same-origin" : "omit",
     });
   } catch (e) {
     throw new ApiClientError(

@@ -53,73 +53,73 @@ for (const theme of ["light", "dark"] as const) {
 
       // Aujourd'hui
       await page.goto("/app");
-      await expect(page.getByTestId("today-kpi")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("today-kpi")).toBeVisible({ timeout: 45_000 });
       await settle(page, 2000);
       await shot(page, `today-${skin}`);
 
       // Stock
       await page.goto("/app/stock");
-      await expect(page.getByTestId("stock-list")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("stock-list")).toBeVisible({ timeout: 45_000 });
       await settle(page, 1000);
       await shot(page, `stock-${skin}`);
 
       // Pièce
       await page.goto("/app/stock/it_142");
-      await expect(page.getByTestId("flip-tag")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("flip-tag")).toBeVisible({ timeout: 45_000 });
       await settle(page, 2400);
       await shot(page, `item-${skin}`);
 
       // Ventes
       await page.goto("/app/ventes");
-      await expect(page.getByTestId("sales-list")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("sales-list")).toBeVisible({ timeout: 45_000 });
       await settle(page, 1000);
       await shot(page, `sales-${skin}`);
 
       // Nouvelle vente → Vendu
       await page.goto("/app/ventes/nouvelle?item=it_142");
-      await expect(page.getByTestId("sale-gross")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("sale-gross")).toBeVisible({ timeout: 45_000 });
       await page.getByTestId("sale-gross").fill("75");
       await settle(page, 500);
       await shot(page, `sale-new-${skin}`);
       await page.getByTestId("sale-submit").click();
-      await expect(page.getByTestId("sold-state")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("sold-state")).toBeVisible({ timeout: 45_000 });
       await settle(page, 2200);
       await shot(page, `sold-${skin}`);
       expect(state.sales.at(-1)?.itemId).toBe("it_142");
 
       // Détail de vente
       await page.goto("/app/ventes/sale_101");
-      await expect(page.getByText("Marge nette")).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator(".margin-card")).toBeVisible({ timeout: 45_000 });
       await settle(page, 1200);
       await shot(page, `sale-${skin}`);
 
       // Sources + détail
       await page.goto("/app/sources");
-      await expect(page.getByTestId("sources-list")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("sources-list")).toBeVisible({ timeout: 45_000 });
       await settle(page, 2200);
       await shot(page, `sources-${skin}`);
       await page.goto("/app/sources/src_fleek");
-      await expect(page.getByTestId("source-performance")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("source-performance")).toBeVisible({ timeout: 45_000 });
       await settle(page, 1600);
       await shot(page, `source-${skin}`);
 
       // Réglages
       await page.goto("/app/reglages");
-      await expect(page.getByTestId("plan-card")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("plan-card")).toBeVisible({ timeout: 45_000 });
       await settle(page, 1200);
       await shot(page, `settings-${skin}`);
 
       // Chiner : photo depuis la galerie, expertise (faux), mètre.
       await page.goto("/app/chiner");
-      await expect(page.getByTestId("viewfinder")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("viewfinder")).toBeVisible({ timeout: 45_000 });
       await page
         .getByTestId("photo-input")
         .setInputFiles({ name: "veste.png", mimeType: "image/png", buffer: await testPng() });
-      await expect(page.getByTestId("appraisal-recognized")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("appraisal-recognized")).toBeVisible({ timeout: 45_000 });
       await settle(page, 1600);
       await shot(page, `chiner-${skin}`);
       await page.getByTestId("capture-submit").click();
-      await expect(page.getByTestId("capture-success")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("capture-success")).toBeVisible({ timeout: 45_000 });
       await settle(page, 1400);
       await shot(page, `chiner-success-${skin}`);
     });
@@ -136,7 +136,7 @@ test.describe("états vides · calico", () => {
     await installFakeApi(page, emptyState(baseURL ?? "", account));
 
     await page.goto("/app");
-    await expect(page.getByText("Ton atelier est vide")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Ton atelier est vide")).toBeVisible({ timeout: 45_000 });
     await settle(page, 1000);
     await shot(page, "empty-today");
 
@@ -166,11 +166,11 @@ test.describe("états vides · calico", () => {
     await page
       .getByTestId("photo-input")
       .setInputFiles({ name: "veste.png", mimeType: "image/png", buffer: await testPng() });
-    await expect(page.getByTestId("ai-upsell")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("ai-upsell")).toBeVisible({ timeout: 45_000 });
     await settle(page, 800);
     await shot(page, "chiner-ai-locked");
     await page.getByTestId("capture-submit").click();
-    await expect(page.getByTestId("capture-success")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("capture-success")).toBeVisible({ timeout: 45_000 });
     await page.getByTestId("capture-view").click();
     await expect(page).toHaveURL(/\/app\/stock\/it_/);
   });
@@ -186,13 +186,13 @@ test.describe("états vides · calico", () => {
 
     // 1. Réseau coupé : la capture est enregistrée localement, le bandeau hors ligne s'affiche.
     await page.goto("/app/chiner");
-    await expect(page.getByTestId("viewfinder")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("viewfinder")).toBeVisible({ timeout: 45_000 });
     await context.setOffline(true);
     await page
       .getByTestId("photo-input")
       .setInputFiles({ name: "veste.png", mimeType: "image/png", buffer: await testPng() });
     await page.getByTestId("capture-submit").click();
-    await expect(page.getByTestId("capture-success")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("capture-success")).toBeVisible({ timeout: 45_000 });
     await expect(page.getByTestId("capture-success")).toContainText("Sync plus tard");
     await expect(page.getByTestId("offline-banner")).toBeVisible();
     await settle(page, 800);

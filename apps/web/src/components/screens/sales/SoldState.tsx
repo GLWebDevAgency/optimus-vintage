@@ -12,6 +12,7 @@ import {
   Tally,
 } from "@chine/ui";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useDashboard } from "@/hooks/api";
 import { useFormat, useLocale, useT } from "@/hooks/i18n";
 import { label } from "../common/labels";
@@ -30,6 +31,10 @@ export function SoldState({ sale, pending, onNewSale }: SoldStateProps) {
   const router = useRouter();
   const dashboard = useDashboard("month");
   const eco = sale.economics;
+  // Le formulaire était défilé jusqu'au bouton : le tampon doit tomber en haut de l'écran.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
   const goal = dashboard.data?.goal;
   const pct = (r: number) =>
     new Intl.NumberFormat(intl, {
@@ -53,9 +58,9 @@ export function SoldState({ sale, pending, onNewSale }: SoldStateProps) {
             <AppIcon name="shirt" size={56} className="text-indigo" />
           )}
         </div>
-        <Stamp size="lg" className="absolute top-[26px]" data-testid="sold-stamp">
-          {t("sales.stampSold")}
-        </Stamp>
+        <span className="absolute top-[26px]" data-testid="sold-stamp">
+          <Stamp size="lg">{t("sales.stampSold")}</Stamp>
+        </span>
         <p className="caption">
           <b className="text-ink">{sale.item?.title ?? t("items.one")}</b> ·{" "}
           {fmt.money(sale.grossPrice)}

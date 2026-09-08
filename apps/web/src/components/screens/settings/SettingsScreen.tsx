@@ -77,14 +77,16 @@ export function SettingsScreen() {
       <Screen>
         <Section title={t("settings.profile")}>
           <div className="card grid gap-3 enter d1">
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <Avatar initial={displayName.charAt(0)} src={overview?.user.avatarUrl} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[15px] font-semibold">{displayName}</div>
                 <div className="mono truncate text-[12px] text-ink-3">{user?.email ?? ""}</div>
               </div>
               {overview ? (
-                <span className={`pill ${overview.billing.plan === "FREE" ? "stock" : "sold"}`}>
+                <span
+                  className={`pill shrink-0 ${overview.billing.plan === "FREE" ? "stock" : "sold"}`}
+                >
                   {t(`billing.plan.${overview.billing.plan}` as MessageKey)}
                 </span>
               ) : null}
@@ -95,19 +97,19 @@ export function SettingsScreen() {
                 onChange={(e) => setName(e.target.value)}
                 maxLength={80}
                 autoComplete="nickname"
-                trailing={
-                  <Button
-                    size="sm"
-                    variant="subtle"
-                    onClick={() => void saveName()}
-                    loading={savingName}
-                    disabled={!name.trim() || name.trim() === (session.data?.user.name ?? "")}
-                  >
-                    {t("common.save")}
-                  </Button>
-                }
               />
             </Field>
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="subtle"
+                onClick={() => void saveName()}
+                loading={savingName}
+                disabled={!name.trim() || name.trim() === (session.data?.user.name ?? "")}
+              >
+                {t("common.save")}
+              </Button>
+            </div>
           </div>
         </Section>
 

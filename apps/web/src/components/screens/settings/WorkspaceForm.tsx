@@ -105,35 +105,33 @@ export function WorkspaceForm({ overview }: { overview: WorkspaceOverviewDto }) 
           />
         </Field>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Field
-          label={t("settings.skuPrefix")}
-          hint={t("settings.skuPrefixExample", { prefix: skuPrefix || "CH" })}
-        >
-          <TextInput
-            value={skuPrefix}
-            onChange={(e) =>
-              setSkuPrefix(
-                e.target.value
-                  .toUpperCase()
-                  .replace(/[^A-Z]/g, "")
-                  .slice(0, 4),
-              )
-            }
-            maxLength={4}
-            autoCapitalize="characters"
-          />
-        </Field>
-        <Field label={t("settings.dormantThreshold")}>
-          <TextInput
-            inputMode="numeric"
-            value={dormant}
-            onChange={(e) => setDormant(e.target.value)}
-            unit={t("common.daysShort", { count: "" }).trim()}
-            maxLength={3}
-          />
-        </Field>
-      </div>
+      <Field
+        label={t("settings.skuPrefix")}
+        hint={t("settings.skuPrefixExample", { prefix: skuPrefix || "CH" })}
+      >
+        <TextInput
+          value={skuPrefix}
+          onChange={(e) =>
+            setSkuPrefix(
+              e.target.value
+                .toUpperCase()
+                .replace(/[^A-Z]/g, "")
+                .slice(0, 4),
+            )
+          }
+          maxLength={4}
+          autoCapitalize="characters"
+        />
+      </Field>
+      <Field label={t("settings.dormantThreshold")}>
+        <TextInput
+          inputMode="numeric"
+          value={dormant}
+          onChange={(e) => setDormant(e.target.value)}
+          unit="j"
+          maxLength={3}
+        />
+      </Field>
       <div className="grid gap-2">
         <span className="label">{t("settings.targetMargin")}</span>
         <Segmented

@@ -114,9 +114,11 @@ function SaleBody({ sale }: { sale: SaleDto }) {
           )}
         </div>
         {sale.status === "COMPLETED" ? (
-          <Stamp size="lg" className="absolute top-[26px]" still>
-            {t("sales.stampSold")}
-          </Stamp>
+          <span className="absolute top-[26px]">
+            <Stamp size="lg" still>
+              {t("sales.stampSold")}
+            </Stamp>
+          </span>
         ) : null}
         <p className="caption">
           <b className="text-ink">{sale.item?.title ?? t("items.one")}</b> ·{" "}

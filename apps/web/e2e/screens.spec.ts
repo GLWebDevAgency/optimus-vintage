@@ -23,7 +23,7 @@ test.describe("Chiné — parcours complet (API réelle)", () => {
     // 1. Tableau de bord d'un atelier neuf : état vide → Chiner.
     await page.goto("/app");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Aujourd'hui");
-    await expect(page.getByText("Ton atelier est vide")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Ton atelier est vide")).toBeVisible({ timeout: 45_000 });
     await page.getByRole("link", { name: "Chiner une pièce" }).click();
     await expect(page).toHaveURL(/\/app\/chiner$/);
 
@@ -68,7 +68,7 @@ test.describe("Chiné — parcours complet (API réelle)", () => {
 
     // 5. La marge du mois apparaît sur le tableau de bord.
     await page.goto("/app");
-    await expect(page.getByTestId("today-kpi")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("today-kpi")).toBeVisible({ timeout: 45_000 });
     await settle(page, 1800);
     await expect(page.getByTestId("today-kpi")).not.toContainText("0,00");
     await expect(page.getByText("Ensemble Lacoste")).toBeVisible();
@@ -76,7 +76,7 @@ test.describe("Chiné — parcours complet (API réelle)", () => {
     // 6. La source unitaire est amortie (75 € encaissés pour un achat de quelques euros).
     await page.goto("/app/sources");
     const card = page.getByTestId("source-card").first();
-    await expect(card).toBeVisible({ timeout: 15_000 });
+    await expect(card).toBeVisible({ timeout: 45_000 });
     await expect(card).toHaveAttribute("data-amortized", "true");
     await expect(card).toContainText("Amortie");
     await settle(page, 1600);

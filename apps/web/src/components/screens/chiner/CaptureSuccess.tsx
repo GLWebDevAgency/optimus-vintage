@@ -3,6 +3,7 @@
 import type { ItemDto } from "@chine/contract";
 import { AppIcon, BigButton, Stamp, StatusPill } from "@chine/ui";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useFormat, useT } from "@/hooks/i18n";
 
 interface CaptureSuccessProps {
@@ -28,6 +29,9 @@ export function CaptureSuccess({
   const t = useT();
   const fmt = useFormat();
   const router = useRouter();
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
   return (
     <div className="grid flex-1 content-start gap-4" data-testid="capture-success">
       <div className="sale-hero enter d1">
@@ -39,9 +43,9 @@ export function CaptureSuccess({
             <AppIcon name="shirt" size={56} className="text-indigo" />
           )}
         </div>
-        <Stamp size="lg" className="absolute top-[26px]">
-          {t("chine.stamp")}
-        </Stamp>
+        <span className="absolute top-[26px]">
+          <Stamp size="lg">{t("chine.stamp")}</Stamp>
+        </span>
         <p className="caption">
           <b className="text-ink">{title}</b> ·{" "}
           {fmt.money({ minor: pricePaidMinor, currency }, { compact: true })}
