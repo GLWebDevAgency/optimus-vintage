@@ -94,7 +94,11 @@ export function mapItem(item: App.ItemDto, ctx: MapContext, extras: ItemExtras =
 
 /* ───────────── Ventes ───────────── */
 
-export function mapItemSummary(row: ItemSummaryRow, ctx: MapContext, publicUrl: (key: string) => string): C.ItemSummaryDto {
+export function mapItemSummary(
+  row: ItemSummaryRow,
+  ctx: MapContext,
+  publicUrl: (key: string) => string,
+): C.ItemSummaryDto {
   return {
     id: row.id,
     sku: row.sku,

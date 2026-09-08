@@ -1,6 +1,7 @@
 import { CreatePurchaseSource, ListSources } from "@chine/application";
 import { routes } from "@chine/contract";
 import { asWorkspaceId } from "@chine/domain";
+import { isoDate } from "@/lib/api/dates";
 import { loadSource, scopeOf } from "@/lib/api/loaders";
 import { mapSource } from "@/lib/api/mappers";
 import { fail } from "@/lib/api/respond";
@@ -55,7 +56,7 @@ export const POST = withAuth(
       name: body.name,
       supplierName: body.supplierName,
       supplierKind: body.supplierKind,
-      purchasedAt: body.purchasedAt,
+      purchasedAt: isoDate(body.purchasedAt, "purchasedAt"),
       goodsCost: body.goodsCost,
       extraCosts: body.extraCosts,
       announcedQuantity: body.announcedQuantity,

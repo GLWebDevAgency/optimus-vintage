@@ -21,7 +21,8 @@ export type DetectedImage = { mimeType: "image/jpeg" | "image/png" | "image/webp
 
 export function detectImage(bytes: Uint8Array): DetectedImage | undefined {
   if (bytes.length < 12) return undefined;
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return { mimeType: "image/jpeg" };
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
+    return { mimeType: "image/jpeg" };
   if (
     bytes[0] === 0x89 &&
     bytes[1] === 0x50 &&

@@ -6,8 +6,8 @@ import {
   ListItems,
 } from "@chine/application";
 import {
-  CreateItemQuickCaptureCommand,
-  CreateItemStandardCommand,
+  type CreateItemQuickCaptureCommand,
+  type CreateItemStandardCommand,
   routes,
 } from "@chine/contract";
 import {
@@ -19,6 +19,7 @@ import {
 } from "@chine/domain";
 import { ClientIdConflict } from "@chine/infrastructure";
 import type { z } from "zod";
+import { isoDateOpt } from "@/lib/api/dates";
 import { loadItem, mapContextFor, scopeOf } from "@/lib/api/loaders";
 import { mapItem } from "@/lib/api/mappers";
 import { assertOwnedPhotoKeys } from "@/lib/api/photos";
@@ -65,7 +66,8 @@ const locationFrom = (
   c: z.output<typeof CreateItemQuickCaptureCommand>,
 ): SourceLocation | undefined => {
   const point = c.lat !== undefined && c.lng !== undefined ? { lat: c.lat, lng: c.lng } : undefined;
-  const label = c.locationLabel?.trim() || (point ? `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}` : "");
+  const label =
+    c.locationLabel?.trim() || (point ? `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}` : "");
   if (!label) return undefined;
   return point ? { label, point } : { label };
 };
@@ -104,7 +106,7 @@ const quickCaptureCommand = (
     pricePaid: c.pricePaid,
     supplierKind: c.supplierKind,
     location: locationFrom(c),
-    purchasedAt: c.purchasedAt,
+    purchasedAt: isoDateOpt(c.purchasedAt, "purchasedAt"),
   },
   appraisalId: c.appraisalId ? asAppraisalId(c.appraisalId) : undefined,
   title: c.title,

@@ -4,11 +4,31 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
 
+/** Origine d'une URL d'environnement, ou `undefined` si absente ou invalide. */
+const originOf = (value: string | undefined): string | undefined => {
+  if (!value) return undefined;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return undefined;
+  }
+};
+
+// Photos : lecture depuis le domaine public R2, upload direct vers l'endpoint S3 du compte.
+const r2PublicOrigin = originOf(process.env.R2_PUBLIC_BASE_URL);
+const r2UploadOrigin = process.env.R2_ACCOUNT_ID
+  ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+  : undefined;
+const connectExtra = [r2PublicOrigin, r2UploadOrigin].filter((o): o is string => Boolean(o));
+
 /**
  * Politique de sécurité de contenu.
  * - `'unsafe-inline'` sur script-src est requis par les scripts inline de Next (hydratation, thème sans flash)
  *   tant qu'un nonce par requête n'est pas mis en place (les pages marketing sont statiques).
  * - Google Fonts est autorisé pour les feuilles de style éventuelles (next/font auto-héberge les polices).
+ * - `blob:` et `data:` pour les aperçus caméra et les vignettes générées côté client.
+ * - `connect-src` : même origine, polices, plus le domaine public R2 et l'endpoint d'upload R2
+ *   (PUT pré-signé depuis le navigateur) quand ils sont configurés.
  * - `'unsafe-eval'` uniquement en développement (React Refresh).
  */
 const csp = [
@@ -18,7 +38,7 @@ const csp = [
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
   "media-src 'self' blob:",
-  "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+  `connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com${connectExtra.map((o) => ` ${o}`).join("")}`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "frame-ancestors 'none'",
@@ -97,6 +117,9 @@ const nextConfig: NextConfig = {
         source: "/icons/(.*)",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
+      // Rien de privé ne doit être indexé (doublon volontaire du proxy pour les réponses statiques).
+      { source: "/app/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+      { source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
     ];
   },
 };

@@ -36,7 +36,8 @@ export async function saveWorkspacePreferences(
   patch: Partial<WorkspacePreferences>,
 ): Promise<void> {
   const set: Partial<{ dormantThresholdDays: number; monthlyGoalMinor: number | null }> = {};
-  if (patch.dormantThresholdDays !== undefined) set.dormantThresholdDays = patch.dormantThresholdDays;
+  if (patch.dormantThresholdDays !== undefined)
+    set.dormantThresholdDays = patch.dormantThresholdDays;
   if (patch.monthlyGoalMinor !== undefined) set.monthlyGoalMinor = patch.monthlyGoalMinor;
   if (Object.keys(set).length === 0) return;
   await db

@@ -9,7 +9,10 @@ export async function GET(): Promise<Response> {
   try {
     const deps = await getContainer();
     await pingDatabase(deps.database.db, 2_000);
-    return NextResponse.json({ data: { ready: true } }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json(
+      { data: { ready: true } },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch {
     return NextResponse.json(
       { data: { ready: false } },

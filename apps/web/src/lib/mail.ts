@@ -72,7 +72,8 @@ export class ConsoleMailer implements Mailer {
  * explicitement — voir `auth.ts`).
  */
 export function createMailer(env: AppEnv): Mailer | undefined {
-  if (env.RESEND_API_KEY) return new ResendMailer(env.RESEND_API_KEY, env.MAIL_FROM ?? DEFAULT_FROM);
+  if (env.RESEND_API_KEY)
+    return new ResendMailer(env.RESEND_API_KEY, env.MAIL_FROM ?? DEFAULT_FROM);
   if (!env.isProduction) return new ConsoleMailer();
   warnOnce(
     "mail:none",

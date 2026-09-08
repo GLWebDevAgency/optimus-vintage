@@ -18,7 +18,9 @@ export const POST = withAuth(
       return fail({ code: "BILLING_UNAVAILABLE", message: BILLING_UNAVAILABLE_MESSAGE });
     }
     if (new URL(body.returnUrl).origin !== publicOrigin(req)) {
-      return fail(validationFailed("L'URL de retour doit être sur ce site.", { field: "returnUrl" }));
+      return fail(
+        validationFailed("L'URL de retour doit être sur ce site.", { field: "returnUrl" }),
+      );
     }
     const result = await new OpenBillingPortal(deps).execute({
       ...scopeOf(ctx),

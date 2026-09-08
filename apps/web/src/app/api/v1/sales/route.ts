@@ -1,6 +1,7 @@
 import { ListSales, RecordSale } from "@chine/application";
 import { routes } from "@chine/contract";
 import { asItemId, asSourceId, asWorkspaceId } from "@chine/domain";
+import { isoDate, isoDateOpt } from "@/lib/api/dates";
 import { attachItemSummaries, mapContextFor, scopeOf } from "@/lib/api/loaders";
 import { fail } from "@/lib/api/respond";
 import { parseBody, parseQuery, sendDto } from "@/lib/api/route";
@@ -16,8 +17,8 @@ export const GET = withAuth(async (req, ctx) => {
   const workspaceId = asWorkspaceId(ctx.workspaceId);
   const result = await new ListSales(deps).execute({
     ...scopeOf(ctx),
-    from: query.from,
-    to: query.to,
+    from: isoDateOpt(query.from, "from"),
+    to: isoDateOpt(query.to, "to"),
     platform: query.platform,
     sourceId: query.sourceId ? asSourceId(query.sourceId) : undefined,
     itemId: query.itemId ? asItemId(query.itemId) : undefined,
@@ -54,7 +55,7 @@ export const POST = withAuth(
       itemId: asItemId(body.itemId),
       platform: body.platform,
       grossPrice: body.grossPrice,
-      soldAt: body.soldAt,
+      soldAt: isoDate(body.soldAt, "soldAt"),
       shippingCost: body.shippingCost,
       packagingCost: body.packagingCost,
       otherCosts: body.otherCosts,

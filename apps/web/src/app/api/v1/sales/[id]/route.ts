@@ -1,6 +1,7 @@
 import { UpdateSale } from "@chine/application";
 import { routes } from "@chine/contract";
 import { asSaleId } from "@chine/domain";
+import { isoDateOpt } from "@/lib/api/dates";
 import { mapContextFor, scopeOf } from "@/lib/api/loaders";
 import { fail } from "@/lib/api/respond";
 import { parseBody, sendDto } from "@/lib/api/route";
@@ -35,7 +36,7 @@ export const PATCH = withAuth<Params>(
       shippingCost: body.shippingCost,
       packagingCost: body.packagingCost,
       otherCosts: body.otherCosts,
-      soldAt: body.soldAt,
+      soldAt: isoDateOpt(body.soldAt, "soldAt"),
       buyer: clearable(body.buyer),
       notes: clearable(body.notes),
     });

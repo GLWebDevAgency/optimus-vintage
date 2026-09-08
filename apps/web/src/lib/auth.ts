@@ -38,7 +38,12 @@ export const workspaceNameFor = (userName: string | null | undefined): string | 
 
 const FIFTEEN_MINUTES = 15 * 60;
 
-export function createAuth({ deps, env, mailer, nextCookies: withCookies = true }: CreateAuthOptions) {
+export function createAuth({
+  deps,
+  env,
+  mailer,
+  nextCookies: withCookies = true,
+}: CreateAuthOptions) {
   const isProd = env.isProduction;
   if (isProd && !mailer) {
     warnOnce(
@@ -97,7 +102,10 @@ export function createAuth({ deps, env, mailer, nextCookies: withCookies = true 
             rule.max,
             rule.window,
           );
-          const retryAfter = Math.max(1, Math.ceil((decision.resetAt.getTime() - Date.now()) / 1000));
+          const retryAfter = Math.max(
+            1,
+            Math.ceil((decision.resetAt.getTime() - Date.now()) / 1000),
+          );
           return { allowed: decision.allowed, retryAfter: decision.allowed ? null : retryAfter };
         },
       },

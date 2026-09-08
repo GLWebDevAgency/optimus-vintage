@@ -17,7 +17,8 @@ export const GET = withPublic<{ key: string[] }>(
     if (!isSafeKey(key)) return fail(notFound("Photo"));
     const file = await deps.photos.read(key);
     if (!file) return fail(notFound("Photo"));
-    return new Response(file.bytes, {
+    const body = new Uint8Array(file.bytes).buffer as ArrayBuffer;
+    return new Response(body, {
       status: 200,
       headers: {
         "Content-Type": contentTypeFor(key),

@@ -1,6 +1,7 @@
 import { DeletePurchaseSource, UpdatePurchaseSource } from "@chine/application";
 import { routes } from "@chine/contract";
 import { asSourceId } from "@chine/domain";
+import { isoDateOpt } from "@/lib/api/dates";
 import { loadSource, scopeOf } from "@/lib/api/loaders";
 import { parseBody, sendDto, sendResult } from "@/lib/api/route";
 import { withAuth } from "@/lib/api/with-auth";
@@ -33,7 +34,7 @@ export const PATCH = withAuth<Params>(
       name: body.name,
       supplierName: clearable(body.supplierName),
       supplierKind: body.supplierKind,
-      purchasedAt: body.purchasedAt,
+      purchasedAt: isoDateOpt(body.purchasedAt, "purchasedAt"),
       goodsCost: body.goodsCost,
       extraCosts: body.extraCosts,
       announcedQuantity: clearable(body.announcedQuantity),

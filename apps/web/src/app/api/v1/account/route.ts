@@ -1,8 +1,8 @@
 import { routes } from "@chine/contract";
-import { getAuth } from "@/lib/auth";
 import { parseBody, sendDto } from "@/lib/api/route";
 import { withAuth } from "@/lib/api/with-auth";
 import { forgetWorkspace } from "@/lib/api/workspace";
+import { getAuth } from "@/lib/auth";
 import { describeError } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
