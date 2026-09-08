@@ -1,6 +1,6 @@
 import { isSafeKey, LocalPhotoStorage } from "@chine/infrastructure";
 import sharp from "sharp";
-import { detectImage } from "@/lib/api/photos";
+import { detectImage, MAX_UPLOAD_BYTES } from "@/lib/api/photos";
 import {
   fail,
   notFound,
@@ -10,13 +10,10 @@ import {
   validationFailed,
 } from "@/lib/api/respond";
 import { withAuth } from "@/lib/api/with-auth";
-import { publicOrigin } from "@/lib/api/request";
-import { absoluteUrl } from "@/lib/api/request";
+import { absoluteUrl, publicOrigin } from "@/lib/api/request";
 
 export const dynamic = "force-dynamic";
 
-/** Taille maximale acceptée avant traitement (15 Mo). */
-export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 /** Plus grand côté après redimensionnement. */
 const MAX_DIMENSION = 2048;
 const WEBP_QUALITY = 82;

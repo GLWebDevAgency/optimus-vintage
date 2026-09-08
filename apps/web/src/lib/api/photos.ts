@@ -13,6 +13,9 @@ export function assertOwnedPhotoKeys(workspaceId: string, keys: readonly string[
   }
 }
 
+/** Taille maximale d'une photo acceptée par l'upload local, avant traitement (15 Mo). */
+export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+
 /** Signatures binaires des formats acceptés (le `Content-Type` déclaré ne fait pas foi). */
 export type DetectedImage = { mimeType: "image/jpeg" | "image/png" | "image/webp" };
 
