@@ -42,7 +42,7 @@ export function Stamp({
         "relative inline-block font-ui font-extrabold uppercase border-double select-none",
         tone === "brass" ? "border-brass text-brass" : "border-thread text-thread",
         sizes[size],
-        "after:pointer-events-none after:absolute after:-inset-1 after:rounded-[inherit] after:opacity-45 after:mix-blend-lighten after:content-[''] after:[background-image:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")]",
+        "stamp-grain",
         className,
       )}
     >

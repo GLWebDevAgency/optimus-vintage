@@ -337,11 +337,11 @@ export function TapeMeasure({
         {/* Fondu des bords */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-surface to-transparent"
+          className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-linear-to-r from-surface to-transparent"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-surface to-transparent"
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-linear-to-l from-surface to-transparent"
         />
       </div>
     </div>
