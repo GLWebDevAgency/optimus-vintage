@@ -27,7 +27,8 @@ const base =
 
 const variants: Record<ButtonVariant, string> = {
   primary: "bg-btn text-btn-ink shadow-[0_8px_20px_-12px_rgba(0,0,0,.6)]",
-  ghost: "bg-transparent text-ink shadow-[inset_0_0_0_1.5px_var(--line-2)] hover:shadow-[inset_0_0_0_1.5px_var(--ink)]",
+  ghost:
+    "bg-transparent text-ink shadow-[inset_0_0_0_1.5px_var(--line-2)] hover:shadow-[inset_0_0_0_1.5px_var(--ink)]",
   danger: "bg-thread text-white",
   subtle: "bg-surface text-ink border border-line",
 };
@@ -40,8 +41,23 @@ const sizes: Record<ButtonSize, string> = {
 
 export function Spinner({ className }: { className?: string }) {
   return (
-    <svg className={cn("animate-spin-slow", className)} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" strokeDasharray="6 5" strokeLinecap="round" />
+    <svg
+      className={cn("animate-spin-slow", className)}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeDasharray="6 5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -61,7 +77,14 @@ export function Button({
   type = "button",
   ...rest
 }: ButtonProps) {
-  const classes = cn(base, variants[variant], sizes[size], fullWidth && "w-full", loading && "cursor-progress", className);
+  const classes = cn(
+    base,
+    variants[variant],
+    sizes[size],
+    fullWidth && "w-full",
+    loading && "cursor-progress",
+    className,
+  );
   const content = (
     <>
       {loading ? <Spinner className="[animation-duration:1.2s]" /> : leading}
@@ -78,7 +101,13 @@ export function Button({
     );
   }
   return (
-    <button type={type} className={classes} disabled={disabled || loading} aria-busy={loading || undefined} {...rest}>
+    <button
+      type={type}
+      className={classes}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      {...rest}
+    >
       {content}
     </button>
   );

@@ -20,9 +20,20 @@ export interface TopBarProps {
 }
 
 /** Barre supérieure des écrans de détail : retour, titre, actions. Respecte la zone sûre. */
-export function TopBar({ title, backHref, onBack, backLabel = "Retour", Link, actions, className, sticky = true, centered = true }: TopBarProps) {
+export function TopBar({
+  title,
+  backHref,
+  onBack,
+  backLabel = "Retour",
+  Link,
+  actions,
+  className,
+  sticky = true,
+  centered = true,
+}: TopBarProps) {
   const L = Link ?? "a";
-  const backClass = "grid h-11 w-11 place-items-center rounded-full text-ink hover:bg-surface-2 active:scale-95 transition-[background-color,transform] duration-micro focus-thread -ml-2";
+  const backClass =
+    "grid h-11 w-11 place-items-center rounded-full text-ink hover:bg-surface-2 active:scale-95 transition-[background-color,transform] duration-micro focus-thread -ml-2";
   return (
     <header
       className={cn(
@@ -42,7 +53,14 @@ export function TopBar({ title, backHref, onBack, backLabel = "Retour", Link, ac
           </button>
         ) : null}
       </div>
-      <div className={cn("min-w-0 truncate font-ui text-[15px] font-bold tracking-[-.01em] text-ink", centered && "text-center")}>{title}</div>
+      <div
+        className={cn(
+          "min-w-0 truncate font-ui text-[15px] font-bold tracking-[-.01em] text-ink",
+          centered && "text-center",
+        )}
+      >
+        {title}
+      </div>
       <div className="flex justify-end">{actions}</div>
     </header>
   );

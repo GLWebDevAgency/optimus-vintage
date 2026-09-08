@@ -23,7 +23,18 @@ export interface HangTagProps {
 }
 
 /** Étiquette suspendue à son fil : entre en se balançant depuis l'œillet. */
-export function HangTag({ label, value, unit, children, delay = 0, still, tone = "neutral", className, size = "md", onClick }: HangTagProps) {
+export function HangTag({
+  label,
+  value,
+  unit,
+  children,
+  delay = 0,
+  still,
+  tone = "neutral",
+  className,
+  size = "md",
+  onClick,
+}: HangTagProps) {
   const reduced = useReducedMotion();
   const animated = !still && !reduced;
   const Comp = onClick ? motion.button : motion.div;
@@ -43,19 +54,34 @@ export function HangTag({ label, value, unit, children, delay = 0, still, tone =
         "before:absolute before:left-1/2 before:top-[9px] before:h-[9px] before:w-[9px] before:-translate-x-1/2 before:rounded-full before:bg-bg before:shadow-[inset_0_0_0_1.5px_var(--line-2)] before:content-['']",
         // Fil
         "after:absolute after:left-1/2 after:top-[-18px] after:h-6 after:w-[1.5px] after:-translate-x-1/2 after:bg-thread after:content-['']",
-        onClick && "cursor-pointer focus-thread active:scale-[.98] transition-transform duration-micro",
+        onClick &&
+          "cursor-pointer focus-thread active:scale-[.98] transition-transform duration-micro",
         className,
       )}
     >
       {label !== undefined ? (
-        <span className={cn("block font-mono text-[10px] uppercase tracking-[.14em]", tone === "thread" ? "text-thread" : tone === "brass" ? "text-brass" : "text-ink-3")}>
+        <span
+          className={cn(
+            "block font-mono text-[10px] uppercase tracking-[.14em]",
+            tone === "thread" ? "text-thread" : tone === "brass" ? "text-brass" : "text-ink-3",
+          )}
+        >
           {label}
         </span>
       ) : null}
       {value !== undefined ? (
-        <span className={cn("mt-1 block font-display italic leading-none text-ink tabular", size === "md" ? "text-[30px]" : "text-[24px]")}>
+        <span
+          className={cn(
+            "mt-1 block font-display italic leading-none text-ink tabular",
+            size === "md" ? "text-[30px]" : "text-[24px]",
+          )}
+        >
           {value}
-          {unit !== undefined ? <small className="ml-0.5 font-ui not-italic text-[12px] font-semibold text-ink-2">{unit}</small> : null}
+          {unit !== undefined ? (
+            <small className="ml-0.5 font-ui not-italic text-[12px] font-semibold text-ink-2">
+              {unit}
+            </small>
+          ) : null}
         </span>
       ) : null}
       {children}

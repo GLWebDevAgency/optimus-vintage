@@ -18,7 +18,13 @@ export interface TabBarProps {
   readonly items: readonly [TabItem, TabItem, TabItem, TabItem] | readonly TabItem[];
   readonly activeKey: string;
   /** Bouton central « Chiner ». */
-  readonly cta: { readonly label: ReactNode; readonly href?: string; readonly onClick?: () => void; readonly icon?: IconName | ReactNode; readonly active?: boolean };
+  readonly cta: {
+    readonly label: ReactNode;
+    readonly href?: string;
+    readonly onClick?: () => void;
+    readonly icon?: IconName | ReactNode;
+    readonly active?: boolean;
+  };
   readonly Link?: LinkComponent;
   readonly className?: string;
   /** Position fixe en bas (par défaut). */
@@ -26,7 +32,11 @@ export interface TabBarProps {
 }
 
 const renderIcon = (icon: IconName | ReactNode, size = 22, strokeWidth = 1.8) =>
-  typeof icon === "string" ? <AppIcon name={icon as IconName} size={size} strokeWidth={strokeWidth} /> : icon;
+  typeof icon === "string" ? (
+    <AppIcon name={icon as IconName} size={size} strokeWidth={strokeWidth} />
+  ) : (
+    icon
+  );
 
 /** Barre d'onglets à cinq places : quatre liens et un appareil photo au centre, cerclé d'un fil qui tourne. */
 export function TabBar({ items, activeKey, cta, Link, className, fixed = true }: TabBarProps) {
@@ -68,10 +78,13 @@ export function TabBar({ items, activeKey, cta, Link, className, fixed = true }:
       >
         {renderIcon(cta.icon ?? "camera", 26, 2)}
       </span>
-      <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap font-ui text-[9.5px] font-bold uppercase tracking-[.08em] text-ink">{cta.label}</span>
+      <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap font-ui text-[9.5px] font-bold uppercase tracking-[.08em] text-ink">
+        {cta.label}
+      </span>
     </>
   );
-  const ctaClass = "group relative grid min-h-[48px] justify-items-center focus-thread rounded-full";
+  const ctaClass =
+    "group relative grid min-h-[48px] justify-items-center focus-thread rounded-full";
   return (
     <nav
       aria-label="Navigation principale"

@@ -177,23 +177,36 @@ const paths = {
 export type IconName = keyof typeof paths;
 export const ICON_NAMES = Object.keys(paths) as IconName[];
 
-export function AppIcon({ name, size = 24, strokeWidth = 1.8, title, className, ...rest }: IconProps & { name: IconName }) {
+export function AppIcon({
+  name,
+  size = 24,
+  strokeWidth = 1.8,
+  title,
+  className,
+  ...rest
+}: IconProps & { name: IconName }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className,
+    ...rest,
+  };
+  if (title) {
+    return (
+      <svg role="img" {...common}>
+        <title>{title}</title>
+        {paths[name]}
+      </svg>
+    );
+  }
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden={title ? undefined : true}
-      role={title ? "img" : undefined}
-      className={className}
-      {...rest}
-    >
-      {title ? <title>{title}</title> : null}
+    <svg aria-hidden="true" {...common}>
       {paths[name]}
     </svg>
   );

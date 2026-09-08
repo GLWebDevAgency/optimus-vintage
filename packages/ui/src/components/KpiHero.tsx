@@ -18,13 +18,34 @@ export interface KpiHeroProps {
 }
 
 /** Le chiffre du mois : libellé mono, montant compté en sérif, variation en laiton. */
-export function KpiHero({ label, value, delta, deltaTone = "brass", locale = "fr", compact, className, size = "hero", tone = "ink" }: KpiHeroProps) {
+export function KpiHero({
+  label,
+  value,
+  delta,
+  deltaTone = "brass",
+  locale = "fr",
+  compact,
+  className,
+  size = "hero",
+  tone = "ink",
+}: KpiHeroProps) {
   return (
     <div className={cn("grid gap-1", className)}>
       <span className="font-mono text-[10.5px] uppercase tracking-[.14em] text-ink-3">{label}</span>
       <Tally value={value} locale={locale} size={size} compact={compact ?? false} tone={tone} />
       {delta ? (
-        <span className={cn("text-[13px] font-semibold", deltaTone === "brass" ? "text-brass" : deltaTone === "thread" ? "text-thread" : "text-ink-3")}>{delta}</span>
+        <span
+          className={cn(
+            "text-[13px] font-semibold",
+            deltaTone === "brass"
+              ? "text-brass"
+              : deltaTone === "thread"
+                ? "text-thread"
+                : "text-ink-3",
+          )}
+        >
+          {delta}
+        </span>
       ) : null}
     </div>
   );

@@ -4,6 +4,8 @@ import { cn } from "../cn.js";
 import type { MoneyLike, Tone } from "../types.js";
 
 export interface ReceiptRow {
+  /** Clé stable (sinon dérivée du libellé et de la valeur). */
+  readonly key?: string;
   readonly label: ReactNode;
   /** Montant, ratio (`{ ratio }` → pourcentage signé) ou texte déjà formaté. */
   readonly value: MoneyLike | { readonly ratio: number | undefined } | string;
@@ -23,12 +25,24 @@ export interface ReceiptProps {
   readonly size?: "sm" | "md";
 }
 
-const toneClass: Record<Tone, string> = { neutral: "text-ink", pos: "text-brass", neg: "text-thread", muted: "text-ink-3" };
+const toneClass: Record<Tone, string> = {
+  neutral: "text-ink",
+  pos: "text-brass",
+  neg: "text-thread",
+  muted: "text-ink-3",
+};
 
 const autoTone = (row: ReceiptRow): Tone => {
   if (row.tone) return row.tone;
   if (typeof row.value === "string") return "neutral";
-  if ("ratio" in row.value) return row.value.ratio === undefined ? "muted" : row.value.ratio > 0 ? "pos" : row.value.ratio < 0 ? "neg" : "neutral";
+  if ("ratio" in row.value)
+    return row.value.ratio === undefined
+      ? "muted"
+      : row.value.ratio > 0
+        ? "pos"
+        : row.value.ratio < 0
+          ? "neg"
+          : "neutral";
   if (row.total) return row.value.minor > 0 ? "pos" : row.value.minor < 0 ? "neg" : "neutral";
   return row.value.minor < 0 ? "neg" : "neutral";
 };
@@ -44,7 +58,7 @@ export function Receipt({ rows, locale = "fr", bare, className, size = "md" }: R
         className,
       )}
     >
-      {rows.map((row, i) => {
+      {rows.map((row) => {
         const tone = autoTone(row);
         const text =
           typeof row.value === "string"
@@ -53,11 +67,17 @@ export function Receipt({ rows, locale = "fr", bare, className, size = "md" }: R
               ? row.value.ratio === undefined
                 ? "—"
                 : formatPercent(row.value.ratio, locale, { signed: true })
-              : formatMoney(row.value, locale, { symbol: false, signDisplay: row.signed ? "exceptZero" : "auto" }).replace("-", "−");
+              : formatMoney(row.value, locale, {
+                  symbol: false,
+                  signDisplay: row.signed ? "exceptZero" : "auto",
+                }).replace("-", "−");
         return (
           <div
-            key={i}
-            className={cn("flex justify-between gap-3", row.total && "mt-1 border-t-[1.5px] border-ink pt-1.5 font-semibold")}
+            key={row.key ?? `${String(row.label)}:${text}`}
+            className={cn(
+              "flex justify-between gap-3",
+              row.total && "mt-1 border-t-[1.5px] border-ink pt-1.5 font-semibold",
+            )}
           >
             <dt className={row.total ? "text-ink" : "text-ink-2"}>{row.label}</dt>
             <dd className={cn("m-0 text-right", toneClass[tone])}>{text}</dd>

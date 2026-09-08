@@ -1,7 +1,17 @@
 import type { ReactNode } from "react";
 import { cn } from "../cn.js";
 
-export type PillStatus = "stock" | "online" | "reserved" | "sold" | "dormant" | "returned" | "lost" | "donated" | "pending" | "amortized";
+export type PillStatus =
+  | "stock"
+  | "online"
+  | "reserved"
+  | "sold"
+  | "dormant"
+  | "returned"
+  | "lost"
+  | "donated"
+  | "pending"
+  | "amortized";
 
 const styles: Record<PillStatus, string> = {
   stock: "bg-chalk text-indigo",
@@ -67,7 +77,8 @@ export function StatusPill({ status, label, className, dotless }: StatusPillProp
       data-status={status}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-[7px] px-2.5 py-1 font-ui text-[11px] font-semibold tracking-[.04em] whitespace-nowrap",
-        !dotless && "before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']",
+        !dotless &&
+          "before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']",
         styles[status],
         className,
       )}

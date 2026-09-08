@@ -339,9 +339,13 @@
   .selvedge *,
   .selvedge *::before,
   .selvedge *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: la préférence de mouvement réduit doit primer sur toute animation */
     animation-duration: 0.001ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: idem */
     animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: idem */
     transition-duration: 0.001ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: idem */
     scroll-behavior: auto !important;
   }
 }

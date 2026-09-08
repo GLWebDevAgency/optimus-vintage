@@ -3,7 +3,7 @@
  * Panneau bas « plié » : se déplie depuis la charnière basse (rotateX), se referme par Échap,
  * clic sur le voile ou glissement de la poignée. Piège le focus et le restitue à la fermeture.
  */
-import { AnimatePresence, type PanInfo, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, type PanInfo, useReducedMotion } from "motion/react";
 import { type ReactNode, useCallback, useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "../cn.js";
@@ -26,9 +26,21 @@ export interface SheetProps {
   readonly portal?: boolean;
 }
 
-const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+const FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-export function Sheet({ open, onClose, title, description, children, footer, className, maxHeight = "92dvh", dismissable = true, portal = true }: SheetProps) {
+export function Sheet({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  className,
+  maxHeight = "92dvh",
+  dismissable = true,
+  portal = true,
+}: SheetProps) {
   const id = useId();
   const reduced = useReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -47,7 +59,9 @@ export function Sheet({ open, onClose, title, description, children, footer, cla
     const raf = requestAnimationFrame(() => {
       const panel = panelRef.current;
       if (!panel) return;
-      const first = panel.querySelector<HTMLElement>("[data-autofocus]") ?? panel.querySelector<HTMLElement>(FOCUSABLE);
+      const first =
+        panel.querySelector<HTMLElement>("[data-autofocus]") ??
+        panel.querySelector<HTMLElement>(FOCUSABLE);
       (first ?? panel).focus({ preventScroll: true });
     });
     return () => {
@@ -64,7 +78,12 @@ export function Sheet({ open, onClose, title, description, children, footer, cla
       return;
     }
     if (e.key !== "Tab" || !panelRef.current) return;
-    const items = Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null || el === document.activeElement);
+    const items = Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+      (el) =>
+        !el.hasAttribute("hidden") &&
+        el.getAttribute("aria-hidden") !== "true" &&
+        !el.closest("[hidden]"),
+    );
     if (items.length === 0) {
       e.preventDefault();
       return;
@@ -72,7 +91,10 @@ export function Sheet({ open, onClose, title, description, children, footer, cla
     const first = items[0];
     const last = items[items.length - 1];
     if (!first || !last) return;
-    if (e.shiftKey && (document.activeElement === first || document.activeElement === panelRef.current)) {
+    if (
+      e.shiftKey &&
+      (document.activeElement === first || document.activeElement === panelRef.current)
+    ) {
       e.preventDefault();
       last.focus();
     } else if (!e.shiftKey && document.activeElement === last) {
@@ -126,13 +148,19 @@ export function Sheet({ open, onClose, title, description, children, footer, cla
               className,
             )}
           >
-            <div className="flex cursor-grab touch-none justify-center pb-1 pt-2.5 active:cursor-grabbing" aria-hidden="true">
+            <div
+              className="flex cursor-grab touch-none justify-center pb-1 pt-2.5 active:cursor-grabbing"
+              aria-hidden="true"
+            >
               <span className="h-1 w-9 rounded-full bg-line-2" />
             </div>
             {title || description ? (
               <header className="grid gap-1 px-5 pb-3 pt-1">
                 {title ? (
-                  <h2 id={`${id}-title`} className="font-ui text-[18px] font-bold leading-tight tracking-[-.01em] text-ink">
+                  <h2
+                    id={`${id}-title`}
+                    className="font-ui text-[18px] font-bold leading-tight tracking-[-.01em] text-ink"
+                  >
                     {title}
                   </h2>
                 ) : null}
@@ -144,7 +172,9 @@ export function Sheet({ open, onClose, title, description, children, footer, cla
               </header>
             ) : null}
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">{children}</div>
-            {footer ? <footer className="border-t border-line bg-surface px-5 pb-4 pt-3">{footer}</footer> : null}
+            {footer ? (
+              <footer className="border-t border-line bg-surface px-5 pb-4 pt-3">{footer}</footer>
+            ) : null}
           </motion.div>
         </div>
       ) : null}

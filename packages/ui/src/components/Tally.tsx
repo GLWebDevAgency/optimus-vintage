@@ -29,31 +29,67 @@ const sizes = {
   card: "text-[36px]",
   hero: "text-[54px] tracking-[-.02em]",
 } as const;
-const smalls = { inline: "text-[.6em]", tag: "text-[12px]", card: "text-[13px]", hero: "text-[16px]" } as const;
+const smalls = {
+  inline: "text-[.6em]",
+  tag: "text-[12px]",
+  card: "text-[13px]",
+  hero: "text-[16px]",
+} as const;
 
 /** Montant compté « à la craie » : accélère puis freine, jamais de saut sec. */
-export function Tally({ value, locale = "fr", decimals, duration = 1.4, delay = 0, signed, compact, size = "hero", tone = "ink", className, suffix }: TallyProps) {
+export function Tally({
+  value,
+  locale = "fr",
+  decimals,
+  duration = 1.4,
+  delay = 0,
+  signed,
+  compact,
+  size = "hero",
+  tone = "ink",
+  className,
+  suffix,
+}: TallyProps) {
   const isMoney = typeof value === "object";
   const currency = isMoney ? value.currency : undefined;
   const digits = decimals ?? (isMoney ? (currency === "JPY" ? 0 : 2) : 0);
   const target = isMoney ? value.minor / 10 ** digits : value;
   const current = useTally(target, { duration, decimals: digits, delay });
   const parts = isMoney
-    ? formatMoneyParts({ minor: Math.round(current * 10 ** digits), currency: currency ?? "EUR" }, locale, {
+    ? formatMoneyParts(
+        { minor: Math.round(current * 10 ** digits), currency: currency ?? "EUR" },
+        locale,
+        {
+          compact: compact ?? false,
+          signDisplay: signed ? "exceptZero" : "auto",
+        },
+      )
+    : null;
+  const text = parts
+    ? `${parts.sign}${parts.integer}${parts.fraction}`
+    : formatNumber(current, locale, { digits, signed: signed ?? false });
+  const final = isMoney
+    ? formatMoneyParts(value, locale, {
         compact: compact ?? false,
         signDisplay: signed ? "exceptZero" : "auto",
-      })
-    : null;
-  const text = parts ? `${parts.sign}${parts.integer}${parts.fraction}` : formatNumber(current, locale, { digits, signed: signed ?? false });
-  const final = isMoney ? formatMoneyParts(value, locale, { compact: compact ?? false, signDisplay: signed ? "exceptZero" : "auto" }).text : formatNumber(target, locale, { digits, signed: signed ?? false });
+      }).text
+    : formatNumber(target, locale, { digits, signed: signed ?? false });
   return (
     <span
-      className={cn("inline-flex items-baseline gap-[.1em] font-display italic leading-none tabular", sizes[size], tone === "brass" ? "text-brass" : tone === "thread" ? "text-thread" : "text-ink", className)}
-      aria-label={final}
+      className={cn(
+        "inline-flex items-baseline gap-[.1em] font-display italic leading-none tabular",
+        sizes[size],
+        tone === "brass" ? "text-brass" : tone === "thread" ? "text-thread" : "text-ink",
+        className,
+      )}
     >
+      <span className="sr-only">{final}</span>
       <span aria-hidden="true">{text}</span>
       {parts || suffix ? (
-        <small aria-hidden="true" className={cn("font-ui not-italic font-semibold text-ink-2", smalls[size])}>
+        <small
+          aria-hidden="true"
+          className={cn("font-ui not-italic font-semibold text-ink-2", smalls[size])}
+        >
           {suffix ?? parts?.symbol}
         </small>
       ) : null}

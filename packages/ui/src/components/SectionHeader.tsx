@@ -13,8 +13,17 @@ export interface SectionHeaderProps {
   readonly as?: "h2" | "h3";
 }
 
-export function SectionHeader({ title, action, href, Link, onAction, className, as: Tag = "h2" }: SectionHeaderProps) {
-  const actionClass = "font-ui text-[12.5px] font-semibold text-ink-2 hover:text-ink min-h-[32px] inline-flex items-center focus-thread rounded-md";
+export function SectionHeader({
+  title,
+  action,
+  href,
+  Link,
+  onAction,
+  className,
+  as: Tag = "h2",
+}: SectionHeaderProps) {
+  const actionClass =
+    "font-ui text-[12.5px] font-semibold text-ink-2 hover:text-ink min-h-[32px] inline-flex items-center focus-thread rounded-md";
   const L = Link ?? "a";
   return (
     <div className={cn("flex items-baseline justify-between gap-3", className)}>

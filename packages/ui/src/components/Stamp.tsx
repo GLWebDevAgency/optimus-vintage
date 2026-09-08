@@ -20,7 +20,14 @@ const sizes = {
 } as const;
 
 /** Tampon encré (VENDU, AMORTIE) : tombe sur la carte en s'écrasant, grain de caoutchouc. */
-export function Stamp({ children, tone = "thread", size = "md", delay = 0.25, still, className }: StampProps) {
+export function Stamp({
+  children,
+  tone = "thread",
+  size = "md",
+  delay = 0.25,
+  still,
+  className,
+}: StampProps) {
   const reduced = useReducedMotion();
   const animated = !still && !reduced;
   return (

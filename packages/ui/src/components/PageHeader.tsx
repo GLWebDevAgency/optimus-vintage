@@ -14,14 +14,27 @@ export interface PageHeaderProps {
 }
 
 /** En-tête d'écran : date mono, titre serré, avatar à droite. */
-export function PageHeader({ eyebrow, title, titleEm, trailing, className, as: Tag = "h1" }: PageHeaderProps) {
+export function PageHeader({
+  eyebrow,
+  title,
+  titleEm,
+  trailing,
+  className,
+  as: Tag = "h1",
+}: PageHeaderProps) {
   return (
     <div className={cn("flex items-center justify-between gap-4", className)}>
       <div className="grid gap-0.5">
-        {eyebrow ? <span className="font-mono text-[10.5px] uppercase tracking-[.12em] text-ink-3">{eyebrow}</span> : null}
+        {eyebrow ? (
+          <span className="font-mono text-[10.5px] uppercase tracking-[.12em] text-ink-3">
+            {eyebrow}
+          </span>
+        ) : null}
         <Tag className="font-ui text-[22px] font-bold leading-[1.05] tracking-[-.02em] text-ink">
           {title}
-          {titleEm ? <em className="font-display font-normal italic tracking-normal"> {titleEm}</em> : null}
+          {titleEm ? (
+            <em className="font-display font-normal italic tracking-normal"> {titleEm}</em>
+          ) : null}
         </Tag>
       </div>
       {trailing}
@@ -30,12 +43,32 @@ export function PageHeader({ eyebrow, title, titleEm, trailing, className, as: T
 }
 
 /** Avatar rond indigo à initiale. */
-export function Avatar({ initial, src, size = 32, className }: { initial: string; src?: string; size?: number; className?: string }) {
+export function Avatar({
+  initial,
+  src,
+  size = 32,
+  className,
+}: {
+  initial: string;
+  src?: string;
+  size?: number;
+  className?: string;
+}) {
   return src ? (
-    <img src={src} alt="" width={size} height={size} className={cn("rounded-full object-cover", className)} style={{ width: size, height: size }} />
+    <img
+      src={src}
+      alt=""
+      width={size}
+      height={size}
+      className={cn("rounded-full object-cover", className)}
+      style={{ width: size, height: size }}
+    />
   ) : (
     <span
-      className={cn("grid place-items-center rounded-full bg-indigo font-ui text-[12px] font-bold text-white", className)}
+      className={cn(
+        "grid place-items-center rounded-full bg-indigo font-ui text-[12px] font-bold text-white",
+        className,
+      )}
       style={{ width: size, height: size }}
       aria-hidden="true"
     >

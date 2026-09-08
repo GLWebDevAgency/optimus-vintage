@@ -1,6 +1,16 @@
 import { cn } from "../cn.js";
 
-export type SkeletonShape = "text" | "title" | "label" | "circle" | "thumb" | "card" | "row" | "tag" | "button" | "hero";
+export type SkeletonShape =
+  | "text"
+  | "title"
+  | "label"
+  | "circle"
+  | "thumb"
+  | "card"
+  | "row"
+  | "tag"
+  | "button"
+  | "hero";
 
 export interface SkeletonProps {
   readonly shape?: SkeletonShape;
@@ -26,7 +36,10 @@ const shapes: Record<SkeletonShape, string> = {
 
 /** Miroitement calico : un reflet passe sur des formes qui reprennent celles du contenu. */
 export function Skeleton({ shape = "text", width, height, className, count = 1 }: SkeletonProps) {
-  const style = { ...(width !== undefined ? { width } : {}), ...(height !== undefined ? { height } : {}) };
+  const style = {
+    ...(width !== undefined ? { width } : {}),
+    ...(height !== undefined ? { height } : {}),
+  };
   const one = (key: number) => (
     <span
       key={key}
@@ -41,7 +54,15 @@ export function Skeleton({ shape = "text", width, height, className, count = 1 }
   );
   if (count === 1) return one(0);
   return (
-    <span className={cn("grid", shape === "row" ? "divide-y divide-line overflow-hidden rounded-card border border-line" : "gap-2")} aria-busy="true">
+    <span
+      className={cn(
+        "grid",
+        shape === "row"
+          ? "divide-y divide-line overflow-hidden rounded-card border border-line"
+          : "gap-2",
+      )}
+      aria-busy="true"
+    >
       {Array.from({ length: count }, (_, i) => one(i))}
     </span>
   );
@@ -50,8 +71,14 @@ export function Skeleton({ shape = "text", width, height, className, count = 1 }
 /** Ligne de liste squelette (vignette + deux lignes + montant). */
 export function SkeletonRow({ count = 3 }: { count?: number }) {
   return (
-    <div className="grid divide-y divide-line overflow-hidden rounded-card border border-line bg-surface" aria-busy="true" aria-label="Chargement">
+    <div
+      className="grid divide-y divide-line overflow-hidden rounded-card border border-line bg-surface"
+      role="status"
+      aria-busy="true"
+      aria-label="Chargement"
+    >
       {Array.from({ length: count }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: lignes identiques et statiques
         <div key={i} className="grid grid-cols-[38px_1fr_auto] items-center gap-3 px-3.5 py-[11px]">
           <Skeleton shape="thumb" />
           <span className="grid gap-1.5">

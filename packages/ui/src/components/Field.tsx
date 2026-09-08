@@ -1,12 +1,12 @@
 "use client";
 import {
   type ChangeEvent,
+  createContext,
   type FocusEvent,
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
-  createContext,
   useContext,
   useId,
   useState,
@@ -36,7 +36,16 @@ export interface FieldProps {
 }
 
 /** Libellé mono capitale + contrôle + aide / erreur. Les contrôles enfants héritent id et aria. */
-export function Field({ label, hint, error, required, disabled = false, children, className, trailing }: FieldProps) {
+export function Field({
+  label,
+  hint,
+  error,
+  required,
+  disabled = false,
+  children,
+  className,
+  trailing,
+}: FieldProps) {
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
@@ -45,11 +54,16 @@ export function Field({ label, hint, error, required, disabled = false, children
     <FieldContext.Provider value={{ id, describedBy, invalid: Boolean(error), disabled }}>
       <div className={cn("grid gap-1.5", className)}>
         <div className="flex items-baseline justify-between gap-3">
-          <label htmlFor={id} className="font-mono text-[10px] uppercase tracking-[.14em] text-ink-3">
+          <label
+            htmlFor={id}
+            className="font-mono text-[10px] uppercase tracking-[.14em] text-ink-3"
+          >
             {label}
             {required ? <span className="text-thread"> *</span> : null}
           </label>
-          {trailing ? <span className="font-mono text-[10px] tracking-[.08em] text-ink-3">{trailing}</span> : null}
+          {trailing ? (
+            <span className="font-mono text-[10px] tracking-[.08em] text-ink-3">{trailing}</span>
+          ) : null}
         </div>
         {children}
         {error ? (
@@ -77,9 +91,11 @@ export const controlClass = (invalid: boolean, extra?: string) =>
     extra,
   );
 
-const bare = "min-w-0 flex-1 bg-transparent py-2.5 outline-none placeholder:text-ink-3 disabled:cursor-not-allowed";
+const bare =
+  "min-w-0 flex-1 bg-transparent py-2.5 outline-none placeholder:text-ink-3 disabled:cursor-not-allowed";
 
-export interface TextInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "size"> {
+export interface TextInputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "size"> {
   readonly unit?: ReactNode;
   readonly leading?: ReactNode;
   readonly trailing?: ReactNode;
@@ -87,7 +103,16 @@ export interface TextInputProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   readonly invalid?: boolean;
 }
 
-export function TextInput({ unit, leading, trailing, className, invalid, id, disabled, ...rest }: TextInputProps) {
+export function TextInput({
+  unit,
+  leading,
+  trailing,
+  className,
+  invalid,
+  id,
+  disabled,
+  ...rest
+}: TextInputProps) {
   const field = useField();
   return (
     <div className={controlClass(invalid ?? field?.invalid ?? false, className)}>
@@ -95,7 +120,7 @@ export function TextInput({ unit, leading, trailing, className, invalid, id, dis
       <input
         id={id ?? field?.id}
         aria-describedby={rest["aria-describedby"] ?? field?.describedBy}
-        aria-invalid={invalid ?? field?.invalid ? true : undefined}
+        aria-invalid={(invalid ?? field?.invalid) ? true : undefined}
         disabled={disabled ?? field?.disabled}
         className={bare}
         {...rest}
@@ -120,7 +145,8 @@ export function parseMoneyInput(raw: string, currency = "EUR"): number | null | 
   const digits = digitsFor(currency);
   const [int = "0", frac = ""] = cleaned.replace(/^-/, "").split(".");
   if (frac.length > digits) return undefined;
-  const minor = Number(int) * 10 ** digits + Number((frac + "0".repeat(digits)).slice(0, digits) || "0");
+  const minor =
+    Number(int) * 10 ** digits + Number((frac + "0".repeat(digits)).slice(0, digits) || "0");
   return cleaned.startsWith("-") ? -minor : minor;
 }
 
@@ -129,10 +155,18 @@ export function formatMoneyInput(minor: number | null, currency = "EUR", locale 
   if (minor === null) return "";
   const digits = digitsFor(currency);
   const amount = minor / 10 ** digits;
-  return new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false }).format(amount);
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+    useGrouping: false,
+  }).format(amount);
 }
 
-export interface MoneyInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "className" | "size" | "type"> {
+export interface MoneyInputProps
+  extends Omit<
+    InputHTMLAttributes<HTMLInputElement>,
+    "value" | "onChange" | "className" | "size" | "type"
+  > {
   readonly valueMinor: number | null;
   readonly onChangeMinor: (minor: number | null) => void;
   readonly currency?: string;
@@ -144,7 +178,20 @@ export interface MoneyInputProps extends Omit<InputHTMLAttributes<HTMLInputEleme
 }
 
 /** Saisie d'un montant avec virgule décimale française ; renvoie des unités mineures entières. */
-export function MoneyInput({ valueMinor, onChangeMinor, currency = "EUR", locale = "fr", className, invalid, allowNegative, id, disabled, onBlur, onFocus, ...rest }: MoneyInputProps) {
+export function MoneyInput({
+  valueMinor,
+  onChangeMinor,
+  currency = "EUR",
+  locale = "fr",
+  className,
+  invalid,
+  allowNegative,
+  id,
+  disabled,
+  onBlur,
+  onFocus,
+  ...rest
+}: MoneyInputProps) {
   const field = useField();
   const [text, setText] = useState(() => formatMoneyInput(valueMinor, currency, locale));
   const [focused, setFocused] = useState(false);
@@ -204,7 +251,8 @@ export interface SelectOption<V extends string = string> {
   readonly label: string;
   readonly disabled?: boolean;
 }
-export interface SelectProps<V extends string = string> extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "className" | "value" | "onChange"> {
+export interface SelectProps<V extends string = string>
+  extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "className" | "value" | "onChange"> {
   readonly options: readonly SelectOption<V>[];
   readonly value: V | "";
   readonly onChange: (value: V) => void;
@@ -213,14 +261,26 @@ export interface SelectProps<V extends string = string> extends Omit<SelectHTMLA
   readonly invalid?: boolean;
 }
 
-export function Select<V extends string = string>({ options, value, onChange, placeholder, className, invalid, id, disabled, ...rest }: SelectProps<V>) {
+export function Select<V extends string = string>({
+  options,
+  value,
+  onChange,
+  placeholder,
+  className,
+  invalid,
+  id,
+  disabled,
+  ...rest
+}: SelectProps<V>) {
   const field = useField();
   return (
-    <div className={controlClass(invalid ?? field?.invalid ?? false, cn("relative pr-9", className))}>
+    <div
+      className={controlClass(invalid ?? field?.invalid ?? false, cn("relative pr-9", className))}
+    >
       <select
         id={id ?? field?.id}
         aria-describedby={rest["aria-describedby"] ?? field?.describedBy}
-        aria-invalid={invalid ?? field?.invalid ? true : undefined}
+        aria-invalid={(invalid ?? field?.invalid) ? true : undefined}
         disabled={disabled ?? field?.disabled}
         value={value}
         onChange={(e) => onChange(e.target.value as V)}
@@ -238,14 +298,19 @@ export function Select<V extends string = string>({ options, value, onChange, pl
           </option>
         ))}
       </select>
-      <AppIcon name="chevronDown" size={18} className="pointer-events-none absolute right-3 text-ink-3" />
+      <AppIcon
+        name="chevronDown"
+        size={18}
+        className="pointer-events-none absolute right-3 text-ink-3"
+      />
     </div>
   );
 }
 
 /* ───────────── Textarea ───────────── */
 
-export interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className"> {
+export interface TextareaProps
+  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className"> {
   readonly className?: string;
   readonly invalid?: boolean;
 }
@@ -253,12 +318,17 @@ export interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaE
 export function Textarea({ className, invalid, id, disabled, rows = 3, ...rest }: TextareaProps) {
   const field = useField();
   return (
-    <div className={controlClass(invalid ?? field?.invalid ?? false, cn("items-stretch py-0", className))}>
+    <div
+      className={controlClass(
+        invalid ?? field?.invalid ?? false,
+        cn("items-stretch py-0", className),
+      )}
+    >
       <textarea
         id={id ?? field?.id}
         rows={rows}
         aria-describedby={rest["aria-describedby"] ?? field?.describedBy}
-        aria-invalid={invalid ?? field?.invalid ? true : undefined}
+        aria-invalid={(invalid ?? field?.invalid) ? true : undefined}
         disabled={disabled ?? field?.disabled}
         className={cn(bare, "resize-y leading-[1.45]")}
         {...rest}

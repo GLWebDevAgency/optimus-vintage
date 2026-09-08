@@ -25,7 +25,8 @@ export function Stitch({ pct, className, label }: StitchProps) {
     >
       <svg viewBox={`0 0 ${w} 14`} preserveAspectRatio="none" aria-hidden="true">
         <defs>
-          <mask id={id}>
+          {/* userSpaceOnUse : la boîte englobante d'une ligne horizontale a une hauteur nulle. */}
+          <mask id={id} maskUnits="userSpaceOnUse" x="0" y="0" width={w} height="14">
             <path className="maskline" d={`M0 7 H${w}`} pathLength={1} />
           </mask>
         </defs>

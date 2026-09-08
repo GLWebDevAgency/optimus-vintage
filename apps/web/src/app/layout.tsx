@@ -89,6 +89,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <head>
         {/* Pose `data-theme` avant le premier rendu : pas de flash de thème. */}
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: script statique, sans entrée utilisateur */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>

@@ -1,6 +1,14 @@
 "use client";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { type ReactNode, createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "../cn.js";
 import { AppIcon } from "../icons.js";
 import { EASE_FOLD, EASE_OUT } from "../motion.js";
@@ -46,7 +54,10 @@ export interface ToastProviderProps {
   readonly bottomOffset?: string;
 }
 
-export function ToastProvider({ children, bottomOffset = "calc(var(--tabbar-h) + var(--safe-bottom) + 8px)" }: ToastProviderProps) {
+export function ToastProvider({
+  children,
+  bottomOffset = "calc(var(--tabbar-h) + var(--safe-bottom) + 8px)",
+}: ToastProviderProps) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const counter = useRef(0);
@@ -61,11 +72,21 @@ export function ToastProvider({ children, bottomOffset = "calc(var(--tabbar-h) +
   const show = useCallback(
     (message: ReactNode, opts: ToastOptions = {}) => {
       const id = opts.id ?? `toast-${++counter.current}`;
-      const item: ToastItem = { id, message, kind: opts.kind ?? "info", duration: opts.duration ?? 3600, ...(opts.action ? { action: opts.action } : {}) };
+      const item: ToastItem = {
+        id,
+        message,
+        kind: opts.kind ?? "info",
+        duration: opts.duration ?? 3600,
+        ...(opts.action ? { action: opts.action } : {}),
+      };
       setToasts((list) => [...list.filter((x) => x.id !== id), item].slice(-3));
       const prev = timers.current.get(id);
       if (prev) clearTimeout(prev);
-      if (item.duration > 0) timers.current.set(id, setTimeout(() => dismiss(id), item.duration));
+      if (item.duration > 0)
+        timers.current.set(
+          id,
+          setTimeout(() => dismiss(id), item.duration),
+        );
       return id;
     },
     [dismiss],
@@ -80,10 +101,22 @@ export function ToastProvider({ children, bottomOffset = "calc(var(--tabbar-h) +
   );
 }
 
-function ToastViewport({ toasts, onDismiss, bottomOffset }: { toasts: readonly ToastItem[]; onDismiss: (id: string) => void; bottomOffset: string }) {
+function ToastViewport({
+  toasts,
+  onDismiss,
+  bottomOffset,
+}: {
+  toasts: readonly ToastItem[];
+  onDismiss: (id: string) => void;
+  bottomOffset: string;
+}) {
   const reduced = useReducedMotion();
   return (
-    <div className="pointer-events-none fixed inset-x-0 z-[60] flex flex-col items-center gap-2 px-4" style={{ bottom: bottomOffset }} role="region" aria-label="Notifications">
+    <section
+      className="pointer-events-none fixed inset-x-0 z-[60] flex flex-col items-center gap-2 px-4"
+      style={{ bottom: bottomOffset }}
+      aria-label="Notifications"
+    >
       <AnimatePresence initial={false}>
         {toasts.map((t) => (
           <motion.div
@@ -93,14 +126,35 @@ function ToastViewport({ toasts, onDismiss, bottomOffset }: { toasts: readonly T
             aria-live={t.kind === "error" ? "assertive" : "polite"}
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.32, ease: EASE_OUT } }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98, transition: { duration: 0.2, ease: EASE_FOLD } }}
+            exit={
+              reduced
+                ? { opacity: 0 }
+                : { opacity: 0, y: 8, scale: 0.98, transition: { duration: 0.2, ease: EASE_FOLD } }
+            }
             className={cn(
               "pointer-events-auto flex w-full max-w-[420px] items-center gap-3 rounded-[14px] border bg-surface px-3.5 py-3 shadow-tag",
-              t.kind === "error" ? "border-thread/40" : t.kind === "success" ? "border-brass/40" : "border-line",
+              t.kind === "error"
+                ? "border-thread/40"
+                : t.kind === "success"
+                  ? "border-brass/40"
+                  : "border-line",
             )}
           >
-            <span className={cn("shrink-0", t.kind === "error" || t.kind === "offline" ? "text-thread" : t.kind === "success" ? "text-brass" : "text-indigo")}>{icons[t.kind]}</span>
-            <span className="min-w-0 flex-1 text-[13.5px] font-medium leading-snug text-ink">{t.message}</span>
+            <span
+              className={cn(
+                "shrink-0",
+                t.kind === "error" || t.kind === "offline"
+                  ? "text-thread"
+                  : t.kind === "success"
+                    ? "text-brass"
+                    : "text-indigo",
+              )}
+            >
+              {icons[t.kind]}
+            </span>
+            <span className="min-w-0 flex-1 text-[13.5px] font-medium leading-snug text-ink">
+              {t.message}
+            </span>
             {t.action ? (
               <button
                 type="button"
@@ -113,12 +167,17 @@ function ToastViewport({ toasts, onDismiss, bottomOffset }: { toasts: readonly T
                 {t.action.label}
               </button>
             ) : null}
-            <button type="button" onClick={() => onDismiss(t.id)} aria-label="Fermer" className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 hover:text-ink focus-thread">
+            <button
+              type="button"
+              onClick={() => onDismiss(t.id)}
+              aria-label="Fermer"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 hover:text-ink focus-thread"
+            >
               <AppIcon name="x" size={16} />
             </button>
           </motion.div>
         ))}
       </AnimatePresence>
-    </div>
+    </section>
   );
 }

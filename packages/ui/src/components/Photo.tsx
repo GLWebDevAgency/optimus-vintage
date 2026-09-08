@@ -19,10 +19,27 @@ export interface PhotoTileProps {
 }
 
 /** Vignette photo carrée, coins 14 px, bouton de suppression 32 px (zone 44). */
-export function PhotoTile({ src, alt = "", primary, onRemove, onClick, placeholder, loading, className, aspect = "square", children }: PhotoTileProps) {
+export function PhotoTile({
+  src,
+  alt = "",
+  primary,
+  onRemove,
+  onClick,
+  placeholder,
+  loading,
+  className,
+  aspect = "square",
+  children,
+}: PhotoTileProps) {
   const Comp = onClick ? "button" : "div";
   return (
-    <div className={cn("relative overflow-hidden rounded-[14px] border border-line bg-surface-2", aspect === "square" ? "aspect-square" : "aspect-[3/4]", className)}>
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-[14px] border border-line bg-surface-2",
+        aspect === "square" ? "aspect-square" : "aspect-[3/4]",
+        className,
+      )}
+    >
       <Comp
         type={onClick ? "button" : undefined}
         onClick={onClick}
@@ -30,10 +47,30 @@ export function PhotoTile({ src, alt = "", primary, onRemove, onClick, placehold
         style={placeholder ? { backgroundColor: placeholder } : undefined}
         aria-label={onClick ? alt || "Voir la photo" : undefined}
       >
-        {src ? <img src={src} alt={alt} className={cn("h-full w-full object-cover", loading && "opacity-60")} loading="lazy" /> : <span className="grid h-full w-full place-items-center text-ink-3"><AppIcon name="shirt" /></span>}
+        {src ? (
+          <img
+            src={src}
+            alt={alt}
+            className={cn("h-full w-full object-cover", loading && "opacity-60")}
+            loading="lazy"
+          />
+        ) : (
+          <span className="grid h-full w-full place-items-center text-ink-3">
+            <AppIcon name="shirt" />
+          </span>
+        )}
       </Comp>
-      {loading ? <span className="absolute inset-x-0 h-[2px] bg-thread opacity-80 animate-scan" aria-hidden="true" /> : null}
-      {primary ? <span className="absolute left-2 top-2 rounded-[6px] bg-ink px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[.12em] text-bg">Principale</span> : null}
+      {loading ? (
+        <span
+          className="absolute inset-x-0 h-[2px] bg-thread opacity-80 animate-scan"
+          aria-hidden="true"
+        />
+      ) : null}
+      {primary ? (
+        <span className="absolute left-2 top-2 rounded-[6px] bg-ink px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[.12em] text-bg">
+          Principale
+        </span>
+      ) : null}
       {onRemove ? (
         <button
           type="button"
@@ -52,7 +89,12 @@ export function PhotoTile({ src, alt = "", primary, onRemove, onClick, placehold
 }
 
 export interface PhotoGridProps {
-  readonly photos: ReadonlyArray<{ readonly id: string; readonly src: string; readonly alt?: string; readonly loading?: boolean }>;
+  readonly photos: ReadonlyArray<{
+    readonly id: string;
+    readonly src: string;
+    readonly alt?: string;
+    readonly loading?: boolean;
+  }>;
   readonly onRemove?: (id: string) => void;
   readonly onOpen?: (id: string) => void;
   /** Bouton d'ajout (caméra / galerie). */
@@ -63,12 +105,29 @@ export interface PhotoGridProps {
   readonly className?: string;
 }
 
-export function PhotoGrid({ photos, onRemove, onOpen, onAdd, addLabel = "Ajouter", max = 8, columns = 3, className }: PhotoGridProps) {
+export function PhotoGrid({
+  photos,
+  onRemove,
+  onOpen,
+  onAdd,
+  addLabel = "Ajouter",
+  max = 8,
+  columns = 3,
+  className,
+}: PhotoGridProps) {
   const canAdd = onAdd && photos.length < max;
   return (
     <div className={cn("grid gap-2", columns === 3 ? "grid-cols-3" : "grid-cols-4", className)}>
       {photos.map((p, i) => (
-        <PhotoTile key={p.id} src={p.src} alt={p.alt ?? ""} primary={i === 0} loading={p.loading ?? false} onRemove={onRemove ? () => onRemove(p.id) : undefined} onClick={onOpen ? () => onOpen(p.id) : undefined} />
+        <PhotoTile
+          key={p.id}
+          src={p.src}
+          alt={p.alt ?? ""}
+          primary={i === 0}
+          loading={p.loading ?? false}
+          onRemove={onRemove ? () => onRemove(p.id) : undefined}
+          onClick={onOpen ? () => onOpen(p.id) : undefined}
+        />
       ))}
       {canAdd ? (
         <button

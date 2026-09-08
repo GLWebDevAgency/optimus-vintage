@@ -1,11 +1,11 @@
 "use client";
+import type { Transition, Variants } from "motion/react";
 /**
  * Grammaire du mouvement Selvedge pour `motion/react` :
  * six gestes (accrocher, coudre, compter, plier, tamponner, dérouler) et une entrée en cascade.
  * Tout respecte `prefers-reduced-motion` via `useReducedMotion` / `useMotionPrefs`.
  */
 import { animate, useMotionValue, useMotionValueEvent, useReducedMotion } from "motion/react";
-import type { Transition, Variants } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -19,7 +19,12 @@ export const stateTransition: Transition = { duration: DURATION.state, ease: EAS
 /** Transition micro (pression d'un bouton). */
 export const microTransition: Transition = { duration: DURATION.micro, ease: EASE_OUT };
 /** Ressort « snap » pour les bascules. */
-export const snapTransition: Transition = { type: "spring", stiffness: 520, damping: 26, mass: 0.8 };
+export const snapTransition: Transition = {
+  type: "spring",
+  stiffness: 520,
+  damping: 26,
+  mass: 0.8,
+};
 
 /* ───────────── 1. Accrocher — l'étiquette entre suspendue et se balance ───────────── */
 export const swingIn: Variants = {
@@ -148,7 +153,10 @@ export const pressTap = { scale: 0.96, y: 1 } as const;
 export const chipTap = { scale: 0.92 } as const;
 
 /** Préférences de mouvement, stables pour tout un arbre. */
-export function useMotionPrefs(): { reduced: boolean; variantsOrNone: (v: Variants) => Variants | undefined } {
+export function useMotionPrefs(): {
+  reduced: boolean;
+  variantsOrNone: (v: Variants) => Variants | undefined;
+} {
   const reduced = useReducedMotion() ?? false;
   return useMemo(
     () => ({ reduced, variantsOrNone: (v: Variants) => (reduced ? undefined : v) }),

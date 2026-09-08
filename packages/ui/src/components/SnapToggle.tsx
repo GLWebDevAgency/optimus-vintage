@@ -16,7 +16,16 @@ export interface SnapToggleProps {
 }
 
 /** Interrupteur « snap » : le bouton-pression claque en place (`role="switch"`). */
-export function SnapToggle({ checked, onChange, label, description, disabled, className, name, ...rest }: SnapToggleProps) {
+export function SnapToggle({
+  checked,
+  onChange,
+  label,
+  description,
+  disabled,
+  className,
+  name,
+  ...rest
+}: SnapToggleProps) {
   const id = useId();
   const reduced = useReducedMotion();
   const control = (

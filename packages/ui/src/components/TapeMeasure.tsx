@@ -4,15 +4,39 @@
  * Traits tous les 1 (12 px), grands traits tous les 5, accroche sur l'unité, retour haptique.
  * Contrôlé en unités mineures. Clavier : ← → ±1, PageUp/Down ±5, Home/End.
  */
-import { animate, motion, useMotionValue, useMotionValueEvent, useReducedMotion, useTransform } from "motion/react";
-import { type KeyboardEvent, type PointerEvent as ReactPointerEvent, type WheelEvent, useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useTransform,
+} from "motion/react";
+import {
+  type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type WheelEvent,
+} from "react";
 import { cn } from "../cn.js";
 import { EASE_OUT } from "../motion.js";
 
 const PX_PER_UNIT = 12;
 const BIG_EVERY = 5;
 const MINOR_UNITS: Record<string, number> = { JPY: 0 };
-const SYMBOL: Record<string, string> = { EUR: "€", USD: "$", GBP: "£", JPY: "¥", CHF: "CHF", CAD: "CA$", AUD: "A$" };
+const SYMBOL: Record<string, string> = {
+  EUR: "€",
+  USD: "$",
+  GBP: "£",
+  JPY: "¥",
+  CHF: "CHF",
+  CAD: "CA$",
+  AUD: "A$",
+};
 
 export interface TapeMeasureProps {
   readonly valueMinor: number;
@@ -69,8 +93,17 @@ export function TapeMeasure({
   const [width, setWidth] = useState(320);
   const [shown, setShown] = useState(() => snap(valueMinor / factor));
   const lastEmitted = useRef(snap(valueMinor / factor));
-  const drag = useRef<{ pointerId: number; startX: number; startValue: number; lastX: number; lastT: number; vx: number } | null>(null);
+  const drag = useRef<{
+    pointerId: number;
+    startX: number;
+    startValue: number;
+    lastX: number;
+    lastT: number;
+    vx: number;
+  } | null>(null);
   const [dragging, setDragging] = useState(false);
+  // Pendant un réglage programmé (clavier, molette), le ruban rattrape la valeur sans émettre les intermédiaires.
+  const suppress = useRef(false);
 
   // Largeur de la piste (ResizeObserver si dispo).
   useEffect(() => {
@@ -96,6 +129,7 @@ export function TapeMeasure({
 
   // Ruban → valeur affichée, haptique et émission quand l'unité change.
   useMotionValueEvent(value, "change", (v) => {
+    if (suppress.current) return;
     const s = snap(v);
     if (s !== lastEmitted.current) {
       lastEmitted.current = s;
@@ -110,7 +144,7 @@ export function TapeMeasure({
   const layerX = useTransform(value, (v) => center - v * PX_PER_UNIT);
   // Traits : motif répété, décalé modulo la période des grands traits.
   const period = BIG_EVERY * PX_PER_UNIT;
-  const ticksX = useTransform(layerX, (x) => ((x % period) + period) % period - period);
+  const ticksX = useTransform(layerX, (x) => (((x % period) + period) % period) - period);
   // Étiquettes : fenêtre de nombres autour de la valeur (re-rendue seulement quand le bucket change).
   const bucketCount = Math.ceil(width / period) + 2;
   const bucket = Math.floor(shown / BIG_EVERY);
@@ -120,20 +154,57 @@ export function TapeMeasure({
     if (unit >= min && unit <= max) labels.push(unit);
   }
 
+  /** Relâchement du ruban : on le lance selon la vitesse puis il s'accroche sur l'unité (émissions intermédiaires + haptique). */
   const settle = (target: number, velocity = 0) => {
     const t = snap(target);
+    suppress.current = false;
     if (reduced) {
       value.set(t);
       return;
     }
-    animate(value, t, { type: "spring", stiffness: 260, damping: 30, velocity: -velocity / PX_PER_UNIT, restDelta: 0.001 });
+    animate(value, t, {
+      type: "spring",
+      stiffness: 260,
+      damping: 30,
+      velocity: -velocity / PX_PER_UNIT,
+      restDelta: 0.001,
+    });
+  };
+
+  /** Réglage direct (clavier, molette) : la valeur est émise tout de suite, le ruban rattrape visuellement. */
+  const commit = (target: number) => {
+    const t = snap(target);
+    if (t !== lastEmitted.current) {
+      lastEmitted.current = t;
+      setShown(t);
+      if (haptics) vibrate(4);
+      onChange(Math.round(t * factor));
+    }
+    if (reduced) {
+      value.set(t);
+      return;
+    }
+    suppress.current = true;
+    value.stop();
+    const controls = animate(value, t, { duration: 0.28, ease: EASE_OUT });
+    controls.then(() => {
+      suppress.current = false;
+    });
   };
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (disabled) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     value.stop();
-    drag.current = { pointerId: e.pointerId, startX: e.clientX, startValue: value.get(), lastX: e.clientX, lastT: performance.now(), vx: 0 };
+    suppress.current = false;
+    drag.current = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startValue: value.get(),
+      lastX: e.clientX,
+      lastT: performance.now(),
+      vx: 0,
+    };
     setDragging(true);
   };
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -160,7 +231,7 @@ export function TapeMeasure({
     if (disabled) return;
     const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     if (!delta) return;
-    settle(clamp(lastEmitted.current + Math.sign(delta) * step));
+    commit(clamp(lastEmitted.current + Math.sign(delta) * step));
   };
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (disabled) return;
@@ -178,18 +249,26 @@ export function TapeMeasure({
     const next = map[e.key];
     if (next === undefined) return;
     e.preventDefault();
-    settle(clamp(next));
+    commit(clamp(next));
   };
 
-  const fmt = new Intl.NumberFormat(locale, { minimumFractionDigits: 0, maximumFractionDigits: digits });
+  const fmt = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: digits,
+  });
   const symbol = SYMBOL[currency] ?? currency;
 
   return (
     <div className={cn("grid w-full gap-2 select-none", disabled && "opacity-50", className)}>
       {!hideValue ? (
-        <div className="text-center font-display italic text-[44px] leading-none text-ink tabular" aria-hidden="true">
+        <div
+          className="text-center font-display italic text-[44px] leading-none text-ink tabular"
+          aria-hidden="true"
+        >
           {fmt.format(shown)}
-          <span className="ml-1 font-ui not-italic text-[16px] font-semibold text-ink-2">{symbol}</span>
+          <span className="ml-1 font-ui not-italic text-[16px] font-semibold text-ink-2">
+            {symbol}
+          </span>
         </div>
       ) : null}
       <div
@@ -233,7 +312,11 @@ export function TapeMeasure({
           }}
         />
         {/* Nombres */}
-        <motion.div aria-hidden="true" className="absolute inset-y-0 left-0 w-0" style={{ x: layerX }}>
+        <motion.div
+          aria-hidden="true"
+          className="absolute inset-y-0 left-0 w-0"
+          style={{ x: layerX }}
+        >
           {labels.map((u) => (
             <span
               key={u}
@@ -245,12 +328,21 @@ export function TapeMeasure({
           ))}
         </motion.div>
         {/* Aiguille */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 bg-thread">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 bg-thread"
+        >
           <span className="absolute -top-px left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-[7px] border-t-thread" />
         </div>
         {/* Fondu des bords */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-surface to-transparent" />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-surface to-transparent" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-surface to-transparent"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-surface to-transparent"
+        />
       </div>
     </div>
   );
