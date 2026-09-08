@@ -1,0 +1,16 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "globalEnv": ["NODE_ENV", "DATABASE_URL", "CHINE_DATA_DIR"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": ["NEXT_PUBLIC_*", "BETTER_AUTH_SECRET", "BETTER_AUTH_URL", "GEMINI_API_KEY", "ANTHROPIC_API_KEY", "STRIPE_*", "R2_*", "STORAGE_DRIVER", "APPRAISER_DRIVER"]
+    },
+    "dev": { "cache": false, "persistent": true, "dependsOn": ["^build"] },
+    "test": { "dependsOn": ["^build"], "outputs": ["coverage/**"] },
+    "typecheck": { "dependsOn": ["^build"] },
+    "clean": { "cache": false }
+  }
+}

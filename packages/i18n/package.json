@@ -1,0 +1,18 @@
+{
+  "name": "@chine/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chiné — messages FR/EN/DE, helper t() et formatage Intl (argent, dates, pourcentages). Zéro dépendance.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check src test"
+  },
+  "devDependencies": { "typescript": "7.0.2", "vitest": "5.0.0" }
+}

@@ -1,189 +1,54 @@
-# 🛍️ Optimus Vintage
+# Chiné
 
-> Enterprise-grade vintage resale analytics platform built with React Native, PostgreSQL & Express.js
+> L'app des revendeurs de vêtements de seconde main : chiner, stocker, vendre, savoir ce qu'on gagne.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.76-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-~52.0-000.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791.svg)](https://www.postgresql.org/)
+Monorepo Turborepo · TypeScript 7 · Next.js 16 PWA mobile-first · Expo (phase 2) · Postgres (PGlite en dev) · Domaine DDD.
 
-## 📋 Overview
-
-Optimus Vintage is a premium inventory management and financial analytics platform designed for vintage clothing resellers. Track lots, items, sales, and gain real-time insights into your business performance.
-
-### ✨ Features
-
-- **📦 Lot Management** - Track bulk purchases with detailed cost analysis
-- **👕 Item Tracking** - Individual item status (Stock → Listed → Sold)
-- **💰 Sales Analytics** - Multi-platform sales tracking (Vinted, Depop, etc.)
-- **📊 Financial Insights** - ROI, floor price protection, break-even analysis
-- **🌙 Dark Mode** - Premium UI with light/dark theme support
-
-## 🏗️ Architecture
+## Structure
 
 ```
-optimus-vintage/
-├── app/                    # Expo Router screens
-│   ├── (tabs)/            # Tab navigation
-│   ├── lots/              # Lot detail & creation
-│   └── sales/             # Sales management
-├── api/                   # Express.js REST API
-│   └── src/
-│       ├── server.ts      # Main server
-│       ├── schema.ts      # Drizzle ORM schema
-│       └── validation.ts  # Zod validators
-├── components/            # Reusable UI components
-├── db/                    # Database layer
-│   └── repositories/      # Data access layer
-├── constants/             # Theme, colors, config
-└── utils/                 # Business logic & calculations
+apps/
+  web/              Next.js 16 — PWA installable, API /api/v1, écrans Aujourd'hui, Chiner, Stock, Ventes, Sources, Réglages
+  mobile/           Expo SDK 57 — socle natif (phase 2) consommant les mêmes packages
+packages/
+  domain/           Cœur métier pur : Money, PurchaseSource, Item, Sale, frais par plateforme, floor price, rapports, plans
+  application/      Cas d'usage (commandes / requêtes), ports, DTOs, adaptateurs en mémoire pour les tests
+  infrastructure/   Drizzle (Postgres / PGlite), stockage photos (R2 / local), expert IA (Gemini / faux), Stripe, outbox
+  contract/         Schémas Zod de l'API + client HTTP typé (web et mobile)
+  ui/               Design system « Selvedge » : tokens CSS + TS, composants React, motion
+  i18n/             Messages FR / EN / DE et formatage
+docs/
+  ANALYSE-APPROFONDIE-2026-09.md   Audit de l'ancienne app et décision de refonte
+  design/                          Brand book Selvedge (page HTML vivante)
+  adr/                             Décisions d'architecture
+legacy/optimus-vintage/            Ancienne app Expo + API Express (archivée, non maintenue)
 ```
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-- iOS Simulator (macOS) or Android Studio
-- PostgreSQL database (or Railway account)
-
-### Installation
+## Démarrer
 
 ```bash
-# Clone the repository
-git clone https://github.com/GLWebDevAgency/optimus-vintage.git
-cd optimus-vintage
-
-# Install mobile app dependencies
-npm install
-
-# Install API dependencies
-cd api && npm install && cd ..
+corepack enable && pnpm install
+cp .env.example .env            # tout fonctionne sans clé : PGlite, IA de démo, photos locales
+pnpm dev                        # http://localhost:3000
 ```
 
-### Environment Setup
+Sur iPhone : Safari → Partager → « Sur l'écran d'accueil ». Sur Android : Chrome propose l'installation.
 
-```bash
-# Mobile app (.env)
-cp .env.example .env
+## Commandes
 
-# API (api/.env)
-cp api/.env.example api/.env
-# Configure your PostgreSQL credentials
-```
+| Commande | Effet |
+|---|---|
+| `pnpm dev` | App web en développement |
+| `pnpm build` | Build de tous les packages puis de l'app |
+| `pnpm test` | Tests unitaires et d'intégration (Vitest) |
+| `pnpm typecheck` | TypeScript 7 sur tout le monorepo |
+| `pnpm lint` | Biome |
+| `pnpm --filter @chine/web e2e` | Playwright, viewport iPhone |
+| `pnpm db:generate` / `pnpm db:migrate` | Migrations Drizzle |
 
-### Running the App
+## Principes
 
-```bash
-# Terminal 1: Start the API
-cd api && npm run dev
-
-# Terminal 2: Start Expo
-npm start
-```
-
-## 🔧 Development Workflow
-
-### Branch Strategy (Git Flow)
-
-| Branch | Purpose |
-|--------|---------|
-| `main` | Production-ready code |
-| `develop` | Integration branch |
-| `feature/*` | New features |
-| `fix/*` | Bug fixes |
-| `release/*` | Release preparation |
-
-### Commit Convention
-
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat: add new lot creation form
-fix: resolve rate limiting issue
-docs: update README
-refactor: improve repository pattern
-```
-
-# Créer une feature
-
-```
-git checkout develop
-git checkout -b feature/ma-feature
-```
-
-# Développer
-
-```
-git add . && git commit -m "feat: ma feature"
-git push origin feature/ma-feature
-```
-
-# Créer une PR vers develop
-
-```
-gh pr create --base develop
-```
-
-# Après validation, merger vers main pour déploiement
-
-### Code Quality
-
-```bash
-# TypeScript check
-npm run typecheck
-
-# Run tests
-npm test
-
-# API typecheck
-cd api && npm run typecheck
-```
-
-## 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/lots` | List all lots |
-| POST | `/api/lots` | Create a lot |
-| GET | `/api/lots/:id` | Get lot details |
-| GET | `/api/items` | List items |
-| POST | `/api/items` | Create item |
-| GET | `/api/sales` | List sales |
-| POST | `/api/sales` | Record sale |
-
-## 🚢 Deployment
-
-### API (Railway)
-
-1. Connect Railway to this GitHub repo
-2. Set root directory to `/api`
-3. Configure environment variables
-4. Deploy automatically on push to `main`
-
-### Mobile App (Expo/EAS)
-
-```bash
-# Build for iOS
-eas build --platform ios
-
-# Build for Android
-eas build --platform android
-```
-
-## 🛡️ Security
-
-- ⚠️ Never commit `.env` files
-- 🔐 API rate limiting enabled in production
-- 🔒 CORS configured for allowed origins
-- ✅ Input validation with Zod
-
-## 📄 License
-
-Private - © 2026 GLWebDevAgency
-
----
-
-Made with ❤️ for vintage resellers
+- **Le domaine ne dépend de rien.** Money en centimes entiers, invariants dans les agrégats, événements de domaine, `Result` pour les erreurs attendues.
+- **Multi-tenant natif.** Chaque table métier porte `workspace_id` ; un espace de travail = un compte reseller, prêt pour le multi-utilisateur.
+- **Hors-ligne d'abord.** Le mode Chiner fonctionne sans réseau : lectures en cache, écritures en file d'attente rejouée au retour du réseau.
+- **Un seul contrat d'API** pour le web et le natif.

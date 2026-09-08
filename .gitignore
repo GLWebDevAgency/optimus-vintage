@@ -1,46 +1,20 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
 node_modules/
-
-# Expo
-.expo/
+.turbo/
 dist/
-web-build/
-expo-env.d.ts
-
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macOS
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
-.env
-api/.env
-
-# AI agents skills (installed locally)
-.agents/
-
-# typescript
+.next/
+out/
+coverage/
 *.tsbuildinfo
-
-# generated native folders
-/ios
-/android
+.env
+.env.*
+!.env.example
+.data/
+.expo/
+*.log
+.DS_Store
+.playwright/
+test-results/
+playwright-report/
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js

@@ -1,0 +1,19 @@
+{
+  "name": "@chine/contract",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chiné — contrat HTTP /api/v1 : schémas Zod, DTOs, table de routes et client isomorphe.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check src test"
+  },
+  "dependencies": { "zod": "^4.5.4" },
+  "devDependencies": { "typescript": "7.0.2", "vitest": "5.0.0" }
+}

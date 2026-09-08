@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Chiné",
+    "slug": "chine",
+    "version": "0.1.0",
+    "scheme": "chine",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": { "supportsTablet": false, "bundleIdentifier": "app.chine.mobile" },
+    "android": { "package": "app.chine.mobile", "edgeToEdgeEnabled": true },
+    "web": { "bundler": "metro", "output": "static" },
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true, "reactCompiler": true }
+  }
+}

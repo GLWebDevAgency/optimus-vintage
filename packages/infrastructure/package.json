@@ -1,0 +1,41 @@
+{
+  "name": "@chine/infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chiné — adaptateurs d'infrastructure : Drizzle/Postgres (ou PGlite), R2, Gemini, Stripe, outbox.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./db": { "types": "./dist/db/index.d.ts", "default": "./dist/db/index.js" },
+    "./auth-schema": { "types": "./dist/db/auth-schema.d.ts", "default": "./dist/db/auth-schema.js" }
+  },
+  "files": ["dist", "drizzle"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --import tsx ./scripts/migrate.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1127.0",
+    "@aws-sdk/s3-request-presigner": "^3.1127.0",
+    "@chine/application": "workspace:*",
+    "@chine/domain": "workspace:*",
+    "@electric-sql/pglite": "^0.5.8",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.20.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  }
+}
