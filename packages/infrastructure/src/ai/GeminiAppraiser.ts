@@ -1,49 +1,46 @@
 /**
- * Expert IA Gemini via l'API REST (pas de SDK) : une image + un prompt → JSON strict,
- * parsé et validé défensivement avant d'être converti en types du domaine.
+ * Expert IA Gemini via l'API REST (pas de SDK) : une image + un prompt → JSON strict
+ * (`responseSchema`), validé par le schéma partagé puis converti en types du domaine.
+ * Le modèle vient de `GEMINI_MODEL` (défaut `gemini-2.5-flash` ; un identifiant plus récent,
+ * par ex. `gemini-3.x-flash`, se règle par l'environnement sans changer le code).
  */
-
 import type { AppraisalDraft, AppraisalRequest, Appraiser } from "../ports.js";
-import { parseAppraisalBody } from "./appraisal-codec.js";
-import { APPRAISAL_RESPONSE_SCHEMA, buildSystemPrompt, buildUserPrompt } from "./prompt.js";
+import {
+  APPRAISAL_JSON_SCHEMA,
+  AppraiserError,
+  buildPrompt,
+  DEFAULT_TIMEOUT_MS,
+  errorMessage,
+  type FetchLike,
+  isAppraiserError,
+  type ProviderOptions,
+  parseAppraisalOutput,
+  parseJsonLoosely,
+  toDraft,
+  toGeminiSchema,
+  withTimeout,
+} from "./core.js";
 
-export type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
-
-export interface GeminiAppraiserOptions {
-  readonly apiKey: string;
-  /** Modèle (défaut `gemini-2.5-flash`). */
-  readonly model?: string | undefined;
+export interface GeminiAppraiserOptions extends ProviderOptions {
   readonly baseUrl?: string | undefined;
-  readonly timeoutMs?: number | undefined;
-  readonly fetch?: FetchLike | undefined;
   /** Envoie `responseSchema` (structuré) en plus du prompt ; désactivable si le modèle le refuse. */
   readonly useResponseSchema?: boolean | undefined;
 }
 
-export class AppraiserError extends Error {
-  override readonly name = "AppraiserError";
-  constructor(
-    readonly code: "HTTP" | "EMPTY" | "BLOCKED" | "INVALID_JSON" | "TIMEOUT" | "NETWORK",
-    message: string,
-    readonly details?: Readonly<Record<string, unknown>>,
-  ) {
-    super(message);
-  }
-}
-
 export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+const PROVIDER = "gemini";
 
 interface GeminiResponse {
   candidates?: Array<{
-    content?: { parts?: Array<{ text?: string }> };
+    content?: { parts?: Array<{ text?: string; thought?: boolean }> };
     finishReason?: string;
   }>;
   promptFeedback?: { blockReason?: string };
-  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+  modelVersion?: string;
 }
 
 export class GeminiAppraiser implements Appraiser {
-  readonly name = "gemini";
+  readonly name = PROVIDER;
   readonly model: string;
   private readonly apiKey: string;
   private readonly baseUrl: string;
@@ -58,106 +55,130 @@ export class GeminiAppraiser implements Appraiser {
       /\/+$/,
       "",
     );
-    this.timeoutMs = options.timeoutMs ?? 45_000;
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.fetchImpl = options.fetch ?? ((input, init) => fetch(input, init));
     this.useResponseSchema = options.useResponseSchema ?? true;
   }
 
   async appraise(req: AppraisalRequest): Promise<AppraisalDraft> {
     const started = Date.now();
+    const prompt = buildPrompt(req);
     const body = {
-      systemInstruction: { parts: [{ text: buildSystemPrompt(req) }] },
+      systemInstruction: { parts: [{ text: prompt.system }] },
       contents: [
         {
           role: "user",
           parts: [
-            { text: buildUserPrompt(req) },
+            { text: prompt.user },
             { inlineData: { mimeType: req.mimeType, data: req.imageBase64 } },
           ],
         },
       ],
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 4096,
+        // Sur les modèles « thinking », la réflexion compte dans la sortie : marge large.
+        maxOutputTokens: 8192,
         responseMimeType: "application/json",
-        ...(this.useResponseSchema ? { responseSchema: APPRAISAL_RESPONSE_SCHEMA } : {}),
+        ...(this.useResponseSchema
+          ? { responseSchema: toGeminiSchema(APPRAISAL_JSON_SCHEMA) }
+          : {}),
       },
     };
 
     const url = `${this.baseUrl}/models/${encodeURIComponent(this.model)}:generateContent`;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
-    let response: Response;
-    try {
-      response = await this.fetchImpl(url, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-    } catch (e) {
-      if (controller.signal.aborted)
-        throw new AppraiserError("TIMEOUT", `Gemini : délai dépassé (${this.timeoutMs} ms)`);
-      throw new AppraiserError("NETWORK", `Gemini : erreur réseau (${errorMessage(e)})`);
-    } finally {
-      clearTimeout(timer);
-    }
+    const response = await withTimeout(
+      async (signal) => {
+        try {
+          return await this.fetchImpl(url, {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
+            body: JSON.stringify(body),
+            signal,
+          });
+        } catch (e) {
+          if (signal.aborted) throw e;
+          throw new AppraiserError(
+            "UPSTREAM_ERROR",
+            `Gemini : erreur réseau (${errorMessage(e)})`,
+            { retryable: true, provider: PROVIDER, cause: e },
+          );
+        }
+      },
+      this.timeoutMs,
+      PROVIDER,
+    );
 
-    if (!response.ok) {
-      const text = await safeText(response);
-      throw new AppraiserError("HTTP", `Gemini : HTTP ${response.status}`, {
-        status: response.status,
-        body: text.slice(0, 2000),
-      });
-    }
+    if (!response.ok) throw await httpError(response);
 
-    const json = (await response.json()) as GeminiResponse;
+    const json = await readJson(response);
     if (json.promptFeedback?.blockReason) {
       throw new AppraiserError(
-        "BLOCKED",
+        "REFUSED",
         `Gemini : requête bloquée (${json.promptFeedback.blockReason})`,
+        { provider: PROVIDER, details: { blockReason: json.promptFeedback.blockReason } },
       );
     }
     const candidate = json.candidates?.[0];
-    const text = (candidate?.content?.parts ?? []).map((p) => p.text ?? "").join("");
+    const finishReason = candidate?.finishReason;
+    if (finishReason === "SAFETY" || finishReason === "PROHIBITED_CONTENT") {
+      throw new AppraiserError("REFUSED", `Gemini : réponse refusée (${finishReason})`, {
+        provider: PROVIDER,
+        details: { finishReason },
+      });
+    }
+    const text = (candidate?.content?.parts ?? [])
+      .filter((p) => !p.thought)
+      .map((p) => p.text ?? "")
+      .join("");
     if (!text.trim()) {
-      throw new AppraiserError("EMPTY", "Gemini : réponse vide", {
-        finishReason: candidate?.finishReason,
+      throw new AppraiserError("INVALID_OUTPUT", "Gemini : réponse vide", {
+        provider: PROVIDER,
+        details: { finishReason },
+      });
+    }
+    if (finishReason === "MAX_TOKENS") {
+      throw new AppraiserError("INVALID_OUTPUT", "Gemini : réponse tronquée (MAX_TOKENS)", {
+        provider: PROVIDER,
+        details: { finishReason },
       });
     }
 
-    const raw = parseJsonLoosely(text);
-    const parsed = parseAppraisalBody(raw, req.currency);
-    return {
-      provider: this.name,
-      model: this.model,
+    const parsed = parseAppraisalOutput(parseJsonLoosely(text, "Gemini"), PROVIDER);
+    return toDraft(parsed, {
+      provider: PROVIDER,
+      model: json.modelVersion ?? this.model,
       latencyMs: Date.now() - started,
-      ...parsed,
-      listingCopy: req.wantListingCopy ? parsed.listingCopy : null,
-    };
+      currency: req.currency,
+      wantListingCopy: req.wantListingCopy ?? false,
+    });
   }
 }
 
-/** JSON éventuellement entouré de ``` ou de texte : on isole le premier objet complet. */
-export function parseJsonLoosely(text: string): unknown {
-  const cleaned = text
-    .replace(/^\s*```(?:json)?/i, "")
-    .replace(/```\s*$/, "")
-    .trim();
+async function httpError(response: Response): Promise<AppraiserError> {
+  const status = response.status;
+  const body = (await safeText(response)).slice(0, 2000);
+  const details = { status, body };
+  if (status === 429) {
+    return new AppraiserError("RATE_LIMITED", "Gemini : quota dépassé (HTTP 429)", {
+      provider: PROVIDER,
+      details,
+    });
+  }
+  return new AppraiserError("UPSTREAM_ERROR", `Gemini : HTTP ${status}`, {
+    retryable: status >= 500 || status === 408,
+    provider: PROVIDER,
+    details,
+  });
+}
+
+async function readJson(response: Response): Promise<GeminiResponse> {
   try {
-    return JSON.parse(cleaned);
-  } catch {
-    const start = cleaned.indexOf("{");
-    const end = cleaned.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      try {
-        return JSON.parse(cleaned.slice(start, end + 1));
-      } catch {
-        // on tombe dans l'erreur ci-dessous
-      }
-    }
-    throw new AppraiserError("INVALID_JSON", "Gemini : JSON invalide", {
-      sample: cleaned.slice(0, 300),
+    return (await response.json()) as GeminiResponse;
+  } catch (e) {
+    if (isAppraiserError(e)) throw e;
+    throw new AppraiserError("INVALID_OUTPUT", "Gemini : corps de réponse illisible", {
+      provider: PROVIDER,
+      cause: e,
     });
   }
 }
@@ -169,4 +190,3 @@ const safeText = async (r: Response): Promise<string> => {
     return "";
   }
 };
-const errorMessage = (e: unknown): string => (e instanceof Error ? e.message : String(e));

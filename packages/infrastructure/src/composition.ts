@@ -2,7 +2,7 @@
  * Racine de composition : assemble base, repositories, unité de travail, outbox, IA,
  * stockage, facturation, horloge et identifiants à partir de l'environnement.
  */
-import { createAppraiser } from "./ai/index.js";
+import { type AppraiserRouter, createAppraiser } from "./ai/index.js";
 import { createBillingGateway, StripeBillingGateway } from "./billing/index.js";
 import { SystemClock } from "./clock.js";
 import { createDatabase, type Database, databaseConfigFromEnv, getDatabase } from "./db/client.js";
@@ -26,6 +26,8 @@ export interface InfrastructureDependencies
   extends Omit<AppDependencies, keyof DrizzleRepositories>,
     DrizzleRepositories {
   readonly database: Database;
+  /** Routeur d'experts IA (chaîne de fournisseurs) : `describe()` alimente `/api/health`. */
+  readonly appraiser: AppraiserRouter;
   readonly outbox: OutboxEventPublisher;
   readonly outboxRelay: OutboxRelay;
   /** Limiteur de débit persistant (hors port applicatif : utilisé par la couche HTTP). */

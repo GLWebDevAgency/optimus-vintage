@@ -49,13 +49,21 @@ Le script crée le projet, les deux environnements, un Postgres par environnemen
 L'expert IA est une chaîne de fournisseurs interchangeables, réglée par variables d'environnement :
 
 ```
-APPRAISER_DRIVER=anthropic,gemini,openai   # ordre d'essai ; repli automatique sur le suivant
-ANTHROPIC_MODEL=claude-fable-5-1           # ou claude-opus-5, claude-sonnet-5
-GEMINI_MODEL=gemini-2.5-flash              # ou toute version plus récente (gemini-3.x-flash)
-OPENAI_MODEL=                              # identifiant exact du modèle OpenAI voulu
+APPRAISER_DRIVER=anthropic,gemini,openai   # ordre d'essai ; `auto` = fournisseurs dont la clé est présente
+APPRAISER_TIMEOUT_MS=45000                 # délai maximal par tentative
+ANTHROPIC_API_KEY=… ANTHROPIC_MODEL=claude-fable-5-1  ANTHROPIC_EFFORT=low   # ou claude-opus-5, claude-sonnet-5
+GEMINI_API_KEY=…    GEMINI_MODEL=gemini-2.5-flash      # ou toute version plus récente (gemini-3.x-flash)
+OPENAI_API_KEY=…    OPENAI_MODEL=…                      # identifiant exact du modèle vision OpenAI (obligatoire si openai est listé)
 ```
 
-Chaque fournisseur reçoit le même schéma JSON strict et rend le même `Appraisal`. Un fournisseur qui échoue (délai, quota, refus, sortie invalide) passe la main au suivant ; le fournisseur et le modèle réellement utilisés sont enregistrés sur chaque expertise. `GET /api/health` affiche la chaîne active. L'expert de démonstration (`fake`) est refusé en production sauf mention explicite.
+Règles :
+
+- Chaque fournisseur reçoit le même prompt versionné et le même schéma JSON strict (`packages/infrastructure/src/ai/schema.ts`), et rend le même `Appraisal`. Le fournisseur, le modèle réellement servi et la latence sont enregistrés sur chaque expertise.
+- Le routeur passe au fournisseur suivant sur délai dépassé, quota (429), refus, sortie invalide ou erreur 5xx. Une erreur de configuration (clé invalide, requête 400) interrompt la chaîne : la rejouer ailleurs masquerait le problème.
+- Un fournisseur listé sans clé (ou `openai` sans `OPENAI_MODEL`) fait échouer le démarrage avec `NOT_CONFIGURED`.
+- `fake` n'entre jamais dans la chaîne `auto` en production ; sans clé, la chaîne est vide et l'expertise renvoie `NOT_CONFIGURED`.
+- Changer de modèle (nouvelle version Gemini, nouveau modèle OpenAI) ne demande qu'une variable et un redéploiement, aucun code.
+- `GET /api/health` expose `appraiser.chain` (`[{ provider, model }]`) et `appraiser.fake`.
 
 ## Matrice des variables
 

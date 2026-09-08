@@ -13,7 +13,7 @@ apps/
 packages/
   domain/           Cœur métier pur : Money, PurchaseSource, Item, Sale, frais par plateforme, floor price, rapports, plans
   application/      Cas d'usage (commandes / requêtes), ports, DTOs, adaptateurs en mémoire pour les tests
-  infrastructure/   Drizzle (Postgres / PGlite), stockage photos (R2 / local), expert IA (Gemini / faux), Stripe, outbox
+  infrastructure/   Drizzle (Postgres / PGlite), stockage photos (R2 / local), expert IA multi-fournisseurs (Anthropic / Gemini / OpenAI / faux), Stripe, outbox
   contract/         Schémas Zod de l'API + client HTTP typé (web et mobile)
   ui/               Design system « Selvedge » : tokens CSS + TS, composants React, motion
   i18n/             Messages FR / EN / DE et formatage

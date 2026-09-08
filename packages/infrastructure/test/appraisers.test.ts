@@ -5,18 +5,11 @@ import {
   parseMoney,
   serializeAppraisalBody,
 } from "../src/ai/appraisal-codec.js";
+import { AppraiserError, parseJsonLoosely } from "../src/ai/core.js";
 import { FakeAppraiser } from "../src/ai/FakeAppraiser.js";
-import { AppraiserError, GeminiAppraiser, parseJsonLoosely } from "../src/ai/GeminiAppraiser.js";
+import { GeminiAppraiser } from "../src/ai/GeminiAppraiser.js";
 import { createAppraiser } from "../src/ai/index.js";
-import type { AppraisalRequest } from "../src/ports.js";
-
-const request = (over: Partial<AppraisalRequest> = {}): AppraisalRequest => ({
-  imageBase64: "AA==",
-  mimeType: "image/jpeg",
-  currency: "EUR",
-  locale: "fr",
-  ...over,
-});
+import { fakeFetch, hangingFetch, jsonResponse, request, validOutput } from "./ai-fixtures.js";
 
 describe("FakeAppraiser", () => {
   it("renvoie une expertise complète et cohérente avec le domaine", async () => {
@@ -124,82 +117,134 @@ describe("codec d'expertise", () => {
 });
 
 describe("GeminiAppraiser", () => {
-  const geminiReply = (text: string, status = 200) =>
-    new Response(
-      JSON.stringify({ candidates: [{ content: { parts: [{ text }] }, finishReason: "STOP" }] }),
-      {
-        status,
-        headers: { "content-type": "application/json" },
-      },
-    );
-
-  it("appelle l'API REST et convertit la réponse JSON", async () => {
-    const calls: Array<{ url: string; init: RequestInit }> = [];
-    const fake = await new FakeAppraiser().appraise(request({ wantListingCopy: true }));
-    const payload = {
-      identification: { ...fake.identification },
-      price: {
-        low: 35,
-        mid: 45,
-        high: 65,
-        retailNew: 150,
-        confidence: 0.8,
-        perPlatform: [{ platform: "VINTED", price: 49, daysToSell: 9 }],
-      },
-      market: { ...fake.market },
-      advice: { ...fake.advice, maxBuyPrice: 18 },
-      listingCopy: fake.listingCopy,
-    };
-    const appraiser = new GeminiAppraiser({
-      apiKey: "k",
-      model: "gemini-2.5-flash",
-      fetch: async (url, init) => {
-        calls.push({ url, init });
-        return geminiReply(`\`\`\`json\n${JSON.stringify(payload)}\n\`\`\``);
-      },
+  const geminiReply = (text: string, extra: Record<string, unknown> = {}) =>
+    jsonResponse({
+      candidates: [{ content: { parts: [{ text }] }, finishReason: "STOP" }],
+      modelVersion: "gemini-2.5-flash-001",
+      ...extra,
     });
+
+  it("appelle l'API REST avec le schéma dérivé et convertit la réponse JSON", async () => {
+    const { fetch, calls } = fakeFetch([
+      geminiReply(`\`\`\`json\n${JSON.stringify(validOutput())}\n\`\`\``),
+    ]);
+    const appraiser = new GeminiAppraiser({ apiKey: "k", model: "gemini-2.5-flash", fetch });
     const d = await appraiser.appraise(
       request({ wantListingCopy: true, hints: { brand: "Lacoste" } }),
     );
-    expect(calls[0]?.url).toBe(
+    const call = calls[0];
+    expect(call?.url).toBe(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
     );
-    const headers = calls[0]?.init.headers as Record<string, string>;
-    expect(headers["x-goog-api-key"]).toBe("k");
-    const body = JSON.parse(String(calls[0]?.init.body));
+    expect(call?.headers["x-goog-api-key"]).toBe("k");
+    const body = call?.body as {
+      generationConfig: { responseMimeType: string; responseSchema: { type: string } };
+      contents: Array<{ parts: Array<{ inlineData?: { mimeType: string } }> }>;
+      systemInstruction: { parts: Array<{ text: string }> };
+    };
     expect(body.generationConfig.responseMimeType).toBe("application/json");
-    expect(body.contents[0].parts[1].inlineData.mimeType).toBe("image/jpeg");
-    expect(body.systemInstruction.parts[0].text).toContain("French");
+    expect(body.generationConfig.responseSchema.type).toBe("OBJECT");
+    expect(body.contents[0]?.parts[1]?.inlineData?.mimeType).toBe("image/jpeg");
+    expect(body.systemInstruction.parts[0]?.text).toContain("French");
     expect(d.provider).toBe("gemini");
-    expect(d.price.mid.minor).toBe(4500);
+    expect(d.model).toBe("gemini-2.5-flash-001");
+    expect(d.price.mid.minor).toBe(4550);
     expect(d.price.retailNew?.minor).toBe(15000);
     expect(d.advice.maxBuyPrice?.minor).toBe(1800);
-    expect(d.listingCopy?.title).toBe(fake.listingCopy?.title);
+    expect(d.listingCopy?.title).toContain("Lacoste");
   });
 
-  it("remonte des erreurs typées (HTTP, JSON invalide)", async () => {
-    const http = new GeminiAppraiser({
+  it("convertit correctement une devise sans décimales (JPY)", async () => {
+    const { fetch } = fakeFetch([geminiReply(JSON.stringify(validOutput()))]);
+    const d = await new GeminiAppraiser({ apiKey: "k", fetch }).appraise(
+      request({ currency: "JPY" }),
+    );
+    expect(d.price.mid.minor).toBe(46);
+    expect(d.model).toBe("gemini-2.5-flash-001");
+  });
+
+  it("remonte des erreurs typées : 429, 5xx, 4xx, JSON invalide, hors schéma", async () => {
+    const limited = new GeminiAppraiser({
       apiKey: "k",
       fetch: async () => new Response("nope", { status: 429 }),
     });
-    await expect(http.appraise(request())).rejects.toMatchObject({
+    await expect(limited.appraise(request())).rejects.toMatchObject({
       name: "AppraiserError",
-      code: "HTTP",
+      code: "RATE_LIMITED",
+      retryable: true,
+    });
+    const down = new GeminiAppraiser({
+      apiKey: "k",
+      fetch: async () => new Response("nope", { status: 503 }),
+    });
+    await expect(down.appraise(request())).rejects.toMatchObject({
+      code: "UPSTREAM_ERROR",
+      retryable: true,
+    });
+    const forbidden = new GeminiAppraiser({
+      apiKey: "k",
+      fetch: async () => new Response("nope", { status: 403 }),
+    });
+    await expect(forbidden.appraise(request())).rejects.toMatchObject({
+      code: "UPSTREAM_ERROR",
+      retryable: false,
     });
     const bad = new GeminiAppraiser({
       apiKey: "k",
       fetch: async () => geminiReply("not json at all"),
     });
-    await expect(bad.appraise(request())).rejects.toBeInstanceOf(AppraiserError);
+    await expect(bad.appraise(request())).rejects.toMatchObject({ code: "INVALID_OUTPUT" });
+    const partial = new GeminiAppraiser({
+      apiKey: "k",
+      fetch: async () => geminiReply(JSON.stringify({ identification: {} })),
+    });
+    await expect(partial.appraise(request())).rejects.toBeInstanceOf(AppraiserError);
     expect(parseJsonLoosely('Voici : {"a":1} merci')).toEqual({ a: 1 });
+  });
+
+  it("traduit un blocage de sécurité en REFUSED et une troncature en INVALID_OUTPUT", async () => {
+    const blocked = new GeminiAppraiser({
+      apiKey: "k",
+      fetch: async () => jsonResponse({ promptFeedback: { blockReason: "SAFETY" } }),
+    });
+    await expect(blocked.appraise(request())).rejects.toMatchObject({
+      code: "REFUSED",
+      retryable: false,
+    });
+    const safety = new GeminiAppraiser({
+      apiKey: "k",
+      fetch: async () => jsonResponse({ candidates: [{ finishReason: "SAFETY" }] }),
+    });
+    await expect(safety.appraise(request())).rejects.toMatchObject({ code: "REFUSED" });
+    const truncated = new GeminiAppraiser({
+      apiKey: "k",
+      fetch: async () =>
+        jsonResponse({
+          candidates: [
+            { content: { parts: [{ text: '{"identification":' }] }, finishReason: "MAX_TOKENS" },
+          ],
+        }),
+    });
+    await expect(truncated.appraise(request())).rejects.toMatchObject({ code: "INVALID_OUTPUT" });
+  });
+
+  it("lève TIMEOUT quand l'API ne répond pas dans le délai", async () => {
+    const slow = new GeminiAppraiser({ apiKey: "k", fetch: hangingFetch, timeoutMs: 30 });
+    await expect(slow.appraise(request())).rejects.toMatchObject({
+      code: "TIMEOUT",
+      retryable: true,
+      provider: "gemini",
+    });
   });
 });
 
 describe("createAppraiser", () => {
-  it("choisit le faux sans clé et Gemini avec", () => {
-    expect(createAppraiser({}).name).toBe("fake");
-    expect(createAppraiser({ GEMINI_API_KEY: "x" }).name).toBe("gemini");
-    expect(createAppraiser({ GEMINI_API_KEY: "x", APPRAISER_DRIVER: "fake" }).name).toBe("fake");
+  it("choisit le faux sans clé et Gemini avec, derrière un routeur", () => {
+    expect(createAppraiser({}).name).toBe("router(fake)");
+    expect(createAppraiser({ GEMINI_API_KEY: "x" }).name).toBe("router(gemini,fake)");
+    expect(createAppraiser({ GEMINI_API_KEY: "x", APPRAISER_DRIVER: "fake" }).name).toBe(
+      "router(fake)",
+    );
     expect(() => createAppraiser({ APPRAISER_DRIVER: "gemini" })).toThrow();
   });
 });

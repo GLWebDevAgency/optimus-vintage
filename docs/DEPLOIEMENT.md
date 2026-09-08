@@ -8,7 +8,7 @@
 | Base de données | **Railway Postgres** (ou Neon) | Continuité avec l'existant ; `DATABASE_URL` avec `sslmode=require` |
 | Photos | **Cloudflare R2** | S3 compatible, egress gratuit |
 | Facturation | **Stripe** | Checkout + Customer Portal + webhooks |
-| IA | **Gemini 2.5 Flash** | Coût faible, JSON structuré |
+| IA | **Chaîne de fournisseurs** : Claude (`claude-fable-5-1`), Gemini (`gemini-2.5-flash` ou plus récent), OpenAI (modèle au choix) | Même schéma JSON strict partout, repli automatique sur le suivant ; voir `docs/ENVIRONNEMENTS.md` |
 
 ## Vercel
 

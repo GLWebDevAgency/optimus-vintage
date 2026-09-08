@@ -1,97 +1,16 @@
 /**
- * Prompt de l'expert IA. Versionné : changer `PROMPT_VERSION` quand le texte évolue,
- * pour tracer quelle version a produit une expertise.
+ * Prompt de l'expert IA, commun à tous les fournisseurs. Versionné : changer `PROMPT_VERSION`
+ * quand le texte évolue, pour tracer quelle version a produit une expertise.
  */
-import { CATEGORIES, CONDITIONS, ERAS, PLATFORMS } from "@chine/domain";
 import type { AppraisalRequest } from "../ports.js";
 
-export const PROMPT_VERSION = "2026-09-v1";
+export const PROMPT_VERSION = "2026-09-v2";
 
 const LANGUAGE: Record<AppraisalRequest["locale"], string> = {
   fr: "French",
   en: "English",
   de: "German",
 };
-
-/** Schéma JSON attendu (sous-ensemble OpenAPI accepté par Gemini `responseSchema`). */
-export const APPRAISAL_RESPONSE_SCHEMA = {
-  type: "OBJECT",
-  required: ["identification", "price", "market", "advice"],
-  properties: {
-    identification: {
-      type: "OBJECT",
-      required: ["brand", "brandConfidence", "category", "era", "condition", "isVintage"],
-      properties: {
-        brand: { type: "STRING", nullable: true },
-        brandConfidence: { type: "NUMBER" },
-        category: { type: "STRING", enum: [...CATEGORIES] },
-        model: { type: "STRING", nullable: true },
-        era: { type: "STRING", enum: [...ERAS] },
-        materials: { type: "ARRAY", items: { type: "STRING" } },
-        colors: { type: "ARRAY", items: { type: "STRING" } },
-        size: { type: "STRING", nullable: true },
-        condition: { type: "STRING", enum: [...CONDITIONS] },
-        conditionNotes: { type: "ARRAY", items: { type: "STRING" } },
-        isVintage: { type: "BOOLEAN" },
-        notableFeatures: { type: "ARRAY", items: { type: "STRING" } },
-      },
-    },
-    price: {
-      type: "OBJECT",
-      required: ["low", "mid", "high", "confidence"],
-      properties: {
-        low: { type: "NUMBER" },
-        mid: { type: "NUMBER" },
-        high: { type: "NUMBER" },
-        retailNew: { type: "NUMBER", nullable: true },
-        confidence: { type: "NUMBER" },
-        perPlatform: {
-          type: "ARRAY",
-          items: {
-            type: "OBJECT",
-            required: ["platform", "price", "daysToSell"],
-            properties: {
-              platform: { type: "STRING", enum: [...PLATFORMS] },
-              price: { type: "NUMBER" },
-              daysToSell: { type: "INTEGER" },
-            },
-          },
-        },
-      },
-    },
-    market: {
-      type: "OBJECT",
-      required: ["demand", "trend", "rarity"],
-      properties: {
-        demand: { type: "STRING", enum: ["VERY_HIGH", "HIGH", "MEDIUM", "LOW", "VERY_LOW"] },
-        trend: { type: "STRING", enum: ["RISING", "STABLE", "DECLINING"] },
-        rarity: { type: "NUMBER" },
-        audience: { type: "ARRAY", items: { type: "STRING" } },
-        seasonality: { type: "STRING", nullable: true },
-      },
-    },
-    advice: {
-      type: "OBJECT",
-      required: ["action", "risk"],
-      properties: {
-        action: { type: "STRING", enum: ["STRONG_BUY", "BUY", "CONSIDER", "PASS"] },
-        maxBuyPrice: { type: "NUMBER", nullable: true },
-        reasons: { type: "ARRAY", items: { type: "STRING" } },
-        risk: { type: "NUMBER" },
-        sellingTips: { type: "ARRAY", items: { type: "STRING" } },
-      },
-    },
-    listingCopy: {
-      type: "OBJECT",
-      nullable: true,
-      properties: {
-        title: { type: "STRING" },
-        description: { type: "STRING" },
-        hashtags: { type: "ARRAY", items: { type: "STRING" } },
-      },
-    },
-  },
-} as const;
 
 /** Instructions système : rôle, contraintes, format. */
 export function buildSystemPrompt(req: AppraisalRequest): string {
@@ -133,4 +52,17 @@ export function buildUserPrompt(req: AppraisalRequest): string {
       : "Set listingCopy to null.",
   );
   return lines.join("\n");
+}
+
+export interface Prompt {
+  /** Instructions système (rôle, langue, devise, format). */
+  readonly system: string;
+  /** Message utilisateur accompagnant la photo (indices, annonce souhaitée). */
+  readonly user: string;
+  readonly version: string;
+}
+
+/** Prompt complet pour une requête : localisé (fr/en/de), devise, indices, annonce. */
+export function buildPrompt(req: AppraisalRequest): Prompt {
+  return { system: buildSystemPrompt(req), user: buildUserPrompt(req), version: PROMPT_VERSION };
 }

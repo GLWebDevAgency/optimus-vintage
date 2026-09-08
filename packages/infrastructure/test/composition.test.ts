@@ -18,7 +18,8 @@ describe("createAppDependencies", () => {
     const deps = await createIsolatedAppDependencies({}, { inMemory: true });
     try {
       expect(deps.database.driver).toBe("pglite");
-      expect(deps.appraiser.name).toBe("fake");
+      expect(deps.appraiser.name).toBe("router(fake)");
+      expect(deps.appraiser.describe().fake).toBe(true);
       expect(deps.stripe).toBeUndefined();
       expect(deps.photos.publicUrl("a/b.jpg")).toBe("/api/v1/photos/a/b.jpg");
       const ws = makeWorkspace();

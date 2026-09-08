@@ -218,7 +218,8 @@ export interface PhotoUploadResult {
 let running: Promise<PhotoUploadResult> | undefined;
 
 /**
- * Rejoue les photos en attente : upload, puis mise en file de `POST /items` avec la clé.
+ * Rejoue les photos en attente (y compris celles interrompues en plein envoi) : upload,
+ * puis mise en file de `POST /items` avec la clé.
  * - erreur réseau / 5xx → on s'arrête, on réessaiera à la prochaine reconnexion ;
  * - 401 → on s'arrête (session à renouveler) ;
  * - autre 4xx → photo marquée `failed` (la commande est conservée, retentable).
@@ -236,7 +237,11 @@ async function doUpload(client: ApiClient): Promise<PhotoUploadResult> {
   if (!hasIndexedDb()) return result;
   if (!isOnline()) return { ...result, stopped: "offline" };
   const table = getPendingPhotosDb().pendingPhotos;
-  const rows = (await table.orderBy("createdAt").toArray()).filter((p) => p.status === "pending");
+  // Une photo restée en « uploading » vient d'une page fermée ou rechargée en plein envoi :
+  // l'envoi ne peut plus aboutir, on la reprend (l'upload est idempotent par `clientId`).
+  const rows = (await table.orderBy("createdAt").toArray()).filter(
+    (p) => p.status === "pending" || p.status === "uploading",
+  );
   for (const row of rows) {
     await table.update(row.id, { status: "uploading" });
     try {

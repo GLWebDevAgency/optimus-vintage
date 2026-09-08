@@ -18,7 +18,12 @@ interface HealthReport {
   checks: {
     database: { ok: boolean; driver?: "pg" | "pglite"; latencyMs?: number; error?: string };
     storage: { driver: "local" | "r2" | "unknown" };
-    appraiser: { driver: string };
+    /** `driver` = premier fournisseur de la chaîne (compatibilité) ; `chain` = ordre de repli. */
+    appraiser: {
+      driver: string;
+      chain: ReadonlyArray<{ provider: string; model: string }>;
+      fake: boolean;
+    };
     billing: { configured: boolean };
     mail: { configured: boolean };
   };
@@ -37,7 +42,7 @@ export async function GET(): Promise<Response> {
     checks: {
       database: { ok: false },
       storage: { driver: "unknown" },
-      appraiser: { driver: "unknown" },
+      appraiser: { driver: "unknown", chain: [], fake: false },
       billing: { configured: Boolean(env.STRIPE_SECRET_KEY) },
       mail: { configured: Boolean(env.RESEND_API_KEY) },
     },
@@ -50,7 +55,12 @@ export async function GET(): Promise<Response> {
         : deps.photos instanceof R2PhotoStorage
           ? "r2"
           : "unknown";
-    report.checks.appraiser.driver = deps.appraiser.name;
+    const appraiser = deps.appraiser.describe();
+    report.checks.appraiser = {
+      driver: appraiser.chain[0]?.provider ?? "none",
+      chain: appraiser.chain,
+      fake: appraiser.fake,
+    };
     report.checks.billing.configured = deps.stripe !== undefined;
     const latencyMs = await pingDatabase(deps.database.db, DB_TIMEOUT_MS);
     report.checks.database = { ok: true, driver: deps.database.driver, latencyMs };

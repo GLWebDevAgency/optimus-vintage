@@ -22,7 +22,11 @@ describe("santé", () => {
       checks: {
         database: { ok: true, driver: "pglite" },
         storage: { driver: "local" },
-        appraiser: { driver: "fake" },
+        appraiser: {
+          driver: "fake",
+          chain: [{ provider: "fake", model: "fake-lacoste-v1" }],
+          fake: true,
+        },
         billing: { configured: false },
       },
     });
