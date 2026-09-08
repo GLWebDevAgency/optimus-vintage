@@ -1,4 +1,4 @@
-import { cn } from "../cn.js";
+import { cn } from "../cn";
 
 export interface LogoProps {
   /** Hauteur de la marque en px (mark) ; le mot suit. */

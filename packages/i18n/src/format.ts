@@ -1,6 +1,6 @@
 /** Formatage Intl sans dépendance : argent, dates, relatif, pourcentages. */
-import { intlLocale } from "./t.js";
-import type { Locale } from "./types.js";
+import { intlLocale } from "./t";
+import type { Locale } from "./types";
 
 export interface MoneyLike {
   readonly minor: number;

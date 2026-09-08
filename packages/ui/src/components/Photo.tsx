@@ -1,7 +1,7 @@
 "use client";
 import type { ReactNode } from "react";
-import { cn } from "../cn.js";
-import { AppIcon } from "../icons.js";
+import { cn } from "../cn";
+import { AppIcon } from "../icons";
 
 export interface PhotoTileProps {
   readonly src?: string;

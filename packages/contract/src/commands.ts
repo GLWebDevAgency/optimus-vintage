@@ -10,7 +10,7 @@ import {
   NonNegativeMoneyDto,
   PositiveMoneyDto,
   TargetMarginDto,
-} from "./common.js";
+} from "./common";
 import {
   AllocationPolicyDto,
   CategoryDto,
@@ -23,7 +23,7 @@ import {
   PlatformDto,
   SourceKindDto,
   SupplierKindDto,
-} from "./enums.js";
+} from "./enums";
 
 const Title = z.string().trim().min(1).max(140);
 const ShortText = z.string().trim().max(120);

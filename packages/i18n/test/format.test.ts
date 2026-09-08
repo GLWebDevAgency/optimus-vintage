@@ -12,7 +12,7 @@ import {
   formatPercent,
   formatRelative,
   toMinor,
-} from "../src/index.js";
+} from "../src/index";
 
 const eur = (minor: number) => ({ minor, currency: "EUR" });
 

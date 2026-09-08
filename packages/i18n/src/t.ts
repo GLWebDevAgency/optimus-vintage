@@ -1,8 +1,8 @@
 /** Accès typé aux messages : `t("items.status.SOLD")`, `t("common.pieces", { count: 3 })`. */
-import { interpolate } from "./interpolate.js";
-import { de } from "./messages/de.js";
-import { en } from "./messages/en.js";
-import { fr } from "./messages/fr.js";
+import { interpolate } from "./interpolate";
+import { de } from "./messages/de";
+import { en } from "./messages/en";
+import { fr } from "./messages/fr";
 import {
   DEFAULT_LOCALE,
   LOCALES,
@@ -10,7 +10,7 @@ import {
   type MessageKey,
   type Messages,
   type Params,
-} from "./types.js";
+} from "./types";
 
 type Tree = { readonly [k: string]: string | Tree };
 

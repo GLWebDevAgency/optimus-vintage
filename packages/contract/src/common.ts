@@ -1,6 +1,6 @@
 /** Briques communes du contrat : argent, dates, pagination, enveloppes. */
 import { z } from "zod";
-import { CurrencyDto } from "./enums.js";
+import { CurrencyDto } from "./enums";
 
 /** Montant en unités mineures entières (2000 = 20,00 €). Jamais de flottant. */
 export const MoneyDto = z.object({

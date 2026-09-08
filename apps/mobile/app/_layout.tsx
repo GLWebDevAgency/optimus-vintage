@@ -9,7 +9,7 @@ import { tokens } from "@chine/ui/tokens";
  */
 export default function RootLayout() {
   const scheme = useColorScheme() ?? "light";
-  const palette = scheme === "dark" ? tokens.dark : tokens.light;
+  const palette = scheme === "dark" ? tokens.palettes.dark : tokens.palettes.light;
   return (
     <>
       <StatusBar style={scheme === "dark" ? "light" : "dark"} />

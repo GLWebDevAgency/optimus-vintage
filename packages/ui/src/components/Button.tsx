@@ -1,7 +1,7 @@
 "use client";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { cn } from "../cn.js";
-import type { LinkComponent } from "../types.js";
+import { cn } from "../cn";
+import type { LinkComponent } from "../types";
 
 export type ButtonVariant = "primary" | "ghost" | "danger" | "subtle";
 export type ButtonSize = "sm" | "md" | "lg";

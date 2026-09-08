@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ApiClientError, buildPath, createApiClient, routes } from "../src/index.js";
+import { ApiClientError, buildPath, createApiClient, routes } from "../src/index";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });

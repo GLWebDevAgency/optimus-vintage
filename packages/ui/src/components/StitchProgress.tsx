@@ -1,8 +1,8 @@
 "use client";
 import { motion, useReducedMotion } from "motion/react";
 import { type ReactNode, useId } from "react";
-import { cn } from "../cn.js";
-import { stitchDraw } from "../motion.js";
+import { cn } from "../cn";
+import { stitchDraw } from "../motion";
 
 export interface StitchProgressProps {
   /** 0 … 1 (peut dépasser 1 : plafonné à la ligne). */

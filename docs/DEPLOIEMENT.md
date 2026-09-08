@@ -24,3 +24,11 @@ Créer un service Postgres, copier `DATABASE_URL` (proxy public) dans Vercel. Ne
 ## Sans aucun service externe
 
 `pnpm dev` fonctionne intégralement en local : PGlite (Postgres embarqué dans `.data/pglite`), photos dans `.data/uploads`, expert IA de démonstration. Idéal pour tester l'app sur téléphone via l'IP locale.
+
+## Observabilité
+
+Sentry est activé uniquement si `SENTRY_DSN` (serveur) et `NEXT_PUBLIC_SENTRY_DSN` (navigateur) sont définis. Les sourcemaps ne sont envoyées que si `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` et `SENTRY_PROJECT` sont présents (CI ou Vercel). Aucun corps de requête ni cookie n'est transmis (`beforeSend`). Les journaux serveur sont en JSON structuré avec `requestId` ; `/api/health` et `/api/ready` servent aux sondes.
+
+## Mode développement
+
+`pnpm dev` lance Next.js avec Turbopack (PGlite embarqué, migrations automatiques). Le service worker n'est actif qu'en build de production (`next build --webpack`, requis par Serwist). Utiliser `http://localhost:3000`, pas `127.0.0.1` (protection des origines de développement de Next 16).

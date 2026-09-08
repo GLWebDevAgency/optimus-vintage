@@ -1,4 +1,4 @@
-import type { fr } from "./messages/fr.js";
+import type { fr } from "./messages/fr";
 
 export const LOCALES = ["fr", "en", "de"] as const;
 export type Locale = (typeof LOCALES)[number];

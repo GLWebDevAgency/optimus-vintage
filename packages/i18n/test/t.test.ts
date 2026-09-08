@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 /** Intl émet des espaces insécables (U+202F, U+00A0) : on compare en espaces simples. */
 const plain = (s: string) => s.replace(/[\u202f\u00a0]/g, " ");
 
-import { createT, interpolate, translate } from "../src/index.js";
+import { createT, interpolate, translate } from "../src/index";
 
 describe("t()", () => {
   const t = createT("fr");

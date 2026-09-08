@@ -6,8 +6,8 @@
 import { AnimatePresence, motion, type PanInfo, useReducedMotion } from "motion/react";
 import { type ReactNode, useCallback, useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
-import { cn } from "../cn.js";
-import { EASE_FOLD, foldOrigin, foldPerspective, foldUp } from "../motion.js";
+import { cn } from "../cn";
+import { EASE_FOLD, foldOrigin, foldPerspective, foldUp } from "../motion";
 
 export interface SheetProps {
   readonly open: boolean;

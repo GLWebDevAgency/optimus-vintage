@@ -18,11 +18,11 @@ export {
   type PercentOptions,
   toAmount,
   toMinor,
-} from "./format.js";
-export { interpolate } from "./interpolate.js";
-export { de } from "./messages/de.js";
-export { en } from "./messages/en.js";
-export { fr } from "./messages/fr.js";
+} from "./format";
+export { interpolate } from "./interpolate";
+export { de } from "./messages/de";
+export { en } from "./messages/en";
+export { fr } from "./messages/fr";
 export {
   createT,
   flattenKeys,
@@ -33,7 +33,7 @@ export {
   resolveLocale,
   type TFunction,
   translate,
-} from "./t.js";
+} from "./t";
 export type {
   DeepPartial,
   DeepString,
@@ -42,5 +42,5 @@ export type {
   Messages,
   Params,
   ParamValue,
-} from "./types.js";
-export { DEFAULT_LOCALE, LOCALES } from "./types.js";
+} from "./types";
+export { DEFAULT_LOCALE, LOCALES } from "./types";

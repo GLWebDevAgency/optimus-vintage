@@ -1,8 +1,8 @@
 "use client";
 import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
-import { cn } from "../cn.js";
-import { stampIn } from "../motion.js";
+import { cn } from "../cn";
+import { stampIn } from "../motion";
 
 export interface StampProps {
   readonly children: ReactNode;

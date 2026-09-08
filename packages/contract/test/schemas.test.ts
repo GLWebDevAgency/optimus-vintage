@@ -19,7 +19,7 @@ import {
   toSearchParams,
   UpdateWorkspaceSettingsCommand,
   WorkspaceOverviewDto,
-} from "../src/index.js";
+} from "../src/index";
 
 const eur = (minor: number) => ({ minor, currency: "EUR" as const });
 const NOW = "2026-09-07T09:41:00.000Z";

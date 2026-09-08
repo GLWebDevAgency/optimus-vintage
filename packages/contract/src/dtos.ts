@@ -10,7 +10,7 @@ import {
   MeasurementsDto,
   MoneyDto,
   TargetMarginDto,
-} from "./common.js";
+} from "./common";
 import {
   AllocationPolicyDto,
   CategoryDto,
@@ -28,7 +28,7 @@ import {
   SaleStatusDto,
   SourceKindDto,
   SupplierKindDto,
-} from "./enums.js";
+} from "./enums";
 
 /* ───────────── Photos & annonces ───────────── */
 

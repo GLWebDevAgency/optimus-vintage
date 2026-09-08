@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { Field, formatMoneyInput, MoneyInput, parseMoneyInput } from "../src/index.js";
+import { Field, formatMoneyInput, MoneyInput, parseMoneyInput } from "../src/index";
 
 describe("parseMoneyInput", () => {
   it("accepte la virgule française, le point et les espaces", () => {

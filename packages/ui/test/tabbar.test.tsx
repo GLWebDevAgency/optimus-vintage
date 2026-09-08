@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { TabBar } from "../src/index.js";
+import { TabBar } from "../src/index";
 
 const FakeLink = ({
   href,

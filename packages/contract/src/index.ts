@@ -1,9 +1,9 @@
 // @chine/contract — contrat HTTP /api/v1 : schémas Zod, DTOs, routes, client.
 
-export * from "./client.js";
-export * from "./commands.js";
-export * from "./common.js";
-export * from "./dtos.js";
-export * from "./enums.js";
-export * from "./queries.js";
-export * from "./routes.js";
+export * from "./client";
+export * from "./commands";
+export * from "./common";
+export * from "./dtos";
+export * from "./enums";
+export * from "./queries";
+export * from "./routes";

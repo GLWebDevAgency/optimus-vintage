@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { de, en, flattenKeys, fr, getMessages, hasKey, resolveLocale } from "../src/index.js";
+import { de, en, flattenKeys, fr, getMessages, hasKey, resolveLocale } from "../src/index";
 
 describe("catalogues", () => {
   it("FR et EN ont exactement le même ensemble de clés", () => {

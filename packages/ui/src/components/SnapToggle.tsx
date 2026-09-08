@@ -1,8 +1,8 @@
 "use client";
 import { motion, useReducedMotion } from "motion/react";
 import { type ReactNode, useId } from "react";
-import { cn } from "../cn.js";
-import { snapTransition } from "../motion.js";
+import { cn } from "../cn";
+import { snapTransition } from "../motion";
 
 export interface SnapToggleProps {
   readonly checked: boolean;

@@ -11,7 +11,7 @@ import {
   StitchProgress,
   ToastProvider,
   useToast,
-} from "../src/index.js";
+} from "../src/index";
 
 describe("composants divers", () => {
   it("Button : loading désactive et annonce aria-busy ; href rend un lien", () => {
@@ -157,7 +157,7 @@ describe("composants divers", () => {
 
 describe("Showcase", () => {
   it("rend tous les composants sans erreur", async () => {
-    const { Showcase } = await import("../src/preview/showcase.js");
+    const { Showcase } = await import("../src/preview/showcase");
     render(<Showcase />);
     expect(screen.getByRole("navigation", { name: "Navigation principale" })).toBeTruthy();
     expect(screen.getByRole("slider")).toBeTruthy();

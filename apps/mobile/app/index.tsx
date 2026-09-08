@@ -8,7 +8,7 @@ import { StyleSheet, Text, View, useColorScheme } from "react-native";
  */
 export default function Home() {
   const scheme = useColorScheme() ?? "light";
-  const p = scheme === "dark" ? tokens.dark : tokens.light;
+  const p = scheme === "dark" ? tokens.palettes.dark : tokens.palettes.light;
   const sim = simulatePrice("VINTED", Money.of(75, "EUR"), Money.of(20, "EUR"), new ScheduleFeePolicy(), Money.of(4.95, "EUR"));
   return (
     <View style={[styles.root, { backgroundColor: p.bg }]}>

@@ -46,6 +46,15 @@ Sur iPhone : Safari → Partager → « Sur l'écran d'accueil ». Sur Android :
 | `pnpm --filter @chine/web e2e` | Playwright, viewport iPhone |
 | `pnpm db:generate` / `pnpm db:migrate` | Migrations Drizzle |
 
+## État de vérification
+
+| Vérification | Résultat |
+|---|---|
+| Tests unitaires et d'intégration | 284 (domaine 28, application 43, infrastructure 67 sur PGlite, contrat 26, i18n 22, ui 22, web 76) |
+| E2E Playwright (iPhone 14) | 11 parcours, dont inscription → chine → vente → source amortie, et le pipeline hors-ligne |
+| Typecheck TypeScript 7, Biome, build Next.js | verts sur tout le monorepo (`pnpm turbo run lint typecheck test build`) |
+| Grille de conformité production | `docs/PRODUCTION-READINESS.md` |
+
 ## Principes
 
 - **Le domaine ne dépend de rien.** Money en centimes entiers, invariants dans les agrégats, événements de domaine, `Result` pour les erreurs attendues.

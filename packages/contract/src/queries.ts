@@ -1,13 +1,13 @@
 /** Paramètres de requête (query string). Tolérants aux formes `?k=a,b` et `?k=a&k=b`. */
 import { z } from "zod";
-import { IdDto, IsoDateDto, PaginationQuery, QueryBooleanDto, queryList } from "./common.js";
+import { IdDto, IsoDateDto, PaginationQuery, QueryBooleanDto, queryList } from "./common";
 import {
   DashboardPeriodDto,
   ItemSortDto,
   ItemStatusDto,
   PlatformDto,
   SourceKindDto,
-} from "./enums.js";
+} from "./enums";
 
 const Search = z.string().trim().max(80);
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { cn } from "../cn.js";
-import type { LinkComponent } from "../types.js";
+import { cn } from "../cn";
+import type { LinkComponent } from "../types";
 
 export interface SectionHeaderProps {
   readonly title: ReactNode;

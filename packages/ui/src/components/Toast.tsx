@@ -9,9 +9,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn } from "../cn.js";
-import { AppIcon } from "../icons.js";
-import { EASE_FOLD, EASE_OUT } from "../motion.js";
+import { cn } from "../cn";
+import { AppIcon } from "../icons";
+import { EASE_FOLD, EASE_OUT } from "../motion";
 
 export type ToastKind = "info" | "success" | "error" | "offline";
 

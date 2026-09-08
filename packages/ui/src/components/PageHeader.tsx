@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "../cn.js";
+import { cn } from "../cn";
 
 export interface PageHeaderProps {
   /** Ligne mono capitale au-dessus du titre (« Dim. 7 sept. », « Mode chine · hors ligne »). */

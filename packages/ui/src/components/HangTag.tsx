@@ -1,8 +1,8 @@
 "use client";
 import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
-import { cn } from "../cn.js";
-import { swingIn, swingOrigin } from "../motion.js";
+import { cn } from "../cn";
+import { swingIn, swingOrigin } from "../motion";
 
 export interface HangTagProps {
   /** Libellé mono capitale (« En stock »). */

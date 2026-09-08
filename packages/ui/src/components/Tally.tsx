@@ -1,8 +1,8 @@
 "use client";
 import { formatMoneyParts, formatNumber } from "@chine/i18n";
-import { cn } from "../cn.js";
-import { useTally } from "../motion.js";
-import type { MoneyLike } from "../types.js";
+import { cn } from "../cn";
+import { useTally } from "../motion";
+import type { MoneyLike } from "../types";
 
 export interface TallyProps {
   /** Nombre ou montant. */

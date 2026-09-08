@@ -6,7 +6,7 @@
  *  - `{n, number}` / `{d, date}`.
  * Les branches peuvent contenir d'autres expressions.
  */
-import type { Params } from "./types.js";
+import type { Params } from "./types";
 
 const pluralRules = new Map<string, Intl.PluralRules>();
 const numberFormats = new Map<string, Intl.NumberFormat>();

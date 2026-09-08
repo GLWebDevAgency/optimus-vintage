@@ -3,9 +3,9 @@
  * réponses validées par Zod, erreurs typées `ApiClientError`. Aucune dépendance React.
  */
 import type { z } from "zod";
-import { ApiError, ok } from "./common.js";
-import type { ApiErrorCode } from "./enums.js";
-import { toSearchParams } from "./queries.js";
+import { ApiError, ok } from "./common";
+import type { ApiErrorCode } from "./enums";
+import { toSearchParams } from "./queries";
 import {
   API_PREFIX,
   buildPath,
@@ -13,7 +13,7 @@ import {
   type RouteDef,
   type Routes,
   routes,
-} from "./routes.js";
+} from "./routes";
 
 export class ApiClientError extends Error {
   override readonly name = "ApiClientError";

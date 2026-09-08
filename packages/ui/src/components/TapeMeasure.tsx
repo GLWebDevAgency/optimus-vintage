@@ -22,8 +22,8 @@ import {
   useState,
   type WheelEvent,
 } from "react";
-import { cn } from "../cn.js";
-import { EASE_OUT } from "../motion.js";
+import { cn } from "../cn";
+import { EASE_OUT } from "../motion";
 
 const PX_PER_UNIT = 12;
 const BIG_EVERY = 5;

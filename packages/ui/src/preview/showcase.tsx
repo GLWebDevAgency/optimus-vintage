@@ -4,32 +4,32 @@
  * Aucune dépendance au routeur : les liens sont des `a`.
  */
 import { useState } from "react";
-import { BigButton } from "../components/BigButton.js";
-import { Button } from "../components/Button.js";
-import { Chip, ChipGroup } from "../components/Chip.js";
-import { EmptyState } from "../components/EmptyState.js";
-import { Field, MoneyInput, Select, Textarea, TextInput } from "../components/Field.js";
-import { HangTag } from "../components/HangTag.js";
-import { KpiHero } from "../components/KpiHero.js";
-import { List, ListRow } from "../components/ListRow.js";
-import { Logo, LogoMark, Wordmark } from "../components/Logo.js";
-import { Avatar, PageHeader } from "../components/PageHeader.js";
-import { PhotoGrid, PhotoTile } from "../components/Photo.js";
-import { Receipt } from "../components/Receipt.js";
-import { SectionHeader } from "../components/SectionHeader.js";
-import { Segmented } from "../components/Segmented.js";
-import { Sheet } from "../components/Sheet.js";
-import { Skeleton, SkeletonRow } from "../components/Skeleton.js";
-import { SnapToggle } from "../components/SnapToggle.js";
-import { Stamp } from "../components/Stamp.js";
-import { StatusPill } from "../components/StatusPill.js";
-import { StitchProgress } from "../components/StitchProgress.js";
-import { TabBar } from "../components/TabBar.js";
-import { Tally } from "../components/Tally.js";
-import { TapeMeasure } from "../components/TapeMeasure.js";
-import { ToastProvider, useToast } from "../components/Toast.js";
-import { TopBar } from "../components/TopBar.js";
-import { AppIcon, ICON_NAMES } from "../icons.js";
+import { BigButton } from "../components/BigButton";
+import { Button } from "../components/Button";
+import { Chip, ChipGroup } from "../components/Chip";
+import { EmptyState } from "../components/EmptyState";
+import { Field, MoneyInput, Select, Textarea, TextInput } from "../components/Field";
+import { HangTag } from "../components/HangTag";
+import { KpiHero } from "../components/KpiHero";
+import { List, ListRow } from "../components/ListRow";
+import { Logo, LogoMark, Wordmark } from "../components/Logo";
+import { Avatar, PageHeader } from "../components/PageHeader";
+import { PhotoGrid, PhotoTile } from "../components/Photo";
+import { Receipt } from "../components/Receipt";
+import { SectionHeader } from "../components/SectionHeader";
+import { Segmented } from "../components/Segmented";
+import { Sheet } from "../components/Sheet";
+import { Skeleton, SkeletonRow } from "../components/Skeleton";
+import { SnapToggle } from "../components/SnapToggle";
+import { Stamp } from "../components/Stamp";
+import { StatusPill } from "../components/StatusPill";
+import { StitchProgress } from "../components/StitchProgress";
+import { TabBar } from "../components/TabBar";
+import { Tally } from "../components/Tally";
+import { TapeMeasure } from "../components/TapeMeasure";
+import { ToastProvider, useToast } from "../components/Toast";
+import { TopBar } from "../components/TopBar";
+import { AppIcon, ICON_NAMES } from "../icons";
 
 const eur = (minor: number) => ({ minor, currency: "EUR" });
 

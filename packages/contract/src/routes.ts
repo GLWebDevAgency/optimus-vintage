@@ -23,8 +23,8 @@ import {
   UpdatePurchaseSourceCommand,
   UpdateSaleCommand,
   UpdateWorkspaceSettingsCommand,
-} from "./commands.js";
-import { DeletedDto, PageOf } from "./common.js";
+} from "./commands";
+import { DeletedDto, PageOf } from "./common";
 import {
   AccountDeletedDto,
   AppraisalDto,
@@ -36,8 +36,8 @@ import {
   UploadTargetDto,
   WorkspaceExportDto,
   WorkspaceOverviewDto,
-} from "./dtos.js";
-import { DashboardQuery, ListItemsQuery, ListSalesQuery, ListSourcesQuery } from "./queries.js";
+} from "./dtos";
+import { DashboardQuery, ListItemsQuery, ListSalesQuery, ListSourcesQuery } from "./queries";
 
 export const API_PREFIX = "/api/v1";
 

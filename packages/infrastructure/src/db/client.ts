@@ -3,7 +3,7 @@
  * sinon PGlite (Postgres embarqué, persisté sur disque) — zéro configuration en dev.
  * Les deux drivers partagent le même schéma Drizzle et les mêmes migrations SQL.
  */
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
@@ -40,8 +40,29 @@ export interface Database {
   close(): Promise<void>;
 }
 
-/** Dossier des migrations générées par drizzle-kit, résolu depuis `src/` comme depuis `dist/`. */
-export const migrationsFolder = fileURLToPath(new URL("../../drizzle", import.meta.url));
+/**
+ * Dossier des migrations générées par drizzle-kit.
+ * Résolu depuis `src/` comme depuis `dist/` ; si le module a été empaqueté (bundler qui réécrit
+ * `import.meta.url`), on retombe sur les emplacements connus du monorepo.
+ */
+export const migrationsFolder = resolveMigrationsFolder();
+
+function resolveMigrationsFolder(): string {
+  const candidates: string[] = [];
+  try {
+    candidates.push(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../drizzle"));
+  } catch {
+    // import.meta.url indisponible ou réécrit : on passe aux candidats suivants.
+  }
+  const cwd = process.cwd();
+  candidates.push(
+    path.join(cwd, "node_modules/@chine/infrastructure/drizzle"),
+    path.resolve(cwd, "../../packages/infrastructure/drizzle"),
+    path.join(cwd, "packages/infrastructure/drizzle"),
+  );
+  for (const c of candidates) if (existsSync(path.join(c, "meta/_journal.json"))) return c;
+  throw new Error(`Dossier de migrations introuvable (candidats : ${candidates.join(", ")})`);
+}
 
 const wantsSsl = (url: string): boolean => {
   try {

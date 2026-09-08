@@ -1,8 +1,8 @@
 "use client";
 import type { ReactNode } from "react";
-import { cn } from "../cn.js";
-import type { MoneyLike } from "../types.js";
-import { Tally } from "./Tally.js";
+import { cn } from "../cn";
+import type { MoneyLike } from "../types";
+import { Tally } from "./Tally";
 
 export interface KpiHeroProps {
   readonly label: ReactNode;

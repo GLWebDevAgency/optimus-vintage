@@ -1,8 +1,8 @@
 import { formatMoney } from "@chine/i18n";
 import type { ReactNode } from "react";
-import { cn } from "../cn.js";
-import { AppIcon } from "../icons.js";
-import type { LinkComponent, MoneyLike, Tone } from "../types.js";
+import { cn } from "../cn";
+import { AppIcon } from "../icons";
+import type { LinkComponent, MoneyLike, Tone } from "../types";
 
 export interface ListRowProps {
   /** Vignette : URL d'image ou nœud (icône). */

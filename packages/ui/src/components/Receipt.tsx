@@ -1,7 +1,7 @@
 import { formatMoney, formatPercent } from "@chine/i18n";
 import type { ReactNode } from "react";
-import { cn } from "../cn.js";
-import type { MoneyLike, Tone } from "../types.js";
+import { cn } from "../cn";
+import type { MoneyLike, Tone } from "../types";
 
 export interface ReceiptRow {
   /** Clé stable (sinon dérivée du libellé et de la valeur). */

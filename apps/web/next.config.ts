@@ -1,6 +1,20 @@
 import { randomUUID } from "node:crypto";
+import { withSentryConfig } from "@sentry/nextjs";
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
+
+type SentryEnv = Partial<
+  Record<
+    | "SENTRY_DSN"
+    | "NEXT_PUBLIC_SENTRY_DSN"
+    | "SENTRY_AUTH_TOKEN"
+    | "SENTRY_ORG"
+    | "SENTRY_PROJECT"
+    | "CI",
+    string
+  >
+>;
+const sentryEnv = process.env as SentryEnv;
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -167,4 +181,18 @@ const withSerwist = withSerwistInit({
   ],
 });
 
-export default withSerwist(nextConfig);
+const withObservability = (config: NextConfig): NextConfig =>
+  sentryEnv.SENTRY_DSN || sentryEnv.NEXT_PUBLIC_SENTRY_DSN
+    ? withSentryConfig(config, {
+        // Envoi des sourcemaps uniquement si un jeton est fourni (CI/Vercel) ; silencieux sinon.
+        silent: !sentryEnv.CI,
+        authToken: sentryEnv.SENTRY_AUTH_TOKEN,
+        org: sentryEnv.SENTRY_ORG,
+        project: sentryEnv.SENTRY_PROJECT,
+        widenClientFileUpload: true,
+        disableLogger: true,
+        sourcemaps: { disable: !sentryEnv.SENTRY_AUTH_TOKEN },
+      })
+    : config;
+
+export default withObservability(withSerwist(nextConfig));

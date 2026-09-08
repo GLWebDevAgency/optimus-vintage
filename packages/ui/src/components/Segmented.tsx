@@ -1,7 +1,7 @@
 "use client";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { type KeyboardEvent, type ReactNode, useId } from "react";
-import { cn } from "../cn.js";
+import { cn } from "../cn";
 
 export interface SegmentedOption<V extends string> {
   readonly value: V;

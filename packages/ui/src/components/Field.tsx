@@ -11,8 +11,8 @@ import {
   useId,
   useState,
 } from "react";
-import { cn } from "../cn.js";
-import { AppIcon } from "../icons.js";
+import { cn } from "../cn";
+import { AppIcon } from "../icons";
 
 interface FieldCtx {
   readonly id: string;

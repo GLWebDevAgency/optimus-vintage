@@ -1,5 +1,5 @@
 /** English messages — same shape as `fr` (enforced by the `Messages` type and a test). */
-import type { Messages } from "../types.js";
+import type { Messages } from "../types";
 
 export const en: Messages = {
   common: {

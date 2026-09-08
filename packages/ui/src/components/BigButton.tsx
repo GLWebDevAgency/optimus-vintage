@@ -1,9 +1,9 @@
 "use client";
 import { type HTMLMotionProps, motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
-import { cn } from "../cn.js";
-import { pressTap } from "../motion.js";
-import { Spinner } from "./Button.js";
+import { cn } from "../cn";
+import { pressTap } from "../motion";
+import { Spinner } from "./Button";
 
 export interface BigButtonProps
   extends Omit<HTMLMotionProps<"button">, "className" | "children" | "ref"> {

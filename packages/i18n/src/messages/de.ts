@@ -1,5 +1,5 @@
 /** Deutsch — partiel : les clés absentes retombent sur le français. */
-import type { DeepPartial, Messages } from "../types.js";
+import type { DeepPartial, Messages } from "../types";
 
 export const de: DeepPartial<Messages> = {
   common: {

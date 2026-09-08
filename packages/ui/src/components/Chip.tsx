@@ -1,6 +1,6 @@
 "use client";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { cn } from "../cn.js";
+import { cn } from "../cn";
 
 export interface ChipProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> {
   readonly selected?: boolean;

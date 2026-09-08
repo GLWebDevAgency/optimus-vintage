@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
-import { SnapToggle } from "../src/index.js";
+import { SnapToggle } from "../src/index";
 
 function Harness() {
   const [on, setOn] = useState(false);
