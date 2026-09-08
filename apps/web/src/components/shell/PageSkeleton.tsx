@@ -228,16 +228,9 @@ export function PageSkeleton({ variant, rows }: PageSkeletonProps) {
     case "sources":
       return (
         <>
-          <div className="seg enter d2" role="tablist" aria-label="Filtrer les sources">
+          <div className="seg enter d2" aria-hidden="true">
             {["Toutes", "Lots", "Palettes", "Chine"].map((s, i) => (
-              <button
-                type="button"
-                key={s}
-                role="tab"
-                aria-selected={i === 0}
-                aria-pressed={i === 0}
-                disabled
-              >
+              <button type="button" key={s} aria-pressed={i === 0} disabled>
                 {s}
               </button>
             ))}

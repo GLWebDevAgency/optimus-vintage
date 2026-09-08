@@ -1,0 +1,7 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.12/schema.json",
+  // Configuration imbriquée : hérite de la racine, active la syntaxe Tailwind v4 (@theme, @source, @utility).
+  "root": false,
+  "extends": "//",
+  "css": { "parser": { "tailwindDirectives": true } }
+}

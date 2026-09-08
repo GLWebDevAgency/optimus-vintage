@@ -13,7 +13,8 @@ const OPTIONS: { value: Theme; label: string }[] = [
 export function ThemePicker() {
   const { theme, setTheme } = useTheme();
   return (
-    <div className="seg" role="group" aria-label="Thème">
+    <fieldset className="seg">
+      <legend className="sr-only">Thème</legend>
       {OPTIONS.map((o) => (
         <button
           key={o.value}
@@ -24,6 +25,6 @@ export function ThemePicker() {
           {o.label}
         </button>
       ))}
-    </div>
+    </fieldset>
   );
 }

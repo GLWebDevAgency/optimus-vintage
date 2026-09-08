@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
 
@@ -100,12 +101,21 @@ const nextConfig: NextConfig = {
   },
 };
 
+// Révision des pages précachées « à la main » : le plugin webpack ne voit pas les pages prérendues
+// (elles sont générées après la compilation), on les ajoute donc explicitement, renouvelées à chaque build.
+const precacheRevision = randomUUID();
+
 const withSerwist = withSerwistInit({
   swSrc: "src/sw.ts",
   swDest: "public/sw.js",
   disable: isDev,
   cacheOnNavigation: true,
   reloadOnOnline: false,
+  additionalPrecacheEntries: [
+    { url: "/offline", revision: precacheRevision },
+    { url: "/", revision: precacheRevision },
+    { url: "/auth/connexion", revision: precacheRevision },
+  ],
 });
 
 export default withSerwist(nextConfig);
