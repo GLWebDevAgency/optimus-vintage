@@ -70,7 +70,8 @@ test.describe("Chiné — parcours complet (API réelle)", () => {
     await page.goto("/app");
     await expect(page.getByTestId("today-kpi")).toBeVisible({ timeout: 45_000 });
     await settle(page, 1800);
-    await expect(page.getByTestId("today-kpi")).not.toContainText("0,00");
+    // 75 € vendus − 5 € payés (prix par défaut du mètre) = 70 € de marge nette.
+    await expect(page.getByTestId("today-kpi")).toContainText("70,00");
     await expect(page.getByText("Ensemble Lacoste")).toBeVisible();
 
     // 6. La source unitaire est amortie (75 € encaissés pour un achat de quelques euros).
