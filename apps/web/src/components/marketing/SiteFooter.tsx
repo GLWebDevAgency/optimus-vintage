@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function SiteFooter() {
   return (
-    <footer className="foot">
+    <footer className="site-foot">
       <nav aria-label="Liens légaux">
         <Link href="/legal/cgu">Conditions d'utilisation</Link>
         <Link href="/legal/confidentialite">Confidentialité</Link>

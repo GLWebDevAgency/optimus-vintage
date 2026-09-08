@@ -1985,7 +1985,7 @@
     font-size: 15px;
     max-width: 68ch;
   }
-  .foot {
+  .site-foot {
     margin-top: 96px;
     border-top: 1px solid var(--line);
     padding: 22px 0 max(40px, var(--safe-bottom));
@@ -1997,19 +1997,19 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
-  .foot nav {
+  .site-foot nav {
     display: flex;
     flex-wrap: wrap;
     gap: 6px 18px;
   }
-  .foot a {
+  .site-foot a {
     color: var(--ink-2);
     text-decoration: none;
     min-height: 44px;
     display: inline-flex;
     align-items: center;
   }
-  .foot a:hover {
+  .site-foot a:hover {
     color: var(--ink);
   }
 
