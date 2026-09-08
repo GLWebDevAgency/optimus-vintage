@@ -1,9 +1,14 @@
+import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.PORT ?? 3100);
 const baseURL = `http://127.0.0.1:${PORT}`;
-// Chromium préinstallé hors du cache Playwright : on pointe l'exécutable directement.
-const executablePath = process.env.PW_CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
+// Chromium préinstallé hors du cache Playwright (environnement distant) : on pointe l'exécutable
+// directement s'il existe ; sinon (CI, poste local) Playwright utilise son propre navigateur.
+const preinstalledChromium = "/opt/pw-browsers/chromium";
+const executablePath =
+  process.env.PW_CHROMIUM_PATH ||
+  (existsSync(preinstalledChromium) ? preinstalledChromium : undefined);
 
 export default defineConfig({
   testDir: "./e2e",
@@ -26,7 +31,7 @@ export default defineConfig({
         // Chromium (pas WebKit) : le viewport et l'UA mobile sont conservés.
         defaultBrowserType: "chromium",
         browserName: "chromium",
-        launchOptions: { executablePath },
+        launchOptions: executablePath ? { executablePath } : {},
       },
     },
   ],

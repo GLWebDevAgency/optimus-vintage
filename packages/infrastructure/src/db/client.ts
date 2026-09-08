@@ -55,6 +55,8 @@ function resolveMigrationsFolder(): string {
     // import.meta.url indisponible ou réécrit : on passe aux candidats suivants.
   }
   const cwd = process.cwd();
+  const fromEnv = process.env["CHINE_MIGRATIONS_DIR"]?.trim();
+  if (fromEnv) candidates.unshift(path.resolve(cwd, fromEnv));
   candidates.push(
     path.join(cwd, "node_modules/@chine/infrastructure/drizzle"),
     path.resolve(cwd, "../../packages/infrastructure/drizzle"),

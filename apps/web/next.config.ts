@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { withSentryConfig } from "@sentry/nextjs";
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
@@ -80,7 +81,12 @@ if (r2) {
 /** Packages du monorepo exécutés par Node hors bundle (voir `webpack` ci-dessous). */
 const WORKSPACE_SERVER_PACKAGES = ["@chine/domain", "@chine/application", "@chine/infrastructure"];
 
+const monorepoRoot = fileURLToPath(new URL("../../", import.meta.url));
+
 const nextConfig: NextConfig = {
+  // Image Docker minimale (Railway) : serveur autonome + fichiers tracés depuis la racine du monorepo.
+  output: "standalone",
+  outputFileTracingRoot: monorepoRoot,
   reactStrictMode: true,
   reactCompiler: true,
   typedRoutes: true,

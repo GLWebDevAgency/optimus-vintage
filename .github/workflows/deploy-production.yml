@@ -1,0 +1,61 @@
+name: Deploy · production
+
+on:
+  push:
+    branches: [production]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: Lint · Typecheck · Test · Build
+    uses: ./.github/workflows/verify.yml
+
+  e2e:
+    name: E2E (Playwright, iPhone)
+    needs: verify
+    uses: ./.github/workflows/e2e.yml
+
+  deploy:
+    name: Railway (production)
+    needs: [verify, e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # L'environnement GitHub « production » porte les relecteurs obligatoires (approbation manuelle).
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL || 'https://chine.app' }}
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Railway CLI
+        run: npm install -g @railway/cli
+      - name: Déploiement
+        run: railway up --service ${{ vars.RAILWAY_SERVICE || 'web' }} --environment production --ci
+      - name: Vérification de disponibilité
+        run: |
+          url="${{ vars.PRODUCTION_URL || 'https://chine.app' }}"
+          for i in $(seq 1 30); do
+            if curl -fsS "$url/api/ready" >/dev/null; then echo "ready"; exit 0; fi
+            sleep 10
+          done
+          echo "::error::$url/api/ready ne répond pas après 5 minutes"; exit 1
+      - name: Étiquette de version
+        run: |
+          tag="v$(date -u +%Y.%m.%d)-${GITHUB_SHA::7}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "Production : $tag"
+          git push origin "$tag"
