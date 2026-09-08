@@ -1,0 +1,347 @@
+/*
+ * Chiné — design system « Selvedge » · tokens.
+ * Importer après `@import "tailwindcss"` et déclarer `@source "../../packages/ui/src"`.
+ * Les polices (Instrument Serif italique, Bricolage Grotesque, IBM Plex Mono) sont chargées par l'app.
+ */
+
+/* ───────────── Palette Calico (jour) ───────────── */
+:root {
+  --bg: #f2ede2;
+  --bg-2: #e8e1d0;
+  --surface: #fbf8f1;
+  --surface-2: #f5f0e4;
+  --ink: #171b27;
+  --ink-2: #565b69;
+  --ink-3: #8b8f99;
+  --line: #d8d0be;
+  --line-2: #c7bea8;
+  --thread: #c4283c;
+  --thread-soft: rgba(196, 40, 60, 0.12);
+  --brass: #946f22;
+  --brass-soft: rgba(148, 111, 34, 0.14);
+  --chalk: #e6eef4;
+  --indigo: #22306a;
+  --indigo-soft: rgba(34, 48, 106, 0.1);
+  --btn: #171b27;
+  --btn-ink: #f7f3ea;
+  --shadow: 0 18px 40px -20px rgba(23, 27, 39, 0.35), 0 2px 6px -2px rgba(23, 27, 39, 0.12);
+  --shadow-tag: 0 10px 24px -14px rgba(23, 27, 39, 0.45);
+  --noise-op: 0.32;
+  --stamp-blend: multiply;
+  color-scheme: light;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-fold: cubic-bezier(0.7, 0, 0.2, 1);
+  --ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-micro: 120ms;
+  --t-state: 240ms;
+  --t-enter: 520ms;
+  --t-hero: 1100ms;
+
+  /* Typographie */
+  --f-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --f-ui: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  /* Zones sûres (PWA plein écran) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tabbar-h: 78px;
+}
+
+/* ───────────── Palette Indigo (nuit) ───────────── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1326;
+    --bg-2: #0a0e1d;
+    --surface: #171e36;
+    --surface-2: #1d2540;
+    --ink: #eef1f7;
+    --ink-2: #a8afc2;
+    --ink-3: #6e778d;
+    --line: #283155;
+    --line-2: #344070;
+    --thread: #e44553;
+    --thread-soft: rgba(228, 69, 83, 0.16);
+    --brass: #d9b66e;
+    --brass-soft: rgba(217, 182, 110, 0.16);
+    --chalk: #dce6f0;
+    --indigo: #8fa0e0;
+    --indigo-soft: rgba(143, 160, 224, 0.14);
+    --btn: #eef1f7;
+    --btn-ink: #0e1326;
+    --shadow: 0 24px 50px -22px rgba(0, 0, 0, 0.75), 0 2px 8px -2px rgba(0, 0, 0, 0.5);
+    --shadow-tag: 0 14px 28px -14px rgba(0, 0, 0, 0.8);
+    --noise-op: 0.18;
+    --stamp-blend: screen;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1326;
+  --bg-2: #0a0e1d;
+  --surface: #171e36;
+  --surface-2: #1d2540;
+  --ink: #eef1f7;
+  --ink-2: #a8afc2;
+  --ink-3: #6e778d;
+  --line: #283155;
+  --line-2: #344070;
+  --thread: #e44553;
+  --thread-soft: rgba(228, 69, 83, 0.16);
+  --brass: #d9b66e;
+  --brass-soft: rgba(217, 182, 110, 0.16);
+  --chalk: #dce6f0;
+  --indigo: #8fa0e0;
+  --indigo-soft: rgba(143, 160, 224, 0.14);
+  --btn: #eef1f7;
+  --btn-ink: #0e1326;
+  --shadow: 0 24px 50px -22px rgba(0, 0, 0, 0.75), 0 2px 8px -2px rgba(0, 0, 0, 0.5);
+  --shadow-tag: 0 14px 28px -14px rgba(0, 0, 0, 0.8);
+  --noise-op: 0.18;
+  --stamp-blend: screen;
+  color-scheme: dark;
+}
+
+/* ───────────── Tailwind v4 : mapping des tokens vers les utilitaires ───────────── */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-thread: var(--thread);
+  --color-thread-soft: var(--thread-soft);
+  --color-brass: var(--brass);
+  --color-brass-soft: var(--brass-soft);
+  --color-chalk: var(--chalk);
+  --color-indigo: var(--indigo);
+  --color-indigo-soft: var(--indigo-soft);
+  --color-btn: var(--btn);
+  --color-btn-ink: var(--btn-ink);
+
+  --font-display: var(--f-display);
+  --font-ui: var(--f-ui);
+  --font-mono: var(--f-mono);
+
+  --ease-out-expo: var(--ease-out);
+  --ease-fold: var(--ease-fold);
+  --ease-snap: var(--ease-snap);
+
+  --shadow-card: var(--shadow);
+  --shadow-tag: var(--shadow-tag);
+
+  --radius-field: 12px;
+  --radius-card: 18px;
+  --radius-sheet: 22px;
+  --radius-pill: 999px;
+
+  --text-label: 10.5px;
+  --text-label--line-height: 1.2;
+  --text-label--letter-spacing: 0.14em;
+  --text-eyebrow: 11px;
+  --text-eyebrow--line-height: 1.2;
+  --text-eyebrow--letter-spacing: 0.16em;
+  --text-body: 15px;
+  --text-body--line-height: 1.5;
+  --text-h2: 17px;
+  --text-h2--line-height: 1.2;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h1: 26px;
+  --text-h1--line-height: 1.05;
+  --text-h1--letter-spacing: -0.02em;
+  --text-hero: 54px;
+  --text-hero--line-height: 1;
+  --text-hero--letter-spacing: -0.02em;
+
+  --animate-swing: swing var(--t-hero) var(--ease-out) both;
+  --animate-rise: rise var(--t-enter) var(--ease-out) both;
+  --animate-fold: fold 700ms var(--ease-fold) both;
+  --animate-stamp: stamp 550ms var(--ease-fold) both;
+  --animate-spin-slow: spin 14s linear infinite;
+  --animate-shimmer: shimmer 1.6s var(--ease-out) infinite;
+  --animate-scan: scan 2.2s var(--ease-fold) 2 both;
+}
+
+@utility duration-micro {
+  transition-duration: var(--t-micro);
+}
+@utility duration-state {
+  transition-duration: var(--t-state);
+}
+@utility duration-enter {
+  transition-duration: var(--t-enter);
+}
+@utility duration-hero {
+  transition-duration: var(--t-hero);
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+@utility pb-safe {
+  padding-bottom: var(--safe-bottom);
+}
+@utility pt-safe {
+  padding-top: var(--safe-top);
+}
+@utility focus-thread {
+  &:focus-visible {
+    outline: 2px solid var(--thread);
+    outline-offset: 3px;
+  }
+}
+
+/* ───────────── Matière : grain de coton (calico) ───────────── */
+.texture-calico {
+  position: relative;
+  isolation: isolate;
+}
+.texture-calico::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--noise-op);
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .2 0 0 0 0 .18 0 0 0 0 .12 0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.texture-calico > * {
+  position: relative;
+  z-index: 1;
+}
+/* Variante fixe plein écran (body de l'app). */
+.texture-calico-fixed::before {
+  position: fixed;
+}
+
+/* ───────────── Keyframes des six gestes ───────────── */
+@keyframes swing {
+  0% {
+    transform: translateY(-28px) rotate(-14deg);
+    opacity: 0;
+  }
+  35% {
+    transform: translateY(0) rotate(8deg);
+    opacity: 1;
+  }
+  60% {
+    transform: rotate(-4.5deg);
+  }
+  80% {
+    transform: rotate(2deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes fold {
+  0% {
+    transform: rotateX(-78deg) translateY(30px);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes stamp {
+  0% {
+    transform: scale(2.4) rotate(-14deg);
+    opacity: 0;
+    filter: blur(3px);
+  }
+  55% {
+    transform: scale(0.94) rotate(-8deg);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: scale(1) rotate(-8deg);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes tape {
+  from {
+    transform: translateX(40px);
+  }
+  to {
+    transform: translateX(-96px);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+@keyframes scan {
+  0% {
+    top: 6%;
+  }
+  50% {
+    top: 92%;
+  }
+  100% {
+    top: 6%;
+  }
+}
+
+/* ───────────── Base ───────────── */
+.selvedge,
+.selvedge body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+.selvedge :focus-visible {
+  outline: 2px solid var(--thread);
+  outline-offset: 3px;
+}
+.selvedge ::selection {
+  background: var(--thread-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selvedge *,
+  .selvedge *::before,
+  .selvedge *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
