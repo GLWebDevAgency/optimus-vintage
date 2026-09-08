@@ -376,4 +376,32 @@ export type UploadTargetDto = z.infer<typeof UploadTargetDto>;
 export const RedirectDto = z.object({ url: z.url() });
 export type RedirectDto = z.infer<typeof RedirectDto>;
 
+/* ───────────── Compte (RGPD) ───────────── */
+
+const JsonObjectDto = z.record(z.string(), z.unknown());
+
+/** Export portable d'un espace de travail (format `chine.workspace-export`, version 1). */
+export const WorkspaceExportDto = z.object({
+  format: z.literal("chine.workspace-export"),
+  version: z.literal(1),
+  exportedAt: IsoDateTimeDto,
+  workspace: JsonObjectDto,
+  members: z.array(z.object({ userId: IdDto, role: MemberRoleDto, createdAt: IsoDateTimeDto })),
+  feeOverrides: JsonObjectDto,
+  monthlyGoalMinor: z.number().int().nullable(),
+  sources: z.array(JsonObjectDto),
+  items: z.array(JsonObjectDto),
+  listings: z.array(JsonObjectDto),
+  sales: z.array(JsonObjectDto),
+  appraisals: z.array(JsonObjectDto),
+});
+export type WorkspaceExportDto = z.infer<typeof WorkspaceExportDto>;
+
+export const AccountDeletedDto = z.object({
+  userId: IdDto,
+  deleted: z.literal(true),
+  deletedWorkspaceIds: z.array(IdDto),
+});
+export type AccountDeletedDto = z.infer<typeof AccountDeletedDto>;
+
 export { GeoPointDto };

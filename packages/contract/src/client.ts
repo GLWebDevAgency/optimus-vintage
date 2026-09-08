@@ -192,7 +192,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       name,
       (input?: RouteInput<RouteDef>) => call(routes[name], input),
     ]),
-  ) as { [K in keyof Routes]: RouteMethod<Routes[K]> };
+  ) as unknown as { [K in keyof Routes]: RouteMethod<Routes[K]> };
 
   return { ...methods, call };
 }

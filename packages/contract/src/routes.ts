@@ -4,17 +4,20 @@
  */
 import type { z } from "zod";
 import {
+  AddItemPhotoCommand,
   AppraiseImageCommand,
   CancelSaleCommand,
   ChangeItemStatusCommand,
   CreateItemCommand,
   CreatePurchaseSourceCommand,
+  DeleteAccountCommand,
   GeneratePiecesCommand,
   OpenBillingPortalCommand,
   PrepareUploadCommand,
   ReceivePurchaseSourceCommand,
   RecordSaleCommand,
   RefundSaleCommand,
+  ReorderItemPhotosCommand,
   StartCheckoutCommand,
   UpdateItemCommand,
   UpdatePurchaseSourceCommand,
@@ -23,6 +26,7 @@ import {
 } from "./commands.js";
 import { DeletedDto, PageOf } from "./common.js";
 import {
+  AccountDeletedDto,
   AppraisalDto,
   DashboardDto,
   ItemDto,
@@ -30,6 +34,7 @@ import {
   SaleDto,
   SourceDto,
   UploadTargetDto,
+  WorkspaceExportDto,
   WorkspaceOverviewDto,
 } from "./dtos.js";
 import { DashboardQuery, ListItemsQuery, ListSalesQuery, ListSourcesQuery } from "./queries.js";
@@ -152,6 +157,20 @@ export const routes = {
     body: ChangeItemStatusCommand,
     response: ItemDto,
   }),
+  addItemPhoto: route("POST", "/items/:id/photos", {
+    summary: "Rattacher une photo téléversée à une pièce",
+    body: AddItemPhotoCommand,
+    response: ItemDto,
+  }),
+  removeItemPhoto: route("DELETE", "/items/:id/photos/:photoId", {
+    summary: "Retirer une photo d'une pièce (et du stockage)",
+    response: ItemDto,
+  }),
+  reorderItemPhotos: route("PUT", "/items/:id/photos/order", {
+    summary: "Réordonner les photos d'une pièce",
+    body: ReorderItemPhotosCommand,
+    response: ItemDto,
+  }),
 
   /* Ventes */
   listSales: route("GET", "/sales", {
@@ -209,6 +228,17 @@ export const routes = {
     summary: "Ouvrir le portail de facturation",
     body: OpenBillingPortalCommand,
     response: RedirectDto,
+  }),
+
+  /* Compte (RGPD) */
+  exportAccount: route("GET", "/account/export", {
+    summary: "Exporter toutes les données de l'espace (JSON téléchargeable)",
+    response: WorkspaceExportDto,
+  }),
+  deleteAccount: route("DELETE", "/account", {
+    summary: "Supprimer définitivement le compte, l'espace, les photos et les sessions",
+    body: DeleteAccountCommand,
+    response: AccountDeletedDto,
   }),
 } as const;
 

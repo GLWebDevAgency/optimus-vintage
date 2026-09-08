@@ -13,7 +13,8 @@
     "e2e": "playwright test",
     "lint": "biome check src e2e scripts",
     "icons": "node scripts/generate-icons.mjs",
-    "clean": "rm -rf .next public/sw.js public/sw.js.map test-results playwright-report"
+    "clean": "rm -rf .next public/sw.js public/sw.js.map test-results playwright-report",
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@chine/application": "workspace:*",
@@ -28,6 +29,7 @@
     "@tanstack/react-query-persist-client": "5.102.8",
     "better-auth": "1.7.3",
     "dexie": "4.4.5",
+    "drizzle-orm": "^0.45.2",
     "idb-keyval": "6.3.0",
     "motion": "13.2.0",
     "next": "16.3.4",
@@ -48,6 +50,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "postcss": "8.5.28",
     "tailwindcss": "4.3.3",
+    "tsx": "^4.20.0",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
   }

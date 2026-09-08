@@ -79,6 +79,8 @@ export const workspaces = pgTable(
     skuCounter: integer("sku_counter").notNull().default(0),
     feeOverrides: jsonb("fee_overrides").$type<FeeOverridesJson>().notNull().default({}),
     monthlyGoalMinor: integer("monthly_goal_minor"),
+    /** Seuil (jours) au-delà duquel une pièce vendable est considérée dormante. */
+    dormantThresholdDays: integer("dormant_threshold_days").notNull().default(30),
     stripeCustomerId: text("stripe_customer_id"),
     stripeSubscriptionId: text("stripe_subscription_id"),
     ...timestamps,
@@ -166,6 +168,11 @@ export const items = pgTable(
     photos: jsonb("photos").$type<readonly PhotoRef[]>().notNull().default([]),
     bin: text("bin"),
     notes: text("notes"),
+    /**
+     * Identifiant local fourni par le client (capture hors ligne) : rend la création idempotente
+     * lors de la synchronisation. Hors du modèle de domaine, géré par le repository.
+     */
+    clientId: text("client_id"),
     ...timestamps,
     listedAt: timestamp("listed_at", { withTimezone: true, mode: "date" }),
     soldAt: timestamp("sold_at", { withTimezone: true, mode: "date" }),
@@ -175,6 +182,7 @@ export const items = pgTable(
     index("items_workspace_source_idx").on(t.workspaceId, t.sourceId),
     index("items_workspace_created_idx").on(t.workspaceId, t.createdAt),
     uniqueIndex("items_workspace_sku_idx").on(t.workspaceId, t.sku),
+    uniqueIndex("items_workspace_client_idx").on(t.workspaceId, t.clientId),
   ],
 );
 

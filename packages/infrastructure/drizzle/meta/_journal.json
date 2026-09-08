@@ -15,6 +15,13 @@
       "when": 1788860792337,
       "tag": "0001_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788862628731,
+      "tag": "0002_item_client_id_workspace_prefs",
+      "breakpoints": true
     }
   ]
 }

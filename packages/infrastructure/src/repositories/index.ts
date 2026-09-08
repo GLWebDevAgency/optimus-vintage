@@ -3,7 +3,12 @@ export {
   appraisalToRow,
   DrizzleAppraisalRepository,
 } from "./DrizzleAppraisalRepository.js";
-export { DrizzleItemRepository, itemToDomain, itemToRow } from "./DrizzleItemRepository.js";
+export {
+  ClientIdConflict,
+  DrizzleItemRepository,
+  itemToDomain,
+  itemToRow,
+} from "./DrizzleItemRepository.js";
 export {
   DrizzleListingRepository,
   listingToDomain,

@@ -205,6 +205,23 @@ export const ChangeItemStatusCommand = z.discriminatedUnion("action", [
 ]);
 export type ChangeItemStatusCommand = z.input<typeof ChangeItemStatusCommand>;
 
+/* ───────────── Photos d'une pièce ───────────── */
+
+/** Rattache une photo déjà téléversée (clé renvoyée par l'upload) à une pièce. */
+export const AddItemPhotoCommand = z.object({
+  key: z.string().min(1).max(256),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  blurhash: z.string().max(120).optional(),
+});
+export type AddItemPhotoCommand = z.input<typeof AddItemPhotoCommand>;
+
+/** Ordre final des photos d'une pièce (toutes les photos, par identifiant). */
+export const ReorderItemPhotosCommand = z.object({
+  photoIds: z.array(IdDto).min(1).max(8),
+});
+export type ReorderItemPhotosCommand = z.input<typeof ReorderItemPhotosCommand>;
+
 /* ───────────── Ventes ───────────── */
 
 export const RecordSaleCommand = z
@@ -316,6 +333,12 @@ export const UpdateWorkspaceSettingsCommand = z.object({
   monthlyGoal: MoneyDto.nullable().optional(),
 });
 export type UpdateWorkspaceSettingsCommand = z.input<typeof UpdateWorkspaceSettingsCommand>;
+
+/* ───────────── Compte (RGPD) ───────────── */
+
+/** Suppression définitive : le mot de confirmation est exigé tel quel. */
+export const DeleteAccountCommand = z.object({ confirm: z.literal("SUPPRIMER") });
+export type DeleteAccountCommand = z.input<typeof DeleteAccountCommand>;
 
 /* ───────────── Facturation ───────────── */
 

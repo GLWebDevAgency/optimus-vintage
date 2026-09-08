@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SyncBadge } from "@/components/offline/SyncBadge";
@@ -9,7 +10,7 @@ interface TopBarProps {
   /** Ligne mono au-dessus du titre (date, SKU, contexte). */
   kicker?: ReactNode;
   /** Lien de retour : affiche un chevron à gauche. */
-  back?: "/app" | "/app/stock" | "/app/ventes" | "/app/sources";
+  back?: Route;
   actions?: ReactNode;
   /** Avatar → réglages (masqué sur les écrans de détail). */
   avatar?: boolean;

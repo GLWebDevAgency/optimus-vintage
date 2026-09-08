@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError, z } from "zod";
+import { describeError, log } from "@/lib/log";
 
 /**
  * Enveloppes JSON de l'API /api/v1 :
@@ -15,9 +16,18 @@ export interface ApiErrorShape {
 export type ApiError = { error: ApiErrorShape };
 export type ApiOk<T> = { data: T };
 
-/** Codes d'erreur métier → statut HTTP. Tout code inconnu retombe sur 500. */
+/** Codes d'erreur (domaine, application, transport) → statut HTTP. Tout code inconnu retombe sur 500. */
 export const ERROR_STATUS: Readonly<Record<string, number>> = {
   VALIDATION_FAILED: 400,
+  CURRENCY_MISMATCH: 400,
+  NEGATIVE_COST: 400,
+  NEGATIVE_PRICE: 400,
+  TITLE_REQUIRED: 400,
+  NAME_REQUIRED: 400,
+  QUANTITY_REQUIRED: 400,
+  UNIT_QUANTITY: 400,
+  INVALID_SKU: 400,
+  INVALID_FEES: 400,
   UNAUTHORIZED: 401,
   QUOTA_EXCEEDED: 402,
   FEATURE_LOCKED: 402,
@@ -25,8 +35,15 @@ export const ERROR_STATUS: Readonly<Record<string, number>> = {
   NOT_FOUND: 404,
   INVALID_TRANSITION: 409,
   INVARIANT_VIOLATION: 409,
+  NOT_RECEIVABLE: 409,
+  PHOTO_LIMIT: 409,
   CONFLICT: 409,
+  PAYLOAD_TOO_LARGE: 413,
+  UNSUPPORTED_MEDIA_TYPE: 415,
   RATE_LIMITED: 429,
+  APPRAISAL_FAILED: 502,
+  BILLING_UNAVAILABLE: 503,
+  SERVICE_UNAVAILABLE: 503,
 };
 
 export function statusFor(code: string): number {
@@ -75,6 +92,7 @@ export function fail(error: unknown, init?: ResponseInit): NextResponse<ApiError
   }
   if (isErrorShape(error)) {
     const status = statusFor(error.code);
+    if (status >= 500) log.error("erreur métier non mappée", { code: error.code, status });
     return NextResponse.json(
       {
         error: {
@@ -86,9 +104,7 @@ export function fail(error: unknown, init?: ResponseInit): NextResponse<ApiError
       { ...init, status },
     );
   }
-  if (process.env.NODE_ENV !== "production") {
-    console.error("[api] erreur non gérée", error);
-  }
+  log.error("erreur non gérée", describeError(error));
   return NextResponse.json(
     { error: { code: "INTERNAL_ERROR", message: "Erreur interne." } },
     { ...init, status: 500 },
@@ -111,3 +127,15 @@ export const notFound = (what = "Ressource") => new ApiFailure("NOT_FOUND", `${w
 export const forbidden = (message = "Accès refusé.") => new ApiFailure("FORBIDDEN", message);
 export const unauthorized = (message = "Connexion requise.") =>
   new ApiFailure("UNAUTHORIZED", message);
+export const validationFailed = (message: string, details?: unknown) =>
+  new ApiFailure("VALIDATION_FAILED", message, details);
+export const payloadTooLarge = (maxBytes: number) =>
+  new ApiFailure("PAYLOAD_TOO_LARGE", "Fichier trop volumineux.", { maxBytes });
+export const unsupportedMediaType = (message = "Format non pris en charge.") =>
+  new ApiFailure("UNSUPPORTED_MEDIA_TYPE", message);
+export const rateLimited = (retryAfterSeconds: number) =>
+  new ApiFailure("RATE_LIMITED", "Trop de requêtes. Réessaie dans un instant.", {
+    retryAfterSeconds,
+  });
+export const serviceUnavailable = (message: string) =>
+  new ApiFailure("SERVICE_UNAVAILABLE", message);

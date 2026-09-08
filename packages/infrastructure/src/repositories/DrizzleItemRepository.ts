@@ -208,11 +208,54 @@ export class DrizzleItemRepository implements ItemRepository {
   async delete(workspaceId: WorkspaceId, id: ItemId): Promise<void> {
     await this.db.delete(items).where(and(eq(items.workspaceId, workspaceId), eq(items.id, id)));
   }
+
+  // ── Idempotence des captures hors ligne (hors port applicatif) ──────────
+
+  /** Pièce déjà créée pour cet identifiant client (synchronisation rejouée). */
+  async byClientId(workspaceId: WorkspaceId, clientId: string): Promise<Item | undefined> {
+    const row = await this.db.query.items.findFirst({
+      where: and(eq(items.workspaceId, workspaceId), eq(items.clientId, clientId)),
+    });
+    return row ? itemToDomain(row) : undefined;
+  }
+
+  /**
+   * Rattache l'identifiant client à une pièce fraîchement créée. Lève `ClientIdConflict`
+   * si un autre enregistrement porte déjà cet identifiant (course entre deux rejeux).
+   */
+  async setClientId(workspaceId: WorkspaceId, id: ItemId, clientId: string): Promise<void> {
+    try {
+      await this.db
+        .update(items)
+        .set({ clientId })
+        .where(and(eq(items.workspaceId, workspaceId), eq(items.id, id)));
+    } catch (e) {
+      if (isUniqueViolation(e)) throw new ClientIdConflict(clientId);
+      throw e;
+    }
+  }
 }
 
-/** Colonnes réécrites en cas de conflit (tout sauf l'identité et la date de création). */
+export class ClientIdConflict extends Error {
+  override readonly name = "ClientIdConflict";
+  constructor(readonly clientId: string) {
+    super(`Une pièce porte déjà l'identifiant client ${clientId}`);
+  }
+}
+
+/** Code SQLSTATE 23505 (contrainte d'unicité), remonté tel quel par pg et PGlite. */
+const isUniqueViolation = (e: unknown): boolean =>
+  typeof e === "object" &&
+  e !== null &&
+  (("code" in e && e.code === "23505") ||
+    ("cause" in e && isUniqueViolation((e as { cause: unknown }).cause)));
+
+/**
+ * Colonnes réécrites en cas de conflit : tout sauf l'identité, la date de création et
+ * `client_id`, qui n'appartient pas au modèle de domaine et ne doit jamais être effacé.
+ */
 const UPSERT_SET = Object.fromEntries(
   Object.entries(getTableColumns(items))
-    .filter(([key]) => !["id", "workspaceId", "createdAt"].includes(key))
+    .filter(([key]) => !["id", "workspaceId", "createdAt", "clientId"].includes(key))
     .map(([key, column]) => [key, sql.raw(`excluded."${column.name}"`)]),
 );

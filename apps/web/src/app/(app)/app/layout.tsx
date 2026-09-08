@@ -1,12 +1,14 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { OfflineBanner } from "@/components/offline/OfflineBanner";
 import { OutboxReplayer } from "@/components/offline/OutboxReplayer";
+import { InstallPromptProvider } from "@/components/pwa/InstallPrompt";
 import { TabBar } from "@/components/shell/TabBar";
 import { auth } from "@/lib/auth";
 
 /**
- * Coquille mobile de l'app : zones sûres, contenu, barre d'onglets fixe.
+ * Coquille mobile de l'app : zones sûres, bandeau hors ligne, contenu, barre d'onglets fixe.
  * Le proxy (src/proxy.ts) filtre déjà sur la présence du cookie ; ici on vérifie la session réelle.
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -16,12 +18,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!session) redirect("/auth/connexion");
 
   return (
-    <div className="app-shell">
-      <main id="main" className="app-main">
-        {children}
-      </main>
-      <TabBar />
-      <OutboxReplayer />
-    </div>
+    <InstallPromptProvider>
+      <div className="app-shell">
+        <OfflineBanner />
+        <main id="main" className="app-main">
+          {children}
+        </main>
+        <TabBar />
+        <OutboxReplayer />
+      </div>
+    </InstallPromptProvider>
   );
 }
