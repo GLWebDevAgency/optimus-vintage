@@ -18,7 +18,7 @@ import { createMailer, type Mailer, resetPasswordEmail, verificationEmail } from
  *   hors production). Sans mailer en production, ces flux sont désactivés et journalisés une fois.
  * - Limitation de débit : le limiteur persistant du conteneur (`rate_limits`), 10 tentatives
  *   par 15 min et par IP sur connexion / inscription.
- * - Cookies : `Secure` en production, `SameSite=Lax`, `HttpOnly`.
+ * - Cookies : `Secure` dès que l'app est servie en HTTPS, `SameSite=Lax`, `HttpOnly`.
  * - À la création d'un utilisateur, son espace de travail est créé immédiatement.
  */
 export interface CreateAuthOptions {
@@ -46,6 +46,9 @@ export function createAuth({
   nextCookies: withCookies = true,
 }: CreateAuthOptions) {
   const isProd = env.isProduction;
+  // Cookies `Secure` dès que l'app est servie en HTTPS (production hébergée). Un build de
+  // production testé en HTTP sur le réseau local (téléphone, e2e) garde des cookies utilisables.
+  const secureCookies = /^https:/i.test(env.appOrigin ?? "");
   if (isProd && !mailer) {
     warnOnce(
       "auth:no-mailer",
@@ -113,8 +116,13 @@ export function createAuth({
     },
     advanced: {
       database: { generateId: () => authIds.next() },
-      useSecureCookies: isProd,
-      defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: isProd, path: "/" },
+      useSecureCookies: secureCookies,
+      defaultCookieAttributes: {
+        sameSite: "lax",
+        httpOnly: true,
+        secure: secureCookies,
+        path: "/",
+      },
     },
     databaseHooks: {
       user: {

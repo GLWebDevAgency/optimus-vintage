@@ -2,17 +2,13 @@
  * Instrumentation client : Sentry navigateur si `NEXT_PUBLIC_SENTRY_DSN` est défini.
  * Chargé paresseusement pour ne rien coûter aux utilisateurs quand l'observabilité est désactivée.
  */
-type Env = Partial<
-  Record<"NEXT_PUBLIC_SENTRY_DSN" | "NEXT_PUBLIC_SENTRY_ENVIRONMENT" | "NODE_ENV", string>
->;
-const env = process.env as Env;
-const dsn = env.NEXT_PUBLIC_SENTRY_DSN;
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 if (dsn) {
   import("@sentry/nextjs").then((Sentry) => {
     Sentry.init({
       dsn,
-      environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? env.NODE_ENV,
+      environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? process.env.NODE_ENV,
       tracesSampleRate: 0.05,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 0,

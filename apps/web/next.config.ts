@@ -3,19 +3,6 @@ import { withSentryConfig } from "@sentry/nextjs";
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
 
-type SentryEnv = Partial<
-  Record<
-    | "SENTRY_DSN"
-    | "NEXT_PUBLIC_SENTRY_DSN"
-    | "SENTRY_AUTH_TOKEN"
-    | "SENTRY_ORG"
-    | "SENTRY_PROJECT"
-    | "CI",
-    string
-  >
->;
-const sentryEnv = process.env as SentryEnv;
-
 const isDev = process.env.NODE_ENV === "development";
 
 /** Origine d'une URL d'environnement, ou `undefined` si absente ou invalide. */
@@ -103,7 +90,18 @@ const nextConfig: NextConfig = {
   // Dépendances natives ou lourdes chargées par Node hors bundle. `drizzle-orm` reste externe pour
   // qu'une seule instance partage les tables entre l'app et l'infrastructure. Les packages du
   // monorepo ne peuvent pas y figurer (hors `node_modules`) : webpack les traite via `externals`.
-  serverExternalPackages: ["@electric-sql/pglite", "pg", "sharp", "drizzle-orm"],
+  serverExternalPackages: [
+    "@electric-sql/pglite",
+    "pg",
+    "sharp",
+    "drizzle-orm",
+    // Sentry / OpenTelemetry patchent `require` à l'exécution : à laisser hors bundle.
+    "@sentry/nextjs",
+    "@sentry/node",
+    "@opentelemetry/instrumentation",
+    "require-in-the-middle",
+    "import-in-the-middle",
+  ],
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [390, 430, 640, 750, 828, 1080, 1200],
@@ -182,16 +180,16 @@ const withSerwist = withSerwistInit({
 });
 
 const withObservability = (config: NextConfig): NextConfig =>
-  sentryEnv.SENTRY_DSN || sentryEnv.NEXT_PUBLIC_SENTRY_DSN
+  process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
     ? withSentryConfig(config, {
         // Envoi des sourcemaps uniquement si un jeton est fourni (CI/Vercel) ; silencieux sinon.
-        silent: !sentryEnv.CI,
-        authToken: sentryEnv.SENTRY_AUTH_TOKEN,
-        org: sentryEnv.SENTRY_ORG,
-        project: sentryEnv.SENTRY_PROJECT,
+        silent: !process.env.CI,
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        org: process.env.SENTRY_ORG,
+        project: process.env.SENTRY_PROJECT,
         widenClientFileUpload: true,
         disableLogger: true,
-        sourcemaps: { disable: !sentryEnv.SENTRY_AUTH_TOKEN },
+        sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
       })
     : config;
 

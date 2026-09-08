@@ -2,9 +2,6 @@
 
 import { useEffect } from "react";
 
-type Env = Partial<Record<"NEXT_PUBLIC_SENTRY_DSN", string>>;
-const env = process.env as Env;
-
 /**
  * Dernier filet de sécurité : erreur non rattrapée dans le layout racine.
  * Rendu volontairement autonome (pas de design system) pour rester affichable quoi qu'il arrive.
@@ -17,7 +14,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    if (env.NEXT_PUBLIC_SENTRY_DSN) {
+    if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
       import("@sentry/nextjs").then((Sentry) => Sentry.captureException(error));
     }
   }, [error]);

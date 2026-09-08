@@ -33,5 +33,15 @@ declare namespace NodeJS {
     CI?: string;
     E2E_DEV?: string;
     PW_CHROMIUM_PATH?: string;
+    SENTRY_DSN?: string;
+    NEXT_PUBLIC_SENTRY_DSN?: string;
+    SENTRY_ENVIRONMENT?: string;
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
+    SENTRY_RELEASE?: string;
+    SENTRY_TRACES_SAMPLE_RATE?: string;
+    SENTRY_AUTH_TOKEN?: string;
+    SENTRY_ORG?: string;
+    SENTRY_PROJECT?: string;
+    VERCEL_GIT_COMMIT_SHA?: string;
   }
 }
