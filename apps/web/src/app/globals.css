@@ -1,7 +1,16 @@
 @import "tailwindcss";
-/* TODO(lead): basculer sur `@import "@chine/ui/tokens.css";` quand packages/ui/src/tokens.css existe. */
-@import "../styles/tokens.css";
+@import "@chine/ui/tokens.css";
 @source "../../../../packages/ui/src";
+
+/* ── Surcharges locales des jetons : polices next/font, zones sûres, hauteur de la barre d'onglets ── */
+:root {
+  --f-display: var(--font-display, "Instrument Serif"), Georgia, "Times New Roman", serif;
+  --f-ui: var(--font-ui, "Bricolage Grotesque"), "Helvetica Neue", Arial, sans-serif;
+  --f-mono: var(--font-mono, "IBM Plex Mono"), ui-monospace, Menlo, monospace;
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --tabbar-h: 96px;
+}
 
 /* ── Pont jetons → utilitaires Tailwind (bg-bg, text-ink, font-display, ease-out-selvedge…) ── */
 @theme inline {
@@ -1017,9 +1026,6 @@
 }
 
 /* ── Utilitaires maison ──────────────────────────────────────── */
-@utility tabular {
-  font-variant-numeric: tabular-nums;
-}
 @utility touch {
   min-height: 44px;
   min-width: 44px;
