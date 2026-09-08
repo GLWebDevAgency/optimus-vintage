@@ -198,7 +198,11 @@ export class DrizzleItemRepository implements ItemRepository {
     await this.db
       .insert(items)
       .values(rows)
-      .onConflictDoUpdate({ target: items.id, set: UPSERT_SET });
+      .onConflictDoUpdate({
+        target: items.id,
+        set: UPSERT_SET,
+        setWhere: sql`${items.workspaceId} = excluded."workspace_id"`,
+      });
   }
 
   async delete(workspaceId: WorkspaceId, id: ItemId): Promise<void> {

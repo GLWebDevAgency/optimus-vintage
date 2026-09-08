@@ -4,7 +4,7 @@
  * plus tard (analytics, e-mails, webhooks) par un relais qui marque `published_at`.
  */
 import type { DomainEvent } from "@chine/domain";
-import { asc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import type { DbExecutor } from "../db/client.js";
 import { type OutboxEventRow, outboxEvents } from "../db/schema.js";
 import { UuidV7Generator } from "../ids.js";
@@ -35,12 +35,16 @@ export class OutboxEventPublisher implements EventPublisher {
     );
   }
 
-  /** Événements non encore relayés, du plus ancien au plus récent. */
-  async pending(limit = 100): Promise<readonly OutboxEventRow[]> {
+  /** Événements non encore relayés (et sous `maxAttempts` échecs), du plus ancien au plus récent. */
+  async pending(limit = 100, maxAttempts?: number): Promise<readonly OutboxEventRow[]> {
+    const where =
+      maxAttempts === undefined
+        ? isNull(outboxEvents.publishedAt)
+        : and(isNull(outboxEvents.publishedAt), lt(outboxEvents.attempts, maxAttempts));
     return this.db
       .select()
       .from(outboxEvents)
-      .where(isNull(outboxEvents.publishedAt))
+      .where(where)
       .orderBy(asc(outboxEvents.occurredAt), asc(outboxEvents.id))
       .limit(Math.min(1000, Math.max(1, limit)));
   }

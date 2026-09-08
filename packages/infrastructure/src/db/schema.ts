@@ -281,7 +281,19 @@ export const outboxEvents = pgTable(
   ],
 );
 
+// ── Limiteur de débit persistant (fenêtre fixe par clé) ────────────────────
+export const rateLimits = pgTable(
+  "rate_limits",
+  {
+    key: text("key").primaryKey(),
+    windowStart: timestamp("window_start", { withTimezone: true, mode: "date" }).notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => [index("rate_limits_window_idx").on(t.windowStart)],
+);
+
 // ── Types de lignes ────────────────────────────────────────────────────────
+export type RateLimitRow = typeof rateLimits.$inferSelect;
 export type WorkspaceRow = typeof workspaces.$inferSelect;
 export type NewWorkspaceRow = typeof workspaces.$inferInsert;
 export type WorkspaceMemberRow = typeof workspaceMembers.$inferSelect;

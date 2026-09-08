@@ -7,13 +7,16 @@ import { createBillingGateway, StripeBillingGateway } from "./billing/index.js";
 import { SystemClock } from "./clock.js";
 import { createDatabase, type Database, databaseConfigFromEnv, getDatabase } from "./db/client.js";
 import { OutboxEventPublisher } from "./events/OutboxEventPublisher.js";
+import { OutboxRelay } from "./events/OutboxRelay.js";
 import { UuidV7Generator } from "./ids.js";
+import { DataLifecycle } from "./lifecycle/DataLifecycle.js";
 import type { AppDependencies } from "./ports.js";
 import {
   createRepositories,
   type DrizzleRepositories,
   DrizzleUnitOfWork,
 } from "./repositories/index.js";
+import { DrizzleRateLimiter } from "./security/rate-limit.js";
 import { createPhotoStorage } from "./storage/index.js";
 
 type Env = Readonly<Record<string, string | undefined>>;
@@ -24,6 +27,11 @@ export interface InfrastructureDependencies
     DrizzleRepositories {
   readonly database: Database;
   readonly outbox: OutboxEventPublisher;
+  readonly outboxRelay: OutboxRelay;
+  /** Limiteur de débit persistant (hors port applicatif : utilisé par la couche HTTP). */
+  readonly rateLimiter: DrizzleRateLimiter;
+  /** Export / effacement RGPD. */
+  readonly lifecycle: DataLifecycle;
   /** Présent uniquement quand Stripe est configuré (traitement des webhooks). */
   readonly stripe: StripeBillingGateway | undefined;
 }
@@ -61,6 +69,9 @@ export async function createAppDependencies(
     uow: new DrizzleUnitOfWork(db),
     events: outbox,
     outbox,
+    outboxRelay: new OutboxRelay(outbox),
+    rateLimiter: new DrizzleRateLimiter(db),
+    lifecycle: new DataLifecycle(db),
     appraiser: createAppraiser(env),
     photos: createPhotoStorage(env),
     billing,

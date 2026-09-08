@@ -27,6 +27,11 @@ describe("createAppDependencies", () => {
       expect(await deps.billing.currentPlan(ws.id)).toBe("FREE");
       expect(deps.ids.next()).not.toBe(deps.ids.next());
       expect(deps.clock.now()).toBeInstanceOf(Date);
+      expect((await deps.rateLimiter.hit("compo", 2, 60)).remaining).toBe(1);
+      expect((await deps.lifecycle.exportWorkspace(ws.id)).workspace).toMatchObject({ id: ws.id });
+      expect(await deps.outboxRelay.relayPending(async () => undefined)).toMatchObject({
+        processed: 0,
+      });
     } finally {
       await deps.database.close();
     }

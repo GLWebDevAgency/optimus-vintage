@@ -6,7 +6,7 @@ import {
   type SourceId,
   type WorkspaceId,
 } from "@chine/domain";
-import { and, count, desc, eq, gte, ilike, or } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, or, sql } from "drizzle-orm";
 import type { DbExecutor } from "../db/client.js";
 import { type PurchaseSourceRow, purchaseSources } from "../db/schema.js";
 import type { PurchaseSourceRepository, SourceFilter } from "../ports.js";
@@ -110,7 +110,12 @@ export class DrizzlePurchaseSourceRepository implements PurchaseSourceRepository
     await this.db
       .insert(purchaseSources)
       .values({ id, workspaceId, createdAt, ...rest })
-      .onConflictDoUpdate({ target: purchaseSources.id, set: rest });
+      .onConflictDoUpdate({
+        target: purchaseSources.id,
+        set: rest,
+        // Cloisonnement : on ne réécrit jamais une ligne d'un autre espace.
+        setWhere: sql`${purchaseSources.workspaceId} = excluded."workspace_id"`,
+      });
   }
 
   async delete(workspaceId: WorkspaceId, id: SourceId): Promise<void> {

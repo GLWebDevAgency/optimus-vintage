@@ -8,7 +8,7 @@ import {
   type ListingProps,
   type WorkspaceId,
 } from "@chine/domain";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import type { DbExecutor } from "../db/client.js";
 import { type ListingRow, listings } from "../db/schema.js";
 import type { ListingRepository } from "../ports.js";
@@ -69,6 +69,10 @@ export class DrizzleListingRepository implements ListingRepository {
     await this.db
       .insert(listings)
       .values({ id, workspaceId, itemId, ...rest })
-      .onConflictDoUpdate({ target: listings.id, set: rest });
+      .onConflictDoUpdate({
+        target: listings.id,
+        set: rest,
+        setWhere: sql`${listings.workspaceId} = excluded."workspace_id"`,
+      });
   }
 }

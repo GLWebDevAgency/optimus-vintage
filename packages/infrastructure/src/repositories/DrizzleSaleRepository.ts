@@ -10,7 +10,7 @@ import {
   type SourceId,
   type WorkspaceId,
 } from "@chine/domain";
-import { and, asc, desc, eq, gte, lte, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, type SQL, sql } from "drizzle-orm";
 import type { DbExecutor } from "../db/client.js";
 import { type SaleRow, sales } from "../db/schema.js";
 import type { SaleFilter, SaleRepository } from "../ports.js";
@@ -117,6 +117,10 @@ export class DrizzleSaleRepository implements SaleRepository {
     await this.db
       .insert(sales)
       .values({ id, workspaceId, createdAt, ...rest })
-      .onConflictDoUpdate({ target: sales.id, set: rest });
+      .onConflictDoUpdate({
+        target: sales.id,
+        set: rest,
+        setWhere: sql`${sales.workspaceId} = excluded."workspace_id"`,
+      });
   }
 }

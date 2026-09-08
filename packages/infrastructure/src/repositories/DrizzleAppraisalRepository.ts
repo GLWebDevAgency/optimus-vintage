@@ -9,7 +9,7 @@ import {
   isCurrency,
   type WorkspaceId,
 } from "@chine/domain";
-import { and, count, desc, eq, gte } from "drizzle-orm";
+import { and, count, desc, eq, gte, sql } from "drizzle-orm";
 import { parseAppraisalBody, serializeAppraisalBody } from "../ai/appraisal-codec.js";
 import type { DbExecutor } from "../db/client.js";
 import { type AppraisalRow, appraisals } from "../db/schema.js";
@@ -71,7 +71,11 @@ export class DrizzleAppraisalRepository implements AppraisalRepository {
     await this.db
       .insert(appraisals)
       .values({ id, workspaceId, createdAt, ...rest })
-      .onConflictDoUpdate({ target: appraisals.id, set: rest });
+      .onConflictDoUpdate({
+        target: appraisals.id,
+        set: rest,
+        setWhere: sql`${appraisals.workspaceId} = excluded."workspace_id"`,
+      });
   }
 
   async countSince(workspaceId: WorkspaceId, since: Date): Promise<number> {
