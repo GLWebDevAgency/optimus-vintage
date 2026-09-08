@@ -90,7 +90,6 @@ export function StockScreen() {
   const total = query.data?.pages[0]?.total ?? 0;
   const showPending = (filter === "all" || filter === "stock") && !debounced;
   const visiblePending = showPending ? pending : [];
-  const empty = items.length === 0 && visiblePending.length === 0;
   const filtered = filter !== "all" || debounced !== "";
 
   return (
@@ -154,48 +153,61 @@ export function StockScreen() {
           />
         </div>
 
+        {visiblePending.length > 0 ? (
+          <div className="enter d3" data-testid="stock-pending">
+            <List>
+              {visiblePending.map((c) => (
+                <PendingItemRow key={c.clientId} capture={c} />
+              ))}
+            </List>
+          </div>
+        ) : null}
+
         {query.isPending && !query.data ? (
           <div className="enter d3">
             <SkeletonRow count={6} />
           </div>
         ) : query.isError && !query.data ? (
           <div className="card enter d3">
-            <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-          </div>
-        ) : empty ? (
-          <div className="card enter d3">
-            <EmptyState
-              title={filtered ? t("items.emptyFiltered") : t("items.empty")}
-              body={filtered ? undefined : t("items.emptyBody")}
-              action={
-                filtered ? (
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setSearch("");
-                      changeFilter("all");
-                    }}
-                  >
-                    {t("common.reset")}
-                  </Button>
-                ) : (
-                  <Button
-                    href="/app/chiner"
-                    Link={NextLink}
-                    leading={<AppIcon name="camera" size={18} />}
-                  >
-                    {t("nav.chine")}
-                  </Button>
-                )
-              }
+            <ErrorState
+              error={query.error}
+              onRetry={() => void query.refetch()}
+              compact={visiblePending.length > 0}
             />
           </div>
+        ) : items.length === 0 ? (
+          visiblePending.length > 0 ? null : (
+            <div className="card enter d3">
+              <EmptyState
+                title={filtered ? t("items.emptyFiltered") : t("items.empty")}
+                body={filtered ? undefined : t("items.emptyBody")}
+                action={
+                  filtered ? (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setSearch("");
+                        changeFilter("all");
+                      }}
+                    >
+                      {t("common.reset")}
+                    </Button>
+                  ) : (
+                    <Button
+                      href="/app/chiner"
+                      Link={NextLink}
+                      leading={<AppIcon name="camera" size={18} />}
+                    >
+                      {t("nav.chine")}
+                    </Button>
+                  )
+                }
+              />
+            </div>
+          )
         ) : (
           <div className="enter d3 grid gap-3" data-testid="stock-list">
             <List>
-              {visiblePending.map((c) => (
-                <PendingItemRow key={c.clientId} capture={c} />
-              ))}
               {items.map((it) => (
                 <ItemRow key={it.id} item={it} pendingSync={pendingStatusIds.has(it.id)} />
               ))}

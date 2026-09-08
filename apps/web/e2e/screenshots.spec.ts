@@ -3,12 +3,34 @@
  * (`fake-api.ts`) : données de démonstration proches des maquettes, puis états vides.
  * Sert aussi de test d'intégration de l'interface : chaque parcours est joué pour de vrai.
  */
-import { expect, type Page, test } from "@playwright/test";
+import { type BrowserContext, devices, expect, type Page, test } from "@playwright/test";
 import { demoState, emptyState, installFakeApi } from "./fake-api";
 import { settle, signUp, testPng, useTheme } from "./helpers";
 
 const DIR = "e2e/__screenshots__";
 const shot = (page: Page, name: string) => page.screenshot({ path: `${DIR}/${name}.png` });
+
+/**
+ * Un seul compte pour toute la suite (l'inscription est limitée en débit) : la session est
+ * capturée une fois puis injectée dans chaque contexte via `storageState`.
+ */
+let session: Awaited<ReturnType<BrowserContext["storageState"]>> | undefined;
+let account: { email: string; name: string } = { email: "", name: "Léa" };
+
+test.beforeAll(async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ ...devices["iPhone 14"], baseURL: baseURL ?? "" });
+  const page = await context.newPage();
+  account = await signUp(page, "Léa");
+  session = await context.storageState();
+  await context.close();
+});
+
+test.use({
+  // biome-ignore lint/correctness/noEmptyPattern: signature imposée par les fixtures Playwright
+  storageState: async ({}, use) => {
+    await use(session ?? { cookies: [], origins: [] });
+  },
+});
 
 for (const theme of ["light", "dark"] as const) {
   const skin = theme === "light" ? "calico" : "indigo";
@@ -23,8 +45,11 @@ for (const theme of ["light", "dark"] as const) {
       baseURL,
     }) => {
       test.setTimeout(180_000);
-      const user = await signUp(page, "Léa");
-      const state = await installFakeApi(page, demoState(baseURL ?? "", user));
+      // Le faux API est branché avant l'inscription : aucune réponse du vrai serveur n'entre
+      // dans le cache persistant de TanStack Query.
+      // Le faux API est branché avant toute navigation : aucune réponse du vrai serveur n'entre
+      // dans le cache persistant de TanStack Query.
+      const state = await installFakeApi(page, demoState(baseURL ?? "", account));
 
       // Aujourd'hui
       await page.goto("/app");
@@ -108,8 +133,7 @@ test.describe("états vides · calico", () => {
   }) => {
     test.setTimeout(120_000);
     await useTheme(page, "light");
-    const user = await signUp(page, "Léa");
-    await installFakeApi(page, emptyState(baseURL ?? "", user));
+    await installFakeApi(page, emptyState(baseURL ?? "", account));
 
     await page.goto("/app");
     await expect(page.getByText("Ton atelier est vide")).toBeVisible({ timeout: 15_000 });
@@ -117,17 +141,23 @@ test.describe("états vides · calico", () => {
     await shot(page, "empty-today");
 
     await page.goto("/app/stock");
-    await expect(page.getByText("Aucune pièce")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Aucune pièce" })).toBeVisible({
+      timeout: 15_000,
+    });
     await settle(page, 800);
     await shot(page, "empty-stock");
 
     await page.goto("/app/ventes");
-    await expect(page.getByText("Aucune vente")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Aucune vente" })).toBeVisible({
+      timeout: 15_000,
+    });
     await settle(page, 800);
     await shot(page, "empty-sales");
 
     await page.goto("/app/sources");
-    await expect(page.getByText("Aucune source")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Aucune source" })).toBeVisible({
+      timeout: 15_000,
+    });
     await settle(page, 800);
     await shot(page, "empty-sources");
 
@@ -150,11 +180,11 @@ test.describe("états vides · calico", () => {
     baseURL,
     context,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
     await useTheme(page, "light");
-    const user = await signUp(page, "Léa");
-    const state = await installFakeApi(page, emptyState(baseURL ?? "", user));
+    const state = await installFakeApi(page, emptyState(baseURL ?? "", account));
 
+    // 1. Réseau coupé : la capture est enregistrée localement, le bandeau hors ligne s'affiche.
     await page.goto("/app/chiner");
     await expect(page.getByTestId("viewfinder")).toBeVisible({ timeout: 15_000 });
     await context.setOffline(true);
@@ -163,21 +193,31 @@ test.describe("états vides · calico", () => {
       .setInputFiles({ name: "veste.png", mimeType: "image/png", buffer: await testPng() });
     await page.getByTestId("capture-submit").click();
     await expect(page.getByTestId("capture-success")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Sync plus tard").first()).toBeVisible();
+    await expect(page.getByTestId("capture-success")).toContainText("Sync plus tard");
+    await expect(page.getByTestId("offline-banner")).toBeVisible();
     await settle(page, 800);
     await shot(page, "chiner-offline");
+    expect(state.items.length).toBe(0);
 
-    await page.getByTestId("capture-view").click();
-    await expect(page).toHaveURL(/\/app\/stock$/);
-    await expect(page.getByTestId("offline-banner")).toBeVisible();
-    await expect(page.getByTestId("stock-list")).toContainText("Sync plus tard");
-    await shot(page, "stock-offline");
-
+    // 2. Serveur joignable mais API en panne : la pièce en attente apparaît dans le stock.
     await context.setOffline(false);
-    await expect.poll(() => state.items.length, { timeout: 20_000 }).toBe(1);
-    await expect(page.getByTestId("offline-banner")).toBeHidden({ timeout: 10_000 });
-    await expect(page.getByTestId("stock-list")).not.toContainText("Sync plus tard", {
+    // Un matcher distinct de celui du faux : `unroute` ne doit retirer que la coupure.
+    const cut = (url: URL) =>
+      url.pathname.includes("/api/v1/") || url.pathname.includes("/__fake/upload/");
+    await page.route(cut, (route) => route.abort("failed"));
+    await page.goto("/app/stock");
+    await expect(page.getByTestId("stock-pending")).toContainText("Sync plus tard", {
       timeout: 15_000,
     });
+    await settle(page, 800);
+    await shot(page, "stock-offline");
+
+    // 3. Réseau de retour : la photo part, la pièce est créée, le stock se rafraîchit.
+    await page.unroute(cut);
+    await page.reload();
+    await expect.poll(() => state.items.length, { timeout: 30_000 }).toBe(1);
+    await expect(page.getByTestId("stock-list")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("stock-pending")).toBeHidden({ timeout: 30_000 });
+    await expect(page.getByTestId("offline-banner")).toBeHidden();
   });
 });

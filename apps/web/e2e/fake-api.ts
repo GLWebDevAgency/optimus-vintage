@@ -295,7 +295,7 @@ export function demoState(origin: string, user: { email: string; name: string })
     colors: [],
     materials: [],
     photos: [mk(String(n), (n * 47) % 360)],
-    createdAt: iso(new Date(Date.now() - (30 - n) * 86_400_000)),
+    createdAt: iso(new Date(Date.now() - (((n * 7) % 40) + 1) * 86_400_000)),
     ...p,
   });
   s.items = [
@@ -436,7 +436,7 @@ const economics = (sale: Sale, item: Item | undefined) => {
   };
 };
 
-function saleDto(s: FakeState, sale: Sale) {
+export function saleDto(s: FakeState, sale: Sale) {
   const item = s.items.find((i) => i.id === sale.itemId);
   return {
     ...sale,
@@ -461,7 +461,7 @@ function saleDto(s: FakeState, sale: Sale) {
   };
 }
 
-function itemDto(s: FakeState, it: Item) {
+export function itemDto(s: FakeState, it: Item) {
   const ageDays = Math.floor((Date.now() - new Date(it.createdAt).getTime()) / 86_400_000);
   const source = s.sources.find((x) => x.id === it.sourceId);
   const { listing, clientId, ...rest } = it;
@@ -501,7 +501,7 @@ function itemDto(s: FakeState, it: Item) {
   };
 }
 
-function sourceDto(s: FakeState, src: Source) {
+export function sourceDto(s: FakeState, src: Source) {
   const items = s.items.filter((i) => i.sourceId === src.id);
   const invested = src.goodsCost.minor + src.extraCosts.minor;
   const sales = s.sales.filter(
@@ -558,7 +558,7 @@ function sourceDto(s: FakeState, src: Source) {
   };
 }
 
-function stats(s: FakeState, from: string, to: string) {
+export function stats(s: FakeState, from: string, to: string) {
   const sales = s.sales.filter(
     (x) => x.status === "COMPLETED" && x.soldAt >= from && x.soldAt <= to,
   );
@@ -622,7 +622,104 @@ function periodBounds(period: string): {
   return { from: f(from), to, prevFrom: f(prevFrom), prevTo: f(prevTo) };
 }
 
-function overview(s: FakeState) {
+export function dashboardDto(s: FakeState, period: string) {
+  const b = periodBounds(period);
+  const current = stats(s, b.from, b.to);
+  const previous = stats(s, b.prevFrom, b.prevTo);
+  const change = (a: number, p: number) => (p > 0 ? (a - p) / p : undefined);
+  const live = s.items.filter(
+    (i) => i.status !== "SOLD" && i.status !== "LOST" && i.status !== "DONATED",
+  );
+  const dormant = live.filter((i) => itemDto(s, i).isDormant).length;
+  const goal = s.workspace.monthlyGoal;
+  return {
+    period: { from: b.from, to: b.to },
+    current,
+    previous,
+    change: {
+      net: change(current.net.minor, previous.net.minor),
+      margin: change(current.margin.minor, previous.margin.minor),
+      salesCount: change(current.salesCount, previous.salesCount),
+    },
+    counts: {
+      inStock: live.filter((i) => i.status === "IN_STOCK").length,
+      listed: live.filter((i) => i.status === "LISTED").length,
+      reserved: live.filter((i) => i.status === "RESERVED").length,
+      sold: s.items.filter((i) => i.status === "SOLD").length,
+      dormant,
+    },
+    stockValueAtCost: eur(live.reduce((a, i) => a + i.acquisitionCost.minor, 0)),
+    ...(goal
+      ? {
+          targetMinor: undefined,
+          goal: {
+            targetMinor: goal.minor,
+            currency: "EUR",
+            progress: goal.minor > 0 ? current.margin.minor / goal.minor : 0,
+          },
+        }
+      : {}),
+    lastSales: [...s.sales]
+      .sort((a, c) => (a.soldAt < c.soldAt ? 1 : -1))
+      .slice(0, 5)
+      .map((x) => saleDto(s, x)),
+  };
+}
+
+export function fakeAppraisal(s: FakeState) {
+  return {
+    id: `ap_${++s.seq}`,
+    workspaceId: s.workspace.id,
+    provider: "fake",
+    model: "fake-vision",
+    createdAt: iso(),
+    identification: {
+      brand: "Lacoste",
+      brandConfidence: 0.92,
+      category: "TRACKSUIT",
+      model: null,
+      era: "1990s",
+      materials: ["Coton piqué"],
+      colors: ["Bleu marine"],
+      size: "L",
+      condition: "EXCELLENT",
+      conditionNotes: [],
+      isVintage: true,
+      notableFeatures: ["Logo crocodile brodé"],
+    },
+    price: {
+      low: eur(6_000),
+      mid: eur(7_500),
+      high: eur(8_500),
+      retailNew: eur(25_000),
+      confidence: 0.86,
+      perPlatform: [{ platform: "VINTED", price: eur(7_500), daysToSell: 9 }],
+    },
+    market: {
+      demand: "HIGH",
+      trend: "RISING",
+      rarity: 0.6,
+      audience: ["Streetwear 90s"],
+      seasonality: null,
+    },
+    advice: {
+      action: "BUY",
+      maxBuyPrice: eur(2_500),
+      reasons: ["Marque recherchée", "Ensemble complet"],
+      risk: 0.2,
+      sellingTips: ["Photographier le logo"],
+    },
+    listingCopy: {
+      title: "Ensemble Lacoste vintage 1990s",
+      description: "Ensemble Lacoste en coton piqué…",
+      hashtags: ["#lacoste", "#vintage"],
+    },
+    latencyMs: 1200,
+    quota: { used: s.appraisals.length + 1, limit: 150 },
+  };
+}
+
+export function overview(s: FakeState) {
   const items = s.items.filter(
     (i) => i.status !== "SOLD" && i.status !== "LOST" && i.status !== "DONATED",
   ).length;
@@ -722,50 +819,7 @@ export async function installFakeApi(page: Page, state: FakeState): Promise<Fake
       }
       return json(route, overview(s));
     }
-    if (path === "/dashboard") {
-      const period = q.get("period") ?? "month";
-      const b = periodBounds(period);
-      const current = stats(s, b.from, b.to);
-      const previous = stats(s, b.prevFrom, b.prevTo);
-      const change = (a: number, p: number) => (p > 0 ? (a - p) / p : undefined);
-      const live = s.items.filter(
-        (i) => i.status !== "SOLD" && i.status !== "LOST" && i.status !== "DONATED",
-      );
-      const dormant = live.filter((i) => itemDto(s, i).isDormant).length;
-      const goal = s.workspace.monthlyGoal;
-      return json(route, {
-        period: { from: b.from, to: b.to },
-        current,
-        previous,
-        change: {
-          net: change(current.net.minor, previous.net.minor),
-          margin: change(current.margin.minor, previous.margin.minor),
-          salesCount: change(current.salesCount, previous.salesCount),
-        },
-        counts: {
-          inStock: live.filter((i) => i.status === "IN_STOCK").length,
-          listed: live.filter((i) => i.status === "LISTED").length,
-          reserved: live.filter((i) => i.status === "RESERVED").length,
-          sold: s.items.filter((i) => i.status === "SOLD").length,
-          dormant,
-        },
-        stockValueAtCost: eur(live.reduce((a, i) => a + i.acquisitionCost.minor, 0)),
-        ...(goal
-          ? {
-              targetMinor: undefined,
-              goal: {
-                targetMinor: goal.minor,
-                currency: "EUR",
-                progress: goal.minor > 0 ? current.margin.minor / goal.minor : 0,
-              },
-            }
-          : {}),
-        lastSales: [...s.sales]
-          .sort((a, c) => (a.soldAt < c.soldAt ? 1 : -1))
-          .slice(0, 5)
-          .map((x) => saleDto(s, x)),
-      });
-    }
+    if (path === "/dashboard") return json(route, dashboardDto(s, q.get("period") ?? "month"));
 
     /* Sources */
     if (seg[0] === "sources") {
@@ -1067,56 +1121,7 @@ export async function installFakeApi(page: Page, state: FakeState): Promise<Fake
     if (path === "/appraisals" && method === "POST") {
       if (s.workspace.plan === "FREE")
         return error(route, 402, "FEATURE_LOCKED", "Expertise IA réservée au plan Premium");
-      const a = {
-        id: `ap_${++s.seq}`,
-        workspaceId: s.workspace.id,
-        provider: "fake",
-        model: "fake-vision",
-        createdAt: iso(),
-        identification: {
-          brand: "Lacoste",
-          brandConfidence: 0.92,
-          category: "TRACKSUIT",
-          model: null,
-          era: "1990s",
-          materials: ["Coton piqué"],
-          colors: ["Bleu marine"],
-          size: "L",
-          condition: "EXCELLENT",
-          conditionNotes: [],
-          isVintage: true,
-          notableFeatures: ["Logo crocodile brodé"],
-        },
-        price: {
-          low: eur(6_000),
-          mid: eur(7_500),
-          high: eur(8_500),
-          retailNew: eur(25_000),
-          confidence: 0.86,
-          perPlatform: [{ platform: "VINTED", price: eur(7_500), daysToSell: 9 }],
-        },
-        market: {
-          demand: "HIGH",
-          trend: "RISING",
-          rarity: 0.6,
-          audience: ["Streetwear 90s"],
-          seasonality: null,
-        },
-        advice: {
-          action: "BUY",
-          maxBuyPrice: eur(2_500),
-          reasons: ["Marque recherchée", "Ensemble complet"],
-          risk: 0.2,
-          sellingTips: ["Photographier le logo"],
-        },
-        listingCopy: {
-          title: "Ensemble Lacoste vintage 1990s",
-          description: "Ensemble Lacoste en coton piqué…",
-          hashtags: ["#lacoste", "#vintage"],
-        },
-        latencyMs: 1200,
-        quota: { used: s.appraisals.length + 1, limit: 150 },
-      };
+      const a = fakeAppraisal(s);
       s.appraisals.push(a);
       await new Promise((r) => setTimeout(r, 900));
       return json(route, a, 201);
