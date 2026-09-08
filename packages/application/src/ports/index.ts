@@ -3,15 +3,39 @@
  * les tests utilisent des adaptateurs en mémoire (`@chine/application/testing`).
  */
 import type {
-  Appraisal, AppraisalId, Currency, DomainEvent, IsoDate, Item, ItemId, ItemStatus, Listing, ListingId, Plan,
-  PurchaseSource, Sale, SaleId, SourceId, UserId, Workspace, WorkspaceId, FeeSchedule, Platform,
+  Appraisal,
+  AppraisalId,
+  Currency,
+  DomainEvent,
+  FeeSchedule,
+  IsoDate,
+  Item,
+  ItemId,
+  ItemStatus,
+  Listing,
+  ListingId,
+  Plan,
+  Platform,
+  PurchaseSource,
+  Sale,
+  SaleId,
+  SourceId,
+  UserId,
+  Workspace,
+  WorkspaceId,
 } from "@chine/domain";
 
-export interface Clock { now(): Date }
-export interface IdGenerator { next(): string }
+export interface Clock {
+  now(): Date;
+}
+export interface IdGenerator {
+  next(): string;
+}
 
 /** Compteur de SKU par espace, monotone, sûr en concurrence (SELECT … FOR UPDATE côté SQL). */
-export interface SkuSequence { next(workspaceId: WorkspaceId): Promise<number> }
+export interface SkuSequence {
+  next(workspaceId: WorkspaceId): Promise<number>;
+}
 
 export interface WorkspaceRepository {
   byId(id: WorkspaceId): Promise<Workspace | undefined>;
@@ -20,10 +44,18 @@ export interface WorkspaceRepository {
   forUser(userId: UserId): Promise<readonly Workspace[]>;
   save(ws: Workspace): Promise<void>;
   feeOverrides(id: WorkspaceId): Promise<Partial<Record<Platform, FeeSchedule>>>;
-  saveFeeOverrides(id: WorkspaceId, overrides: Partial<Record<Platform, FeeSchedule>>): Promise<void>;
+  saveFeeOverrides(
+    id: WorkspaceId,
+    overrides: Partial<Record<Platform, FeeSchedule>>,
+  ): Promise<void>;
 }
 
-export interface SourceFilter { readonly kind?: PurchaseSource["kind"]; readonly search?: string; readonly limit?: number; readonly offset?: number }
+export interface SourceFilter {
+  readonly kind?: PurchaseSource["kind"];
+  readonly search?: string;
+  readonly limit?: number;
+  readonly offset?: number;
+}
 export interface PurchaseSourceRepository {
   byId(workspaceId: WorkspaceId, id: SourceId): Promise<PurchaseSource | undefined>;
   list(workspaceId: WorkspaceId, filter?: SourceFilter): Promise<readonly PurchaseSource[]>;
@@ -58,7 +90,15 @@ export interface ListingRepository {
   save(listing: Listing): Promise<void>;
 }
 
-export interface SaleFilter { readonly from?: IsoDate; readonly to?: IsoDate; readonly sourceId?: SourceId; readonly itemId?: ItemId; readonly platform?: Platform; readonly limit?: number; readonly offset?: number }
+export interface SaleFilter {
+  readonly from?: IsoDate;
+  readonly to?: IsoDate;
+  readonly sourceId?: SourceId;
+  readonly itemId?: ItemId;
+  readonly platform?: Platform;
+  readonly limit?: number;
+  readonly offset?: number;
+}
 export interface SaleRepository {
   byId(workspaceId: WorkspaceId, id: SaleId): Promise<Sale | undefined>;
   byItem(workspaceId: WorkspaceId, itemId: ItemId): Promise<readonly Sale[]>;
@@ -85,18 +125,31 @@ export interface AppraisalRequest {
 }
 export type AppraisalDraft = Omit<Appraisal, "id" | "workspaceId" | "itemId" | "createdAt">;
 /** Port IA : Gemini, Claude, ou un faux déterministe en dev. */
-export interface Appraiser { readonly name: string; appraise(req: AppraisalRequest): Promise<AppraisalDraft> }
+export interface Appraiser {
+  readonly name: string;
+  appraise(req: AppraisalRequest): Promise<AppraisalDraft>;
+}
 
 /** Stockage des photos : clé opaque, URL signée d'upload direct, URL publique de lecture. */
 export interface PhotoStorage {
-  createUploadTarget(workspaceId: WorkspaceId, mimeType: string): Promise<{ key: string; uploadUrl: string; method: "PUT" | "POST"; headers?: Record<string, string> }>;
+  createUploadTarget(
+    workspaceId: WorkspaceId,
+    mimeType: string,
+  ): Promise<{
+    key: string;
+    uploadUrl: string;
+    method: "PUT" | "POST";
+    headers?: Record<string, string>;
+  }>;
   /** Upload direct côté serveur (mode local ou fallback). */
   put(key: string, bytes: Uint8Array, mimeType: string): Promise<void>;
   publicUrl(key: string): string;
   delete(key: string): Promise<void>;
 }
 
-export interface EventPublisher { publish(events: readonly DomainEvent[]): Promise<void> }
+export interface EventPublisher {
+  publish(events: readonly DomainEvent[]): Promise<void>;
+}
 
 /** Unité de travail : exécute un bloc dans une transaction (les repos passés sont transactionnels). */
 export interface UnitOfWork {
@@ -115,7 +168,12 @@ export interface TransactionalRepositories {
 /** Abonnement courant d'un espace (renseigné par Stripe ou par défaut FREE). */
 export interface BillingGateway {
   currentPlan(workspaceId: WorkspaceId): Promise<Plan>;
-  createCheckoutUrl(workspaceId: WorkspaceId, plan: Exclude<Plan, "FREE">, interval: "monthly" | "yearly", returnUrl: string): Promise<string | undefined>;
+  createCheckoutUrl(
+    workspaceId: WorkspaceId,
+    plan: Exclude<Plan, "FREE">,
+    interval: "monthly" | "yearly",
+    returnUrl: string,
+  ): Promise<string | undefined>;
   createPortalUrl(workspaceId: WorkspaceId, returnUrl: string): Promise<string | undefined>;
 }
 
