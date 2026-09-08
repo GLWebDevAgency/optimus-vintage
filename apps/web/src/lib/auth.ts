@@ -16,10 +16,8 @@ import { nextCookies } from "better-auth/next-js";
  * Tant que l'adaptateur n'est pas branché, Better Auth retombe sur son adaptateur mémoire :
  * les comptes vivent le temps du processus (suffisant pour le dev et les tests e2e).
  */
-export type Auth = ReturnType<typeof betterAuth>;
-
-type BetterAuthOptions = Parameters<typeof betterAuth>[0];
-type DatabaseOption = NonNullable<BetterAuthOptions>["database"];
+type BetterAuthOptions = NonNullable<Parameters<typeof betterAuth>[0]>;
+type DatabaseOption = BetterAuthOptions["database"];
 
 function resolveDatabase(): DatabaseOption | undefined {
   // TODO(lead): return drizzleAdapter(getDatabase().db, { provider: "pg", schema: authSchema });
@@ -31,16 +29,12 @@ function resolveDatabase(): DatabaseOption | undefined {
   return undefined;
 }
 
-function buildAuth(): Auth {
-  const database = resolveDatabase();
-  const baseURL = process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL;
-  const secret = process.env.BETTER_AUTH_SECRET;
-
-  return betterAuth({
+function buildAuth() {
+  const options = {
     appName: "Chiné",
-    ...(database ? { database } : {}),
-    ...(baseURL ? { baseURL } : {}),
-    ...(secret ? { secret } : {}),
+    database: resolveDatabase(),
+    baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL,
+    secret: process.env.BETTER_AUTH_SECRET,
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,
@@ -59,8 +53,11 @@ function buildAuth(): Auth {
       },
     },
     plugins: [nextCookies()],
-  });
+  } satisfies BetterAuthOptions;
+  return betterAuth(options);
 }
+
+export type Auth = ReturnType<typeof buildAuth>;
 
 let instance: Auth | undefined;
 

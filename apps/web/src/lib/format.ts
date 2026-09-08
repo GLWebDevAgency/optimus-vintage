@@ -18,7 +18,9 @@ const num2 = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 2, maximumF
 export const formatEur = (amount: number): string => eur.format(amount);
 /** 5.99 → « 5,99 » (la devise est posée à part, en petit, en grotesque) */
 export const formatAmount = (amount: number, decimals = 2): string =>
-  decimals === 2 ? num2.format(amount) : amount.toLocaleString("fr-FR", { maximumFractionDigits: decimals });
+  decimals === 2
+    ? num2.format(amount)
+    : amount.toLocaleString("fr-FR", { maximumFractionDigits: decimals });
 /** 149 → « 149 € » */
 export const formatEurRound = (amount: number): string => eurCompact.format(amount);
 
@@ -31,7 +33,11 @@ export function formatPercent(ratio: number, signed = true): string {
 
 /** « dim. 7 sept. » → « Dim. 7 sept. » */
 export function formatDayKicker(date: Date): string {
-  const s = new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short" }).format(date);
+  const s = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 

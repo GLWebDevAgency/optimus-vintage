@@ -28,7 +28,12 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   const json = (await res.json().catch(() => null)) as ApiOk<T> | ApiError | null;
   if (!res.ok || !json || "error" in json) {
     const err = json && "error" in json ? json.error : undefined;
-    throw new ApiClientError(res.status, err?.code ?? "HTTP_ERROR", err?.message ?? `HTTP ${res.status}`, err?.details);
+    throw new ApiClientError(
+      res.status,
+      err?.code ?? "HTTP_ERROR",
+      err?.message ?? `HTTP ${res.status}`,
+      err?.details,
+    );
   }
   return json.data;
 }

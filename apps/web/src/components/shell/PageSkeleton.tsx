@@ -230,7 +230,14 @@ export function PageSkeleton({ variant, rows }: PageSkeletonProps) {
         <>
           <div className="seg enter d2" role="tablist" aria-label="Filtrer les sources">
             {["Toutes", "Lots", "Palettes", "Chine"].map((s, i) => (
-              <button type="button" key={s} role="tab" aria-selected={i === 0} aria-pressed={i === 0} disabled>
+              <button
+                type="button"
+                key={s}
+                role="tab"
+                aria-selected={i === 0}
+                aria-pressed={i === 0}
+                disabled
+              >
                 {s}
               </button>
             ))}
@@ -273,7 +280,9 @@ export function PageSkeleton({ variant, rows }: PageSkeletonProps) {
       );
     case "showcase":
       return (
-        <div className="card enter d2 grid place-items-center min-h-40 text-ink-3 text-sm">showcase</div>
+        <div className="card enter d2 grid place-items-center min-h-40 text-ink-3 text-sm">
+          showcase
+        </div>
       );
     default:
       return (

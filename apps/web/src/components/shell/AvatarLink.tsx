@@ -9,7 +9,12 @@ export function AvatarLink() {
   const name = data?.user.name?.trim() || data?.user.email || "";
   const initial = name ? name.charAt(0).toUpperCase() : "·";
   return (
-    <Link href="/app/reglages" className="avatar touch" aria-label="Réglages et compte" title={name || "Réglages"}>
+    <Link
+      href="/app/reglages"
+      className="avatar touch"
+      aria-label="Réglages et compte"
+      title={name || "Réglages"}
+    >
       {initial}
     </Link>
   );

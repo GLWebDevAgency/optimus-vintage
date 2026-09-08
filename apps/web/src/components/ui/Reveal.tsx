@@ -38,7 +38,8 @@ export function Reveal({ children, className, delay = 0, y = 18, as = "div" }: R
     });
   }, [armed, inView, controls, delay]);
 
-  const Tag = motion[as];
+  // Les composants motion.* ont des refs incompatibles entre eux : on unifie sur motion.div.
+  const Tag = (motion as unknown as Record<NonNullable<RevealProps["as"]>, typeof motion.div>)[as];
   return (
     <Tag ref={ref} initial={false} animate={controls} className={className}>
       {children}

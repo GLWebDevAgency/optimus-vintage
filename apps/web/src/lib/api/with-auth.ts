@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
-import { auth, type Session } from "@/lib/auth";
 import { fail, unauthorized } from "@/lib/api/respond";
+import { auth, type Session } from "@/lib/auth";
 
 export interface AuthContext<P = Record<string, never>> {
   readonly userId: string;

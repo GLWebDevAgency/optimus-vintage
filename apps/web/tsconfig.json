@@ -8,13 +8,15 @@
     "jsx": "preserve",
     "allowJs": true,
     "noEmit": true,
+    // Les bibliothèques (Next, Serwist, Better Auth, TanStack) ne sont pas écrites pour ce mode ;
+    // il reste actif dans les packages métier (tsconfig.base.json).
+    "exactOptionalPropertyTypes": false,
     "incremental": true,
     "declaration": false,
     "declarationMap": false,
     "sourceMap": false,
     "types": ["node", "@serwist/next/typings"],
     "plugins": [{ "name": "next" }],
-    "baseUrl": ".",
     "paths": { "@/*": ["./src/*"] }
   },
   "include": [

@@ -60,7 +60,8 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     siteName: "Chiné",
     title: "Chiné — l'app des chineurs",
-    description: "La chine avant le tableur : stock, sources, marge, expert IA. Hors ligne, dans la poche.",
+    description:
+      "La chine avant le tableur : stock, sources, marge, expert IA. Hors ligne, dans la poche.",
     images: [{ url: "/icons/og.png", width: 1200, height: 630, alt: "Chiné" }],
   },
   twitter: { card: "summary_large_image" },
@@ -81,7 +82,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr" className={`${display.variable} ${ui.variable} ${mono.variable}`} suppressHydrationWarning>
+    <html
+      lang="fr"
+      className={`${display.variable} ${ui.variable} ${mono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Pose `data-theme` avant le premier rendu : pas de flash de thème. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />

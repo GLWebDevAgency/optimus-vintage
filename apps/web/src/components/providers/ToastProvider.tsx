@@ -1,7 +1,15 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 export type ToastTone = "ink" | "thread" | "brass";
 export interface ToastOptions {
@@ -67,7 +75,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               <b>{t.title}</b>
               {t.description ? <span>{t.description}</span> : null}
-              <button type="button" className="toast-x" onClick={() => dismiss(t.id)} aria-label="Fermer">
+              <button
+                type="button"
+                className="toast-x"
+                onClick={() => dismiss(t.id)}
+                aria-label="Fermer"
+              >
                 ×
               </button>
             </motion.div>

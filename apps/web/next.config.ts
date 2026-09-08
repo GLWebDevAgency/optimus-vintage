@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
+import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -46,7 +46,10 @@ const r2 = process.env.R2_PUBLIC_BASE_URL;
 if (r2) {
   try {
     const u = new URL(r2);
-    remotePatterns.push({ protocol: u.protocol.replace(":", "") as "http" | "https", hostname: u.hostname });
+    remotePatterns.push({
+      protocol: u.protocol.replace(":", "") as "http" | "https",
+      hostname: u.hostname,
+    });
   } catch {
     // URL invalide : on ignore, l'erreur remontera à l'usage.
   }

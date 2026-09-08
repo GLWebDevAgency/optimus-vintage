@@ -39,7 +39,13 @@ export function SyncBadge({ className }: { className?: string }) {
     );
   }
   return (
-    <button type="button" className={cls} onClick={action} aria-live="polite" title="Synchroniser maintenant">
+    <button
+      type="button"
+      className={cls}
+      onClick={action}
+      aria-live="polite"
+      title="Synchroniser maintenant"
+    >
       {label}
     </button>
   );

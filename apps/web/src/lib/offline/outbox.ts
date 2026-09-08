@@ -53,7 +53,13 @@ export interface OutboxStatus {
   readonly lastError: string | null;
 }
 
-const IDLE: OutboxStatus = { pending: 0, failed: 0, syncing: false, lastSyncedAt: null, lastError: null };
+const IDLE: OutboxStatus = {
+  pending: 0,
+  failed: 0,
+  syncing: false,
+  lastSyncedAt: null,
+  lastError: null,
+};
 let status: OutboxStatus = IDLE;
 const listeners = new Set<() => void>();
 let countsSubscription: { unsubscribe(): void } | undefined;
@@ -140,7 +146,11 @@ export async function listEntries(): Promise<OutboxEntry[]> {
   return getOutboxDb().outbox.orderBy("createdAt").toArray();
 }
 
-export type ReplayResult = { sent: number; failed: number; stopped: "done" | "offline" | "network" | "client-error" | "unauthorized" };
+export type ReplayResult = {
+  sent: number;
+  failed: number;
+  stopped: "done" | "offline" | "network" | "client-error" | "unauthorized";
+};
 
 let replaying: Promise<ReplayResult> | undefined;
 
@@ -165,7 +175,9 @@ async function doReplay(): Promise<ReplayResult> {
   if (!isOnline()) return { ...result, stopped: "offline" };
 
   const table = getOutboxDb().outbox;
-  const entries = (await table.orderBy("createdAt").toArray()).filter((e) => e.status === "pending");
+  const entries = (await table.orderBy("createdAt").toArray()).filter(
+    (e) => e.status === "pending",
+  );
   if (entries.length === 0) return result;
 
   setStatus({ syncing: true, lastError: null });
@@ -204,7 +216,11 @@ async function doReplay(): Promise<ReplayResult> {
       }
       const message = await describeFailure(response);
       if (response.status >= 400 && response.status < 500) {
-        await table.update(entry.id, { status: "failed", attempts: entry.attempts + 1, lastError: message });
+        await table.update(entry.id, {
+          status: "failed",
+          attempts: entry.attempts + 1,
+          lastError: message,
+        });
         result.failed += 1;
         setStatus({ lastError: message });
         return { ...result, stopped: "client-error" };
@@ -222,7 +238,8 @@ async function doReplay(): Promise<ReplayResult> {
 async function describeFailure(response: Response): Promise<string> {
   try {
     const json = (await response.clone().json()) as { error?: { message?: string; code?: string } };
-    if (json?.error?.message) return `${json.error.code ?? response.status} · ${json.error.message}`;
+    if (json?.error?.message)
+      return `${json.error.code ?? response.status} · ${json.error.message}`;
   } catch {
     // corps non JSON
   }

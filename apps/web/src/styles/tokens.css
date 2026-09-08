@@ -105,16 +105,46 @@
 
 /* Skins locaux (forcer une matière sur un sous-arbre) */
 .skin-calico {
-  --bg: #f2ede2; --bg-2: #e8e1d0; --surface: #fbf8f1; --surface-2: #f5f0e4;
-  --ink: #171b27; --ink-2: #565b69; --ink-3: #8b8f99; --line: #d8d0be; --line-2: #c7bea8;
-  --thread: #c4283c; --thread-soft: rgba(196, 40, 60, 0.12); --brass: #946f22; --brass-soft: rgba(148, 111, 34, 0.14);
-  --chalk: #e6eef4; --indigo: #22306a; --indigo-soft: rgba(34, 48, 106, 0.1); --btn: #171b27; --btn-ink: #f7f3ea;
-  --shadow-tag: 0 10px 24px -14px rgba(23, 27, 39, 0.45); color-scheme: light;
+  --bg: #f2ede2;
+  --bg-2: #e8e1d0;
+  --surface: #fbf8f1;
+  --surface-2: #f5f0e4;
+  --ink: #171b27;
+  --ink-2: #565b69;
+  --ink-3: #8b8f99;
+  --line: #d8d0be;
+  --line-2: #c7bea8;
+  --thread: #c4283c;
+  --thread-soft: rgba(196, 40, 60, 0.12);
+  --brass: #946f22;
+  --brass-soft: rgba(148, 111, 34, 0.14);
+  --chalk: #e6eef4;
+  --indigo: #22306a;
+  --indigo-soft: rgba(34, 48, 106, 0.1);
+  --btn: #171b27;
+  --btn-ink: #f7f3ea;
+  --shadow-tag: 0 10px 24px -14px rgba(23, 27, 39, 0.45);
+  color-scheme: light;
 }
 .skin-indigo {
-  --bg: #0e1326; --bg-2: #0a0e1d; --surface: #171e36; --surface-2: #1d2540;
-  --ink: #eef1f7; --ink-2: #a8afc2; --ink-3: #6e778d; --line: #283155; --line-2: #344070;
-  --thread: #e44553; --thread-soft: rgba(228, 69, 83, 0.16); --brass: #d9b66e; --brass-soft: rgba(217, 182, 110, 0.16);
-  --chalk: #dce6f0; --indigo: #8fa0e0; --indigo-soft: rgba(143, 160, 224, 0.14); --btn: #eef1f7; --btn-ink: #0e1326;
-  --shadow-tag: 0 14px 28px -14px rgba(0, 0, 0, 0.8); color-scheme: dark;
+  --bg: #0e1326;
+  --bg-2: #0a0e1d;
+  --surface: #171e36;
+  --surface-2: #1d2540;
+  --ink: #eef1f7;
+  --ink-2: #a8afc2;
+  --ink-3: #6e778d;
+  --line: #283155;
+  --line-2: #344070;
+  --thread: #e44553;
+  --thread-soft: rgba(228, 69, 83, 0.16);
+  --brass: #d9b66e;
+  --brass-soft: rgba(217, 182, 110, 0.16);
+  --chalk: #dce6f0;
+  --indigo: #8fa0e0;
+  --indigo-soft: rgba(143, 160, 224, 0.14);
+  --btn: #eef1f7;
+  --btn-ink: #0e1326;
+  --shadow-tag: 0 14px 28px -14px rgba(0, 0, 0, 0.8);
+  color-scheme: dark;
 }

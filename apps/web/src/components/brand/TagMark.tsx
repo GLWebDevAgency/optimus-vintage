@@ -11,7 +11,13 @@ interface TagMarkProps {
 }
 
 /** L'étiquette, l'œillet et le fil : la marque tissée. */
-export function TagMark({ size = 56, className, title = "Chiné", palette, swing = false }: TagMarkProps) {
+export function TagMark({
+  size = 56,
+  className,
+  title = "Chiné",
+  palette,
+  swing = false,
+}: TagMarkProps) {
   const c = palette ?? {
     surface: "var(--surface)",
     bg: "var(--bg)",
@@ -36,7 +42,13 @@ export function TagMark({ size = 56, className, title = "Chiné", palette, swing
         strokeWidth="2.5"
       />
       <circle cx="32" cy="15" r="3.5" fill={c.bg} stroke={c.ink} strokeWidth="2" />
-      <path d="M32 11 C 32 2, 44 2, 44 8" stroke={c.thread} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+      <path
+        d="M32 11 C 32 2, 44 2, 44 8"
+        stroke={c.thread}
+        strokeWidth="2.2"
+        fill="none"
+        strokeLinecap="round"
+      />
       <path d={GLYPH_O} fill={c.ink} />
       <path d="M16 52 h32" stroke={c.thread} strokeWidth="2" strokeDasharray="4 3" />
     </svg>
