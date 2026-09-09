@@ -333,6 +333,7 @@ export function mapOverview(
       items: quota(o.usage.items),
       sourcesPerMonth: quota(o.usage.sourcesPerMonth),
       aiCreditsPerMonth: quota(o.usage.aiCreditsPerMonth),
+      aiCreditsPerDay: quota(o.usage.aiCreditsPerDay),
       members: quota(o.usage.members),
     },
     features: [...o.features],

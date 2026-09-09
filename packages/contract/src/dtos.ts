@@ -377,6 +377,7 @@ export const WorkspaceOverviewDto = z.object({
     items: QuotaUsageDto,
     sourcesPerMonth: QuotaUsageDto,
     aiCreditsPerMonth: QuotaUsageDto,
+    aiCreditsPerDay: QuotaUsageDto,
     members: QuotaUsageDto,
   }),
   features: z.array(FeatureDto),

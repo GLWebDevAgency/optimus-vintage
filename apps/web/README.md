@@ -22,6 +22,7 @@ pnpm --filter @chine/web seed   # compte demo@chine.app / Chine-demo-2026! avec 
 | `pnpm --filter @chine/web test` | Tests Vitest (`test/`) : routes API sur un Postgres embarqué isolé, idempotence, exports, auth, env. |
 | `pnpm --filter @chine/web e2e` | Playwright (iPhone 14, Chromium). Construit et démarre le serveur sur le port 3100 ; `E2E_DEV=1` pour utiliser `next dev`. |
 | `pnpm --filter @chine/web icons` | Régénère les icônes PWA (`scripts/generate-icons.mjs`, sharp). |
+| `pnpm --filter @chine/web kpi -- 30` | Indicateurs de pilotage sur N jours, lus dans la base (`DATABASE_URL`) : inscriptions, activation, plans, MRR, crédits et coût IA, ventes. Lecture seule, sans donnée personnelle. |
 | `pnpm --filter @chine/web lint` | Biome. |
 
 ## Variables d'environnement
@@ -87,7 +88,7 @@ Le contrat (`@chine/contract`) est la source unique : chaque handler valide la q
 | `GET/POST /items`, `GET/PATCH/DELETE /items/:id`, `POST /items/:id/status` | Stock. `POST /items` en capture rapide est **idempotent par `clientId`** (201 puis 200 avec la même pièce). `LIST` sur une pièce déjà en ligne clôt l'annonce précédente (reprise de prix, changement de plateforme). Une pièce qui a une vente, même annulée, ne se supprime pas (`409 HAS_SALES`). |
 | `POST /items/:id/photos`, `DELETE /items/:id/photos/:photoId`, `PUT /items/:id/photos/order` | Photos d'une pièce. |
 | `GET/POST /sales`, `GET/PATCH /sales/:id`, `POST /sales/:id/complete`, `POST /sales/:id/cancel`, `POST /sales/:id/refund` | Ventes et leur économie ; une pièce n'a jamais deux ventes en attente (`409`). |
-| `POST /appraisals`, `GET /appraisals/:id` | Expertise IA : un crédit IA par appel (quota mensuel selon le plan), jetons facturés et coût estimé journalisés ; texte d'annonce si le plan inclut `AI_LISTING_COPY`. |
+| `POST /appraisals`, `GET /appraisals/:id` | Expertise IA : un crédit IA par appel (quota mensuel selon le plan, plus un garde-fou journalier 5 / 40 / 100 / 300), jetons facturés et coût estimé journalisés ; texte d'annonce si le plan inclut `AI_LISTING_COPY`. |
 | `GET /export/items.csv`, `/export/sales.csv`, `/export/sources.csv`, `/export/comptabilite.csv` | Exports CSV (UTF-8 avec BOM, `;`, formules neutralisées). L'export comptable mensuel exige `ACCOUNTING_EXPORT` (Pro). |
 | `POST /uploads`, `PUT /photos/upload/…`, `GET /photos/…` | Photos (voir ci-dessous). |
 | `POST /billing/checkout`, `POST /billing/portal`, `POST /billing/webhook` | Stripe. |

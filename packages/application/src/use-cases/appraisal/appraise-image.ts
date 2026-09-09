@@ -14,7 +14,7 @@ import { NotFound } from "../../errors.js";
 import { toAppraisalDto } from "../../mappers/index.js";
 import type { AppDependencies, AppraisalRequest } from "../../ports/index.js";
 import { loadOwnedWorkspace, type WorkspaceScoped } from "../../shared/access.js";
-import { startOfMonth } from "../../shared/dates.js";
+import { startOfDay, startOfMonth } from "../../shared/dates.js";
 import { omitUndefined } from "../../shared/objects.js";
 import { ensureFeature, ensureQuota } from "../../shared/quotas.js";
 import { transact } from "../../shared/transaction.js";
@@ -60,6 +60,13 @@ export class AppraiseImage implements UseCase<AppraiseImageCommand, AppraiseImag
     const cost = AI_CREDIT_COST.APPRAISAL;
     const quota = ensureQuota(ws.value.plan, "aiCreditsPerMonth", used, cost);
     if (!quota.ok) return quota;
+    // Garde-fou journalier (abus, boucle client) : le mois ne se vide pas en une soirée.
+    const usedToday = await this.deps.appraisals.creditsSince(
+      ws.value.id,
+      startOfDay(this.deps.clock.now()),
+    );
+    const daily = ensureQuota(ws.value.plan, "aiCreditsPerDay", usedToday, cost);
+    if (!daily.ok) return daily;
     if (cmd.itemId && !(await this.deps.items.byId(ws.value.id, cmd.itemId)))
       return err(new NotFound("Item", cmd.itemId));
 

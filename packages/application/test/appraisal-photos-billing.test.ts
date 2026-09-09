@@ -77,11 +77,36 @@ describe("AppraiseImage", () => {
     expect(withCopy.appraisal.listingCopy?.hashtags).toContain("#lacoste");
   });
 
-  it("applique le quota mensuel d'expertises", async () => {
+  it("applique le garde-fou journalier avant le quota mensuel", async () => {
+    const s = await setup({ plan: "FREE" });
+    const uc = new AppraiseImage(s.deps);
+    for (let i = 0; i < 5; i++)
+      unwrap(await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }));
+    const e = expectErr(
+      await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }),
+      QuotaExceeded,
+    );
+    expect(e.details).toMatchObject({ resource: "aiCreditsPerDay", used: 5, limit: 5 });
+    // Le lendemain, le mois (10) reprend le relais.
+    s.deps.clock.set(new Date(s.deps.clock.now().getTime() + 86_400_000));
+    for (let i = 0; i < 5; i++)
+      unwrap(await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }));
+    const m = expectErr(
+      await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }),
+      QuotaExceeded,
+    );
+    expect(m.details).toMatchObject({ resource: "aiCreditsPerMonth", used: 10, limit: 10 });
+  });
+
+  it("applique le quota mensuel de crédits IA", async () => {
     const s = await setup({ plan: "PREMIUM" });
     const uc = new AppraiseImage(s.deps);
-    for (let i = 0; i < 100; i++)
+    for (let i = 0; i < 100; i++) {
+      // 40 crédits par jour au plus : on avance d'un jour tous les 40 appels, dans le même mois.
+      if (i > 0 && i % 40 === 0)
+        s.deps.clock.set(new Date(s.deps.clock.now().getTime() + 86_400_000));
       unwrap(await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }));
+    }
     const e = expectErr(
       await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }),
       QuotaExceeded,

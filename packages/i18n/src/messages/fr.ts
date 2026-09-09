@@ -811,6 +811,7 @@ export const fr = {
       items: "Pièces en stock",
       sourcesPerMonth: "Sources par mois",
       aiCreditsPerMonth: "Crédits IA par mois",
+      aiCreditsPerDay: "Crédits IA par jour",
       members: "Membres",
     },
     plan: {

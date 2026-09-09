@@ -741,6 +741,7 @@ export function overview(s: FakeState) {
         limit: premium ? null : 3,
       },
       aiCreditsPerMonth: { used: s.appraisals.length, limit: premium ? 100 : 10 },
+      aiCreditsPerDay: { used: s.appraisals.length, limit: premium ? 40 : 5 },
       members: { used: 1, limit: 1 },
     },
     features: premium

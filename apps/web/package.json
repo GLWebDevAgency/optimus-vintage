@@ -14,7 +14,8 @@
     "lint": "biome check src e2e scripts",
     "icons": "node scripts/generate-icons.mjs",
     "clean": "rm -rf .next public/sw.js public/sw.js.map test-results playwright-report",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "kpi": "tsx scripts/kpi.ts"
   },
   "dependencies": {
     "@chine/application": "workspace:*",

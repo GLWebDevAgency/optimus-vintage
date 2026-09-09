@@ -374,6 +374,7 @@ describe("DTOs de réponse", () => {
         items: { used: 142, limit: null },
         sourcesPerMonth: { used: 4, limit: null },
         aiCreditsPerMonth: { used: 37, limit: 100 },
+        aiCreditsPerDay: { used: 3, limit: 40 },
         members: { used: 1, limit: 1 },
       },
       features: ["AI_APPRAISAL", "CSV_EXPORT"],

@@ -56,6 +56,8 @@ export interface PlanLimits {
    * une expertise photo en coûte un. Jamais illimité : le coût d'inférence est réel.
    */
   readonly aiCreditsPerMonth: number;
+  /** Garde-fou journalier contre les abus et les boucles : bien en dessous du quota mensuel. */
+  readonly aiCreditsPerDay: number;
   readonly members: number;
   readonly features: ReadonlySet<Feature>;
 }
@@ -83,6 +85,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
     maxItems: 50,
     maxSourcesPerMonth: 3,
     aiCreditsPerMonth: 10,
+    aiCreditsPerDay: 5,
     members: 1,
     features: F("AI_APPRAISAL", "CSV_EXPORT"),
   },
@@ -90,6 +93,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
     maxItems: 500,
     maxSourcesPerMonth: INF,
     aiCreditsPerMonth: 100,
+    aiCreditsPerDay: 40,
     members: 1,
     features: F(
       "AI_APPRAISAL",
@@ -103,6 +107,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
     maxItems: INF,
     maxSourcesPerMonth: INF,
     aiCreditsPerMonth: 300,
+    aiCreditsPerDay: 100,
     members: 1,
     features: F(
       "AI_APPRAISAL",
@@ -118,6 +123,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
     maxItems: INF,
     maxSourcesPerMonth: INF,
     aiCreditsPerMonth: 1000,
+    aiCreditsPerDay: 300,
     members: 5,
     features: F(
       "AI_APPRAISAL",
@@ -168,7 +174,12 @@ export const hasFeature = (plan: Plan, feature: Feature): boolean =>
 export const minimumPlanFor = (feature: Feature): Plan =>
   PLANS.find((p) => hasFeature(p, feature)) ?? "BUSINESS";
 
-export type QuotaResource = "items" | "sourcesPerMonth" | "aiCreditsPerMonth" | "members";
+export type QuotaResource =
+  | "items"
+  | "sourcesPerMonth"
+  | "aiCreditsPerMonth"
+  | "aiCreditsPerDay"
+  | "members";
 
 export interface QuotaDecision {
   readonly allowed: boolean;
@@ -189,6 +200,8 @@ const limitOf = (plan: Plan, resource: QuotaResource): number => {
       return l.maxSourcesPerMonth;
     case "aiCreditsPerMonth":
       return l.aiCreditsPerMonth;
+    case "aiCreditsPerDay":
+      return l.aiCreditsPerDay;
     case "members":
       return l.members;
   }

@@ -15,7 +15,7 @@ import type { QuotaUsageDto, WorkspaceOverviewDto } from "../dto.js";
 import { toWorkspaceDto } from "../mappers/index.js";
 import type { AppDependencies } from "../ports/index.js";
 import { loadOwnedWorkspace, type WorkspaceScoped } from "../shared/access.js";
-import { startOfMonth } from "../shared/dates.js";
+import { startOfDay, startOfMonth } from "../shared/dates.js";
 import { countSellableItems } from "../use-cases/shared/counts.js";
 import type { Query } from "./query.js";
 
@@ -50,11 +50,13 @@ export class GetWorkspaceOverview
     const ws = await loadOwnedWorkspace(this.deps.workspaces, q);
     if (!ws.ok) return ws;
     const { id, plan } = ws.value;
-    const since = startOfMonth(this.deps.clock.now());
-    const [items, sources, appraisals, feeOverrides] = await Promise.all([
+    const now = this.deps.clock.now();
+    const since = startOfMonth(now);
+    const [items, sources, appraisals, creditsToday, feeOverrides] = await Promise.all([
       countSellableItems(this.deps.items, id),
       this.deps.sources.countCreatedSince(id, since),
       this.deps.appraisals.creditsSince(id, since),
+      this.deps.appraisals.creditsSince(id, startOfDay(now)),
       this.deps.workspaces.feeOverrides(id),
     ]);
     const limits = PLAN_LIMITS[plan];
@@ -71,6 +73,7 @@ export class GetWorkspaceOverview
         items: usage(plan, "items", items),
         sourcesPerMonth: usage(plan, "sourcesPerMonth", sources),
         aiCreditsPerMonth: usage(plan, "aiCreditsPerMonth", appraisals),
+        aiCreditsPerDay: usage(plan, "aiCreditsPerDay", creditsToday),
         members: usage(plan, "members", 1),
       },
       features: FEATURES.filter((f) => hasFeature(plan, f)),

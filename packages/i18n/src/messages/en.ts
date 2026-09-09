@@ -806,6 +806,7 @@ export const en: Messages = {
       items: "Pieces in stock",
       sourcesPerMonth: "Sources per month",
       aiCreditsPerMonth: "AI credits per month",
+      aiCreditsPerDay: "AI credits per day",
       members: "Members",
     },
     plan: {
