@@ -36,7 +36,9 @@ describe("santé", () => {
   it("/api/ready répond prêt", async () => {
     const res = await ready();
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ data: { ready: true } });
+    expect(await res.json()).toEqual({
+      data: { ready: true, version: expect.any(String), commit: null },
+    });
   });
 
   it("/api/v1/health reste une sonde légère", async () => {

@@ -10,14 +10,8 @@
   ],
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**",
-        "dist/**"
-      ],
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
       "env": [
         "NEXT_PUBLIC_*",
         "BETTER_AUTH_SECRET",
@@ -38,33 +32,21 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "coverage/**"
-      ],
-      "env": [
-        "CI"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "env": ["CI"]
     },
     "typecheck": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "clean": {
       "cache": false
     },
     "e2e": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": false
     },
     "lint": {

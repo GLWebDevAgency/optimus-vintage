@@ -28,13 +28,32 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # ── Build : packages compilés puis Next.js (webpack + service worker) ─────────
 FROM deps AS build
 COPY . .
-ENV NODE_ENV=production
-RUN pnpm turbo run build --filter=@chine/web
+# Variables inlinées au build par Next.js (préfixe NEXT_PUBLIC_) et références Sentry.
+# Railway ne transmet une variable de service au build Docker que si elle est déclarée en ARG.
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_SENTRY_DSN
+ARG NEXT_PUBLIC_SENTRY_ENVIRONMENT
+ARG SENTRY_DSN
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
+ARG APP_COMMIT
+ENV NODE_ENV=production \
+    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT=$NEXT_PUBLIC_SENTRY_ENVIRONMENT \
+    SENTRY_DSN=$SENTRY_DSN SENTRY_ORG=$SENTRY_ORG SENTRY_PROJECT=$SENTRY_PROJECT \
+    APP_COMMIT=$APP_COMMIT
+# Le jeton Sentry (source maps) est monté en secret : jamais copié dans une couche.
+RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
+    export SENTRY_AUTH_TOKEN="$(cat /run/secrets/SENTRY_AUTH_TOKEN 2>/dev/null || true)" \
+    && pnpm turbo run build --filter=@chine/web
 
 # ── Image finale : serveur autonome, utilisateur non root ────────────────────
 FROM node:${NODE_VERSION}-bookworm-slim AS runner
-ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1 \
-    CHINE_MIGRATIONS_DIR=/app/packages/infrastructure/drizzle
+ARG APP_COMMIT
+# HOSTNAME=:: écoute en double pile (IPv4 + IPv6) : requis par le réseau privé et les sondes Railway v2.
+ENV NODE_ENV=production PORT=3000 HOSTNAME=:: NEXT_TELEMETRY_DISABLED=1 \
+    CHINE_MIGRATIONS_DIR=/app/packages/infrastructure/drizzle APP_COMMIT=$APP_COMMIT
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*

@@ -15,7 +15,7 @@ npm install
 PGHOST=turntable.proxy.rlwy.net
 PGPORT=51538
 PGUSER=postgres
-PGPASSWORD=LNBzmjBhfsKQViWmdMwCpDNADYCkNiNM
+PGPASSWORD=***SECRET-PURGE***
 PGDATABASE=railway
 PORT=3001
 ```

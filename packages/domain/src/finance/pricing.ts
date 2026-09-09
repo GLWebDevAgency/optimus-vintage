@@ -1,5 +1,5 @@
-import { Money } from "../money/money.js";
 import type { Platform, PlatformFeePolicy } from "../listing/platforms.js";
+import { Money } from "../money/money.js";
 
 export interface PriceSimulation {
   readonly platform: Platform;
@@ -12,7 +12,10 @@ export interface PriceSimulation {
 
 /** Simule ce qu'un prix affiché rapporte sur une plateforme donnée. */
 export function simulatePrice(
-  platform: Platform, price: Money, acquisitionCost: Money, feePolicy: PlatformFeePolicy,
+  platform: Platform,
+  price: Money,
+  acquisitionCost: Money,
+  feePolicy: PlatformFeePolicy,
   extraCosts: Money = Money.zero(price.currency),
 ): PriceSimulation {
   const fees = feePolicy.feesFor(platform, price);
@@ -26,10 +29,12 @@ export function simulatePrice(
  * Résolution par itération sur la grille (les grilles ont des minimums/fixes, pas de forme fermée).
  */
 export function priceForTargetMargin(
-  platform: Platform, acquisitionCost: Money, targetMargin: Money, feePolicy: PlatformFeePolicy,
+  platform: Platform,
+  acquisitionCost: Money,
+  targetMargin: Money,
+  feePolicy: PlatformFeePolicy,
   extraCosts: Money = Money.zero(acquisitionCost.currency),
 ): Money {
-  const c = acquisitionCost.currency;
   const wanted = acquisitionCost.add(targetMargin).add(extraCosts);
   let price = wanted;
   for (let i = 0; i < 12; i++) {

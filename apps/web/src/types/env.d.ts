@@ -35,6 +35,9 @@ declare namespace NodeJS {
     PW_CHROMIUM_PATH?: string;
     SENTRY_DSN?: string;
     NEXT_PUBLIC_SENTRY_DSN?: string;
+    /** Commit déployé (ARG Docker) ; Railway injecte aussi RAILWAY_GIT_COMMIT_SHA. */
+    APP_COMMIT?: string;
+    RAILWAY_GIT_COMMIT_SHA?: string;
     SENTRY_ENVIRONMENT?: string;
     NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
     SENTRY_RELEASE?: string;

@@ -4,7 +4,7 @@ import { getContainer } from "@/lib/container";
 import { pingDatabase } from "@/lib/db/queries";
 import { getEnv } from "@/lib/env";
 import { describeError, log } from "@/lib/log";
-import { APP_VERSION } from "@/lib/version";
+import { APP_COMMIT, APP_VERSION } from "@/lib/version";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,7 @@ const startedAt = Date.now();
 interface HealthReport {
   status: "ok" | "degraded";
   version: string;
+  commit: string | null;
   uptimeSeconds: number;
   checks: {
     database: { ok: boolean; driver?: "pg" | "pglite"; latencyMs?: number; error?: string };
@@ -38,6 +39,7 @@ export async function GET(): Promise<Response> {
   const report: HealthReport = {
     status: "ok",
     version: APP_VERSION,
+    commit: APP_COMMIT || null,
     uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
     checks: {
       database: { ok: false },
@@ -56,9 +58,13 @@ export async function GET(): Promise<Response> {
           ? "r2"
           : "unknown";
     const appraiser = deps.appraiser.describe();
+    // En production, la chaîne n'expose que les fournisseurs (pas les identifiants de modèle).
     report.checks.appraiser = {
       driver: appraiser.chain[0]?.provider ?? "none",
-      chain: appraiser.chain,
+      chain:
+        env.NODE_ENV === "production"
+          ? appraiser.chain.map((p) => ({ provider: p.provider, model: "•" }))
+          : appraiser.chain,
       fake: appraiser.fake,
     };
     report.checks.billing.configured = deps.stripe !== undefined;

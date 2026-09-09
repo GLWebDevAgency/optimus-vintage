@@ -21,7 +21,12 @@ const r2PublicOrigin = originOf(process.env.R2_PUBLIC_BASE_URL);
 const r2UploadOrigin = process.env.R2_ACCOUNT_ID
   ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
   : undefined;
-const connectExtra = [r2PublicOrigin, r2UploadOrigin].filter((o): o is string => Boolean(o));
+// L'endpoint S3 de R2 est autorisé statiquement (`*.r2.cloudflarestorage.com`) : l'image Docker est
+// construite sans les variables R2, la politique ne doit pas dépendre de l'environnement de build.
+const connectExtra = [
+  "https://*.r2.cloudflarestorage.com",
+  ...[r2PublicOrigin, r2UploadOrigin].filter((o): o is string => Boolean(o)),
+];
 
 /**
  * Politique de sécurité de contenu.

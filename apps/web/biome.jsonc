@@ -3,5 +3,13 @@
   // Configuration imbriquée : hérite de la racine, active la syntaxe Tailwind v4 (@theme, @source, @utility).
   "root": false,
   "extends": "//",
-  "css": { "parser": { "tailwindDirectives": true } }
+  "css": { "parser": { "tailwindDirectives": true } },
+  "linter": {
+    "rules": {
+      // `!important` est assumé sur les utilitaires marketing qui surchargent Tailwind ; l'ordre de spécificité
+      // de globals.css suit la cascade voulue (composants puis variantes).
+      "complexity": { "noImportantStyles": "off" },
+      "style": { "noDescendingSpecificity": "off" }
+    }
+  }
 }

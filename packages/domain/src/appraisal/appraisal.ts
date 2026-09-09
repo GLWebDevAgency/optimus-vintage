@@ -1,6 +1,6 @@
-import type { Money } from "../money/money.js";
 import type { Category, Condition, Era } from "../inventory/item.js";
 import type { Platform } from "../listing/platforms.js";
+import type { Money } from "../money/money.js";
 import type { AppraisalId, ItemId, WorkspaceId } from "../shared/ids.js";
 
 /** Résultat d'une expertise IA sur photo. Produit par un port (Gemini, Claude, ou un faux en dev). */

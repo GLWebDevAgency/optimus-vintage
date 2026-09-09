@@ -1,5 +1,5 @@
-import { DomainError, assertInvariant } from "../shared/result.js";
-import { type Currency, MINOR_UNITS, CURRENCY_SYMBOL, isCurrency } from "./currency.js";
+import { assertInvariant, DomainError } from "../shared/result.js";
+import { CURRENCY_SYMBOL, type Currency, isCurrency, MINOR_UNITS } from "./currency.js";
 
 export class CurrencyMismatch extends DomainError {
   override readonly name = "CurrencyMismatch";
@@ -95,7 +95,9 @@ export class Money {
   }
   /** Division entière avec arrondi au plus proche. */
   divide(divisor: number): Money {
-    assertInvariant(divisor !== 0 && Number.isFinite(divisor), "Money.divide: diviseur invalide", { divisor });
+    assertInvariant(divisor !== 0 && Number.isFinite(divisor), "Money.divide: diviseur invalide", {
+      divisor,
+    });
     return new Money(Math.round(this.minor / divisor), this.currency);
   }
   max(other: Money): Money {
@@ -112,7 +114,9 @@ export class Money {
    * Les centimes restants vont aux premières parts (algorithme de Fowler).
    */
   allocate(parts: number): Money[] {
-    assertInvariant(Number.isInteger(parts) && parts > 0, "Money.allocate: parts doit être > 0", { parts });
+    assertInvariant(Number.isInteger(parts) && parts > 0, "Money.allocate: parts doit être > 0", {
+      parts,
+    });
     const base = Math.trunc(this.minor / parts);
     let remainder = this.minor - base * parts;
     const sign = Math.sign(remainder);
@@ -132,7 +136,10 @@ export class Money {
   allocateByWeights(weights: readonly number[]): Money[] {
     assertInvariant(weights.length > 0, "Money.allocateByWeights: poids vides");
     const total = weights.reduce((s, w) => s + w, 0);
-    assertInvariant(total > 0 && weights.every((w) => w >= 0), "Money.allocateByWeights: poids invalides");
+    assertInvariant(
+      total > 0 && weights.every((w) => w >= 0),
+      "Money.allocateByWeights: poids invalides",
+    );
     let allocated = 0;
     const out = weights.map((w) => {
       const minor = Math.floor((this.minor * w) / total);
@@ -171,7 +178,10 @@ export class Money {
   /** "20,00" (sans symbole), pour les reçus et exports. */
   toDecimalString(locale = "fr-FR"): string {
     const digits = MINOR_UNITS[this.currency];
-    return this.amount.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    return this.amount.toLocaleString(locale, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
   }
 
   /** "20,00 €" — formatage local avec symbole. */

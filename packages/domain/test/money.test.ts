@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Money, CurrencyMismatch } from "../src/index.js";
+import { CurrencyMismatch, Money } from "../src/index.js";
 
 describe("Money", () => {
   it("construit depuis un décimal sans erreur de flottant", () => {
@@ -27,10 +27,13 @@ describe("Money", () => {
     expect(odd.reduce((s, p) => s + p.minor, 0)).toBe(1001);
   });
   it("calcule ROI et formatage", () => {
-    const margin = Money.of(49.65, "EUR"), cost = Money.of(20, "EUR");
+    const margin = Money.of(49.65, "EUR"),
+      cost = Money.of(20, "EUR");
     expect(margin.ratioTo(cost)).toBeCloseTo(2.4825, 4);
     expect(Money.zero("EUR").ratioTo(Money.zero("EUR"))).toBeUndefined();
-    expect(Money.of(1284.5, "EUR").toDecimalString()).toBe("1 234,50".replace("1 234,50", Money.of(1284.5, "EUR").toDecimalString()));
+    expect(Money.of(1284.5, "EUR").toDecimalString()).toBe(
+      "1 234,50".replace("1 234,50", Money.of(1284.5, "EUR").toDecimalString()),
+    );
     expect(Money.of(20, "EUR").format("fr-FR")).toMatch(/20,00/);
   });
   it("sérialise en JSON et revient", () => {

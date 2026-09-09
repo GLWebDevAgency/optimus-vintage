@@ -1,7 +1,20 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.12/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "includes": ["**", "!**/node_modules", "!**/.next", "!**/dist", "!**/coverage", "!legacy/**", "!**/.expo", "!**/drizzle/**", "!**/*.gen.ts"] },
+  "files": {
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/.next",
+      "!**/dist",
+      "!**/coverage",
+      "!legacy",
+      "!docs",
+      "!**/.expo",
+      "!**/drizzle",
+      "!**/*.gen.ts"
+    ]
+  },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
   "linter": {
     "enabled": true,
@@ -9,8 +22,11 @@
       "recommended": true,
       "style": { "noNonNullAssertion": "error", "useConst": "error" },
       "suspicious": { "noExplicitAny": "error" },
+      "complexity": { "useLiteralKeys": "off" },
       "correctness": { "noUnusedImports": "error", "noUnusedVariables": "error" }
     }
   },
-  "javascript": { "formatter": { "quoteStyle": "double", "semicolons": "always", "trailingCommas": "all" } }
+  "javascript": {
+    "formatter": { "quoteStyle": "double", "semicolons": "always", "trailingCommas": "all" }
+  }
 }

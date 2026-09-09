@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Money, ScheduleFeePolicy, simulatePrice, priceForTargetMargin } from "../src/index.js";
+import { Money, priceForTargetMargin, ScheduleFeePolicy, simulatePrice } from "../src/index.js";
 
 const policy = new ScheduleFeePolicy();
 const eur = (n: number) => Money.of(n, "EUR");

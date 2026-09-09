@@ -658,7 +658,7 @@ section{margin-top:120px}
 <footer class="foot"><span>Selvedge · identité v2 · septembre 2026</span><span>Calico · Indigo · Fil de lisière · Laiton · Craie</span></footer>
 </div>
 
-<script>(function(){
+<script>(()=> {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let uid = 0;
   function stitchSVG(pct){
@@ -671,7 +671,7 @@ section{margin-top:120px}
   function tally(el){
     const to = parseFloat(el.dataset.to), d = +(el.dataset.dec||0), dur = 1400, t0 = performance.now();
     if(reduce){ el.textContent = fmt(to,d); return; }
-    function step(t){ const p = Math.min(1,(t-t0)/dur); const e = 1-Math.pow(1-p,4); el.textContent = fmt(to*e,d); if(p<1) requestAnimationFrame(step); }
+    function step(t){ const p = Math.min(1,(t-t0)/dur); const e = 1-(1-p) ** 4; el.textContent = fmt(to*e,d); if(p<1) requestAnimationFrame(step); }
     requestAnimationFrame(step);
   }
   function initTallies(root){ root.querySelectorAll(".tally[data-to]").forEach(tally); }

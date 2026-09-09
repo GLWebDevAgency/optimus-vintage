@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   verify:
@@ -27,6 +27,9 @@ jobs:
     needs: [verify, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Seul ce job pousse le tag de version : le jeton en écriture n'est pas exposé aux jobs de test.
+    permissions:
+      contents: write
     # L'environnement GitHub « production » porte les relecteurs obligatoires (approbation manuelle).
     environment:
       name: production
@@ -42,16 +45,20 @@ jobs:
           node-version-file: .nvmrc
       - name: Railway CLI
         run: npm install -g @railway/cli
+      - name: Commit déployé (ARG de build + variable d'exécution)
+        run: railway variables --service ${{ vars.RAILWAY_SERVICE || 'web' }} --environment production --set "APP_COMMIT=${GITHUB_SHA}" --skip-deploys
       - name: Déploiement
         run: railway up --service ${{ vars.RAILWAY_SERVICE || 'web' }} --environment production --ci
       - name: Vérification de disponibilité
         run: |
           url="${{ vars.PRODUCTION_URL || 'https://chine.app' }}"
-          for i in $(seq 1 30); do
-            if curl -fsS "$url/api/ready" >/dev/null; then echo "ready"; exit 0; fi
+          # Le déploiement est accepté quand /api/ready répond 200 ET sert ce commit (sinon c'est l'ancien).
+          for i in $(seq 1 60); do
+            body="$(curl -fsS "$url/api/ready" 2>/dev/null || true)"
+            if [ -n "$body" ] && echo "$body" | grep -q "\"commit\":\"${GITHUB_SHA}\""; then echo "ready: $body"; exit 0; fi
             sleep 10
           done
-          echo "::error::$url/api/ready ne répond pas après 5 minutes"; exit 1
+          echo "::error::$url/api/ready ne sert pas le commit ${GITHUB_SHA} après 10 minutes (dernière réponse : $body)"; exit 1
       - name: Étiquette de version
         run: |
           tag="v$(date -u +%Y.%m.%d)-${GITHUB_SHA::7}"

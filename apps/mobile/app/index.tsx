@@ -1,6 +1,6 @@
 import { Money, ScheduleFeePolicy, simulatePrice } from "@chine/domain";
 import { tokens } from "@chine/ui/tokens";
-import { StyleSheet, Text, View, useColorScheme } from "react-native";
+import { StyleSheet, Text, useColorScheme, View } from "react-native";
 
 /**
  * Écran de démonstration : prouve que le domaine partagé tourne tel quel en natif.
@@ -9,14 +9,22 @@ import { StyleSheet, Text, View, useColorScheme } from "react-native";
 export default function Home() {
   const scheme = useColorScheme() ?? "light";
   const p = scheme === "dark" ? tokens.palettes.dark : tokens.palettes.light;
-  const sim = simulatePrice("VINTED", Money.of(75, "EUR"), Money.of(20, "EUR"), new ScheduleFeePolicy(), Money.of(4.95, "EUR"));
+  const sim = simulatePrice(
+    "VINTED",
+    Money.of(75, "EUR"),
+    Money.of(20, "EUR"),
+    new ScheduleFeePolicy(),
+    Money.of(4.95, "EUR"),
+  );
   return (
     <View style={[styles.root, { backgroundColor: p.bg }]}>
       <Text style={[styles.eyebrow, { color: p.thread }]}>CHINÉ · NATIF · PHASE 2</Text>
       <Text style={[styles.title, { color: p.ink }]}>Ensemble Lacoste</Text>
       <Text style={[styles.price, { color: p.ink }]}>{sim.price.format("fr-FR")}</Text>
       <Text style={[styles.line, { color: p.ink2 }]}>Marge nette {sim.margin.format("fr-FR")}</Text>
-      <Text style={[styles.line, { color: p.brass }]}>ROI +{Math.round((sim.roi ?? 0) * 100)} %</Text>
+      <Text style={[styles.line, { color: p.brass }]}>
+        ROI +{Math.round((sim.roi ?? 0) * 100)} %
+      </Text>
     </View>
   );
 }

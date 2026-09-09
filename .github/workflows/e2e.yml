@@ -19,6 +19,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Les paquets compilés (domain, application, infrastructure) doivent exister avant `next build`.
+      - run: pnpm turbo run build --filter='@chine/web^...'
       - run: pnpm --filter @chine/web exec playwright install --with-deps chromium
       - run: pnpm --filter @chine/web e2e
       - uses: actions/upload-artifact@v4

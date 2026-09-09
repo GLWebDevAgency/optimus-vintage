@@ -1,7 +1,7 @@
+import { tokens } from "@chine/ui/tokens";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "react-native";
-import { tokens } from "@chine/ui/tokens";
 
 /**
  * Racine de l'app native. Même identité Selvedge que le web via les tokens partagés.

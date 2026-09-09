@@ -8,6 +8,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
+    "lint": "biome check app",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'no tests yet (phase 2)'"
   },

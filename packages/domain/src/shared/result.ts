@@ -39,6 +39,10 @@ export class InvalidTransition extends DomainError {
   }
 }
 
-export function assertInvariant(condition: unknown, message: string, details?: Record<string, unknown>): asserts condition {
+export function assertInvariant(
+  condition: unknown,
+  message: string,
+  details?: Record<string, unknown>,
+): asserts condition {
   if (!condition) throw new InvariantViolation(message, details);
 }

@@ -1,8 +1,8 @@
-import { Money } from "../money/money.js";
-import type { PurchaseSource } from "../sourcing/purchase-source.js";
-import type { Item } from "../inventory/item.js";
-import type { Sale } from "../sales/sale.js";
 import type { TargetMargin } from "../identity/workspace.js";
+import type { Item } from "../inventory/item.js";
+import { Money } from "../money/money.js";
+import type { Sale } from "../sales/sale.js";
+import type { PurchaseSource } from "../sourcing/purchase-source.js";
 
 export interface SourcePerformance {
   readonly invested: Money;
@@ -40,29 +40,46 @@ export function computeSourcePerformance(
   const remainingToRecover = profit.isNegative ? profit.abs() : Money.zero(c);
   const sellable = items.filter((i) => i.sourceId === source.id && i.isSellable);
   const soldCount = valid.length;
-  const writtenOffCount = items.filter((i) => i.sourceId === source.id && (i.status === "LOST" || i.status === "DONATED")).length;
+  const writtenOffCount = items.filter(
+    (i) => i.sourceId === source.id && (i.status === "LOST" || i.status === "DONATED"),
+  ).length;
   const stockValueAtCost = sellable.reduce((acc, i) => acc.add(i.acquisitionCost), Money.zero(c));
 
   // Pièces restantes : pièces vendables connues, sinon (lot pas encore détaillé) quantité effective − vendues.
   const knownRemaining = sellable.length;
-  const theoreticalRemaining = Math.max(0, (source.effectiveQuantity ?? 0) - soldCount - writtenOffCount);
-  const remaining = items.some((i) => i.sourceId === source.id) ? knownRemaining : theoreticalRemaining;
+  const theoreticalRemaining = Math.max(
+    0,
+    (source.effectiveQuantity ?? 0) - soldCount - writtenOffCount,
+  );
+  const remaining = items.some((i) => i.sourceId === source.id)
+    ? knownRemaining
+    : theoreticalRemaining;
 
   let floorPriceBreakEven: Money | undefined;
   let floorPriceTarget: Money | undefined;
   if (remaining > 0) {
     floorPriceBreakEven = remainingToRecover.divide(remaining);
-    const targetProfit = targetMargin.kind === "PERCENT" ? invested.percent(targetMargin.value) : Money.ofMinor(targetMargin.value * remaining, c);
+    const targetProfit =
+      targetMargin.kind === "PERCENT"
+        ? invested.percent(targetMargin.value)
+        : Money.ofMinor(targetMargin.value * remaining, c);
     const targetGap = invested.add(targetProfit).subtract(recovered);
     floorPriceTarget = (targetGap.isNegative ? Money.zero(c) : targetGap).divide(remaining);
   }
 
   return {
-    invested, recovered, remainingToRecover, profit,
+    invested,
+    recovered,
+    remainingToRecover,
+    profit,
     roi: profit.ratioTo(invested),
     recoveryRate: invested.isZero ? 1 : recovered.minor / invested.minor,
     isAmortized: !profit.isNegative,
-    soldCount, sellableCount: remaining, writtenOffCount, stockValueAtCost,
-    floorPriceBreakEven, floorPriceTarget,
+    soldCount,
+    sellableCount: remaining,
+    writtenOffCount,
+    stockValueAtCost,
+    floorPriceBreakEven,
+    floorPriceTarget,
   };
 }
