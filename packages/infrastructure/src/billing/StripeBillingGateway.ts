@@ -4,7 +4,7 @@
  * `workspaces.plan` et l'état d'abonnement.
  */
 import { PLAN_TRIAL_DAYS, type Plan, type WorkspaceId } from "@chine/domain";
-import { eq } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 import * as auth from "../db/auth-schema.js";
 import type { DbExecutor } from "../db/client.js";
 import { stripeEvents, type WorkspaceRow, workspaces } from "../db/schema.js";
@@ -380,6 +380,15 @@ export class StripeBillingGateway implements BillingGateway {
       .where(eq(workspaces.id, workspaceId));
     this.logger.warn("[stripe] paiement échoué", { workspaceId });
     return { handled: true, workspaceId };
+  }
+
+  /** Purge des événements traités (idempotence) plus anciens que `olderThan`. */
+  async purgeEvents(olderThan: Date): Promise<number> {
+    const rows = await this.db
+      .delete(stripeEvents)
+      .where(lt(stripeEvents.processedAt, olderThan))
+      .returning({ id: stripeEvents.id });
+    return rows.length;
   }
 
   // ── Aides ───────────────────────────────────────────────────────────────

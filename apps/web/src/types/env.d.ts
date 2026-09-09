@@ -39,6 +39,10 @@ declare namespace NodeJS {
     NEXT_PUBLIC_SENTRY_DSN?: string;
     /** Commit déployé (ARG Docker) ; Railway injecte aussi RAILWAY_GIT_COMMIT_SHA. */
     APP_COMMIT?: string;
+    /** `false` pour désactiver le planificateur de tâches de fond du processus. */
+    CHINE_JOBS?: string;
+    NEXT_RUNTIME?: string;
+    CHINE_ALLOW_NO_MAILER?: string;
     RAILWAY_GIT_COMMIT_SHA?: string;
     SENTRY_ENVIRONMENT?: string;
     NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;

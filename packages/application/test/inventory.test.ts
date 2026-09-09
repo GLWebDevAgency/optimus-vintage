@@ -4,6 +4,7 @@ import {
   AddItemPhoto,
   AppraiseImage,
   ChangeItemStatus,
+  Conflict,
   CreateItem,
   DeleteItem,
   Forbidden,
@@ -202,10 +203,8 @@ describe("Photos / DeleteItem", () => {
       }),
     );
     expect(
-      expectErr(
-        await new DeleteItem(s.deps).execute({ ...s.scope, itemId: item.id }),
-        ValidationFailed,
-      ).details,
+      expectErr(await new DeleteItem(s.deps).execute({ ...s.scope, itemId: item.id }), Conflict)
+        .details,
     ).toMatchObject({ reason: "HAS_SALES" });
     const other = await chine(s, 5);
     unwrap(await new DeleteItem(s.deps).execute({ ...s.scope, itemId: other.item.id }));

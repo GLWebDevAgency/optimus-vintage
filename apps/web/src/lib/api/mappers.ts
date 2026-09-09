@@ -287,7 +287,13 @@ const isHttpUrl = (s: string): boolean => {
   }
 };
 
-const quota = (u: App.QuotaUsageDto): C.QuotaUsageDto => ({ used: u.used, limit: u.limit });
+const quota = (u: App.QuotaUsageDto): C.QuotaUsageDto => ({
+  used: u.used,
+  limit: u.limit,
+  remaining: u.remaining,
+  allowed: u.allowed,
+  upgradeTo: u.upgradeTo,
+});
 
 export function mapOverview(
   o: App.WorkspaceOverviewDto,

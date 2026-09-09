@@ -3,6 +3,7 @@ import { authSchema } from "@chine/infrastructure/auth-schema";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { CLIENT_IP_HEADER } from "@/lib/api/request";
 import { ensureWorkspace } from "@/lib/api/workspace";
 import { type Container, getContainer } from "@/lib/container";
 import { type AppEnv, getEnv } from "@/lib/env";
@@ -116,6 +117,9 @@ export function createAuth({
     },
     advanced: {
       database: { generateId: () => authIds.next() },
+      // L'IP vient de l'en-tête interne posé par le proxy (dernier saut de confiance) : sans cela,
+      // un X-Forwarded-For à plusieurs sauts ferait tomber tout le monde dans un seul seau de limite.
+      ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER, "cf-connecting-ip"] },
       useSecureCookies: secureCookies,
       defaultCookieAttributes: {
         sameSite: "lax",

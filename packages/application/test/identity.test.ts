@@ -27,11 +27,12 @@ describe("EnsureWorkspaceForUser", () => {
     expect(second.workspace.id).toBe(first.workspace.id);
   });
 
-  it("resynchronise le plan depuis la facturation aux logins suivants", async () => {
+  it("ne réécrit jamais le plan aux logins suivants : il appartient à la facturation", async () => {
     const { deps, scope } = await setup({ plan: "FREE" });
     deps.billing.setPlan("PRO");
     const r = unwrap(await new EnsureWorkspaceForUser(deps).execute({ userId: scope.actorUserId }));
-    expect(r.workspace.plan).toBe("PRO");
+    expect(r.created).toBe(false);
+    expect(r.workspace.plan).toBe("FREE");
   });
 });
 

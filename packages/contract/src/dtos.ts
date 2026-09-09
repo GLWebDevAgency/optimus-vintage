@@ -316,6 +316,12 @@ export const QuotaUsageDto = z.object({
   used: z.number().int().min(0),
   /** `null` = illimité. */
   limit: z.number().int().min(0).nullable(),
+  /** Unités restantes (`null` = illimité). */
+  remaining: z.number().int().min(0).nullable().optional(),
+  /** Une unité de plus est-elle acceptée ? */
+  allowed: z.boolean().optional(),
+  /** Premier plan achetable qui accepterait une unité de plus. */
+  upgradeTo: PlanDto.nullable().optional(),
 });
 export type QuotaUsageDto = z.infer<typeof QuotaUsageDto>;
 

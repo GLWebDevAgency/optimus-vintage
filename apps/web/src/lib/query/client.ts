@@ -6,6 +6,8 @@ import type { PersistQueryClientOptions } from "@tanstack/react-query-persist-cl
 import { del, get, set } from "idb-keyval";
 
 const WEEK = 7 * 24 * 60 * 60 * 1000;
+/** Clé IndexedDB du cache de requêtes persisté (effacée à la déconnexion). */
+export const PERSIST_KEY = "chine.query-cache";
 
 /** Client TanStack Query : lecture hors ligne d'abord, cache conservé une semaine (persisté en IndexedDB). */
 export function makeQueryClient(): QueryClient {
@@ -35,7 +37,7 @@ export function makeQueryClient(): QueryClient {
 export function makePersistOptions(): Omit<PersistQueryClientOptions, "queryClient"> | undefined {
   if (typeof window === "undefined" || typeof indexedDB === "undefined") return undefined;
   const persister = createAsyncStoragePersister({
-    key: "chine.query-cache",
+    key: PERSIST_KEY,
     throttleTime: 1000,
     storage: {
       getItem: async (key) => (await get<string>(key)) ?? null,

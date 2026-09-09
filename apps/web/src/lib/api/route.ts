@@ -3,7 +3,7 @@ import type { DomainError, Result } from "@chine/domain";
 import type { NextRequest } from "next/server";
 import type { z } from "zod";
 import { log } from "@/lib/log";
-import { created, fail, ok, validationFailed } from "./respond";
+import { created, fail, ok, payloadTooLarge, validationFailed } from "./respond";
 
 /**
  * Aides de validation pour les handlers : lecture du corps et de la query avec les schémas du
@@ -11,13 +11,23 @@ import { created, fail, ok, validationFailed } from "./respond";
  * validé contre le schéma de réponse hors production (dérive contrat ↔ serveur détectée en test).
  */
 
-/** Corps JSON validé par un schéma ; lève `ZodError` (→ 400) ou `ApiFailure` si le JSON est illisible. */
+/** Taille maximale d'un corps JSON ordinaire (les photos passent par l'upload direct). */
+export const DEFAULT_MAX_BODY_BYTES = 256 * 1024;
+
+/**
+ * Corps JSON validé par un schéma ; lève `ZodError` (→ 400), `ApiFailure` si le JSON est illisible
+ * ou si le corps dépasse `maxBytes` (→ 413, vérifié sur Content-Length puis sur le texte lu).
+ */
 export async function parseBody<S extends z.ZodType>(
   req: NextRequest,
   schema: S,
+  maxBytes = DEFAULT_MAX_BODY_BYTES,
 ): Promise<z.output<S>> {
   let raw: unknown;
+  const declared = Number(req.headers.get("content-length") ?? 0);
+  if (declared > maxBytes) throw payloadTooLarge(maxBytes);
   const text = await req.text();
+  if (text.length > maxBytes) throw payloadTooLarge(maxBytes);
   if (text.trim() === "") raw = {};
   else {
     try {

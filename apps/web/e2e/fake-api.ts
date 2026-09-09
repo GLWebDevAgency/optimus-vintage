@@ -728,7 +728,12 @@ export function overview(s: FakeState) {
     workspace: { ...s.workspace },
     user: { ...s.user, role: "OWNER" },
     quotas: {
-      items: { used: items, limit: premium ? 500 : 50 },
+      items: {
+        used: items,
+        limit: premium ? 500 : 50,
+        allowed: items < (premium ? 500 : 50),
+        upgradeTo: premium ? "PRO" : "PREMIUM",
+      },
       sourcesPerMonth: {
         used: s.sources.filter((x) => x.kind !== "UNIT").length,
         limit: premium ? null : 3,

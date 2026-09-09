@@ -206,6 +206,9 @@ export const fr = {
     aiLockedTitle: "Expertise IA · Premium",
     aiLockedBody: "Marque, époque, fourchette de prix et conseil d'achat en quelques secondes.",
     aiLockedCta: "Débloquer avec Premium",
+    quotaTitle: "{limit} pièces en stock : limite atteinte",
+    quotaBody:
+      "Une vente libère une place. Pour suivre plus de pièces, change de formule : rien n'est perdu.",
     aiQuotaTitle: "Quota d'expertises atteint",
     aiFailedTitle: "L'IA n'a pas reconnu la pièce",
     aiRetry: "Relancer l'expertise",
@@ -922,6 +925,12 @@ export const fr = {
     offlineBannerPending:
       "Hors ligne · {count, plural, one{# action en attente} other{# actions en attente}}",
     syncNow: "Synchroniser",
+    failedTitle: "Actions en échec",
+    failedBody: "Le serveur a refusé ces actions : corrige-les depuis l'app ou abandonne-les.",
+    failedPhoto: "Photo en attente",
+    discard: "Abandonner",
+    showFailed: "Voir",
+    queued: "En attente",
     retryFailed: "Réessayer",
     failedBanner: "{count, plural, one{# action en échec} other{# actions en échec}}",
     afterSaleInstall: "Bravo pour la vente. Installe Chiné pour la prochaine.",

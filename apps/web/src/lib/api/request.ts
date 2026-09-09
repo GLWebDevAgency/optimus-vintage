@@ -4,21 +4,41 @@ import { getEnv } from "@/lib/env";
 /** Méthodes qui modifient l'état : soumises au contrôle d'origine (CSRF). */
 export const MUTATING_METHODS: ReadonlySet<string> = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
+/** En-tête interne posé par le proxy Next après résolution : la seule valeur de confiance. */
+export const CLIENT_IP_HEADER = "x-chine-client-ip";
+
+const IPV4 = /^(\d{1,3})(\.\d{1,3}){3}$/;
+const IPV6 = /^[0-9a-f:]+$/i;
+export const isValidIp = (v: string): boolean =>
+  (IPV4.test(v) && v.split(".").every((n) => Number(n) <= 255)) ||
+  (v.includes(":") && IPV6.test(v));
+
 /**
- * Adresse IP du client, pour les limites anonymes. Derrière un proxy de confiance
- * (Vercel, Cloudflare) les en-têtes standard sont renseignés ; sinon `unknown`.
+ * Adresse IP du client derrière la chaîne de proxys.
+ * - `cf-connecting-ip` si Cloudflare est devant (il ne peut pas être forgé par le client) ;
+ * - sinon le **dernier** saut de `X-Forwarded-For`, celui qu'ajoute le bord Railway : les sauts
+ *   précédents sont fournis par le client et donc falsifiables ;
+ * - `x-real-ip` en dernier recours ; `unknown` sans en-tête.
  */
+export function resolveClientIp(headers: Headers): string {
+  const cf = headers.get("cf-connecting-ip")?.trim();
+  if (cf && isValidIp(cf)) return cf;
+  const hops = (headers.get("x-forwarded-for") ?? "")
+    .split(",")
+    .map((h) => h.trim())
+    .filter(Boolean);
+  const last = hops.at(-1);
+  if (last && isValidIp(last)) return last;
+  const real = headers.get("x-real-ip")?.trim();
+  if (real && isValidIp(real)) return real;
+  return "unknown";
+}
+
+/** IP du client pour les limites anonymes : l'en-tête interne du proxy d'abord, puis la résolution. */
 export function clientIp(req: Request): string {
-  const headers = req.headers;
-  const forwarded = headers.get("x-forwarded-for");
-  const first = forwarded?.split(",")[0]?.trim();
-  return (
-    first ||
-    headers.get("x-real-ip")?.trim() ||
-    headers.get("cf-connecting-ip")?.trim() ||
-    headers.get("x-vercel-forwarded-for")?.trim() ||
-    "unknown"
-  );
+  const internal = req.headers.get(CLIENT_IP_HEADER)?.trim();
+  if (internal && isValidIp(internal)) return internal;
+  return resolveClientIp(req.headers);
 }
 
 /**

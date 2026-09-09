@@ -16,6 +16,7 @@ import {
   type DrizzleRepositories,
   DrizzleUnitOfWork,
 } from "./repositories/index.js";
+import { DrizzleIdempotencyStore } from "./security/idempotency.js";
 import { DrizzleRateLimiter } from "./security/rate-limit.js";
 import { createPhotoStorage } from "./storage/index.js";
 
@@ -32,6 +33,8 @@ export interface InfrastructureDependencies
   readonly outboxRelay: OutboxRelay;
   /** Limiteur de débit persistant (hors port applicatif : utilisé par la couche HTTP). */
   readonly rateLimiter: DrizzleRateLimiter;
+  /** Rejeu idempotent des mutations (`X-Outbox-Id`). */
+  readonly idempotency: DrizzleIdempotencyStore;
   /** Export / effacement RGPD. */
   readonly lifecycle: DataLifecycle;
   /** Présent uniquement quand Stripe est configuré (traitement des webhooks). */
@@ -73,6 +76,7 @@ export async function createAppDependencies(
     outbox,
     outboxRelay: new OutboxRelay(outbox),
     rateLimiter: new DrizzleRateLimiter(db),
+    idempotency: new DrizzleIdempotencyStore(db),
     lifecycle: new DataLifecycle(db),
     appraiser: createAppraiser(env),
     photos: createPhotoStorage(env),

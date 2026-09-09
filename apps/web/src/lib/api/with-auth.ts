@@ -1,10 +1,10 @@
-import { rateLimitKey, UuidV7Generator } from "@chine/infrastructure";
+import { IDEMPOTENCY_KEY_PATTERN, rateLimitKey, UuidV7Generator } from "@chine/infrastructure";
 import type { NextRequest } from "next/server";
 import { getAuth, type Session } from "@/lib/auth";
 import { type Container, getContainer } from "@/lib/container";
 import { describeError, type Logger, log } from "@/lib/log";
 import { clientIp, isSameOriginRequest, MUTATING_METHODS } from "./request";
-import { fail, forbidden, rateLimited, unauthorized } from "./respond";
+import { ApiFailure, fail, forbidden, rateLimited, unauthorized } from "./respond";
 import { resolveWorkspaceId } from "./workspace";
 
 /** Contexte d'une requête authentifiée. */
@@ -51,6 +51,53 @@ export type RouteHandler<P> = (req: NextRequest, ctx?: RouteContext<P>) => Promi
 
 const ids = new UuidV7Generator();
 export const REQUEST_ID_HEADER = "X-Request-Id";
+/** Clé d'idempotence envoyée par la file hors ligne : même clé → même réponse, une seule écriture. */
+export const IDEMPOTENCY_HEADER = "x-outbox-id";
+const REPLAY_HEADER = "X-Idempotent-Replay";
+
+/**
+ * Exécute une mutation sous clé d'idempotence quand le client en fournit une (UUID) :
+ * réponse mémorisée rejouée à l'identique, doublon simultané refusé (409), échec serveur libéré.
+ */
+async function withIdempotency(
+  req: NextRequest,
+  deps: Container,
+  workspaceId: string,
+  run: () => Promise<Response>,
+): Promise<Response> {
+  const key = req.headers.get(IDEMPOTENCY_HEADER)?.trim();
+  if (!key || !MUTATING_METHODS.has(req.method)) return run();
+  if (!IDEMPOTENCY_KEY_PATTERN.test(key)) return run();
+  const path = new URL(req.url).pathname;
+  const begun = await deps.idempotency.begin(workspaceId, key, req.method, path);
+  if (begun.state === "replay") {
+    return new Response(JSON.stringify(begun.body), {
+      status: begun.status,
+      headers: { "content-type": "application/json", [REPLAY_HEADER]: "true" },
+    });
+  }
+  if (begun.state === "in-flight") {
+    return fail(new ApiFailure("CONFLICT", "La même requête est déjà en cours de traitement."));
+  }
+  let res: Response;
+  try {
+    res = await run();
+  } catch (e) {
+    await deps.idempotency.abandon(workspaceId, key).catch(() => undefined);
+    throw e;
+  }
+  const isJson = (res.headers.get("content-type") ?? "").includes("application/json");
+  if (res.status >= 500 || !isJson) {
+    await deps.idempotency.abandon(workspaceId, key).catch(() => undefined);
+    return res;
+  }
+  const body: unknown = await res
+    .clone()
+    .json()
+    .catch(() => null);
+  await deps.idempotency.complete(workspaceId, key, res.status, body).catch(() => undefined);
+  return res;
+}
 
 /** Résolution de session, remplaçable dans les tests. */
 export type SessionResolver = (req: NextRequest) => Promise<Session | null>;
@@ -161,21 +208,26 @@ export function withAuth<P = Record<string, never>>(
       }
       const session = await sessionResolver(req);
       if (!session) return finish(t, fail(unauthorized()));
-      userId = session.user.id;
+      const uid = session.user.id;
+      userId = uid;
       const deps = await getContainer();
-      const workspaceId = await resolveWorkspaceId(deps, userId);
+      const workspaceId = await resolveWorkspaceId(deps, uid);
       const limited = await applyLimit(deps, options.limit, workspaceId);
       if (limited) return finish(t, limited, userId);
       const params = ctx ? await ctx.params : ({} as P);
-      const res = await handler(req, {
-        userId,
-        workspaceId,
-        session,
-        deps,
-        params,
-        requestId: t.requestId,
-        log: log.child({ requestId: t.requestId, route: t.route, userId }),
-      });
+      const res = await withIdempotency(req, deps, workspaceId, () =>
+        Promise.resolve(
+          handler(req, {
+            userId: uid,
+            workspaceId,
+            session,
+            deps,
+            params,
+            requestId: t.requestId,
+            log: log.child({ requestId: t.requestId, route: t.route, userId: uid }),
+          }),
+        ),
+      );
       return finish(t, res, userId);
     } catch (error) {
       return finish(t, failAndLog(t, error), userId);

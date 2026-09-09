@@ -33,6 +33,8 @@ const EnvSchema = z
     STRIPE_SECRET_KEY: optionalString,
     STRIPE_WEBHOOK_SECRET: optionalString,
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "silent"]).optional(),
+    /** `true` pour tolérer une production sans e-mails (recette) : mot de passe oublié indisponible. */
+    CHINE_ALLOW_NO_MAILER: optionalString,
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== "production") return;
@@ -55,6 +57,14 @@ const EnvSchema = z
         code: "custom",
         path: ["DATABASE_URL"],
         message: "doit être une URL postgres://",
+      });
+    }
+    if (!env.RESEND_API_KEY && env.CHINE_ALLOW_NO_MAILER !== "true") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["RESEND_API_KEY"],
+        message:
+          "obligatoire en production (mot de passe oublié, vérification d'e-mail) ; CHINE_ALLOW_NO_MAILER=true pour passer outre",
       });
     }
     if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET) {

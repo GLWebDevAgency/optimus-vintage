@@ -367,7 +367,8 @@ export function useQuickCapture() {
     onSuccess: (result) => {
       if (result.kind === "created") qc.setQueryData(keys.item(result.item.id), result.item);
     },
-    onSettled: () => invalidate(qc, keys.itemLists, keys.dashboards, keys.sourceLists),
+    onSettled: () =>
+      invalidate(qc, keys.itemLists, keys.dashboards, keys.sourceLists, keys.workspace),
   });
 }
 
@@ -403,7 +404,7 @@ export function useUpdateItem(id: string) {
       if (ctx?.previous) qc.setQueryData(keys.item(id), ctx.previous);
     },
     onSuccess: (item) => qc.setQueryData(keys.item(id), item),
-    onSettled: () => invalidate(qc, keys.item(id), keys.itemLists, keys.dashboards),
+    onSettled: () => invalidate(qc, keys.item(id), keys.itemLists, keys.dashboards, keys.workspace),
   });
 }
 
@@ -492,7 +493,8 @@ export function useDeleteItem(id: string) {
   return useMutation({
     mutationFn: () => api.deleteItem({ params: { id } }),
     onSuccess: () => qc.removeQueries({ queryKey: keys.item(id) }),
-    onSettled: () => invalidate(qc, keys.itemLists, keys.dashboards, keys.sourceLists),
+    onSettled: () =>
+      invalidate(qc, keys.itemLists, keys.dashboards, keys.sourceLists, keys.workspace),
   });
 }
 
@@ -555,7 +557,7 @@ export function useChangeItemStatus(id: string) {
       }
     },
     onSuccess: (item) => qc.setQueryData(keys.item(id), item),
-    onSettled: () => invalidate(qc, keys.item(id), keys.itemLists, keys.dashboards),
+    onSettled: () => invalidate(qc, keys.item(id), keys.itemLists, keys.dashboards, keys.workspace),
   });
 }
 
@@ -674,7 +676,7 @@ export function useUpdateSale(id: string) {
   return useMutation({
     mutationFn: (body: UpdateSaleCommand) => api.updateSale({ params: { id }, body }),
     onSuccess: (sale) => qc.setQueryData(keys.sale(id), sale),
-    onSettled: () => invalidate(qc, keys.sale(id), keys.saleLists, keys.dashboards),
+    onSettled: () => invalidate(qc, keys.sale(id), keys.saleLists, keys.dashboards, keys.workspace),
   });
 }
 
@@ -767,7 +769,9 @@ export function useGeneratePieces(id: string) {
 export function useAppraise() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: AppraiseImageCommand) => api.appraiseImage({ body }),
+    // Une chaîne de fournisseurs peut prendre plus d'une minute : délai client au-delà du budget serveur.
+    mutationFn: (body: AppraiseImageCommand) =>
+      api.appraiseImage({ body, signal: AbortSignal.timeout(120_000) }),
     onSuccess: (a: AppraisalDto) => {
       qc.setQueryData(keys.appraisal(a.id), a);
       void invalidate(qc, keys.workspace);

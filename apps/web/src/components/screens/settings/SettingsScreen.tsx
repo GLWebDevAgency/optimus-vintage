@@ -14,6 +14,7 @@ import { useWorkspace } from "@/hooks/api";
 import { useT } from "@/hooks/i18n";
 import { usePrefs } from "@/hooks/prefs";
 import { authClient, useSession } from "@/lib/auth-client";
+import { signOutEverywhere } from "@/lib/session";
 import { APP_VERSION } from "@/lib/version";
 import { ErrorState, useErrorMessage } from "../common/ErrorState";
 import { DataSection } from "./DataSection";
@@ -49,6 +50,7 @@ export function SettingsScreen() {
   const install = useInstallPrompt();
   const [name, setName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     if (session.data?.user.name) setName(session.data.user.name);
@@ -196,14 +198,19 @@ export function SettingsScreen() {
         </div>
 
         <div className="mt-auto grid gap-3 pt-4 enter d6">
-          <Link
-            href="/auth/deconnexion"
+          <button
+            type="button"
             className="btn ghost"
-            prefetch={false}
             data-testid="sign-out"
+            disabled={signingOut}
+            aria-busy={signingOut}
+            onClick={() => {
+              setSigningOut(true);
+              void signOutEverywhere();
+            }}
           >
             {t("nav.logout")}
-          </Link>
+          </button>
           <p className="label text-center">{t("settings.version", { version: APP_VERSION })}</p>
         </div>
       </Screen>

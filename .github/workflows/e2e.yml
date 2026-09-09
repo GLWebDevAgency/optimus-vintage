@@ -11,6 +11,7 @@ jobs:
       BETTER_AUTH_SECRET: ci-secret-not-for-production-0123456789
       BETTER_AUTH_URL: http://127.0.0.1:3100
       NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+      CHINE_ALLOW_NO_MAILER: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

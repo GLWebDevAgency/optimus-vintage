@@ -126,7 +126,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         </h1>
         <p className="text-ink-2 text-[14.5px]">
           {isSignup
-            ? "Gratuit jusqu'à 60 pièces. Pas de carte bancaire."
+            ? "Gratuit jusqu'à 50 pièces en stock. Pas de carte bancaire."
             : "Ton stock, tes sources et ta marge t'attendent."}
         </p>
       </div>
@@ -166,6 +166,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
           </div>
         );
       })}
+
+      {!isSignup ? (
+        <p className="-mt-2 text-right text-[13px]">
+          <Link href="/auth/mot-de-passe-oublie" className="font-semibold text-ink-2">
+            Mot de passe oublié ?
+          </Link>
+        </p>
+      ) : null}
 
       <button type="submit" className="big-btn" disabled={pending} aria-busy={pending}>
         {pending ? "Un instant…" : isSignup ? "Créer mon compte et continuer" : "Continuer"}

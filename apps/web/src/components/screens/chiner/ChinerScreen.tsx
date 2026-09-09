@@ -1,7 +1,9 @@
 "use client";
 
 import type { AppraisalDto, ItemDto, SupplierKind } from "@chine/contract";
+import type { MessageKey } from "@chine/i18n";
 import { AppIcon, BigButton, TapeMeasure, useToast } from "@chine/ui";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Screen } from "@/components/shell/Screen";
 import { TopBar } from "@/components/shell/TopBar";
@@ -191,6 +193,11 @@ export function ChinerScreen() {
 
   const filled = filledDetails(details);
   const saving = capture.isPending;
+  // Limite de pièces en stock atteinte (d'après le dernier état connu de l'espace) : on le dit
+  // avant la photo, pas après un aller-retour serveur — ni, pire, au moment de la synchro.
+  const itemsQuota = workspace.data?.quotas.items;
+  const atItemLimit =
+    itemsQuota !== undefined && itemsQuota.limit !== null && itemsQuota.used >= itemsQuota.limit;
   const successTitle =
     details.title.trim() || t("chine.quickTitle", { date: fmt.date(new Date(), "medium") });
 
@@ -278,10 +285,33 @@ export function ChinerScreen() {
               </span>
             </button>
 
+            {atItemLimit && itemsQuota ? (
+              <div className="card grid gap-2 enter" role="status" data-testid="quota-paywall">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brass-soft text-brass">
+                    <AppIcon name="lock" size={20} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-bold">
+                      {t("chine.quotaTitle", { limit: itemsQuota.limit ?? 0 })}
+                    </div>
+                    <div className="text-[12.5px] text-ink-2">{t("chine.quotaBody")}</div>
+                  </div>
+                </div>
+                <Link href="/app/reglages#plan" className="btn" data-testid="quota-paywall-cta">
+                  {itemsQuota.upgradeTo
+                    ? t("billing.switchTo", {
+                        plan: t(`billing.plan.${itemsQuota.upgradeTo}` as MessageKey),
+                      })
+                    : t("billing.choosePlan")}
+                </Link>
+              </div>
+            ) : null}
             <div className="mt-auto pt-2 enter d5">
               <BigButton
                 onClick={() => void submit()}
                 loading={saving}
+                disabled={atItemLimit}
                 leading={<AppIcon name="plus" size={18} />}
                 data-testid="capture-submit"
               >

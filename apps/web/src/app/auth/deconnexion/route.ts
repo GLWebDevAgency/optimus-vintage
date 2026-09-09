@@ -1,7 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
-/** Déconnexion : révoque la session Better Auth puis redirige vers la connexion (GET ou POST). */
+/**
+ * Déconnexion : révoque la session Better Auth puis redirige vers la connexion.
+ * POST uniquement : un lien tiers ou un préchargement ne doivent pas déconnecter l'utilisateur.
+ */
 async function logout(req: NextRequest): Promise<Response> {
   const redirect = NextResponse.redirect(new URL("/auth/connexion", req.url), 303);
   try {
@@ -13,6 +16,8 @@ async function logout(req: NextRequest): Promise<Response> {
   return redirect;
 }
 
-export const GET = logout;
 export const POST = logout;
+export function GET(): Response {
+  return new Response(null, { status: 405, headers: { allow: "POST" } });
+}
 export const dynamic = "force-dynamic";

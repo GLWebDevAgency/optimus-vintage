@@ -27,6 +27,7 @@ export {
   WorkspaceNotFoundError,
 } from "./lifecycle/DataLifecycle.js";
 export * from "./repositories/index.js";
+export * from "./security/idempotency.js";
 export {
   DrizzleRateLimiter,
   type DrizzleRateLimiterOptions,

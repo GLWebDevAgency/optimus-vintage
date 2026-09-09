@@ -46,6 +46,9 @@ export default defineConfig({
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "e2e-secret-e2e-secret-e2e-secret-32",
       BETTER_AUTH_URL: baseURL,
       NEXT_PUBLIC_APP_URL: baseURL,
+      // Build de production sans service d'e-mail : dérogation explicite (jamais en vraie prod).
+      CHINE_ALLOW_NO_MAILER: "true",
+      CHINE_JOBS: "false",
     },
   },
 });

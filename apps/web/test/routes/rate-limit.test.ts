@@ -36,8 +36,9 @@ describe("limite de débit et contexte de requête", () => {
     const handler = withPublic(async (_req, ctx) => ok({ ip: ctx.ip }), {
       limit: { key: "test:public", max: 1, windowSeconds: 60 },
     });
+    // Le dernier saut est celui qu'ajoute le proxy de bord ; les précédents viennent du client.
     const a = await api<{ data: { ip: string } }>(handler, "GET", "/api/x", {
-      headers: { "x-forwarded-for": "198.51.100.1, 10.0.0.1" },
+      headers: { "x-forwarded-for": "10.0.0.1, 198.51.100.1" },
     });
     expect(a.status).toBe(200);
     expect(a.data.ip).toBe("198.51.100.1");

@@ -57,7 +57,8 @@ test.describe("Chiné — fumée", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Aujourd'hui");
     await expect(page.getByRole("navigation", { name: "Navigation principale" })).toBeVisible();
     await page.screenshot({ path: "e2e/__screenshots__/app-today.png" });
-    await page.goto("/auth/deconnexion");
-    await expect(page).toHaveURL(/\/auth\/connexion/);
+    await page.goto("/app/reglages");
+    await page.getByTestId("sign-out").click();
+    await expect(page).toHaveURL(/\/auth\/connexion/, { timeout: 15_000 });
   });
 });
