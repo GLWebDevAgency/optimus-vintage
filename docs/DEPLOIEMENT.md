@@ -1,34 +1,24 @@
 # Déploiement
 
-## Cible recommandée
+Chiné se déploie comme **une image Docker** (Next.js en sortie « standalone ») sur Railway, avec un Postgres par environnement, Cloudflare R2 pour les photos, Stripe pour la facturation, Resend pour les e-mails, Sentry pour les erreurs. Le guide complet des environnements, des branches, des secrets et des runbooks est dans [`ENVIRONNEMENTS.md`](./ENVIRONNEMENTS.md).
 
 | Brique | Service | Pourquoi |
 |---|---|---|
-| App web + API | **Vercel** (projet racine `apps/web`, framework Next.js) | Edge + ISR pour la landing, Node runtime pour l'API, previews par PR |
-| Base de données | **Railway Postgres** (ou Neon) | Continuité avec l'existant ; `DATABASE_URL` avec `sslmode=require` |
-| Photos | **Cloudflare R2** | S3 compatible, egress gratuit |
-| Facturation | **Stripe** | Checkout + Customer Portal + webhooks |
-| IA | **Chaîne de fournisseurs** : Claude (`claude-fable-5-1`), Gemini (`gemini-2.5-flash` ou plus récent), OpenAI (modèle au choix) | Même schéma JSON strict partout, repli automatique sur le suivant ; voir `docs/ENVIRONNEMENTS.md` |
+| App web + API | **Railway** (service `web`, `apps/web/Dockerfile`) | Une image, un health check `/api/ready`, staging et production dans un même projet |
+| Base de données | **Railway Postgres** | `DATABASE_URL` avec `sslmode=require` ; migrations Drizzle au démarrage (`CHINE_AUTO_MIGRATE=true`) |
+| Photos | **Cloudflare R2** | S3 compatible, egress gratuit, upload direct depuis le navigateur |
+| Facturation | **Stripe** | Checkout (essai sans carte), Customer Portal, webhooks signés et idempotents, Stripe Tax optionnel |
+| E-mails | **Resend** | Vérification d'adresse, mot de passe oublié — obligatoire en production |
+| IA | **Chaîne de fournisseurs** : Claude (`claude-fable-5-1`), Gemini, OpenAI | Même schéma JSON strict partout, repli automatique ; voir ADR 0005 |
+| Erreurs | **Sentry** (activé par DSN) | Serveur et client, sans donnée personnelle |
 
-## Vercel
+## En bref
 
-1. Importer le dépôt, **Root Directory** = `apps/web`, Framework = Next.js, Node 24.
-2. Build command : `cd ../.. && pnpm turbo run build --filter=@chine/web`. Install command : `pnpm install --frozen-lockfile`.
-3. Variables d'environnement : copier `.env.example` et renseigner `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ caractères aléatoires), `BETTER_AUTH_URL` (URL publique), `NEXT_PUBLIC_APP_URL`, puis les clés IA / R2 / Stripe quand disponibles.
-4. Migrations : `pnpm db:migrate` s'exécute au démarrage si `RUN_MIGRATIONS=1`, ou manuellement depuis un poste avec `DATABASE_URL`.
+1. `./deploy/railway/bootstrap.sh` crée le projet, les environnements `staging` et `production`, un Postgres chacun et le service `web`, puis pousse les variables des fichiers `deploy/railway/*.env`.
+2. Les branches `staging` et `production` déclenchent les workflows `Deploy · staging` et `Deploy · production` (vérification, e2e, approbation manuelle en production, `railway up`, contrôle du commit servi, étiquette de version).
+3. Variables inlinées au build (`NEXT_PUBLIC_*`, Sentry) : déclarées en `ARG` dans le Dockerfile, Railway les transmet au build. `APP_COMMIT` est poussé par le workflow avant chaque déploiement pour que `/api/ready` identifie la version servie.
+4. L'image démarre par `apps/web/scripts/start.mjs`, qui écoute en double pile (`::`, requis par le réseau privé et les sondes Railway) quand l'hôte a IPv6 et retombe sur `0.0.0.0` sinon ; `BIND_HOST` force une adresse.
 
-## Railway (Postgres)
+## Développement local
 
-Créer un service Postgres, copier `DATABASE_URL` (proxy public) dans Vercel. Ne jamais versionner cette valeur : l'ancien dépôt a exposé un mot de passe de production dans un README pendant sept mois.
-
-## Sans aucun service externe
-
-`pnpm dev` fonctionne intégralement en local : PGlite (Postgres embarqué dans `.data/pglite`), photos dans `.data/uploads`, expert IA de démonstration. Idéal pour tester l'app sur téléphone via l'IP locale.
-
-## Observabilité
-
-Sentry est activé uniquement si `SENTRY_DSN` (serveur) et `NEXT_PUBLIC_SENTRY_DSN` (navigateur) sont définis. Les sourcemaps ne sont envoyées que si `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` et `SENTRY_PROJECT` sont présents (CI ou Vercel). Aucun corps de requête ni cookie n'est transmis (`beforeSend`). Les journaux serveur sont en JSON structuré avec `requestId` ; `/api/health` et `/api/ready` servent aux sondes.
-
-## Mode développement
-
-`pnpm dev` lance Next.js avec Turbopack (PGlite embarqué, migrations automatiques). Le service worker n'est actif qu'en build de production (`next build --webpack`, requis par Serwist). Utiliser `http://localhost:3000`, pas `127.0.0.1` (protection des origines de développement de Next 16).
+`pnpm dev` fonctionne intégralement sans clé : PGlite (Postgres embarqué dans `.data/pglite`), photos dans `.data/uploads`, expert IA de démonstration, e-mails affichés dans la console. `pnpm --filter @chine/web seed` crée un compte de démonstration avec trois mois d'activité (refusé en production). Idéal pour tester l'app sur téléphone via l'IP locale.

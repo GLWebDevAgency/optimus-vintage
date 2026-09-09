@@ -52,17 +52,20 @@ export function Field({
   const describedBy = [errorId, hintId].filter(Boolean).join(" ") || undefined;
   return (
     <FieldContext.Provider value={{ id, describedBy, invalid: Boolean(error), disabled }}>
-      <div className={cn("grid gap-1.5", className)}>
-        <div className="flex items-baseline justify-between gap-3">
+      <div className={cn("grid min-w-0 gap-1.5", className)}>
+        {/* min-w-0 + flex-wrap : un libellé long ou une colonne étroite ne peuvent jamais élargir la page. */}
+        <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
           <label
             htmlFor={id}
-            className="font-mono text-[10px] uppercase tracking-[.14em] text-ink-3"
+            className="min-w-0 break-words font-mono text-[10px] uppercase tracking-[.14em] text-ink-3"
           >
             {label}
             {required ? <span className="text-thread"> *</span> : null}
           </label>
           {trailing ? (
-            <span className="font-mono text-[10px] tracking-[.08em] text-ink-3">{trailing}</span>
+            <span className="min-w-0 font-mono text-[10px] tracking-[.08em] text-ink-3">
+              {trailing}
+            </span>
           ) : null}
         </div>
         {children}
@@ -83,7 +86,7 @@ export function Field({
 /** Enveloppe visuelle `.in` : bordure, fond, focus indigo, erreur fil. */
 export const controlClass = (invalid: boolean, extra?: string) =>
   cn(
-    "flex min-h-[46px] w-full items-center gap-2 rounded-field border-[1.5px] bg-bg px-3 font-ui text-[15px] font-medium text-ink",
+    "flex min-h-[46px] w-full items-center gap-2 rounded-field border-[1.5px] bg-bg px-3 font-ui text-[16px] font-medium text-ink",
     "transition-[border-color,box-shadow] duration-state",
     "has-[:focus-visible]:border-ink has-[:focus-visible]:shadow-[0_0_0_3px_var(--indigo-soft)]",
     "has-[:disabled]:opacity-50",
@@ -91,8 +94,9 @@ export const controlClass = (invalid: boolean, extra?: string) =>
     extra,
   );
 
+/** `w-full` : un champ natif garde sinon sa largeur intrinsèque (~20 caractères) et déborde d'une colonne étroite. */
 const bare =
-  "min-w-0 flex-1 bg-transparent py-2.5 outline-none placeholder:text-ink-3 disabled:cursor-not-allowed";
+  "min-w-0 w-full flex-1 bg-transparent py-2.5 outline-none placeholder:text-ink-3 disabled:cursor-not-allowed";
 
 export interface TextInputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "size"> {

@@ -83,7 +83,9 @@ for (const theme of ["light", "dark"] as const) {
       await shot(page, `sale-new-${skin}`);
       await page.getByTestId("sale-submit").click();
       await expect(page.getByTestId("sold-state")).toBeVisible({ timeout: 45_000 });
-      await settle(page, 2200);
+      // Le toast « Vente enregistrée » (3,6 s) ne doit pas figurer sur la capture.
+      await expect(page.getByText("Vente enregistrée")).toBeHidden({ timeout: 15_000 });
+      await settle(page, 900);
       await shot(page, `sold-${skin}`);
       expect(state.sales.at(-1)?.itemId).toBe("it_142");
 

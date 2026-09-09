@@ -30,6 +30,10 @@ cp deploy/railway/production.env.example deploy/railway/production.env
 
 Le script crée le projet, les deux environnements, un Postgres par environnement, le service `web`, et pousse les variables. Trois réglages restent manuels dans le tableau de bord : la source GitHub (branche `staging` / `production`) si tu préfères le déclencheur Railway aux GitHub Actions, les domaines publics, et les jetons de projet.
 
+### Variables inlinées au build et commit servi
+
+Next.js inline les variables `NEXT_PUBLIC_*` et la configuration Sentry au moment du build : elles sont déclarées en `ARG` dans `apps/web/Dockerfile` (Railway ne transmet une variable au build Docker que si elle est déclarée). Le jeton Sentry des source maps est monté en secret de build (`SENTRY_AUTH_TOKEN`), jamais copié dans une couche. Le workflow pousse `APP_COMMIT` (SHA Git) avant `railway up` ; `/api/ready` et `/api/health` l'exposent et le déploiement n'est accepté que lorsque l'URL publique sert ce commit.
+
 ### Migrations
 
 `CHINE_AUTO_MIGRATE=true` : le serveur applique les migrations Drizzle au démarrage, avant de répondre au health check. Un déploiement dont la migration échoue reste en échec et l'ancienne version continue de servir. Pour les migrations lourdes, les jouer à la main avant le déploiement : `DATABASE_URL=... pnpm db:migrate`.
@@ -73,9 +77,18 @@ Règles :
 | `STORAGE_DRIVER` | local | r2 (bucket staging) | r2 |
 | `APPRAISER_DRIVER` | auto (fake sans clé) | anthropic,gemini | anthropic,gemini |
 | `STRIPE_*` | vide | clés `sk_test_` | clés `sk_live_` |
-| `RESEND_API_KEY` | vide (console) | test | production |
 | `SENTRY_*` | vide | DSN staging, trace 30 % | DSN production, trace 10 % |
 | `CHINE_AUTO_MIGRATE` | implicite | true | true |
+| `RESEND_API_KEY` | vide (console) | test | production (obligatoire, sinon `CHINE_ALLOW_NO_MAILER=true`) |
+| `STRIPE_AUTOMATIC_TAX` | false | false | true si Stripe Tax est activé sur le compte |
+| `STRIPE_TRIAL_DAYS` | 14 | 14 | 14 (0 pour désactiver l'essai) |
+| `CHINE_JOBS` | true | true | true (relais outbox, purges ; `false` pour désactiver) |
+| `APP_COMMIT` | vide | poussé par le workflow | poussé par le workflow |
+| `BIND_HOST` | — | auto (`::` si IPv6, sinon `0.0.0.0`) | auto |
+
+## Tâches de fond
+
+Le processus web planifie lui-même, toutes les minutes (première passe 30 s après le démarrage) : relais de l'outbox d'événements, purge des compteurs de limitation de débit, des clés d'idempotence (24 h) et des événements Stripe traités (30 jours). Une seule instance Railway suffit ; `CHINE_JOBS=false` désactive le planificateur (par exemple sur une instance secondaire).
 
 ## Rollback
 

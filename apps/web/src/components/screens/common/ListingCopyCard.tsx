@@ -68,15 +68,15 @@ export function ListingCopyCard({
     }
   };
   return (
-    <div className="card grid gap-3" data-testid="listing-copy">
-      <div className="flex items-center justify-between gap-2">
+    <div className="card grid min-w-0 gap-3" data-testid="listing-copy">
+      {/* Les pastilles passent à la ligne : jamais plus larges que la carte (sinon zoom arrière mobile). */}
+      <div className="grid min-w-0 gap-2">
         <span className="label">{t("listingCopy.title")}</span>
         <ChipGroup
           value={platform}
           onChange={(p) => p && setPlatform(p)}
           allowEmpty={false}
           size="sm"
-          scroll
           aria-label={t("sales.platform")}
           options={PLATFORMS.map((p) => ({ value: p, label: label.platform(t, p) }))}
         />

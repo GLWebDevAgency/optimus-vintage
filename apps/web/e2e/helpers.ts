@@ -41,6 +41,8 @@ export async function useTheme(page: Page, theme: "light" | "dark"): Promise<voi
   await page.addInitScript((t) => {
     try {
       localStorage.setItem("chine.theme", t);
+      // L'invitation à installer la PWA (après la première vente) ne doit pas couvrir les captures.
+      localStorage.setItem("chine.prefs", JSON.stringify({ installDismissedAt: Date.now() }));
     } catch {
       // ignore
     }

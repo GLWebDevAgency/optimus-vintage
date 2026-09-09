@@ -116,6 +116,14 @@
     font: inherit;
     color: inherit;
   }
+  /* iOS Safari zoome sur un champ dont la police est < 16px : garde-fou, sans effet ailleurs. */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    select,
+    textarea {
+      font-size: max(1em, 16px);
+    }
+  }
   :focus-visible {
     outline: 2px solid var(--thread);
     outline-offset: 3px;
@@ -894,7 +902,7 @@
     inset: 0;
     transform: translateX(-100%);
     background: linear-gradient(90deg, transparent, var(--surface), transparent);
-    animation: shimmer 1.8s var(--ease-out) infinite;
+    animation: shimmer-sweep 1.8s var(--ease-out) infinite;
   }
   .sk.text {
     height: 0.9em;
@@ -995,7 +1003,7 @@
     transform: rotate(360deg);
   }
 }
-@keyframes shimmer {
+@keyframes shimmer-sweep {
   to {
     transform: translateX(100%);
   }

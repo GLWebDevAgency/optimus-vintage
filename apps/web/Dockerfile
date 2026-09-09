@@ -51,8 +51,9 @@ RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
 # ── Image finale : serveur autonome, utilisateur non root ────────────────────
 FROM node:${NODE_VERSION}-bookworm-slim AS runner
 ARG APP_COMMIT
-# HOSTNAME=:: écoute en double pile (IPv4 + IPv6) : requis par le réseau privé et les sondes Railway v2.
-ENV NODE_ENV=production PORT=3000 HOSTNAME=:: NEXT_TELEMETRY_DISABLED=1 \
+# L'adresse d'écoute est choisie au démarrage par scripts/start.mjs : `::` (double pile, requis par
+# le réseau privé et les sondes Railway v2) si l'hôte a IPv6, sinon `0.0.0.0` ; `BIND_HOST` force.
+ENV NODE_ENV=production PORT=3000 NEXT_TELEMETRY_DISABLED=1 \
     CHINE_MIGRATIONS_DIR=/app/packages/infrastructure/drizzle APP_COMMIT=$APP_COMMIT
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
@@ -61,8 +62,9 @@ COPY --from=build --chown=node:node /app/apps/web/.next/standalone ./
 COPY --from=build --chown=node:node /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build --chown=node:node /app/apps/web/public ./apps/web/public
 COPY --from=build --chown=node:node /app/packages/infrastructure/drizzle ./packages/infrastructure/drizzle
+COPY --from=build --chown=node:node /app/apps/web/scripts/start.mjs ./apps/web/scripts/start.mjs
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -fsS http://127.0.0.1:${PORT}/api/ready || exit 1
-CMD ["node", "apps/web/server.js"]
+CMD ["node", "apps/web/scripts/start.mjs"]
