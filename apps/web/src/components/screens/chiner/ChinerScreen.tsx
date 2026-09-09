@@ -97,7 +97,7 @@ export function ChinerScreen() {
         setAppraisal({ status: "locked" });
         return;
       }
-      const quota = ws?.quotas.aiAppraisalsPerMonth;
+      const quota = ws?.quotas.aiCreditsPerMonth;
       if (quota && quota.limit !== null && quota.used >= quota.limit) {
         setAppraisal({ status: "quota" });
         return;

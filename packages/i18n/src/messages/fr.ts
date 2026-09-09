@@ -211,7 +211,7 @@ export const fr = {
     quotaTitle: "{limit} pièces en stock : limite atteinte",
     quotaBody:
       "Une vente libère une place. Pour suivre plus de pièces, change de formule : rien n'est perdu.",
-    aiQuotaTitle: "Quota d'expertises atteint",
+    aiQuotaTitle: "Crédits IA épuisés",
     aiFailedTitle: "L'IA n'a pas reconnu la pièce",
     aiRetry: "Relancer l'expertise",
     aiOffline: "Expertise IA au retour du réseau",
@@ -708,9 +708,9 @@ export const fr = {
     copyAll: "Copier l'annonce",
     applyToItem: "Appliquer à la fiche",
     applied: "Fiche mise à jour",
-    quota: "{used} / {limit} expertises ce mois",
-    quotaUnlimited: "Expertises illimitées",
-    quotaReached: "Quota d'expertises atteint ce mois-ci.",
+    quota: "{used} / {limit} crédits IA ce mois",
+    quotaUnlimited: "Crédits IA illimités",
+    quotaReached: "Crédits IA épuisés ce mois-ci.",
     failed: "L'expertise a échoué. Réessaie avec une photo plus nette.",
     disclaimer: "Estimation indicative, à confirmer avec le marché.",
   },
@@ -810,7 +810,7 @@ export const fr = {
     quota: {
       items: "Pièces en stock",
       sourcesPerMonth: "Sources par mois",
-      aiAppraisalsPerMonth: "Expertises IA par mois",
+      aiCreditsPerMonth: "Crédits IA par mois",
       members: "Membres",
     },
     plan: {

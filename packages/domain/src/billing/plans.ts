@@ -51,11 +51,29 @@ export interface PlanLimits {
   readonly maxItems: number;
   /** Sources LOT / PALLET / PICKING créées par mois civil (les achats à l'unité ne comptent pas). */
   readonly maxSourcesPerMonth: number;
-  /** Expertises IA par mois civil. */
-  readonly aiAppraisalsPerMonth: number;
+  /**
+   * Crédits IA par mois civil. Chaque action IA coûte un nombre de crédits (`AI_CREDIT_COST`) ;
+   * une expertise photo en coûte un. Jamais illimité : le coût d'inférence est réel.
+   */
+  readonly aiCreditsPerMonth: number;
   readonly members: number;
   readonly features: ReadonlySet<Feature>;
 }
+
+/**
+ * Actions IA décomptées en crédits. `PHOTO_STUDIO` (fond et lumière professionnels) n'est pas
+ * encore livré : son coût est réservé pour que les quotas n'aient pas à changer à sa sortie.
+ */
+export const AI_ACTIONS = ["APPRAISAL", "LISTING_COPY", "PHOTO_STUDIO"] as const;
+export type AiAction = (typeof AI_ACTIONS)[number];
+export const AI_CREDIT_COST: Readonly<Record<AiAction, number>> = {
+  /** Expertise photo complète ; le texte d'annonce demandé dans le même appel est inclus. */
+  APPRAISAL: 1,
+  /** Régénération d'un texte d'annonce seul (sans image) pour une autre plateforme. */
+  LISTING_COPY: 1,
+  /** Photo studio : fond et lumière professionnels (génération d'image). */
+  PHOTO_STUDIO: 3,
+};
 
 const F = (...f: Feature[]): ReadonlySet<Feature> => new Set(f);
 export const INF = Number.POSITIVE_INFINITY;
@@ -64,14 +82,14 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
   FREE: {
     maxItems: 50,
     maxSourcesPerMonth: 3,
-    aiAppraisalsPerMonth: 10,
+    aiCreditsPerMonth: 10,
     members: 1,
     features: F("AI_APPRAISAL", "CSV_EXPORT"),
   },
   PREMIUM: {
     maxItems: 500,
     maxSourcesPerMonth: INF,
-    aiAppraisalsPerMonth: 200,
+    aiCreditsPerMonth: 100,
     members: 1,
     features: F(
       "AI_APPRAISAL",
@@ -84,7 +102,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
   PRO: {
     maxItems: INF,
     maxSourcesPerMonth: INF,
-    aiAppraisalsPerMonth: 1000,
+    aiCreditsPerMonth: 300,
     members: 1,
     features: F(
       "AI_APPRAISAL",
@@ -99,7 +117,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
   BUSINESS: {
     maxItems: INF,
     maxSourcesPerMonth: INF,
-    aiAppraisalsPerMonth: 3000,
+    aiCreditsPerMonth: 1000,
     members: 5,
     features: F(
       "AI_APPRAISAL",
@@ -150,7 +168,7 @@ export const hasFeature = (plan: Plan, feature: Feature): boolean =>
 export const minimumPlanFor = (feature: Feature): Plan =>
   PLANS.find((p) => hasFeature(p, feature)) ?? "BUSINESS";
 
-export type QuotaResource = "items" | "sourcesPerMonth" | "aiAppraisalsPerMonth" | "members";
+export type QuotaResource = "items" | "sourcesPerMonth" | "aiCreditsPerMonth" | "members";
 
 export interface QuotaDecision {
   readonly allowed: boolean;
@@ -169,23 +187,31 @@ const limitOf = (plan: Plan, resource: QuotaResource): number => {
       return l.maxItems;
     case "sourcesPerMonth":
       return l.maxSourcesPerMonth;
-    case "aiAppraisalsPerMonth":
-      return l.aiAppraisalsPerMonth;
+    case "aiCreditsPerMonth":
+      return l.aiCreditsPerMonth;
     case "members":
       return l.members;
   }
 };
 
 /**
- * Peut-on consommer une unité de plus ? `used` est la consommation actuelle : autorisé tant que
- * `used < limit`. Propose le premier plan achetable qui accepterait `used + 1`.
+ * Peut-on consommer `cost` unité(s) de plus ? `used` est la consommation actuelle : autorisé tant
+ * que `used + cost <= limit`. Propose le premier plan achetable qui accepterait `used + cost`.
  */
-export function checkQuota(plan: Plan, resource: QuotaResource, used: number): QuotaDecision {
+export function checkQuota(
+  plan: Plan,
+  resource: QuotaResource,
+  used: number,
+  cost = 1,
+): QuotaDecision {
   const limit = limitOf(plan, resource);
-  const allowed = used < limit;
+  const allowed = used + cost <= limit;
   if (allowed) return { allowed, used, limit };
   const upgradeTo = PLANS.find(
-    (p) => ORDER[p] > ORDER[plan] && PLAN_AVAILABILITY[p] === "sale" && used < limitOf(p, resource),
+    (p) =>
+      ORDER[p] > ORDER[plan] &&
+      PLAN_AVAILABILITY[p] === "sale" &&
+      used + cost <= limitOf(p, resource),
   );
   return upgradeTo ? { allowed, used, limit, upgradeTo } : { allowed, used, limit };
 }

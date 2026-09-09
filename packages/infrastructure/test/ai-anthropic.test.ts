@@ -33,7 +33,7 @@ describe("AnthropicAppraiser", () => {
     expect(call?.headers["x-api-key"]).toBe("sk-test");
     expect(call?.headers["anthropic-beta"]).toContain("server-side-fallback-2026-07-01");
     expect(call?.body).toMatchObject({
-      model: "claude-fable-5-1",
+      model: "claude-sonnet-5",
       max_tokens: 16000,
       fallbacks: "default",
       output_config: { effort: "medium", format: { type: "json_schema" } },
@@ -50,6 +50,8 @@ describe("AnthropicAppraiser", () => {
 
     expect(d.provider).toBe("anthropic");
     expect(d.model).toBe("claude-fable-5-1");
+    expect(d.tokens).toEqual({ input: 10, output: 20 });
+    expect(d.credits).toBe(1);
     expect(d.price.mid.minor).toBe(4550);
     expect(d.price.mid.currency).toBe("EUR");
     expect(d.identification.category).toBe("TRACKSUIT");

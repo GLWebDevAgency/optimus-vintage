@@ -9,7 +9,7 @@ Chiné se déploie comme **une image Docker** (Next.js en sortie « standalone �
 | Photos | **Cloudflare R2** | S3 compatible, egress gratuit, upload direct depuis le navigateur |
 | Facturation | **Stripe** | Checkout (essai sans carte), Customer Portal, webhooks signés et idempotents, Stripe Tax optionnel |
 | E-mails | **Resend** | Vérification d'adresse, mot de passe oublié — obligatoire en production |
-| IA | **Chaîne de fournisseurs** : Claude (`claude-fable-5-1`), Gemini, OpenAI | Même schéma JSON strict partout, repli automatique ; voir ADR 0005 |
+| IA | **Chaîne de fournisseurs** : Claude (`claude-sonnet-5` par défaut), Gemini, OpenAI | Même schéma JSON strict partout, repli automatique ; voir ADR 0005 |
 | Erreurs | **Sentry** (activé par DSN) | Serveur et client, sans donnée personnelle |
 
 ## En bref

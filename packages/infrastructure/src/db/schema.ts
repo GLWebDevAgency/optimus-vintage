@@ -309,6 +309,11 @@ export const appraisals = pgTable(
     provider: text("provider").notNull(),
     model: text("model").notNull(),
     latencyMs: integer("latency_ms").notNull().default(0),
+    /** Crédits IA décomptés du quota mensuel (1 par expertise ; le studio photo en coûtera plus). */
+    credits: integer("credits").notNull().default(1),
+    /** Jetons facturés par le fournisseur (entrée / sortie, réflexion incluse) ; null si inconnus. */
+    inputTokens: integer("input_tokens"),
+    outputTokens: integer("output_tokens"),
     payload: jsonb("payload").$type<AppraisalPayloadJson>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

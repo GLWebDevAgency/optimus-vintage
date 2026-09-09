@@ -111,7 +111,8 @@ export interface SaleRepository {
 export interface AppraisalRepository {
   byId(workspaceId: WorkspaceId, id: AppraisalId): Promise<Appraisal | undefined>;
   save(appraisal: Appraisal): Promise<void>;
-  countSince(workspaceId: WorkspaceId, since: Date): Promise<number>;
+  /** Crédits IA consommés (somme de `credits`) depuis `since`. */
+  creditsSince(workspaceId: WorkspaceId, since: Date): Promise<number>;
   latestForItem(workspaceId: WorkspaceId, itemId: ItemId): Promise<Appraisal | undefined>;
 }
 

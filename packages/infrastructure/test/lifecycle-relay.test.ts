@@ -105,7 +105,7 @@ describe("DataLifecycle", () => {
     expect(await t.repos.items.count(a.ws.id)).toBe(0);
     expect(await t.repos.sources.list(a.ws.id)).toEqual([]);
     expect(await t.repos.sales.list(a.ws.id)).toEqual([]);
-    expect(await t.repos.appraisals.countSince(a.ws.id, new Date(0))).toBe(0);
+    expect(await t.repos.appraisals.creditsSince(a.ws.id, new Date(0))).toBe(0);
     expect(await t.repos.workspaces.forUser(user("del_a"))).toEqual([]);
     expect(
       await t.database.db.select().from(outboxEvents).where(eq(outboxEvents.workspaceId, a.ws.id)),

@@ -92,10 +92,10 @@ export class InMemoryAppraisalRepository
   async save(appraisal: Appraisal): Promise<void> {
     this.rows.set(appraisal.id, appraisal);
   }
-  async countSince(workspaceId: WorkspaceId, since: Date): Promise<number> {
-    return this.values().filter(
-      (a) => a.workspaceId === workspaceId && a.createdAt.getTime() >= since.getTime(),
-    ).length;
+  async creditsSince(workspaceId: WorkspaceId, since: Date): Promise<number> {
+    return this.values()
+      .filter((a) => a.workspaceId === workspaceId && a.createdAt.getTime() >= since.getTime())
+      .reduce((sum, a) => sum + a.credits, 0);
   }
   async latestForItem(workspaceId: WorkspaceId, itemId: ItemId): Promise<Appraisal | undefined> {
     return this.values()

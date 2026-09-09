@@ -1,7 +1,7 @@
 import { AppraiseImage } from "@chine/application";
 import { routes } from "@chine/contract";
 import { asItemId } from "@chine/domain";
-import { AppraiserError } from "@chine/infrastructure";
+import { AppraiserError, estimateCostMicroUsd } from "@chine/infrastructure";
 import { scopeOf } from "@/lib/api/loaders";
 import { mapAppraisal } from "@/lib/api/mappers";
 import { ApiFailure, fail } from "@/lib/api/respond";
@@ -53,6 +53,19 @@ export const POST = withAuth(
         return appraiserFailure(e);
       }
       throw e;
+    }
+    if (result.ok) {
+      // Journal de coût : jetons facturés et estimation en micro-dollars (table datée, jamais un secret).
+      const a = result.value.appraisal;
+      ctx.log.info("expertise IA", {
+        provider: a.provider,
+        model: a.model,
+        credits: a.credits,
+        inputTokens: a.tokens?.input ?? null,
+        outputTokens: a.tokens?.output ?? null,
+        costMicroUsd: estimateCostMicroUsd(a.model, a.tokens),
+        latencyMs: a.latencyMs,
+      });
     }
     return sendResult(result, {
       route: "POST /appraisals",

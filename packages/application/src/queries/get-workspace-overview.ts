@@ -54,7 +54,7 @@ export class GetWorkspaceOverview
     const [items, sources, appraisals, feeOverrides] = await Promise.all([
       countSellableItems(this.deps.items, id),
       this.deps.sources.countCreatedSince(id, since),
-      this.deps.appraisals.countSince(id, since),
+      this.deps.appraisals.creditsSince(id, since),
       this.deps.workspaces.feeOverrides(id),
     ]);
     const limits = PLAN_LIMITS[plan];
@@ -64,13 +64,13 @@ export class GetWorkspaceOverview
       limits: {
         maxItems: finiteOrNull(limits.maxItems),
         maxSourcesPerMonth: finiteOrNull(limits.maxSourcesPerMonth),
-        aiAppraisalsPerMonth: finiteOrNull(limits.aiAppraisalsPerMonth),
+        aiCreditsPerMonth: finiteOrNull(limits.aiCreditsPerMonth),
         members: limits.members,
       },
       usage: {
         items: usage(plan, "items", items),
         sourcesPerMonth: usage(plan, "sourcesPerMonth", sources),
-        aiAppraisalsPerMonth: usage(plan, "aiAppraisalsPerMonth", appraisals),
+        aiCreditsPerMonth: usage(plan, "aiCreditsPerMonth", appraisals),
         members: usage(plan, "members", 1),
       },
       features: FEATURES.filter((f) => hasFeature(plan, f)),

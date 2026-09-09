@@ -9,6 +9,8 @@ export function toAppraisalDto(a: Appraisal): AppraisalDto {
     itemId: a.itemId ?? null,
     provider: a.provider,
     model: a.model,
+    credits: a.credits,
+    tokens: a.tokens ? { input: a.tokens.input, output: a.tokens.output } : null,
     createdAt: toIso(a.createdAt),
     identification: a.identification,
     price: {

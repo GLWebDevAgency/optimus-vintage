@@ -1,7 +1,7 @@
 /**
  * Expert IA Claude via le SDK officiel `@anthropic-ai/sdk` : image + prompt → sortie structurée
- * (`output_config.format` construit depuis le schéma zod). Modèle par défaut `claude-fable-5-1`
- * (la réflexion y est toujours active : on ne transmet ni `thinking`, ni `temperature`).
+ * (`output_config.format` construit depuis le schéma zod). Modèle par défaut `claude-sonnet-5`
+ * (réflexion adaptative : on ne transmet ni `thinking`, ni `temperature`, seulement `effort`).
  * Le repli côté serveur (`fallbacks: "default"`) rejoue une requête déclinée sur le modèle
  * recommandé par Anthropic ; le modèle réellement servi est celui rapporté dans le brouillon.
  */
@@ -19,7 +19,12 @@ import {
   withTimeout,
 } from "./core.js";
 
-export const DEFAULT_ANTHROPIC_MODEL = "claude-fable-5-1";
+/**
+ * Modèle par défaut : Sonnet 5 (2 $ / 10 $ par million de jetons). Une expertise coûte ainsi
+ * environ 0,02 € ; Fable 5.1 (10 $ / 50 $) reviendrait à plus de 0,10 € pour un gain marginal sur
+ * cette tâche. Réglable par `ANTHROPIC_MODEL`.
+ */
+export const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5";
 export const ANTHROPIC_EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
 export type AnthropicEffort = (typeof ANTHROPIC_EFFORTS)[number];
 export const DEFAULT_ANTHROPIC_EFFORT: AnthropicEffort = "low";
@@ -131,6 +136,7 @@ export class AnthropicAppraiser implements Appraiser {
     return toDraft(parsed, {
       provider: PROVIDER,
       model: response.model,
+      tokens: { input: response.usage.input_tokens, output: response.usage.output_tokens },
       latencyMs: Date.now() - started,
       currency: req.currency,
       wantListingCopy: req.wantListingCopy ?? false,

@@ -37,6 +37,11 @@ interface GeminiResponse {
   }>;
   promptFeedback?: { blockReason?: string };
   modelVersion?: string;
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    thoughtsTokenCount?: number;
+  };
 }
 
 export class GeminiAppraiser implements Appraiser {
@@ -144,9 +149,17 @@ export class GeminiAppraiser implements Appraiser {
     }
 
     const parsed = parseAppraisalOutput(parseJsonLoosely(text, "Gemini"), PROVIDER);
+    const u = json.usageMetadata;
     return toDraft(parsed, {
       provider: PROVIDER,
       model: json.modelVersion ?? this.model,
+      tokens:
+        u?.promptTokenCount === undefined
+          ? null
+          : {
+              input: u.promptTokenCount,
+              output: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0),
+            },
       latencyMs: Date.now() - started,
       currency: req.currency,
       wantListingCopy: req.wantListingCopy ?? false,

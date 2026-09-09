@@ -55,12 +55,12 @@ Sur iPhone : Safari → Partager → « Sur l'écran d'accueil ». Sur Android :
 
 | Plan | Prix | Ce qu'il débloque |
 |---|---|---|
-| Gratuit | 0 € | 50 pièces en stock (une vente libère une place), 3 lots ou palettes par mois, 10 expertises IA par mois, export CSV |
-| Chineur | 6,99 €/mois ou 59 €/an | 500 pièces, sources illimitées, 200 expertises, textes d'annonce, analytique avancée, rapport mensuel |
-| Pro | 14,99 €/mois ou 129 €/an | Stock illimité, 1 000 expertises, export comptable, étiquettes QR |
+| Gratuit | 0 € | 50 pièces en stock (une vente libère une place), 3 lots ou palettes par mois, 10 crédits IA par mois, export CSV |
+| Chineur | 6,99 €/mois ou 59 €/an | 500 pièces, sources illimitées, 100 crédits IA, textes d'annonce prêts à coller, analytique avancée, rapport mensuel |
+| Pro | 14,99 €/mois ou 129 €/an | Stock illimité, 300 crédits IA, export comptable, étiquettes QR |
 | Atelier | liste d'attente | Multi-utilisateurs, API, marque blanche (non vendu tant que non livré) |
 
-Essai de 14 jours sans carte sur les plans payants ; quotas appliqués côté serveur (`402 QUOTA_EXCEEDED`) ; détail dans l'ADR 0007 et `apps/web/src/components/marketing/pricing.ts`.
+Un crédit IA = une expertise photo (texte d'annonce inclus) ; le futur studio photo en coûtera trois. Essai de 14 jours sans carte sur les plans payants ; quotas appliqués côté serveur (`402 QUOTA_EXCEEDED`). Détail dans l'ADR 0007, coûts et projections dans `docs/BUSINESS-PLAN.md`.
 
 ## État de vérification
 

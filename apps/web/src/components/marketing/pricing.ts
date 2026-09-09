@@ -47,7 +47,7 @@ export interface PlanCard {
 const limit = (plan: Plan) => PLAN_LIMITS[plan];
 const price = (plan: Plan) => PLAN_PRICES_EUR[plan];
 const fr = new Intl.NumberFormat("fr-FR");
-/** « 3 lots », « 1 000 expertises IA », « expertises IA illimitées ». */
+/** « 3 lots », « 300 crédits IA », « lots illimités ». */
 const n = (v: number, singular: string, plural: string, unlimited = `${plural} illimitées`) =>
   v === INF ? unlimited : `${fr.format(v)} ${v > 1 ? plural : singular}`;
 
@@ -74,7 +74,7 @@ export const PLANS: readonly PlanCard[] = [
         on: true,
       },
       {
-        label: `${n(limit("FREE").aiAppraisalsPerMonth, "expertise IA", "expertises IA")} par mois`,
+        label: `${n(limit("FREE").aiCreditsPerMonth, "crédit IA", "crédits IA")} par mois : expertise photo, texte d'annonce prêt à coller`,
         on: true,
       },
       { label: "Sources, marge réelle et prix plancher", on: true },
@@ -98,7 +98,7 @@ export const PLANS: readonly PlanCard[] = [
       { label: `${fr.format(limit("PREMIUM").maxItems)} pièces en stock`, on: true, lead: true },
       { label: "Lots et palettes illimités", on: true },
       {
-        label: `${n(limit("PREMIUM").aiAppraisalsPerMonth, "expertise IA", "expertises IA")} par mois`,
+        label: `${n(limit("PREMIUM").aiCreditsPerMonth, "crédit IA", "crédits IA")} par mois : expertise photo, texte d'annonce prêt à coller`,
         on: true,
       },
       { label: "Textes d'annonce par IA (Vinted, Vestiaire, eBay, Leboncoin)", on: true },
@@ -121,7 +121,7 @@ export const PLANS: readonly PlanCard[] = [
       { label: "Pièces en stock illimitées", on: true, lead: true },
       { label: `Tout ${PLAN_NAMES.PREMIUM}`, on: true },
       {
-        label: `${n(limit("PRO").aiAppraisalsPerMonth, "expertise IA", "expertises IA")} par mois`,
+        label: `${n(limit("PRO").aiCreditsPerMonth, "crédit IA", "crédits IA")} par mois : expertise photo, texte d'annonce prêt à coller`,
         on: true,
       },
       { label: "Export comptable : journal des ventes, chiffre d'affaires à déclarer", on: true },

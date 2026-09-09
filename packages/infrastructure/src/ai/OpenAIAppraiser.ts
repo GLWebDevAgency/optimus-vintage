@@ -41,6 +41,7 @@ interface OpenAIResponse {
   error?: { code?: string; message?: string } | null;
   output_text?: string;
   output?: Array<{ type?: string; content?: OpenAIContentPart[] }>;
+  usage?: { input_tokens?: number; output_tokens?: number };
 }
 
 export class OpenAIAppraiser implements Appraiser {
@@ -165,6 +166,10 @@ export class OpenAIAppraiser implements Appraiser {
     return toDraft(parsed, {
       provider: PROVIDER,
       model: json.model ?? this.model,
+      tokens:
+        json.usage?.input_tokens === undefined
+          ? null
+          : { input: json.usage.input_tokens, output: json.usage.output_tokens ?? 0 },
       latencyMs: Date.now() - started,
       currency: req.currency,
       wantListingCopy: req.wantListingCopy ?? false,

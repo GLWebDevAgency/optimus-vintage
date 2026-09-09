@@ -35,6 +35,10 @@ export interface AppraisalDto {
   readonly itemId: ItemId | null;
   readonly provider: string;
   readonly model: string;
+  /** Crédits IA décomptés pour cette expertise. */
+  readonly credits: number;
+  /** Jetons facturés par le fournisseur, `null` si inconnus. */
+  readonly tokens: { readonly input: number; readonly output: number } | null;
   readonly createdAt: string;
   readonly identification: Identification;
   readonly price: PriceEstimateDto;

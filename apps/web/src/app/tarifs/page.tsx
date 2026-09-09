@@ -55,9 +55,9 @@ export default function PricingPage() {
                   ))}
                 </tr>
                 <tr>
-                  <th scope="row">Expertises IA par mois</th>
+                  <th scope="row">Crédits IA par mois (1 par expertise)</th>
                   {PLAN_CODES.map((p) => (
-                    <td key={p}>{inf(PLAN_LIMITS[p].aiAppraisalsPerMonth)}</td>
+                    <td key={p}>{inf(PLAN_LIMITS[p].aiCreditsPerMonth)}</td>
                   ))}
                 </tr>
                 <tr>

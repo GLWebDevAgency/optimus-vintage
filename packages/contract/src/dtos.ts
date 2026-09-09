@@ -244,6 +244,10 @@ export const AppraisalDto = z.object({
   itemId: IdDto.optional(),
   provider: z.string(),
   model: z.string(),
+  /** Crédits IA décomptés du quota mensuel pour cette expertise. */
+  credits: z.number().int().min(0),
+  /** Jetons facturés par le fournisseur (entrée / sortie), `null` si inconnus. */
+  tokens: z.object({ input: z.number().int().min(0), output: z.number().int().min(0) }).nullable(),
   createdAt: IsoDateTimeDto,
   identification: IdentificationDto,
   price: PriceEstimateDto,
@@ -372,7 +376,7 @@ export const WorkspaceOverviewDto = z.object({
   quotas: z.object({
     items: QuotaUsageDto,
     sourcesPerMonth: QuotaUsageDto,
-    aiAppraisalsPerMonth: QuotaUsageDto,
+    aiCreditsPerMonth: QuotaUsageDto,
     members: QuotaUsageDto,
   }),
   features: z.array(FeatureDto),

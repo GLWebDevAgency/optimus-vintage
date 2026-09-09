@@ -14,7 +14,7 @@ import { useErrorMessage } from "../common/ErrorState";
 const QUOTAS: (keyof WorkspaceOverviewDto["quotas"])[] = [
   "items",
   "sourcesPerMonth",
-  "aiAppraisalsPerMonth",
+  "aiCreditsPerMonth",
 ];
 
 type Interval = "monthly" | "yearly";

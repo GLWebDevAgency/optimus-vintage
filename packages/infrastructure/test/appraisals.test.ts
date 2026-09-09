@@ -85,8 +85,8 @@ describe("DrizzleAppraisalRepository", () => {
     };
     await t.repos.appraisals.save(older);
     await t.repos.appraisals.save(newer);
-    expect(await t.repos.appraisals.countSince(w.id, new Date("2026-09-05T00:00:00Z"))).toBe(1);
-    expect(await t.repos.appraisals.countSince(w.id, new Date("2026-08-01T00:00:00Z"))).toBe(2);
+    expect(await t.repos.appraisals.creditsSince(w.id, new Date("2026-09-05T00:00:00Z"))).toBe(1);
+    expect(await t.repos.appraisals.creditsSince(w.id, new Date("2026-08-01T00:00:00Z"))).toBe(2);
     expect((await t.repos.appraisals.latestForItem(w.id, i.id))?.id).toBe(newer.id);
     expect((await t.repos.appraisals.list(w.id)).map((x) => x.id)).toEqual([newer.id, older.id]);
   });

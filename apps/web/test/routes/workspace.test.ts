@@ -33,7 +33,7 @@ describe("espace de travail : /me, /workspace/settings", () => {
     expect(me.workspace.dormantThresholdDays).toBe(30);
     expect(me.user).toMatchObject({ id: app.user.id, email: app.user.email, role: "OWNER" });
     expect(me.quotas.items).toMatchObject({ used: 0, limit: 50, remaining: 50, allowed: true });
-    expect(me.quotas.aiAppraisalsPerMonth.limit).toBe(10);
+    expect(me.quotas.aiCreditsPerMonth.limit).toBe(10);
     expect(me.features).toContain("CSV_EXPORT");
     expect(me.billing).toEqual({
       plan: "FREE",

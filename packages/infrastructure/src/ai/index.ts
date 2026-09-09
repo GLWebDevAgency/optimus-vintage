@@ -19,6 +19,9 @@ import {
 import { AppraiserError, DEFAULT_TIMEOUT_MS, type FetchLike } from "./core.js";
 import { FakeAppraiser } from "./FakeAppraiser.js";
 import { DEFAULT_GEMINI_MODEL, GeminiAppraiser } from "./GeminiAppraiser.js";
+
+export { estimateCostMicroUsd, PRICES_DATED, priceForModel } from "./pricing.js";
+
 import { OpenAIAppraiser } from "./OpenAIAppraiser.js";
 
 export {

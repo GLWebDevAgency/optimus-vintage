@@ -45,12 +45,21 @@ export interface ListingCopy {
   readonly description: string;
   readonly hashtags: readonly string[];
 }
+/** Jetons facturés par le fournisseur pour une action IA (entrée et sortie, réflexion incluse). */
+export interface AiTokenUsage {
+  readonly input: number;
+  readonly output: number;
+}
 export interface Appraisal {
   readonly id: AppraisalId;
   readonly workspaceId: WorkspaceId;
   readonly itemId?: ItemId;
   readonly provider: string;
   readonly model: string;
+  /** Crédits IA décomptés du quota mensuel (`AI_CREDIT_COST.APPRAISAL`). */
+  readonly credits: number;
+  /** Jetons rapportés par le fournisseur ; `null` si inconnu (faux expert, ancien enregistrement). */
+  readonly tokens: AiTokenUsage | null;
   readonly createdAt: Date;
   readonly identification: Identification;
   readonly price: PriceEstimate;

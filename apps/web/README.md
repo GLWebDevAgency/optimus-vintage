@@ -42,7 +42,7 @@ Validées au premier appel par `src/lib/env.ts` (zod). En production, une variab
 | `RESEND_API_KEY`, `MAIL_FROM` | prod | E-mails transactionnels (voir Mail). En production, l'absence de clé est une erreur sauf `CHINE_ALLOW_NO_MAILER=true` (e2e, essai). |
 | `STORAGE_DRIVER`, `R2_*` | — | Photos (voir Photos). |
 | `APPRAISER_DRIVER`, `APPRAISER_TIMEOUT_MS` | — | Expert IA : `auto` (chaîne Claude → Gemini → OpenAI selon les clés présentes), un fournisseur, ou une liste ordonnée `anthropic,gemini`. `fake` n'entre dans la chaîne que s'il est nommé. |
-| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_EFFORT` | — | Claude (défaut `claude-fable-5-1`, effort `low`). |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_EFFORT` | — | Claude (défaut `claude-sonnet-5`, effort `low` ; voir `docs/BUSINESS-PLAN.md` pour le coût par expertise). |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | — | Gemini (défaut `gemini-2.5-flash`). |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | — | OpenAI ; le modèle est obligatoire dès que le fournisseur est activé. |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_<PLAN>_<MONTHLY\|YEARLY>` | — | Facturation (voir Stripe). En production, `STRIPE_WEBHOOK_SECRET` est exigé dès que la clé secrète est définie. |
@@ -87,7 +87,7 @@ Le contrat (`@chine/contract`) est la source unique : chaque handler valide la q
 | `GET/POST /items`, `GET/PATCH/DELETE /items/:id`, `POST /items/:id/status` | Stock. `POST /items` en capture rapide est **idempotent par `clientId`** (201 puis 200 avec la même pièce). `LIST` sur une pièce déjà en ligne clôt l'annonce précédente (reprise de prix, changement de plateforme). Une pièce qui a une vente, même annulée, ne se supprime pas (`409 HAS_SALES`). |
 | `POST /items/:id/photos`, `DELETE /items/:id/photos/:photoId`, `PUT /items/:id/photos/order` | Photos d'une pièce. |
 | `GET/POST /sales`, `GET/PATCH /sales/:id`, `POST /sales/:id/complete`, `POST /sales/:id/cancel`, `POST /sales/:id/refund` | Ventes et leur économie ; une pièce n'a jamais deux ventes en attente (`409`). |
-| `POST /appraisals`, `GET /appraisals/:id` | Expertise IA (quota mensuel selon le plan ; texte d'annonce si le plan inclut `AI_LISTING_COPY`). |
+| `POST /appraisals`, `GET /appraisals/:id` | Expertise IA : un crédit IA par appel (quota mensuel selon le plan), jetons facturés et coût estimé journalisés ; texte d'annonce si le plan inclut `AI_LISTING_COPY`. |
 | `GET /export/items.csv`, `/export/sales.csv`, `/export/sources.csv`, `/export/comptabilite.csv` | Exports CSV (UTF-8 avec BOM, `;`, formules neutralisées). L'export comptable mensuel exige `ACCOUNTING_EXPORT` (Pro). |
 | `POST /uploads`, `PUT /photos/upload/…`, `GET /photos/…` | Photos (voir ci-dessous). |
 | `POST /billing/checkout`, `POST /billing/portal`, `POST /billing/webhook` | Stripe. |
@@ -115,7 +115,7 @@ La CSP autorise `https://*.r2.cloudflarestorage.com` (upload) et l'origine de `R
 
 ## Plans et Stripe
 
-Plans (`@chine/domain`, `billing/plans.ts`) : **Gratuit** (50 pièces en stock, 3 lots ou palettes par mois, 10 expertises IA), **Chineur** 6,99 €/mois ou 59 €/an (500 pièces, sources illimitées, 200 expertises, textes d'annonce, analytique, rapport mensuel), **Pro** 14,99 €/mois ou 129 €/an (stock illimité, 1 000 expertises, export comptable, étiquettes QR), **Atelier** en liste d'attente. Une pièce vendue libère sa place ; au-delà de la limite, la capture est refusée (`402 QUOTA_EXCEEDED` avec `upgradeTo`) et l'écran Chiner affiche le paywall. Tarifs affichés par `components/marketing/pricing.ts`, contrat par ADR 0007.
+Plans (`@chine/domain`, `billing/plans.ts`) : **Gratuit** (50 pièces en stock, 3 lots ou palettes par mois, 10 crédits IA), **Chineur** 6,99 €/mois ou 59 €/an (500 pièces, sources illimitées, 100 crédits IA, textes d'annonce, analytique, rapport mensuel), **Pro** 14,99 €/mois ou 129 €/an (stock illimité, 300 crédits IA, export comptable, étiquettes QR), **Atelier** en liste d'attente. Une pièce vendue libère sa place ; au-delà de la limite, la capture est refusée (`402 QUOTA_EXCEEDED` avec `upgradeTo`) et l'écran Chiner affiche le paywall. Tarifs affichés par `components/marketing/pricing.ts`, contrat par ADR 0007.
 
 1. Créer les produits et prix, puis renseigner `STRIPE_SECRET_KEY` et `STRIPE_PRICE_PREMIUM_MONTHLY`, `STRIPE_PRICE_PREMIUM_YEARLY`, `STRIPE_PRICE_PRO_*` (un prix manquant rend le plan non vendable : `503 BILLING_UNAVAILABLE`). Les plans en liste d'attente sont refusés au checkout.
 2. Déclarer un endpoint webhook `https://chine.app/api/v1/billing/webhook` avec `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, et copier son secret dans `STRIPE_WEBHOOK_SECRET`. La signature est vérifiée sur le corps brut (400 sinon) ; chaque événement n'est traité qu'une fois (`stripe_events`), un événement plus ancien que l'état connu est ignoré, et le webhook est le **seul** propriétaire de `workspaces.plan`, `subscription_status`, `current_period_end`, `cancel_at_period_end`, `trial_ends_at`.
@@ -144,7 +144,7 @@ Plans (`@chine/domain`, `billing/plans.ts`) : **Gratuit** (50 pièces en stock, 
 
 ## Migrations
 
-`packages/infrastructure/drizzle/` : `0002_item_client_id_workspace_prefs.sql` ajoute `items.client_id` (index unique `(workspace_id, client_id)`) et `workspaces.dormant_threshold_days` ; `0003_billing_state_idempotency.sql` ajoute l'état d'abonnement sur `workspaces`, l'unicité de `owner_user_id`, et les tables `stripe_events` et `idempotency_keys`. Postgres : `pnpm db:migrate` (ou `CHINE_AUTO_MIGRATE=true`) ; PGlite migre au démarrage. Les migrations sont additives.
+`packages/infrastructure/drizzle/` : `0002_item_client_id_workspace_prefs.sql` ajoute `items.client_id` (index unique `(workspace_id, client_id)`) et `workspaces.dormant_threshold_days` ; `0003_billing_state_idempotency.sql` ajoute l'état d'abonnement sur `workspaces`, l'unicité de `owner_user_id`, et les tables `stripe_events` et `idempotency_keys` ; `0004_appraisal_credits_tokens.sql` ajoute `credits`, `input_tokens` et `output_tokens` sur `appraisals`. Postgres : `pnpm db:migrate` (ou `CHINE_AUTO_MIGRATE=true`) ; PGlite migre au démarrage. Les migrations sont additives.
 
 ## Structure
 

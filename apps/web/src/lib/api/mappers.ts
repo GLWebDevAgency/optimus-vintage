@@ -332,7 +332,7 @@ export function mapOverview(
     quotas: {
       items: quota(o.usage.items),
       sourcesPerMonth: quota(o.usage.sourcesPerMonth),
-      aiAppraisalsPerMonth: quota(o.usage.aiAppraisalsPerMonth),
+      aiCreditsPerMonth: quota(o.usage.aiCreditsPerMonth),
       members: quota(o.usage.members),
     },
     features: [...o.features],
@@ -392,6 +392,8 @@ export function mapAppraisal(a: App.AppraisalDto, usage?: App.QuotaUsageDto): C.
     },
     listingCopy: a.listingCopy ? { ...a.listingCopy, hashtags: [...a.listingCopy.hashtags] } : null,
     latencyMs: Math.max(0, a.latencyMs),
+    credits: a.credits,
+    tokens: a.tokens,
     quota: usage && usage.limit !== null ? { used: usage.used, limit: usage.limit } : undefined,
   };
 }

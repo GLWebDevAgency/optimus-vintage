@@ -175,7 +175,7 @@ describe("isolation multi-tenant", () => {
 
   it("appraisals : lecture, comptage, latestForItem, liste, réécriture", async () => {
     expect(await t.repos.appraisals.byId(A.ws.id, B.appraisal.id)).toBeUndefined();
-    expect(await t.repos.appraisals.countSince(A.ws.id, new Date(0))).toBe(1);
+    expect(await t.repos.appraisals.creditsSince(A.ws.id, new Date(0))).toBe(1);
     expect(await t.repos.appraisals.latestForItem(A.ws.id, B.item.id)).toBeUndefined();
     expect((await t.repos.appraisals.list(A.ws.id)).map((a) => a.id)).toEqual([A.appraisal.id]);
     await t.repos.appraisals.save({ ...B.appraisal, workspaceId: A.ws.id, provider: "PIRATÉ" });

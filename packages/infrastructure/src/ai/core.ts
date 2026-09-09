@@ -3,7 +3,7 @@
  * conversion vers le domaine et garde-fou de délai. Chaque fournisseur (Anthropic, Gemini,
  * OpenAI) s'appuie sur ce module ; le routeur ne raisonne que sur `AppraiserError`.
  */
-import type { Currency } from "@chine/domain";
+import { AI_CREDIT_COST, type AiTokenUsage, type Currency } from "@chine/domain";
 import type { AppraisalDraft } from "../ports.js";
 import { parseAppraisalBody } from "./appraisal-codec.js";
 import { type AppraisalOutput, AppraisalOutputSchema } from "./schema.js";
@@ -91,12 +91,23 @@ export function toAppraiserError(e: unknown, provider: string): AppraiserError {
 
 // ── Conversion vers le domaine ───────────────────────────────────────────
 
+/** Jetons entiers et positifs ; `null` si le fournisseur n'a rien rapporté d'exploitable. */
+export function normalizeTokens(t: AiTokenUsage | null | undefined): AiTokenUsage | null {
+  if (!t) return null;
+  const input = Number(t.input);
+  const output = Number(t.output);
+  if (!Number.isFinite(input) || !Number.isFinite(output)) return null;
+  return { input: Math.max(0, Math.round(input)), output: Math.max(0, Math.round(output)) };
+}
+
 export interface DraftMeta {
   readonly provider: string;
   /** Modèle réellement servi (peut différer du modèle demandé : repli côté serveur). */
   readonly model: string;
   readonly latencyMs: number;
   readonly currency: Currency;
+  /** Jetons facturés (entrée / sortie) tels que rapportés par le fournisseur ; absent si inconnus. */
+  readonly tokens?: AiTokenUsage | null | undefined;
   /** `false` : l'annonce est ignorée même si le modèle en a produit une. Défaut : conservée. */
   readonly wantListingCopy?: boolean | undefined;
 }
@@ -107,6 +118,8 @@ export function toDraft(parsed: AppraisalOutput, meta: DraftMeta): AppraisalDraf
   return {
     provider: meta.provider,
     model: meta.model,
+    credits: AI_CREDIT_COST.APPRAISAL,
+    tokens: normalizeTokens(meta.tokens),
     latencyMs: Math.max(0, Math.round(meta.latencyMs)),
     ...body,
     listingCopy: meta.wantListingCopy === false ? null : body.listingCopy,

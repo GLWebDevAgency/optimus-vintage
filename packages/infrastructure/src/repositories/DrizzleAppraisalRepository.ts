@@ -9,7 +9,7 @@ import {
   isCurrency,
   type WorkspaceId,
 } from "@chine/domain";
-import { and, count, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, sql, sum } from "drizzle-orm";
 import { parseAppraisalBody, serializeAppraisalBody } from "../ai/appraisal-codec.js";
 import type { DbExecutor } from "../db/client.js";
 import { type AppraisalRow, appraisals } from "../db/schema.js";
@@ -37,6 +37,11 @@ export function appraisalToDomain(row: AppraisalRow): Appraisal {
     itemId: row.itemId === null ? undefined : asItemId(row.itemId),
     provider: row.provider,
     model: row.model,
+    credits: row.credits,
+    tokens:
+      row.inputTokens === null || row.outputTokens === null
+        ? null
+        : { input: row.inputTokens, output: row.outputTokens },
     createdAt: row.createdAt,
     latencyMs: row.latencyMs,
     ...body,
@@ -51,6 +56,9 @@ export function appraisalToRow(a: Appraisal) {
     provider: a.provider,
     model: a.model,
     latencyMs: Math.max(0, Math.round(a.latencyMs)),
+    credits: Math.max(0, Math.round(a.credits)),
+    inputTokens: a.tokens ? Math.max(0, Math.round(a.tokens.input)) : null,
+    outputTokens: a.tokens ? Math.max(0, Math.round(a.tokens.output)) : null,
     payload: serializeAppraisalBody(a),
     createdAt: a.createdAt,
   };
@@ -78,12 +86,12 @@ export class DrizzleAppraisalRepository implements AppraisalRepository {
       });
   }
 
-  async countSince(workspaceId: WorkspaceId, since: Date): Promise<number> {
+  async creditsSince(workspaceId: WorkspaceId, since: Date): Promise<number> {
     const [row] = await this.db
-      .select({ n: count() })
+      .select({ n: sum(appraisals.credits) })
       .from(appraisals)
       .where(and(eq(appraisals.workspaceId, workspaceId), gte(appraisals.createdAt, since)));
-    return row?.n ?? 0;
+    return Number(row?.n ?? 0);
   }
 
   async latestForItem(workspaceId: WorkspaceId, itemId: ItemId): Promise<Appraisal | undefined> {

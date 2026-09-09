@@ -715,6 +715,8 @@ export function fakeAppraisal(s: FakeState) {
       hashtags: ["#lacoste", "#vintage"],
     },
     latencyMs: 1200,
+    credits: 1,
+    tokens: { input: 2600, output: 900 },
     quota: { used: s.appraisals.length + 1, limit: s.workspace.plan === "FREE" ? 10 : 200 },
   };
 }
@@ -738,7 +740,7 @@ export function overview(s: FakeState) {
         used: s.sources.filter((x) => x.kind !== "UNIT").length,
         limit: premium ? null : 3,
       },
-      aiAppraisalsPerMonth: { used: s.appraisals.length, limit: premium ? 200 : 10 },
+      aiCreditsPerMonth: { used: s.appraisals.length, limit: premium ? 100 : 10 },
       members: { used: 1, limit: 1 },
     },
     features: premium
@@ -1133,11 +1135,11 @@ export async function installFakeApi(page: Page, state: FakeState): Promise<Fake
 
     /* Expertise IA */
     if (path === "/appraisals" && method === "POST") {
-      // Plan gratuit : 10 expertises par mois, sans texte d'annonce.
-      const limit = s.workspace.plan === "FREE" ? 10 : 200;
+      // Plan gratuit : 10 crédits IA par mois, sans texte d'annonce.
+      const limit = s.workspace.plan === "FREE" ? 10 : 100;
       if (s.appraisals.length >= limit)
         return error(route, 402, "QUOTA_EXCEEDED", "Quota mensuel d'expertises atteint", {
-          resource: "aiAppraisalsPerMonth",
+          resource: "aiCreditsPerMonth",
           used: s.appraisals.length,
           limit,
           upgradeTo: s.workspace.plan === "FREE" ? "PREMIUM" : "PRO",

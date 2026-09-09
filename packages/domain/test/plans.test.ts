@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  AI_CREDIT_COST,
   checkQuota,
   hasFeature,
   INF,
@@ -25,7 +26,7 @@ describe("Plans et quotas", () => {
 
   it("propose Pro quand Chineur ne suffit plus, jamais Atelier (liste d'attente)", () => {
     expect(checkQuota("PREMIUM", "items", 500).upgradeTo).toBe("PRO");
-    expect(checkQuota("PRO", "aiAppraisalsPerMonth", 1000).upgradeTo).toBeUndefined();
+    expect(checkQuota("PRO", "aiCreditsPerMonth", 300).upgradeTo).toBeUndefined();
     expect(PURCHASABLE_PLANS).toEqual(["PREMIUM", "PRO"]);
   });
 
@@ -40,7 +41,7 @@ describe("Plans et quotas", () => {
 
   it("l'expertise IA existe dès le plan gratuit, avec un quota mensuel", () => {
     expect(hasFeature("FREE", "AI_APPRAISAL")).toBe(true);
-    expect(PLAN_LIMITS.FREE.aiAppraisalsPerMonth).toBe(10);
+    expect(PLAN_LIMITS.FREE.aiCreditsPerMonth).toBe(10);
     expect(hasFeature("FREE", "AI_LISTING_COPY")).toBe(false);
     expect(minimumPlanFor("AI_LISTING_COPY")).toBe("PREMIUM");
     expect(minimumPlanFor("QR_LABELS")).toBe("PRO");
@@ -54,7 +55,7 @@ describe("Plans et quotas", () => {
       const upper = PLAN_LIMITS[PLANS[i] as (typeof PLANS)[number]];
       for (const f of lower.features) expect(upper.features.has(f)).toBe(true);
       expect(upper.maxItems).toBeGreaterThanOrEqual(lower.maxItems);
-      expect(upper.aiAppraisalsPerMonth).toBeGreaterThanOrEqual(lower.aiAppraisalsPerMonth);
+      expect(upper.aiCreditsPerMonth).toBeGreaterThanOrEqual(lower.aiCreditsPerMonth);
     }
   });
 
@@ -73,5 +74,20 @@ describe("Plans et quotas", () => {
     expect(overQuotaBy("FREE", "items", 120)).toBe(70);
     expect(overQuotaBy("FREE", "items", 12)).toBe(0);
     expect(overQuotaBy("PRO", "items", 12_000)).toBe(0);
+  });
+});
+
+describe("crédits IA", () => {
+  it("aucun plan n'offre de crédits illimités : le coût d'inférence est réel", () => {
+    for (const p of PLANS) expect(Number.isFinite(PLAN_LIMITS[p].aiCreditsPerMonth)).toBe(true);
+  });
+
+  it("une action à plusieurs crédits est refusée dès que le solde ne la couvre plus", () => {
+    const cost = AI_CREDIT_COST.PHOTO_STUDIO;
+    expect(cost).toBeGreaterThan(AI_CREDIT_COST.APPRAISAL);
+    expect(checkQuota("FREE", "aiCreditsPerMonth", 10 - cost, cost).allowed).toBe(true);
+    const d = checkQuota("FREE", "aiCreditsPerMonth", 10 - cost + 1, cost);
+    expect(d.allowed).toBe(false);
+    expect(d.upgradeTo).toBe("PREMIUM");
   });
 });

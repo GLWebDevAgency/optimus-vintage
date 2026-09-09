@@ -1,4 +1,5 @@
 import {
+  AI_CREDIT_COST,
   type Appraisal,
   asAppraisalId,
   checkQuota,
@@ -55,8 +56,9 @@ export class AppraiseImage implements UseCase<AppraiseImageCommand, AppraiseImag
       if (!copy.ok) return copy;
     }
     const since = startOfMonth(this.deps.clock.now());
-    const used = await this.deps.appraisals.countSince(ws.value.id, since);
-    const quota = ensureQuota(ws.value.plan, "aiAppraisalsPerMonth", used);
+    const used = await this.deps.appraisals.creditsSince(ws.value.id, since);
+    const cost = AI_CREDIT_COST.APPRAISAL;
+    const quota = ensureQuota(ws.value.plan, "aiCreditsPerMonth", used, cost);
     if (!quota.ok) return quota;
     if (cmd.itemId && !(await this.deps.items.byId(ws.value.id, cmd.itemId)))
       return err(new NotFound("Item", cmd.itemId));
@@ -74,16 +76,17 @@ export class AppraiseImage implements UseCase<AppraiseImageCommand, AppraiseImag
       id: asAppraisalId(this.deps.ids.next()),
       workspaceId: ws.value.id,
       createdAt: this.deps.clock.now(),
+      credits: cost,
       listingCopy: cmd.wantListingCopy ? draft.listingCopy : null,
     };
     return transact(this.deps, async (repos) => {
       await repos.appraisals.save(appraisal);
-      const decision = checkQuota(ws.value.plan, "aiAppraisalsPerMonth", used + 1);
+      const decision = checkQuota(ws.value.plan, "aiCreditsPerMonth", used + cost, cost);
       const limit = Number.isFinite(decision.limit) ? decision.limit : null;
       const usage: QuotaUsageDto = {
-        used: used + 1,
+        used: used + cost,
         limit,
-        remaining: limit === null ? null : Math.max(0, limit - used - 1),
+        remaining: limit === null ? null : Math.max(0, limit - used - cost),
         allowed: decision.allowed,
         upgradeTo: decision.upgradeTo ?? null,
       };

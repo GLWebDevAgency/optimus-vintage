@@ -2,7 +2,7 @@
  * Expert IA de démonstration : déterministe, sans réseau. Renvoie une expertise plausible
  * (survêtement Lacoste vintage) adaptée à la devise, à la langue et aux indices fournis.
  */
-import { CATEGORIES, type Category, Money } from "@chine/domain";
+import { AI_CREDIT_COST, CATEGORIES, type Category, Money } from "@chine/domain";
 import type { AppraisalDraft, AppraisalRequest, Appraiser } from "../ports.js";
 
 const COPY = {
@@ -109,6 +109,8 @@ export class FakeAppraiser implements Appraiser {
     return {
       provider: this.name,
       model: this.model,
+      credits: AI_CREDIT_COST.APPRAISAL,
+      tokens: null,
       latencyMs: this.latencyMs,
       identification: {
         brand,

@@ -55,7 +55,7 @@ L'expert IA est une chaîne de fournisseurs interchangeables, réglée par varia
 ```
 APPRAISER_DRIVER=anthropic,gemini,openai   # ordre d'essai ; `auto` = fournisseurs dont la clé est présente
 APPRAISER_TIMEOUT_MS=45000                 # délai maximal par tentative
-ANTHROPIC_API_KEY=… ANTHROPIC_MODEL=claude-fable-5-1  ANTHROPIC_EFFORT=low   # ou claude-opus-5, claude-sonnet-5
+ANTHROPIC_API_KEY=… ANTHROPIC_MODEL=claude-sonnet-5  ANTHROPIC_EFFORT=low   # ou claude-opus-5, claude-fable-5-1 (bien plus chers)
 GEMINI_API_KEY=…    GEMINI_MODEL=gemini-2.5-flash      # ou toute version plus récente (gemini-3.x-flash)
 OPENAI_API_KEY=…    OPENAI_MODEL=…                      # identifiant exact du modèle vision OpenAI (obligatoire si openai est listé)
 ```

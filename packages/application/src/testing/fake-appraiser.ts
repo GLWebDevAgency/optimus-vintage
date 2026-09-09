@@ -1,4 +1,4 @@
-import { Money } from "@chine/domain";
+import { AI_CREDIT_COST, Money } from "@chine/domain";
 import type { AppraisalDraft, AppraisalRequest, Appraiser } from "../ports/index.js";
 
 /** Expertise déterministe : un survêtement Lacoste des années 90 (60 / 75 / 85, neuf 250). */
@@ -13,6 +13,8 @@ export class FakeAppraiser implements Appraiser {
     return {
       provider: "fake",
       model: "fake-1",
+      credits: AI_CREDIT_COST.APPRAISAL,
+      tokens: null,
       identification: {
         brand,
         brandConfidence: 0.92,

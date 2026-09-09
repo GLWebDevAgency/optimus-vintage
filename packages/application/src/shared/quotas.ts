@@ -19,7 +19,7 @@ export function ensureQuota(
   used: number,
   adding = 1,
 ): Result<void, DomainError> {
-  const decision = checkQuota(plan, resource, used + adding - 1);
+  const decision = checkQuota(plan, resource, used, adding);
   if (decision.allowed) return ok(undefined);
   return err(new QuotaExceeded(resource, used, decision.limit, decision.upgradeTo));
 }

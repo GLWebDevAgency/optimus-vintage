@@ -57,7 +57,7 @@ describe("AppraiseImage", () => {
     ]).toEqual([6000, 7500, 8500]);
     expect(r.appraisal.price.retailNew?.minor).toBe(25000);
     expect(r.appraisal.listingCopy).toBeNull();
-    expect(r.usage).toMatchObject({ used: 1, limit: 200, remaining: 199 });
+    expect(r.usage).toMatchObject({ used: 1, limit: 100, remaining: 99 });
     expect(
       await s.deps.appraisals.byId(s.scope.workspaceId, asAppraisalId(r.appraisal.id)),
     ).toBeDefined();
@@ -80,16 +80,16 @@ describe("AppraiseImage", () => {
   it("applique le quota mensuel d'expertises", async () => {
     const s = await setup({ plan: "PREMIUM" });
     const uc = new AppraiseImage(s.deps);
-    for (let i = 0; i < 200; i++)
+    for (let i = 0; i < 100; i++)
       unwrap(await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }));
     const e = expectErr(
       await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }),
       QuotaExceeded,
     );
     expect(e.details).toMatchObject({
-      resource: "aiAppraisalsPerMonth",
-      used: 200,
-      limit: 200,
+      resource: "aiCreditsPerMonth",
+      used: 100,
+      limit: 100,
       upgradeTo: "PRO",
     });
   });
