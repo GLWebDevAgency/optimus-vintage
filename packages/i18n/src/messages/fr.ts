@@ -165,6 +165,8 @@ export const fr = {
   },
 
   chine: {
+    purchasedAt: "Date d'achat",
+    extraCosts: "Frais annexes",
     title: "Nouvelle pièce",
     modeOffline: "Mode chine · hors ligne",
     modeOnline: "Mode chine",
@@ -236,6 +238,17 @@ export const fr = {
   },
 
   items: {
+    appraise: "Expertiser",
+    reappraise: "Ré-expertiser",
+    appraised: "Expertise enregistrée",
+    noAppraisal: "Pas encore d'expertise IA pour cette pièce.",
+    reprice: "Modifier l'annonce",
+    repriceBody: "Nouveau prix ou nouvelle plateforme : l'annonce précédente est remplacée.",
+    repriced: "Annonce mise à jour",
+    select: "Sélectionner",
+    selectDone: "Terminer",
+    selectedCount: "{count, plural, one{# sélectionnée} other{# sélectionnées}}",
+    bulkDone: "{count, plural, one{# pièce mise à jour} other{# pièces mises à jour}}",
     title: "Stock",
     one: "Pièce",
     many: "Pièces",
@@ -543,6 +556,10 @@ export const fr = {
   },
 
   sales: {
+    editTitle: "Corriger la vente",
+    editBody: "Montants, date, acheteur : la marge est recalculée.",
+    updated: "Vente corrigée",
+    completed: "Vente encaissée",
     title: "Ventes",
     one: "Vente",
     new: "Nouvelle vente",
@@ -699,6 +716,12 @@ export const fr = {
   },
 
   settings: {
+    csvHint:
+      "Tableur (Excel, Numbers, Google Sheets) : séparateur point-virgule, montants en euros.",
+    csvItems: "Pièces",
+    csvSales: "Ventes",
+    csvSources: "Sources",
+    accountingLocked: "Journal comptable (ventes encaissées, totaux mensuels) : formule Pro.",
     title: "Réglages",
     workspace: "Boutique",
     workspaceName: "Nom",
@@ -839,6 +862,55 @@ export const fr = {
     yearlySaving: "−{saving} par an",
     trialNote: "Sans carte bancaire. Sans engagement.",
     checkoutCanceled: "Paiement annulé : rien n'a changé.",
+  },
+
+  analytics: {
+    title: "Analytique",
+    lockedBody:
+      "Taux d'écoulement, délai de vente, meilleures plateformes et sources : avec la formule Chineur.",
+    sellThrough: "Écoulement",
+    avgDays: "Délai moyen",
+    medianDays: "Délai médian",
+    days: "{count} j",
+    topPlatforms: "Meilleures plateformes",
+    topSources: "Meilleures sources",
+    topBrands: "Meilleures marques",
+    marginRateShort: "de marge",
+    empty: "Pas encore assez de ventes sur la période pour dégager une tendance.",
+  },
+
+  listingCopy: {
+    title: "Texte d'annonce",
+    lockedBody:
+      "Titre, description et hashtags rédigés par l'IA, prêts à coller sur Vinted ou Vestiaire : avec la formule Chineur.",
+    copy: "Copier",
+    copied: "{what} copié",
+    copyFailed: "Impossible de copier : sélectionne le texte à la main.",
+    titleWord: "Titre",
+    descriptionWord: "Description",
+    copyDescription: "Copier la description",
+    chars: "{count} caractères",
+  },
+
+  report: {
+    title: "Rapport mensuel",
+    hint: "Chiffres du mois, plateformes, journal des ventes, imprimable en PDF.",
+    lockedBody: "Rapport mensuel imprimable (PDF) avec la formule Chineur.",
+    month: "Mois",
+    print: "Imprimer / PDF",
+    salesJournal: "Journal des ventes",
+    footer: "Généré par Chiné le {date}.",
+  },
+
+  labels: {
+    title: "Étiquettes QR",
+    hint: "Planche imprimable : SKU, titre, prix, QR vers la fiche.",
+    lockedBody: "Étiquettes QR imprimables avec la formule Pro.",
+    kicker: "{count, plural, =0{aucune sélection} one{# étiquette} other{# étiquettes}}",
+    selectAll: "Tout",
+    selectNone: "Aucune",
+    print: "Imprimer",
+    emptyBody: "Ajoute des pièces en stock pour imprimer leurs étiquettes.",
   },
 
   errors: {

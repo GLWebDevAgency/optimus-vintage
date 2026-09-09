@@ -1,17 +1,26 @@
 "use client";
 
 import type { ItemDto, Platform } from "@chine/contract";
-import { ChipGroup, Receipt, SectionHeader, StatusPill } from "@chine/ui";
+import {
+  AppIcon,
+  Button,
+  ChipGroup,
+  Receipt,
+  SectionHeader,
+  StatusPill,
+  useToast,
+} from "@chine/ui";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PageSkeleton } from "@/components/shell/PageSkeleton";
 import { Screen } from "@/components/shell/Screen";
 import { TopBar } from "@/components/shell/TopBar";
-import { type ItemWithSync, useAppraisal, useItem, useWorkspace } from "@/hooks/api";
+import { type ItemWithSync, useAppraisal, useAppraise, useItem, useWorkspace } from "@/hooks/api";
 import { effectiveSchedules, simulateAcross } from "@/hooks/economics";
 import { useFormat, useLocale, useT } from "@/hooks/i18n";
 import { usePendingPath } from "@/hooks/offline";
-import { ErrorState } from "../common/ErrorState";
+import { ErrorState, useErrorMessage } from "../common/ErrorState";
+import { ListingCopyCard } from "../common/ListingCopyCard";
 import { itemPill, label, MAIN_PLATFORMS } from "../common/labels";
 import { FlipTag } from "./FlipTag";
 import { ItemActions } from "./ItemActions";
@@ -63,7 +72,40 @@ function ItemBody({ item, pendingSync }: { item: ItemDto; pendingSync: boolean }
   const { locale } = useLocale();
   const workspace = useWorkspace();
   const appraisal = useAppraisal(item.latestAppraisalId);
+  const appraise = useAppraise();
+  const { show } = useToast();
+  const describe = useErrorMessage();
   const pill = itemPill(t, item.status, item.isDormant);
+  const features = workspace.data?.features ?? [];
+  const canAppraise = features.includes("AI_APPRAISAL") && item.photoUrls.length > 0;
+  const wantCopy = features.includes("AI_LISTING_COPY");
+
+  /** Expertise depuis la première photo de la fiche (pièces créées sans passer par « Chiner »). */
+  const runAppraisal = async () => {
+    const url = item.photoUrls[0];
+    if (!url) return;
+    try {
+      const blob = await (await fetch(url)).blob();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      const mimeType = (
+        blob.type === "image/png" || blob.type === "image/webp" ? blob.type : "image/jpeg"
+      ) as "image/jpeg" | "image/png" | "image/webp";
+      await appraise.mutateAsync({
+        imageBase64: base64,
+        mimeType,
+        itemId: item.id,
+        wantListingCopy: wantCopy,
+      });
+      show(t("items.appraised"), { kind: "success" });
+    } catch (e) {
+      show(describe(e), { kind: "error" });
+    }
+  };
   const [platform, setPlatform] = useState<Platform>(item.activeListings[0]?.platform ?? "VINTED");
 
   const aiRange = appraisal.data
@@ -185,6 +227,39 @@ function ItemBody({ item, pendingSync }: { item: ItemDto; pendingSync: boolean }
             </Link>
           </p>
         )}
+      </div>
+
+      <div className="grid gap-2.5 enter d4">
+        <div className="flex items-center justify-between gap-2">
+          <SectionHeader title={t("appraisal.title")} as="h3" />
+          {canAppraise ? (
+            <Button
+              size="sm"
+              variant="subtle"
+              onClick={() => void runAppraisal()}
+              loading={appraise.isPending}
+              leading={<AppIcon name="sparkle" size={14} />}
+              data-testid="item-appraise"
+            >
+              {appraisal.data ? t("items.reappraise") : t("items.appraise")}
+            </Button>
+          ) : null}
+        </div>
+        {appraisal.data ? (
+          <p className="text-[13px] text-ink-2">
+            {[
+              appraisal.data.identification.brand,
+              label.condition(t, appraisal.data.identification.condition),
+              aiRange,
+              t(`appraisal.adviceLabel.${appraisal.data.advice.action}` as never),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        ) : (
+          <p className="text-[13px] text-ink-3">{t("items.noAppraisal")}</p>
+        )}
+        <ListingCopyCard copy={appraisal.data?.listingCopy} locked={!wantCopy} compact />
       </div>
 
       <div className="grid gap-2.5 enter d5">

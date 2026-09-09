@@ -12,6 +12,7 @@ import {
   type AppraiseImageCommand,
   type CancelSaleCommand,
   type ChangeItemStatusCommand,
+  type CompleteSaleCommand,
   type CreatePurchaseSourceCommand,
   createApiClient,
   type DashboardDto,
@@ -127,6 +128,14 @@ export function useDashboard(period: DashboardPeriod) {
   return useQuery({
     queryKey: keys.dashboard(period),
     queryFn: ({ signal }) => api.getDashboard({ query: { period }, signal }),
+  });
+}
+
+/** Synthèse d'un intervalle explicite (rapport mensuel). */
+export function useDashboardRange(from: string, to: string) {
+  return useQuery({
+    queryKey: ["dashboard", "range", from, to] as const,
+    queryFn: ({ signal }) => api.getDashboard({ query: { period: "month", from, to }, signal }),
   });
 }
 
@@ -677,6 +686,26 @@ export function useUpdateSale(id: string) {
     mutationFn: (body: UpdateSaleCommand) => api.updateSale({ params: { id }, body }),
     onSuccess: (sale) => qc.setQueryData(keys.sale(id), sale),
     onSettled: () => invalidate(qc, keys.sale(id), keys.saleLists, keys.dashboards, keys.workspace),
+  });
+}
+
+/** Encaisser une vente en attente. */
+export function useCompleteSale(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CompleteSaleCommand = {}) => api.completeSale({ params: { id }, body }),
+    onSuccess: (sale) => qc.setQueryData(keys.sale(id), sale),
+    onSettled: (sale) =>
+      invalidate(
+        qc,
+        keys.sale(id),
+        keys.saleLists,
+        keys.itemLists,
+        keys.dashboards,
+        keys.sourceLists,
+        keys.workspace,
+        ...(sale ? [keys.item(sale.itemId)] : []),
+      ),
   });
 }
 

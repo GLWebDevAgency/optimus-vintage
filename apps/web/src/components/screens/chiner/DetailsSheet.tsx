@@ -20,6 +20,10 @@ export interface CaptureDetails {
   retailPriceMinor: number | null;
   targetPriceMinor: number | null;
   notes: string;
+  /** Date d'achat (AAAA-MM-JJ) ; vide = aujourd'hui. */
+  purchasedAt: string;
+  /** Frais annexes de cet achat (entrée, essence, port), en centimes. */
+  extraCostsMinor: number | null;
 }
 
 export const EMPTY_DETAILS: CaptureDetails = {
@@ -31,6 +35,8 @@ export const EMPTY_DETAILS: CaptureDetails = {
   retailPriceMinor: null,
   targetPriceMinor: null,
   notes: "",
+  purchasedAt: "",
+  extraCostsMinor: null,
 };
 
 /** Nombre de champs renseignés (pour le compteur du bouton « Détails »). */
@@ -38,7 +44,9 @@ export const filledDetails = (d: CaptureDetails): number =>
   [d.title, d.brand, d.category, d.size, d.condition, d.notes].filter((v) => v.trim() !== "")
     .length +
   (d.retailPriceMinor ? 1 : 0) +
-  (d.targetPriceMinor ? 1 : 0);
+  (d.targetPriceMinor ? 1 : 0) +
+  (d.purchasedAt ? 1 : 0) +
+  (d.extraCostsMinor ? 1 : 0);
 
 interface DetailsSheetProps {
   readonly open: boolean;
@@ -122,6 +130,24 @@ export function DetailsSheet({ open, onClose, value, onChange, currency }: Detai
             <MoneyInput
               valueMinor={value.targetPriceMinor}
               onChangeMinor={(m) => set("targetPriceMinor", m)}
+              currency={currency}
+            />
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t("chine.purchasedAt")}>
+            <TextInput
+              type="date"
+              value={value.purchasedAt}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => set("purchasedAt", e.target.value)}
+              data-testid="details-purchased-at"
+            />
+          </Field>
+          <Field label={t("chine.extraCosts")} trailing={t("common.optional")}>
+            <MoneyInput
+              valueMinor={value.extraCostsMinor}
+              onChangeMinor={(m) => set("extraCostsMinor", m)}
               currency={currency}
             />
           </Field>

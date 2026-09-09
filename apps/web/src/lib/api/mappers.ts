@@ -222,9 +222,20 @@ export function mapDashboard(
   d: App.DashboardDto,
   lastSales: readonly C.SaleDto[],
   label: string,
+  withAnalytics = false,
 ): C.DashboardDto {
   return {
     period: { from: d.period.from, to: d.period.to, label },
+    analytics: withAnalytics
+      ? {
+          sellThroughRate: d.analytics.sellThroughRate,
+          averageDaysToSell: d.analytics.averageDaysToSell,
+          medianDaysToSell: d.analytics.medianDaysToSell,
+          topPlatforms: d.analytics.topPlatforms.map((p) => ({ ...p })),
+          topSources: d.analytics.topSources.map((s) => ({ ...s })),
+          topBrands: d.analytics.topBrands.map((b) => ({ ...b })),
+        }
+      : null,
     current: mapPeriodStats(d.current),
     previous: mapPeriodStats(d.previous),
     change: {

@@ -1,6 +1,6 @@
 import { GetDashboard } from "@chine/application";
 import { type DashboardPeriod, routes } from "@chine/contract";
-import { asWorkspaceId, type IsoDate, toIsoDate } from "@chine/domain";
+import { asWorkspaceId, hasFeature, type IsoDate, toIsoDate } from "@chine/domain";
 import { attachItemSummaries, mapContextFor, scopeOf } from "@/lib/api/loaders";
 import { mapDashboard } from "@/lib/api/mappers";
 import { parseQuery, sendResult } from "@/lib/api/route";
@@ -59,7 +59,10 @@ export const GET = withAuth(async (req, ctx) => {
     deps.workspaces.byId(workspaceId),
   ]);
   const now = deps.clock.now();
-  const bounds = boundsFor(query.period, now, workspace?.createdAt ?? now);
+  const bounds =
+    query.from && query.to
+      ? { from: query.from as IsoDate, to: query.to as IsoDate }
+      : boundsFor(query.period, now, workspace?.createdAt ?? now);
   const result = await new GetDashboard(deps).execute({
     ...scopeOf(ctx),
     ...bounds,
@@ -74,7 +77,9 @@ export const GET = withAuth(async (req, ctx) => {
       mapDashboard(
         d,
         await attachItemSummaries(deps, workspaceId, d.lastSales, mapCtx),
-        LABELS[query.period],
+        query.from && query.to ? `${query.from} → ${query.to}` : LABELS[query.period],
+        // L'analytique avancée est une fonctionnalité de formule : absente du contrat sinon.
+        workspace && hasFeature(workspace.plan, "ADVANCED_ANALYTICS"),
       ),
   });
 });

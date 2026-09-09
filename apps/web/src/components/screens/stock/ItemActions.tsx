@@ -61,21 +61,32 @@ export function ItemActions({ item }: { item: ItemDto }) {
           price: { minor: priceMinor ?? 0, currency },
           ...(url.trim() ? { url: url.trim() } : {}),
         }),
-      t("items.listed"),
+      item.status === "LISTED" ? t("items.repriced") : t("items.listed"),
     );
 
   return (
     <>
       <div className="flex flex-wrap gap-2 enter d5">
         {item.status === "LISTED" ? (
-          <Button
-            size="sm"
-            variant="subtle"
-            onClick={() => setOpen("unlist")}
-            leading={<AppIcon name="cloudOff" size={14} />}
-          >
-            {t("items.unlist")}
-          </Button>
+          <>
+            <Button
+              size="sm"
+              variant="subtle"
+              onClick={() => setOpen("list")}
+              leading={<AppIcon name="euro" size={14} />}
+              data-testid="item-reprice"
+            >
+              {t("items.reprice")}
+            </Button>
+            <Button
+              size="sm"
+              variant="subtle"
+              onClick={() => setOpen("unlist")}
+              leading={<AppIcon name="cloudOff" size={14} />}
+            >
+              {t("items.unlist")}
+            </Button>
+          </>
         ) : null}
         {item.status === "IN_STOCK" || item.status === "LISTED" ? (
           <Button
@@ -147,8 +158,8 @@ export function ItemActions({ item }: { item: ItemDto }) {
       <Sheet
         open={open === "list"}
         onClose={() => setOpen(null)}
-        title={t("items.listSheetTitle")}
-        description={t("items.listSheetBody")}
+        title={item.status === "LISTED" ? t("items.reprice") : t("items.listSheetTitle")}
+        description={item.status === "LISTED" ? t("items.repriceBody") : t("items.listSheetBody")}
         footer={
           <BigButton
             onClick={() => void publish()}

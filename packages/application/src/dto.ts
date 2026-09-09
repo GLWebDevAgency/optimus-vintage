@@ -231,6 +231,31 @@ export interface GoalProgressDto {
   readonly progress: number;
 }
 
+/** Analytique de période (plan Chineur+) : écoulement, délais, meilleures plateformes/sources/marques. */
+export interface AnalyticsDto {
+  /** Ventes de la période / (ventes + pièces encore en stock) ; null sans donnée. */
+  readonly sellThroughRate: number | null;
+  readonly averageDaysToSell: number | null;
+  readonly medianDaysToSell: number | null;
+  readonly topPlatforms: ReadonlyArray<{
+    readonly platform: Platform;
+    readonly count: number;
+    readonly margin: MoneyDto;
+    readonly marginRate: number | null;
+  }>;
+  readonly topSources: ReadonlyArray<{
+    readonly sourceId: SourceId;
+    readonly name: string;
+    readonly count: number;
+    readonly margin: MoneyDto;
+  }>;
+  readonly topBrands: ReadonlyArray<{
+    readonly brand: string;
+    readonly count: number;
+    readonly margin: MoneyDto;
+  }>;
+}
+
 export interface DashboardDto {
   readonly period: { readonly from: IsoDate; readonly to: IsoDate };
   readonly current: PeriodReportDto;
@@ -249,6 +274,7 @@ export interface DashboardDto {
   /** Objectif mensuel de marge, si un `goalMinor` a été fourni. */
   readonly goal: GoalProgressDto | null;
   readonly lastSales: readonly SaleListEntryDto[];
+  readonly analytics: AnalyticsDto;
 }
 
 export interface QuotaUsageDto {

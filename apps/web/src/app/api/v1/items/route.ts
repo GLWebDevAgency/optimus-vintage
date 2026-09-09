@@ -104,6 +104,7 @@ const quickCaptureCommand = (
   ...scope,
   quickCapture: {
     pricePaid: c.pricePaid,
+    extraCosts: c.extraCosts,
     supplierKind: c.supplierKind,
     location: locationFrom(c),
     purchasedAt: isoDateOpt(c.purchasedAt, "purchasedAt"),

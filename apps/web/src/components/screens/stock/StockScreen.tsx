@@ -11,7 +11,9 @@ import {
   Select,
   SkeletonRow,
   TextInput,
+  useToast,
 } from "@chine/ui";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -19,7 +21,7 @@ import { Screen } from "@/components/shell/Screen";
 import { TopBar } from "@/components/shell/TopBar";
 import { IconPlus } from "@/components/ui/Icons";
 import { NextLink } from "@/components/ui/NextLink";
-import { type ItemsFilter, useItems } from "@/hooks/api";
+import { api, type ItemsFilter, keys, useItems } from "@/hooks/api";
 import { useT } from "@/hooks/i18n";
 import { useOutboxEntries, usePendingCaptures } from "@/hooks/offline";
 import { ErrorState } from "../common/ErrorState";
@@ -70,6 +72,43 @@ export function StockScreen() {
   const query = useItems(apiFilter);
   const pending = usePendingCaptures();
   const outbox = useOutboxEntries();
+  const qc = useQueryClient();
+  const { show } = useToast();
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+  const toggleSelected = (id: string) =>
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  /** Actions groupées : une requête par pièce (idempotentes), puis rafraîchissement des listes. */
+  const bulk = async (label: string, fn: (id: string) => Promise<unknown>) => {
+    if (selected.size === 0) return;
+    setBusy(true);
+    let done = 0;
+    for (const id of selected) {
+      try {
+        await fn(id);
+        done += 1;
+      } catch {
+        // Une pièce refusée (déjà vendue, déjà sortie) n'empêche pas les autres.
+      }
+    }
+    setBusy(false);
+    setSelected(new Set());
+    setSelecting(false);
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: keys.itemLists }),
+      qc.invalidateQueries({ queryKey: keys.dashboards }),
+      qc.invalidateQueries({ queryKey: keys.workspace }),
+    ]);
+    show(`${label} · ${t("items.bulkDone", { count: done })}`, {
+      kind: done > 0 ? "success" : "error",
+    });
+  };
   const pendingStatusIds = useMemo(
     () =>
       new Set(
@@ -140,7 +179,21 @@ export function StockScreen() {
           ]}
         />
         <div className="flex items-center justify-between gap-3 enter d2">
-          <span className="label">{t("items.sortLabel")}</span>
+          <div className="flex items-center gap-2">
+            <span className="label">{t("items.sortLabel")}</span>
+            <button
+              type="button"
+              className="chip !min-h-[30px] !text-[12px]"
+              aria-pressed={selecting}
+              onClick={() => {
+                setSelecting((v) => !v);
+                setSelected(new Set());
+              }}
+              data-testid="stock-select-toggle"
+            >
+              {selecting ? t("items.selectDone") : t("items.select")}
+            </button>
+          </div>
           <Select
             value={sort}
             onChange={setSort}
@@ -208,10 +261,89 @@ export function StockScreen() {
         ) : (
           <div className="enter d3 grid gap-3" data-testid="stock-list">
             <List>
-              {items.map((it) => (
-                <ItemRow key={it.id} item={it} pendingSync={pendingStatusIds.has(it.id)} />
-              ))}
+              {items.map((it) =>
+                selecting ? (
+                  <label
+                    key={it.id}
+                    className="flex items-center gap-2 pl-2"
+                    data-testid="stock-select-row"
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 shrink-0 accent-ink"
+                      checked={selected.has(it.id)}
+                      onChange={() => toggleSelected(it.id)}
+                      aria-label={it.title}
+                    />
+                    <div className="min-w-0 flex-1 pointer-events-none">
+                      <ItemRow item={it} pendingSync={pendingStatusIds.has(it.id)} />
+                    </div>
+                  </label>
+                ) : (
+                  <ItemRow key={it.id} item={it} pendingSync={pendingStatusIds.has(it.id)} />
+                ),
+              )}
             </List>
+            {selecting ? (
+              <div
+                className="sticky bottom-[calc(var(--tabbar-h,64px)+8px)] z-10 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface p-2 shadow-tag"
+                data-testid="bulk-bar"
+              >
+                <span className="label px-1">
+                  {t("items.selectedCount", { count: selected.size })}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy || selected.size === 0}
+                  onClick={() =>
+                    void bulk(t("items.reserve"), (id) =>
+                      api.changeItemStatus({ params: { id }, body: { action: "reserve" } }),
+                    )
+                  }
+                >
+                  {t("items.reserve")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy || selected.size === 0}
+                  onClick={() =>
+                    void bulk(t("items.restock"), (id) =>
+                      api.changeItemStatus({ params: { id }, body: { action: "restock" } }),
+                    )
+                  }
+                >
+                  {t("items.restock")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy || selected.size === 0}
+                  onClick={() =>
+                    void bulk(t("items.writeOff"), (id) =>
+                      api.changeItemStatus({
+                        params: { id },
+                        body: { action: "writeOff", reason: "LOST" },
+                      }),
+                    )
+                  }
+                >
+                  {t("items.writeOff")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="!text-thread"
+                  disabled={busy || selected.size === 0}
+                  onClick={() =>
+                    void bulk(t("common.delete"), (id) => api.deleteItem({ params: { id } }))
+                  }
+                >
+                  {t("common.delete")}
+                </Button>
+              </div>
+            ) : null}
             <LoadMore
               shown={items.length}
               total={total}

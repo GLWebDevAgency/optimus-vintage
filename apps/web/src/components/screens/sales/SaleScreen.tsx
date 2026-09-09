@@ -3,9 +3,12 @@
 import type { SaleDto } from "@chine/contract";
 import {
   AppIcon,
+  BigButton,
   Button,
   Field,
+  MoneyInput,
   Receipt,
+  Sheet,
   SnapToggle,
   Stamp,
   StatusPill,
@@ -18,7 +21,7 @@ import { useState } from "react";
 import { PageSkeleton } from "@/components/shell/PageSkeleton";
 import { Screen } from "@/components/shell/Screen";
 import { TopBar } from "@/components/shell/TopBar";
-import { useCancelSale, useRefundSale, useSale } from "@/hooks/api";
+import { useCancelSale, useCompleteSale, useRefundSale, useSale, useUpdateSale } from "@/hooks/api";
 import { useFormat, useLocale, useT } from "@/hooks/i18n";
 import { usePendingPath } from "@/hooks/offline";
 import { ConfirmSheet } from "../common/ConfirmSheet";
@@ -75,10 +78,38 @@ function SaleBody({ sale }: { sale: SaleDto }) {
   const describe = useErrorMessage();
   const cancel = useCancelSale(sale.id);
   const refund = useRefundSale(sale.id);
+  const complete = useCompleteSale(sale.id);
+  const update = useUpdateSale(sale.id);
   const pending = usePendingPath(`/sales/${encodeURIComponent(sale.id)}/`);
-  const [open, setOpen] = useState<null | "cancel" | "refund">(null);
+  const [open, setOpen] = useState<null | "cancel" | "refund" | "edit">(null);
   const [reason, setReason] = useState("");
   const [restock, setRestock] = useState(true);
+  const [draft, setDraft] = useState({
+    grossMinor: sale.grossPrice.minor as number | null,
+    feesMinor: sale.platformFees.minor as number | null,
+    shippingMinor: sale.shippingCost.minor as number | null,
+    packagingMinor: sale.packagingCost.minor as number | null,
+    otherMinor: sale.otherCosts.minor as number | null,
+    soldAt: sale.soldAt,
+    buyer: sale.buyer ?? "",
+    notes: sale.notes ?? "",
+  });
+  const currency = sale.grossPrice.currency;
+  const saveEdit = () =>
+    run(
+      () =>
+        update.mutateAsync({
+          grossPrice: { minor: draft.grossMinor ?? 0, currency },
+          platformFees: { minor: draft.feesMinor ?? 0, currency },
+          shippingCost: { minor: draft.shippingMinor ?? 0, currency },
+          packagingCost: { minor: draft.packagingMinor ?? 0, currency },
+          otherCosts: { minor: draft.otherMinor ?? 0, currency },
+          soldAt: draft.soldAt,
+          buyer: draft.buyer.trim() || null,
+          notes: draft.notes.trim() || null,
+        }),
+      t("sales.updated"),
+    );
   const eco = sale.economics;
   const neg = (m: { minor: number; currency: string }) => ({
     minor: -Math.abs(m.minor),
@@ -196,6 +227,28 @@ function SaleBody({ sale }: { sale: SaleDto }) {
           {t("sales.viewItem")}
         </Button>
         {active ? (
+          <Button
+            size="sm"
+            variant="subtle"
+            onClick={() => setOpen("edit")}
+            leading={<AppIcon name="edit" size={14} />}
+            data-testid="sale-edit"
+          >
+            {t("common.edit")}
+          </Button>
+        ) : null}
+        {sale.status === "PENDING" ? (
+          <Button
+            size="sm"
+            onClick={() => void run(() => complete.mutateAsync({}), t("sales.completed"))}
+            loading={complete.isPending}
+            leading={<AppIcon name="check" size={14} />}
+            data-testid="sale-complete"
+          >
+            {t("sales.complete")}
+          </Button>
+        ) : null}
+        {active ? (
           <Button size="sm" variant="subtle" onClick={() => setOpen("cancel")}>
             {t("sales.cancel")}
           </Button>
@@ -211,6 +264,84 @@ function SaleBody({ sale }: { sale: SaleDto }) {
           </Button>
         ) : null}
       </div>
+
+      <Sheet
+        open={open === "edit"}
+        onClose={() => setOpen(null)}
+        title={t("sales.editTitle")}
+        description={t("sales.editBody")}
+        footer={
+          <BigButton
+            onClick={() => void saveEdit()}
+            loading={update.isPending}
+            data-testid="sale-edit-save"
+          >
+            {t("common.save")}
+          </BigButton>
+        }
+      >
+        <div className="grid gap-4 py-1">
+          <Field label={t("sales.grossPrice")}>
+            <MoneyInput
+              valueMinor={draft.grossMinor}
+              onChangeMinor={(m) => setDraft((d) => ({ ...d, grossMinor: m }))}
+              currency={currency}
+              data-autofocus
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("sales.platformFees", { platform: label.platform(t, sale.platform) })}>
+              <MoneyInput
+                valueMinor={draft.feesMinor}
+                onChangeMinor={(m) => setDraft((d) => ({ ...d, feesMinor: m }))}
+                currency={currency}
+              />
+            </Field>
+            <Field label={t("sales.shipping")}>
+              <MoneyInput
+                valueMinor={draft.shippingMinor}
+                onChangeMinor={(m) => setDraft((d) => ({ ...d, shippingMinor: m }))}
+                currency={currency}
+              />
+            </Field>
+            <Field label={t("sales.packaging")}>
+              <MoneyInput
+                valueMinor={draft.packagingMinor}
+                onChangeMinor={(m) => setDraft((d) => ({ ...d, packagingMinor: m }))}
+                currency={currency}
+              />
+            </Field>
+            <Field label={t("sales.otherCosts")}>
+              <MoneyInput
+                valueMinor={draft.otherMinor}
+                onChangeMinor={(m) => setDraft((d) => ({ ...d, otherMinor: m }))}
+                currency={currency}
+              />
+            </Field>
+          </div>
+          <Field label={t("common.date")}>
+            <TextInput
+              type="date"
+              value={draft.soldAt}
+              onChange={(e) => setDraft((d) => ({ ...d, soldAt: e.target.value }))}
+            />
+          </Field>
+          <Field label={t("sales.buyer")} trailing={t("common.optional")}>
+            <TextInput
+              value={draft.buyer}
+              onChange={(e) => setDraft((d) => ({ ...d, buyer: e.target.value }))}
+              maxLength={120}
+            />
+          </Field>
+          <Field label={t("common.notes")} trailing={t("common.optional")}>
+            <TextInput
+              value={draft.notes}
+              onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}
+              maxLength={2000}
+            />
+          </Field>
+        </div>
+      </Sheet>
 
       <ConfirmSheet
         open={open === "cancel"}

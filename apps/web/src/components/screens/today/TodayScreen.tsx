@@ -27,6 +27,7 @@ import { useFormat, useLocale, useT } from "@/hooks/i18n";
 import { usePendingCaptures } from "@/hooks/offline";
 import { ErrorState } from "../common/ErrorState";
 import { label, periodLabel } from "../common/labels";
+import { AnalyticsCard } from "./AnalyticsCard";
 import { GoalSheet } from "./GoalSheet";
 
 const PERIODS: readonly DashboardPeriod[] = ["month", "30d", "3m", "year"];
@@ -106,17 +107,25 @@ export function TodayScreen() {
               />
             </div>
           ) : (
-            <DashboardBody
-              data={dashboard.data}
-              period={period}
-              locale={locale}
-              intl={intl}
-              pendingCount={pending.length}
-              fmtMoney={fmt.money}
-              fmtRelative={fmt.relative}
-              onEditGoal={() => setGoalOpen(true)}
-              onTag={(status) => router.push(`/app/stock?filter=${status}`)}
-            />
+            <>
+              <DashboardBody
+                data={dashboard.data}
+                period={period}
+                locale={locale}
+                intl={intl}
+                pendingCount={pending.length}
+                fmtMoney={fmt.money}
+                fmtRelative={fmt.relative}
+                onEditGoal={() => setGoalOpen(true)}
+                onTag={(status) => router.push(`/app/stock?filter=${status}`)}
+              />
+              <div className="enter d6">
+                <AnalyticsCard
+                  analytics={dashboard.data.analytics}
+                  locked={!(workspace.data?.features.includes("ADVANCED_ANALYTICS") ?? false)}
+                />
+              </div>
+            </>
           )
         ) : null}
       </Screen>

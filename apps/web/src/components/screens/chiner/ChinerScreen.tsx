@@ -149,8 +149,11 @@ export function ChinerScreen() {
       mode: "quickCapture",
       clientId,
       pricePaid: { minor: priceMinor, currency },
+      ...(details.extraCostsMinor
+        ? { extraCosts: { minor: details.extraCostsMinor, currency } }
+        : {}),
       supplierKind,
-      purchasedAt: isoDay(),
+      purchasedAt: /^\d{4}-\d{2}-\d{2}$/.test(details.purchasedAt) ? details.purchasedAt : isoDay(),
       ...(locationLabel.trim() ? { locationLabel: locationLabel.trim() } : {}),
       ...(geo.status === "ok" && geo.lat !== undefined && geo.lng !== undefined
         ? { lat: geo.lat, lng: geo.lng }

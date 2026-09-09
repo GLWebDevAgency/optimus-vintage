@@ -280,6 +280,25 @@ export const PeriodStatsDto = z.object({
 });
 export type PeriodStatsDto = z.infer<typeof PeriodStatsDto>;
 
+export const AnalyticsDto = z.object({
+  sellThroughRate: z.number().min(0).max(1).nullable(),
+  averageDaysToSell: z.number().min(0).nullable(),
+  medianDaysToSell: z.number().min(0).nullable(),
+  topPlatforms: z.array(
+    z.object({
+      platform: PlatformDto,
+      count: z.number().int(),
+      margin: MoneyDto,
+      marginRate: z.number().nullable(),
+    }),
+  ),
+  topSources: z.array(
+    z.object({ sourceId: IdDto, name: z.string(), count: z.number().int(), margin: MoneyDto }),
+  ),
+  topBrands: z.array(z.object({ brand: z.string(), count: z.number().int(), margin: MoneyDto })),
+});
+export type AnalyticsDto = z.infer<typeof AnalyticsDto>;
+
 export const DashboardDto = z.object({
   period: z.object({ from: IsoDateDto, to: IsoDateDto, label: z.string().optional() }),
   current: PeriodStatsDto,
@@ -306,6 +325,8 @@ export const DashboardDto = z.object({
       progress: z.number().min(0),
     })
     .optional(),
+  /** Analytique avancée ; `null` quand le plan ne l'inclut pas. */
+  analytics: AnalyticsDto.nullable().optional(),
   lastSales: z.array(SaleDto),
 });
 export type DashboardDto = z.infer<typeof DashboardDto>;

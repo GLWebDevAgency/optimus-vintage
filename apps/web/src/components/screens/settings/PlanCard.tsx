@@ -170,16 +170,12 @@ export function PlanCard({ overview }: { overview: WorkspaceOverviewDto }) {
       <div className="grid gap-2.5" data-testid="plan-chooser">
         <div className="flex items-center justify-between gap-2">
           <span className="label">{t("billing.choosePlan")}</span>
-          <div
-            className="flex items-center gap-1 rounded-full bg-surface-2 p-0.5"
-            role="radiogroup"
-          >
+          <div className="flex items-center gap-1 rounded-full bg-surface-2 p-0.5">
             {(["monthly", "yearly"] as const).map((i) => (
               <button
                 key={i}
                 type="button"
-                role="radio"
-                aria-checked={interval === i}
+                aria-pressed={interval === i}
                 className={`min-h-[32px] rounded-full px-3 text-[12px] font-bold ${interval === i ? "bg-ink text-bg" : "text-ink-2"}`}
                 onClick={() => setInterval(i)}
               >

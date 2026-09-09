@@ -48,6 +48,8 @@ export function OfflineBanner() {
     }
   }, [lastSyncedAt, qc]);
 
+  // `failed` n'est pas lu dans l'effet : il sert de déclencheur de rechargement quand la file change.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: dépendance volontaire
   useEffect(() => {
     if (!open) return;
     let cancelled = false;

@@ -142,6 +142,8 @@ export const CreateItemStandardCommand = z.object({
 export const CreateItemQuickCaptureCommand = z.object({
   mode: z.literal("quickCapture"),
   pricePaid: NonNegativeMoneyDto,
+  /** Frais annexes de cet achat (entrée de brocante, essence, port), ajoutés au coût de la pièce. */
+  extraCosts: NonNegativeMoneyDto.optional(),
   supplierKind: SupplierKindDto,
   locationLabel: z.string().trim().max(160).optional(),
   lat: z.number().min(-90).max(90).optional(),
@@ -266,6 +268,10 @@ export const UpdateSaleCommand = z.object({
   notes: Notes.nullable().optional(),
 });
 export type UpdateSaleCommand = z.input<typeof UpdateSaleCommand>;
+
+/** Encaissement d'une vente en attente. */
+export const CompleteSaleCommand = z.object({ note: ShortText.optional() });
+export type CompleteSaleCommand = z.input<typeof CompleteSaleCommand>;
 
 /** Annulation avant expédition : la pièce revient en stock. */
 export const CancelSaleCommand = z.object({ reason: ShortText.optional() });

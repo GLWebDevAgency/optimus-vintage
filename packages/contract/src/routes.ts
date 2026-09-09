@@ -8,6 +8,7 @@ import {
   AppraiseImageCommand,
   CancelSaleCommand,
   ChangeItemStatusCommand,
+  CompleteSaleCommand,
   CreateItemCommand,
   CreatePurchaseSourceCommand,
   DeleteAccountCommand,
@@ -192,6 +193,11 @@ export const routes = {
   cancelSale: route("POST", "/sales/:id/cancel", {
     summary: "Annuler une vente (pièce remise en stock)",
     body: CancelSaleCommand,
+    response: SaleDto,
+  }),
+  completeSale: route("POST", "/sales/:id/complete", {
+    summary: "Encaisser une vente en attente (pièce vendue, annonces clôturées)",
+    body: CompleteSaleCommand,
     response: SaleDto,
   }),
   refundSale: route("POST", "/sales/:id/refund", {

@@ -28,6 +28,8 @@ export interface GeneratePiecesForSourceCommand extends WorkspaceScoped {
   readonly count?: number;
   readonly category?: Category;
   readonly condition?: Condition;
+  /** Préfixe des titres générés (défaut « Pièce ») : « Jean 1 », « Jean 2 »… */
+  readonly titlePrefix?: string;
   /** Un poids par pièce : active la répartition au poids (palettes). */
   readonly weightsKg?: readonly number[];
 }
@@ -94,7 +96,7 @@ export class GeneratePiecesForSource
           workspaceId: ws.value.id,
           sourceId: source.id,
           sku,
-          title: `Pièce ${existing.length + i + 1}`,
+          title: `${cmd.titlePrefix?.trim() || "Pièce"} ${existing.length + i + 1}`,
           category: cmd.category ?? "OTHER",
           condition: cmd.condition ?? "GOOD",
           acquisitionCost: costs[i] ?? Money.zero(source.currency),

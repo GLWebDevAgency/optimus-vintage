@@ -5,6 +5,7 @@ import type { MessageKey } from "@chine/i18n";
 import { AppIcon, Button } from "@chine/ui";
 import Link from "next/link";
 import { useFormat, useLocale, useT } from "@/hooks/i18n";
+import { ListingCopyCard } from "../common/ListingCopyCard";
 import { label } from "../common/labels";
 
 export type AppraisalState =
@@ -159,6 +160,7 @@ export function AppraisalCard({
           {t("appraisal.quota", { used: a.quota.used, limit: a.quota.limit })}
         </span>
       ) : null}
+      {a.listingCopy ? <ListingCopyCard copy={a.listingCopy} compact /> : null}
     </div>
   );
 }

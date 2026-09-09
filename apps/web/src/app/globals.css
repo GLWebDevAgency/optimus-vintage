@@ -2396,3 +2396,88 @@
     z-index: 1;
   }
 }
+
+/* ── Étiquettes QR et rapport : aperçu à l'écran, planche à l'impression ── */
+.label-sheet {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.qr-label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px dashed var(--line-2);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--surface);
+  break-inside: avoid;
+}
+.qr-label-code {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  display: block;
+}
+.qr-label-text {
+  min-width: 0;
+}
+.qr-label-sku {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+}
+.qr-label-title {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.qr-label-meta {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  body::before,
+  nav,
+  .tabbar,
+  .topbar,
+  .offline-banner,
+  .print\:hidden {
+    display: none !important;
+  }
+  .screen,
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .label-sheet {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4mm;
+  }
+  .qr-label {
+    border: 1px solid #999;
+    border-radius: 2mm;
+    padding: 3mm;
+    height: 30mm;
+  }
+  .qr-label-code {
+    width: 22mm;
+    height: 22mm;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ccc;
+  }
+  .report table {
+    font-size: 11px;
+  }
+}

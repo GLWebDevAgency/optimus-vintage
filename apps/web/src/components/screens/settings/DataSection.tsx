@@ -11,9 +11,16 @@ import { ConfirmSheet } from "../common/ConfirmSheet";
 import { useErrorMessage } from "../common/ErrorState";
 import { isoDay } from "../common/labels";
 
-/** Données : export JSON téléchargeable, suppression du compte avec mot à recopier. */
-export function DataSection() {
+const CSV = [
+  { entity: "items", key: "settings.csvItems" },
+  { entity: "sales", key: "settings.csvSales" },
+  { entity: "sources", key: "settings.csvSources" },
+] as const;
+
+/** Données : exports CSV (tableur), journal comptable (Pro), export JSON, suppression du compte. */
+export function DataSection({ features = [] }: { features?: readonly string[] }) {
   const t = useT();
+  const accounting = features.includes("ACCOUNTING_EXPORT");
   const router = useRouter();
   const qc = useQueryClient();
   const { show } = useToast();
@@ -61,6 +68,34 @@ export function DataSection() {
   return (
     <div className="card grid gap-3">
       <div>
+        <div className="text-[14.5px] font-semibold">{t("settings.exportCsv")}</div>
+        <div className="text-[12.5px] text-ink-2">{t("settings.csvHint")}</div>
+      </div>
+      {/* Liens directs (GET + cookie) : fonctionnent aussi dans une PWA iOS, où le téléchargement
+          d'un blob est ignoré. */}
+      <div className="grid grid-cols-3 gap-2" data-testid="csv-exports">
+        {CSV.map((c) => (
+          <a
+            key={c.entity}
+            href={`/api/v1/export/${c.entity}.csv`}
+            className="btn ghost !min-h-[40px] !text-[12.5px]"
+          >
+            {t(c.key)}
+          </a>
+        ))}
+      </div>
+      {accounting ? (
+        <a
+          href="/api/v1/export/comptabilite.csv"
+          className="btn ghost"
+          data-testid="csv-accounting"
+        >
+          {t("settings.exportAccounting")}
+        </a>
+      ) : (
+        <p className="text-[12.5px] text-ink-3">{t("settings.accountingLocked")}</p>
+      )}
+      <div className="border-t border-line pt-3">
         <div className="text-[14.5px] font-semibold">{t("settings.exportJson")}</div>
         <div className="text-[12.5px] text-ink-2">{t("settings.exportHint")}</div>
       </div>

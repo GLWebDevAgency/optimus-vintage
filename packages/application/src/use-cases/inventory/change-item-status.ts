@@ -59,6 +59,9 @@ export class ChangeItemStatus implements UseCase<ChangeItemStatusCommand, Change
           const platform = cmd.platform ?? "OTHER";
           const r = item.markListed(platform, now);
           if (!r.ok) return r;
+          // Déjà en ligne : l'annonce active est remplacée (changement de prix ou de plateforme),
+          // on ne cumule jamais deux annonces actives pour une même pièce.
+          await endActiveListings(repos.listings, ws.value.id, item.id, today, "ENDED");
           if (cmd.price) {
             const money = readMoney(ws.value, { price: cmd.price });
             if (!money.ok) return money;

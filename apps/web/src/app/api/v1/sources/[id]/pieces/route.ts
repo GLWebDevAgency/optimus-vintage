@@ -21,6 +21,7 @@ export const POST = withAuth<{ id: string }>(
       count: body.count,
       category: body.category,
       condition: body.condition,
+      titlePrefix: body.titlePrefix,
       weightsKg: body.weightsKg,
     });
     const mapCtx = mapContextFor(req);

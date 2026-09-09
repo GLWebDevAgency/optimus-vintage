@@ -39,9 +39,17 @@ export const ListSourcesQuery = PaginationQuery.extend({
 });
 export type ListSourcesQuery = z.input<typeof ListSourcesQuery>;
 
-export const DashboardQuery = z.object({
-  period: DashboardPeriodDto.default("month"),
-});
+export const DashboardQuery = z
+  .object({
+    period: DashboardPeriodDto.default("month"),
+    /** Bornes explicites (rapport mensuel) : priment sur `period` quand les deux sont fournies. */
+    from: IsoDateDto.optional(),
+    to: IsoDateDto.optional(),
+  })
+  .refine((q) => !q.from || !q.to || q.from <= q.to, {
+    path: ["to"],
+    message: "La date de fin précède la date de début",
+  });
 export type DashboardQuery = z.input<typeof DashboardQuery>;
 
 /**

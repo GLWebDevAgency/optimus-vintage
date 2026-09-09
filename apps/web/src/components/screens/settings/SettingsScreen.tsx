@@ -161,7 +161,7 @@ export function SettingsScreen() {
 
         <Section title={t("settings.dataSection")}>
           <div className="enter d4">
-            <DataSection />
+            <DataSection features={overview?.features ?? []} />
           </div>
         </Section>
 
@@ -183,6 +183,20 @@ export function SettingsScreen() {
               <AppIcon name="check" size={18} className="text-brass" />
             </div>
           ) : null}
+          <Link href="/app/rapports" className="settings-row" data-testid="link-report">
+            <div>
+              <div className="t">{t("report.title")}</div>
+              <div className="s">{t("report.hint")}</div>
+            </div>
+            <IconChevronRight className="text-ink-3" />
+          </Link>
+          <Link href="/app/etiquettes" className="settings-row" data-testid="link-labels">
+            <div>
+              <div className="t">{t("labels.title")}</div>
+              <div className="s">{t("labels.hint")}</div>
+            </div>
+            <IconChevronRight className="text-ink-3" />
+          </Link>
           <Link href="/legal/cgu" className="settings-row">
             <div className="t">{t("settings.terms")}</div>
             <IconChevronRight className="text-ink-3" />
