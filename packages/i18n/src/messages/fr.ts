@@ -786,13 +786,12 @@ export const fr = {
       sourcesPerMonth: "Sources par mois",
       aiAppraisalsPerMonth: "Expertises IA par mois",
       members: "Membres",
-      historyMonths: "Historique",
     },
     plan: {
       FREE: "Gratuit",
-      PREMIUM: "Premium",
+      PREMIUM: "Chineur",
       PRO: "Pro",
-      BUSINESS: "Business",
+      BUSINESS: "Atelier",
     },
     planTagline: {
       FREE: "Pour commencer à chiner",
@@ -819,6 +818,24 @@ export const fr = {
     portalUnavailable: "Portail indisponible pour cette formule.",
     checkoutStarting: "Redirection vers le paiement…",
     yearlyHint: "{price} / an · 2 mois offerts",
+    popular: "Le plus chiné",
+    trialUntil: "Essai gratuit jusqu'au {date}",
+    pastDue: "Le dernier paiement a échoué : mets à jour ta carte pour garder ta formule.",
+    pastDueCta: "Mettre à jour le paiement",
+    canceledInfo:
+      "Abonnement terminé : tes données restent lisibles, la formule gratuite s'applique.",
+    overQuota: "Au-dessus de la limite : {used} pièces en stock pour {limit} incluses.",
+    overQuotaBody:
+      "Rien n'est supprimé. Vends, sors des pièces ou reprends une formule pour capturer à nouveau.",
+    tryDays: "Essayer {days} jours gratuits",
+    current: "Formule actuelle",
+    choose: "Choisir",
+    switchTo: "Passer à {plan}",
+    waitlist: "Sur liste d'attente",
+    perMonthYearly: "{price} / mois, facturé {year} par an",
+    yearlySaving: "−{saving} par an",
+    trialNote: "Sans carte bancaire. Sans engagement.",
+    checkoutCanceled: "Paiement annulé : rien n'a changé.",
   },
 
   errors: {

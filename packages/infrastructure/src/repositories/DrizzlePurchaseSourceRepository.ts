@@ -6,7 +6,7 @@ import {
   type SourceId,
   type WorkspaceId,
 } from "@chine/domain";
-import { and, count, desc, eq, gte, ilike, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, ne, or, sql } from "drizzle-orm";
 import type { DbExecutor } from "../db/client.js";
 import { type PurchaseSourceRow, purchaseSources } from "../db/schema.js";
 import type { PurchaseSourceRepository, SourceFilter } from "../ports.js";
@@ -100,7 +100,11 @@ export class DrizzlePurchaseSourceRepository implements PurchaseSourceRepository
       .select({ n: count() })
       .from(purchaseSources)
       .where(
-        and(eq(purchaseSources.workspaceId, workspaceId), gte(purchaseSources.createdAt, since)),
+        and(
+          eq(purchaseSources.workspaceId, workspaceId),
+          ne(purchaseSources.kind, "UNIT"),
+          gte(purchaseSources.createdAt, since),
+        ),
       );
     return row?.n ?? 0;
   }

@@ -1,5 +1,36 @@
+/**
+ * Plans, limites et fonctionnalités. Données du produit, pas du code : la grille se relit d'un coup d'œil.
+ *
+ * Modèle : le plan gratuit est limité par le nombre de pièces suivies **en stock** (vendues, sorties et
+ * perdues ne comptent plus : une vente libère une place). Les plans payants relèvent la limite et
+ * débloquent le suivi complet (IA, analytique, exports, étiquettes). Les codes de plan sont stables
+ * (base, Stripe, i18n) ; les noms affichés vivent dans `PLAN_NAMES`.
+ */
 export const PLANS = ["FREE", "PREMIUM", "PRO", "BUSINESS"] as const;
 export type Plan = (typeof PLANS)[number];
+
+/** Noms commerciaux (français). Les autres langues passent par i18n. */
+export const PLAN_NAMES: Readonly<Record<Plan, string>> = {
+  FREE: "Gratuit",
+  PREMIUM: "Chineur",
+  PRO: "Pro",
+  BUSINESS: "Atelier",
+};
+
+/**
+ * Disponibilité à la vente. `BUSINESS` (équipes, API, marque) est sur liste d'attente tant que ses
+ * fonctionnalités ne sont pas livrées : il n'est ni affiché en achat ni proposé comme upgrade.
+ */
+export const PLAN_AVAILABILITY: Readonly<Record<Plan, "free" | "sale" | "waitlist">> = {
+  FREE: "free",
+  PREMIUM: "sale",
+  PRO: "sale",
+  BUSINESS: "waitlist",
+};
+
+export const PURCHASABLE_PLANS: readonly Plan[] = PLANS.filter(
+  (p) => PLAN_AVAILABILITY[p] === "sale",
+);
 
 export const FEATURES = [
   "AI_APPRAISAL",
@@ -16,10 +47,12 @@ export const FEATURES = [
 export type Feature = (typeof FEATURES)[number];
 
 export interface PlanLimits {
+  /** Pièces en stock (IN_STOCK, LISTED, RESERVED, RETURNED) suivies simultanément. */
   readonly maxItems: number;
+  /** Sources LOT / PALLET / PICKING créées par mois civil (les achats à l'unité ne comptent pas). */
   readonly maxSourcesPerMonth: number;
+  /** Expertises IA par mois civil. */
   readonly aiAppraisalsPerMonth: number;
-  readonly historyMonths: number;
   readonly members: number;
   readonly features: ReadonlySet<Feature>;
 }
@@ -29,18 +62,16 @@ export const INF = Number.POSITIVE_INFINITY;
 
 export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
   FREE: {
-    maxItems: 60,
-    maxSourcesPerMonth: 5,
-    aiAppraisalsPerMonth: 8,
-    historyMonths: 6,
+    maxItems: 50,
+    maxSourcesPerMonth: 3,
+    aiAppraisalsPerMonth: 10,
     members: 1,
-    features: F("CSV_EXPORT"),
+    features: F("AI_APPRAISAL", "CSV_EXPORT"),
   },
   PREMIUM: {
-    maxItems: INF,
+    maxItems: 500,
     maxSourcesPerMonth: INF,
-    aiAppraisalsPerMonth: 150,
-    historyMonths: INF,
+    aiAppraisalsPerMonth: 200,
     members: 1,
     features: F(
       "AI_APPRAISAL",
@@ -53,8 +84,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
   PRO: {
     maxItems: INF,
     maxSourcesPerMonth: INF,
-    aiAppraisalsPerMonth: INF,
-    historyMonths: INF,
+    aiAppraisalsPerMonth: 1000,
     members: 1,
     features: F(
       "AI_APPRAISAL",
@@ -64,14 +94,12 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
       "CSV_EXPORT",
       "ACCOUNTING_EXPORT",
       "QR_LABELS",
-      "API_ACCESS",
     ),
   },
   BUSINESS: {
     maxItems: INF,
     maxSourcesPerMonth: INF,
-    aiAppraisalsPerMonth: INF,
-    historyMonths: INF,
+    aiAppraisalsPerMonth: 3000,
     members: 5,
     features: F(
       "AI_APPRAISAL",
@@ -88,12 +116,31 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
   },
 };
 
-export const PLAN_PRICES_EUR: Readonly<Record<Plan, { monthly: number; yearly: number }>> = {
-  FREE: { monthly: 0, yearly: 0 },
-  PREMIUM: { monthly: 5.99, yearly: 59 },
-  PRO: { monthly: 14.99, yearly: 149 },
-  BUSINESS: { monthly: 34.99, yearly: 349 },
+export type BillingInterval = "monthly" | "yearly";
+
+/** Prix TTC en centimes d'euro (jamais de flottant pour de l'argent). */
+export interface PlanPrice {
+  readonly monthlyMinor: number;
+  readonly yearlyMinor: number;
+}
+
+export const PLAN_PRICES_EUR: Readonly<Record<Plan, PlanPrice>> = {
+  FREE: { monthlyMinor: 0, yearlyMinor: 0 },
+  PREMIUM: { monthlyMinor: 699, yearlyMinor: 5_900 },
+  PRO: { monthlyMinor: 1_499, yearlyMinor: 12_900 },
+  BUSINESS: { monthlyMinor: 3_499, yearlyMinor: 29_900 },
 };
+
+/** Essai gratuit (sans carte) sur les plans payants, géré par Stripe. */
+export const PLAN_TRIAL_DAYS = 14;
+
+/** Prix mensuel équivalent de la formule annuelle, en centimes (arrondi au centime). */
+export const yearlyPerMonthMinor = (plan: Plan): number =>
+  Math.round(PLAN_PRICES_EUR[plan].yearlyMinor / 12);
+
+/** Économie de la formule annuelle par rapport à 12 mois, en centimes. */
+export const yearlySavingMinor = (plan: Plan): number =>
+  PLAN_PRICES_EUR[plan].monthlyMinor * 12 - PLAN_PRICES_EUR[plan].yearlyMinor;
 
 const ORDER: Readonly<Record<Plan, number>> = { FREE: 0, PREMIUM: 1, PRO: 2, BUSINESS: 3 };
 export const planAtLeast = (plan: Plan, min: Plan): boolean => ORDER[plan] >= ORDER[min];
@@ -104,36 +151,45 @@ export const minimumPlanFor = (feature: Feature): Plan =>
   PLANS.find((p) => hasFeature(p, feature)) ?? "BUSINESS";
 
 export type QuotaResource = "items" | "sourcesPerMonth" | "aiAppraisalsPerMonth" | "members";
+
 export interface QuotaDecision {
   readonly allowed: boolean;
+  /** Consommation constatée (pièces en stock, sources du mois…). */
   readonly used: number;
+  /** Limite du plan ; `Infinity` = illimité (sérialisé `null` par la couche application). */
   readonly limit: number;
+  /** Premier plan **achetable** dont la limite couvre `used + 1`. */
   readonly upgradeTo?: Plan;
 }
 
+const limitOf = (plan: Plan, resource: QuotaResource): number => {
+  const l = PLAN_LIMITS[plan];
+  switch (resource) {
+    case "items":
+      return l.maxItems;
+    case "sourcesPerMonth":
+      return l.maxSourcesPerMonth;
+    case "aiAppraisalsPerMonth":
+      return l.aiAppraisalsPerMonth;
+    case "members":
+      return l.members;
+  }
+};
+
+/**
+ * Peut-on consommer une unité de plus ? `used` est la consommation actuelle : autorisé tant que
+ * `used < limit`. Propose le premier plan achetable qui accepterait `used + 1`.
+ */
 export function checkQuota(plan: Plan, resource: QuotaResource, used: number): QuotaDecision {
-  const limits = PLAN_LIMITS[plan];
-  const limit =
-    resource === "items"
-      ? limits.maxItems
-      : resource === "sourcesPerMonth"
-        ? limits.maxSourcesPerMonth
-        : resource === "aiAppraisalsPerMonth"
-          ? limits.aiAppraisalsPerMonth
-          : limits.members;
+  const limit = limitOf(plan, resource);
   const allowed = used < limit;
   if (allowed) return { allowed, used, limit };
-  const upgradeTo = PLANS.find((p) => {
-    const l = PLAN_LIMITS[p];
-    const cand =
-      resource === "items"
-        ? l.maxItems
-        : resource === "sourcesPerMonth"
-          ? l.maxSourcesPerMonth
-          : resource === "aiAppraisalsPerMonth"
-            ? l.aiAppraisalsPerMonth
-            : l.members;
-    return ORDER[p] > ORDER[plan] && used < cand;
-  });
+  const upgradeTo = PLANS.find(
+    (p) => ORDER[p] > ORDER[plan] && PLAN_AVAILABILITY[p] === "sale" && used < limitOf(p, resource),
+  );
   return upgradeTo ? { allowed, used, limit, upgradeTo } : { allowed, used, limit };
 }
+
+/** Pièces en stock au-delà de la limite du plan (après une rétrogradation) ; 0 sinon. */
+export const overQuotaBy = (plan: Plan, resource: QuotaResource, used: number): number =>
+  Math.max(0, used - limitOf(plan, resource));

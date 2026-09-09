@@ -37,13 +37,13 @@ describe("CreatePurchaseSource", () => {
     });
   });
 
-  it("applique le quota de sources par mois du plan FREE (5)", async () => {
+  it("applique le quota de sources par mois du plan FREE (3), hors achats à l'unité", async () => {
     const s = await setup({ plan: "FREE" });
-    for (let i = 0; i < 5; i++) await createLot(s);
-    const sixth = await new CreatePurchaseSource(s.deps).execute({
+    for (let i = 0; i < 3; i++) await createLot(s);
+    const fourth = await new CreatePurchaseSource(s.deps).execute({
       ...s.scope,
       kind: "PICKING",
-      name: "6e",
+      name: "4e",
       supplierKind: "OTHER",
       goodsCost: eur(1),
     });
@@ -56,11 +56,11 @@ describe("CreatePurchaseSource", () => {
       goodsCost: eur(1),
     });
     expect(unit.ok).toBe(true);
-    const e = expectErr(sixth, QuotaExceeded);
+    const e = expectErr(fourth, QuotaExceeded);
     expect(e.details).toMatchObject({
       resource: "sourcesPerMonth",
-      used: 5,
-      limit: 5,
+      used: 3,
+      limit: 3,
       upgradeTo: "PREMIUM",
     });
     // Le mois suivant, le compteur repart.
@@ -175,25 +175,25 @@ describe("GeneratePiecesForSource", () => {
     expect(rest.items[0]?.title).toBe("Pièce 2");
   });
 
-  it("applique le quota de pièces du plan FREE (60) sans rien créer", async () => {
+  it("applique le quota de pièces du plan FREE (50) sans rien créer", async () => {
     const s = await setup({ plan: "FREE" });
     const source = await createLot(s, { quantity: 100 });
     const e = expectErr(
       await new GeneratePiecesForSource(s.deps).execute({
         ...s.scope,
         sourceId: source.id,
-        count: 61,
+        count: 51,
       }),
       QuotaExceeded,
     );
-    expect(e.details).toMatchObject({ resource: "items", limit: 60, upgradeTo: "PREMIUM" });
+    expect(e.details).toMatchObject({ resource: "items", limit: 50, upgradeTo: "PREMIUM" });
     expect(await s.deps.items.count(s.scope.workspaceId)).toBe(0);
     expect(
       (
         await new GeneratePiecesForSource(s.deps).execute({
           ...s.scope,
           sourceId: source.id,
-          count: 60,
+          count: 50,
         })
       ).ok,
     ).toBe(true);

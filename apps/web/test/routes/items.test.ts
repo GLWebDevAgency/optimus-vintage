@@ -156,7 +156,7 @@ describe("pièces : capture rapide idempotente, quotas, validation", () => {
     expect(res.status).toBe(400);
   });
 
-  it("quota FREE : 60 pièces vendables maximum → 402 QUOTA_EXCEEDED avec le plan conseillé", async () => {
+  it("quota FREE : 50 pièces en stock maximum → 402 QUOTA_EXCEEDED avec le plan conseillé", async () => {
     const source = await api<D<SourceDto>>(createSource, "POST", "/api/v1/sources", {
       body: {
         kind: "PALLET",
@@ -168,12 +168,12 @@ describe("pièces : capture rapide idempotente, quotas, validation", () => {
       },
     });
     expect(source.status).toBe(201);
-    // 2 pièces existent déjà : 58 de plus atteignent la limite de 60.
+    // 2 pièces existent déjà : 48 de plus atteignent la limite de 50.
     const fill = await api<D<PageOf<ItemDto>>, { id: string }>(
       generatePieces,
       "POST",
       `/api/v1/sources/${source.data.id}/pieces`,
-      { params: { id: source.data.id }, body: { count: 58 } },
+      { params: { id: source.data.id }, body: { count: 48 } },
     );
     expect(fill.status).toBe(201);
     const over = await api(createItem, "POST", "/api/v1/items", { body: quick("local-quota") });
@@ -181,7 +181,7 @@ describe("pièces : capture rapide idempotente, quotas, validation", () => {
     expect(over.error?.code).toBe("QUOTA_EXCEEDED");
     expect(over.error?.details).toMatchObject({
       resource: "items",
-      limit: 60,
+      limit: 50,
       upgradeTo: "PREMIUM",
     });
     const overGenerate = await api(
@@ -223,7 +223,7 @@ describe("pièces : capture rapide idempotente, quotas, validation", () => {
     );
     expect(page.status).toBe(200);
     expect(page.data.items).toHaveLength(5);
-    expect(page.data.total).toBe(60);
+    expect(page.data.total).toBe(50);
     expect(page.data.limit).toBe(5);
     expect(page.data.offset).toBe(5);
     const bad = await api(listItems, "GET", "/api/v1/items?status=BROKEN");

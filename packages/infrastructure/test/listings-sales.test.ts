@@ -65,7 +65,7 @@ describe("DrizzleSaleRepository", () => {
     const loaded = await t.repos.sales.byId(ws.id, sale.id);
     expect(loaded?.toProps()).toEqual(sale.toProps());
     expect(loaded?.economics.net.minor).toBe(sale.economics.net.minor);
-    expect(loaded?.platformFees.minor).toBe(1800); // 15 % de 120 € sur Vestiaire
+    expect(loaded?.platformFees.minor).toBe(2400); // 17 % + 3 % de 120 € sur Vestiaire
   });
 
   it("persiste un remboursement", async () => {

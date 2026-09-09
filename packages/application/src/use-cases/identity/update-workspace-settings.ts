@@ -63,7 +63,8 @@ export class UpdateWorkspaceSettings
       if (
         cmd.currency &&
         cmd.currency !== ws.value.currency &&
-        (await repos.items.count(ws.value.id)) > 0
+        ((await repos.items.count(ws.value.id)) > 0 ||
+          (await repos.sources.list(ws.value.id, { limit: 1 })).length > 0)
       ) {
         return err(
           new ValidationFailed("Impossible de changer de devise : des pièces existent déjà"),

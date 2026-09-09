@@ -8,13 +8,15 @@ describe("Grilles de frais par plateforme", () => {
   it("Vinted FR : zéro frais vendeur", () => {
     expect(policy.feesFor("VINTED", eur(75)).isZero).toBe(true);
   });
-  it("Vestiaire : 15 % avec un minimum de 15 €", () => {
-    expect(policy.feesFor("VESTIAIRE", eur(200)).minor).toBe(3000);
+  it("Vestiaire (juin 2026) : 17 % + 3 % de traitement, forfait 15 € sous 75 €", () => {
+    expect(policy.feesFor("VESTIAIRE", eur(200)).minor).toBe(4000);
+    expect(policy.feesFor("VESTIAIRE", eur(75)).minor).toBe(1500);
     expect(policy.feesFor("VESTIAIRE", eur(50)).minor).toBe(1500);
     expect(policy.feesFor("VESTIAIRE", eur(10)).minor).toBe(1000); // jamais plus que le brut
   });
-  it("eBay : pourcentage + fixe", () => {
-    expect(policy.feesFor("EBAY", eur(100)).minor).toBe(1290 + 30);
+  it("eBay particuliers (sept. 2026) : zéro frais ; Etsy : pourcentage + fixe", () => {
+    expect(policy.feesFor("EBAY", eur(100)).isZero).toBe(true);
+    expect(policy.feesFor("ETSY", eur(100)).minor).toBe(1090 + 47);
   });
   it("les grilles sont surchargeables par espace de travail", () => {
     const custom = ScheduleFeePolicy.withOverrides({ VINTED: { percent: 5, fixedMinor: 70 } });
@@ -30,8 +32,8 @@ describe("Simulation de prix", () => {
     expect(s.roi).toBeCloseTo(2.5025, 4);
   });
   it("trouve le prix affiché pour une marge cible frais compris", () => {
-    const p = priceForTargetMargin("EBAY", eur(20), eur(30), policy);
-    const check = simulatePrice("EBAY", p, eur(20), policy);
+    const p = priceForTargetMargin("ETSY", eur(20), eur(30), policy);
+    const check = simulatePrice("ETSY", p, eur(20), policy);
     expect(check.margin.minor).toBeGreaterThanOrEqual(3000);
     expect(check.margin.minor).toBeLessThan(3100);
   });

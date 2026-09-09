@@ -119,7 +119,7 @@ describe("ListItems / GetItem", () => {
       net: { minor: 6000 },
       margin: { minor: 4000 },
     });
-    expect(r.simulations[3]?.fees.minor).toBe(998); // 12,9 % + 0,30 €
+    expect(r.simulations[3]?.fees.minor).toBe(0); // eBay particuliers : zéro frais depuis sept. 2026
   });
 });
 
@@ -175,16 +175,17 @@ describe("Sources / Sales / Overview / SimulatePrice", () => {
     expect(o.plan).toBe("FREE");
     expect(o.usage.items).toEqual({
       used: 1,
-      limit: 60,
-      remaining: 59,
+      limit: 50,
+      remaining: 49,
       allowed: true,
       upgradeTo: null,
     });
-    expect(o.usage.sourcesPerMonth.used).toBe(1);
-    expect(o.limits.maxItems).toBe(60);
-    expect(o.features).toEqual(["CSV_EXPORT"]);
-    expect(o.lockedFeatures).toContainEqual({ feature: "AI_APPRAISAL", minimumPlan: "PREMIUM" });
-    expect(o.feeSchedules.VESTIAIRE.percent).toBe(15);
+    // La chine à l'unité ne consomme pas le quota de sources.
+    expect(o.usage.sourcesPerMonth.used).toBe(0);
+    expect(o.limits.maxItems).toBe(50);
+    expect(o.features).toEqual(["AI_APPRAISAL", "CSV_EXPORT"]);
+    expect(o.lockedFeatures).toContainEqual({ feature: "AI_LISTING_COPY", minimumPlan: "PREMIUM" });
+    expect(o.feeSchedules.VESTIAIRE.percent).toBe(20);
     expect(JSON.parse(JSON.stringify(o))).toEqual(o);
   });
 
@@ -202,12 +203,13 @@ describe("Sources / Sales / Overview / SimulatePrice", () => {
       }),
     );
     expect(r).toMatchObject({
-      fees: { minor: 1500 },
-      net: { minor: 8000 },
-      margin: { minor: 6000 },
-      roi: 3,
+      fees: { minor: 2000 },
+      net: { minor: 7500 },
+      margin: { minor: 5500 },
+      roi: 2.75,
       targetMargin: { minor: 600 },
     });
+    // 20 + 6 + 5 = 31 € voulus ; à 31 € la commission plancher de 15 € s'applique → 46 €.
     expect(r.priceForTargetMargin.minor).toBe(2000 + 600 + 500 + 1500);
   });
 });

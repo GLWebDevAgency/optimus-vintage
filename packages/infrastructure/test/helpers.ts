@@ -43,9 +43,11 @@ export async function testDb(): Promise<TestDb> {
 export function makeWorkspace(
   over: Partial<Parameters<typeof Workspace.create>[0]> = {},
 ): Workspace {
+  // Un propriétaire = un espace (index unique) : chaque espace de test a son propre utilisateur.
+  const id = asWorkspaceId(ids.next());
   return Workspace.create({
-    id: asWorkspaceId(ids.next()),
-    ownerId: asUserId("user_owner"),
+    id,
+    ownerId: asUserId(`user_${id}`),
     name: "Friperie Test",
     currency: "EUR",
     locale: "fr",

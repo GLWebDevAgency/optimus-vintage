@@ -59,6 +59,14 @@ export class StaticBilling implements BillingGateway {
   async currentPlan(): Promise<Plan> {
     return this.plan;
   }
+  async hasActiveSubscription(): Promise<boolean> {
+    return this.plan !== "FREE";
+  }
+  released: WorkspaceId[] = [];
+  async releaseWorkspace(workspaceId: WorkspaceId): Promise<void> {
+    this.released.push(workspaceId);
+    this.plan = "FREE";
+  }
   async createCheckoutUrl(
     workspaceId: WorkspaceId,
     plan: Exclude<Plan, "FREE">,

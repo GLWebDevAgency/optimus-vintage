@@ -39,29 +39,52 @@ export interface FeeSchedule {
   readonly note?: string;
 }
 
-/** Grilles par défaut (France, 2026). Modifiables par espace de travail. */
+/**
+ * Grilles par défaut (France, particuliers, septembre 2026). Modifiables par espace de travail.
+ * Les vendeurs professionnels (Vinted Pro, eBay pro…) ajustent leur grille dans les réglages.
+ */
 export const DEFAULT_FEE_SCHEDULES: Readonly<Record<Platform, FeeSchedule>> = {
   VINTED: {
     percent: 0,
     fixedMinor: 0,
-    note: "Aucun frais vendeur ; la protection acheteur est payée par l'acheteur.",
+    note: "Aucun frais vendeur (la protection acheteur est payée par l'acheteur). Vinted Pro : 5 % + 0,30 € par article, à régler ici.",
   },
   VESTIAIRE: {
-    percent: 15,
+    percent: 20,
     fixedMinor: 0,
     minMinor: 1500,
-    note: "Commission vendeur 15 %, minimum 15 €.",
+    note: "Depuis juin 2026 : 17 % de commission + 3 % de traitement ; sous 75 €, forfait 12 € + 3 €.",
   },
-  LEBONCOIN: { percent: 0, fixedMinor: 0, note: "Gratuit hors options de mise en avant." },
-  DEPOP: {
+  LEBONCOIN: {
     percent: 0,
     fixedMinor: 0,
-    note: "Plus de frais vendeur depuis 2024 (frais reportés sur l'acheteur).",
+    note: "Gratuit hors options de mise en avant ; le paiement sécurisé est facturé à l'acheteur.",
   },
-  EBAY: { percent: 12.9, fixedMinor: 30, note: "Frais sur la valeur finale ~12,9 % + 0,30 €." },
-  ETSY: { percent: 6.5, fixedMinor: 20, note: "Commission 6,5 % + frais de mise en vente 0,20 €." },
-  WHATNOT: { percent: 8, fixedMinor: 0 },
-  INSTAGRAM: { percent: 0, fixedMinor: 0 },
+  DEPOP: {
+    percent: 13.3,
+    fixedMinor: 45,
+    note: "Hors UK/US : 10 % de commission + traitement du paiement (≈ 3,3 % + 0,45 €).",
+  },
+  EBAY: {
+    percent: 0,
+    fixedMinor: 0,
+    note: "Particuliers de l'EEE : plus de frais de vente depuis septembre 2026 (protection acheteur payée par l'acheteur). Pro : ≈ 12,9 % + 0,35 €, à régler ici.",
+  },
+  ETSY: {
+    percent: 10.9,
+    fixedMinor: 47,
+    note: "6,5 % de transaction + 4 % + 0,30 € de paiement + 0,17 € de mise en vente + frais réglementaires.",
+  },
+  WHATNOT: {
+    percent: 10.9,
+    fixedMinor: 30,
+    note: "UE : 6,67 % HT de commission (8 % TTC) + 2,9 % + 0,30 € de paiement.",
+  },
+  INSTAGRAM: {
+    percent: 0,
+    fixedMinor: 0,
+    note: "Vente directe : frais du moyen de paiement à ajouter.",
+  },
   IN_PERSON: { percent: 0, fixedMinor: 0 },
   OTHER: { percent: 0, fixedMinor: 0 },
 };

@@ -27,7 +27,7 @@ export interface EnsureWorkspaceForUserOutput {
 
 /**
  * Premier login : crée l'espace de l'utilisateur (EUR, fr, préfixe CH, marge cible 30 %).
- * Aux logins suivants, resynchronise le plan depuis la facturation.
+ * L'index unique sur le propriétaire empêche deux espaces en cas de première requête concurrente.
  */
 export class EnsureWorkspaceForUser
   implements UseCase<EnsureWorkspaceForUserCommand, EnsureWorkspaceForUserOutput>
@@ -41,14 +41,8 @@ export class EnsureWorkspaceForUser
   ): Promise<Result<EnsureWorkspaceForUserOutput, DomainError>> {
     return transact<EnsureWorkspaceForUserOutput>(this.deps, async (repos) => {
       const existing = await repos.workspaces.byOwner(cmd.userId);
-      if (existing) {
-        const plan = await this.deps.billing.currentPlan(existing.id);
-        if (plan === existing.plan)
-          return ok({ workspace: toWorkspaceDto(existing), created: false });
-        const synced = existing.with({ plan });
-        await repos.workspaces.save(synced);
-        return ok({ workspace: toWorkspaceDto(synced), created: false });
-      }
+      // Le plan appartient à la facturation (webhooks Stripe) : l'agrégat le lit, ne l'écrit pas.
+      if (existing) return ok({ workspace: toWorkspaceDto(existing), created: false });
       const id = asWorkspaceId(this.deps.ids.next());
       const plan = await this.deps.billing.currentPlan(id);
       const created = attempt(() =>

@@ -12,7 +12,7 @@ import {
   toIsoDate,
 } from "@chine/domain";
 import type { ItemDto, SaleDto } from "../../dto.js";
-import { NotFound, ValidationFailed } from "../../errors.js";
+import { Conflict, NotFound, ValidationFailed } from "../../errors.js";
 import { toItemDto, toSaleDto } from "../../mappers/index.js";
 import type { AppDependencies } from "../../ports/index.js";
 import { loadOwnedWorkspace, type WorkspaceScoped } from "../../shared/access.js";
@@ -56,6 +56,17 @@ export class RecordSale implements UseCase<RecordSaleCommand, RecordSaleOutput> 
       if (!item) return err(new NotFound("Item", cmd.itemId));
       if (!item.isSellable)
         return err(new ValidationFailed("La pièce n'est pas vendable", { status: item.status }));
+      // Une vente en attente réserve déjà la pièce : on l'encaisse ou on l'annule, on n'en crée pas une seconde.
+      const pending = (await repos.sales.byItem(ws.value.id, item.id)).find(
+        (s) => s.status === "PENDING",
+      );
+      if (pending)
+        return err(
+          new Conflict("Une vente en attente existe déjà pour cette pièce", {
+            reason: "PENDING_SALE",
+            saleId: pending.id,
+          }),
+        );
       const money = readMoney(ws.value, {
         grossPrice: cmd.grossPrice,
         shippingCost: cmd.shippingCost,

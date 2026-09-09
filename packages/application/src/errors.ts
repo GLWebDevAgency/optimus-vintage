@@ -39,3 +39,11 @@ export class ValidationFailed extends DomainError {
     super("VALIDATION_FAILED", message, details);
   }
 }
+
+/** L'état actuel interdit l'opération (409) : vente en attente, historique existant… */
+export class Conflict extends DomainError {
+  override readonly name = "Conflict";
+  constructor(message: string, details?: Record<string, unknown>) {
+    super("CONFLICT", message, details);
+  }
+}

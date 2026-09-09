@@ -102,10 +102,12 @@ export function ChinerScreen() {
       }
       setAppraisal({ status: "running" });
       try {
+        // Le texte d'annonce est une fonctionnalité à part (plan Chineur+) : on ne le demande
+        // que si le plan l'inclut, sinon l'expertise elle-même serait refusée.
         const data = await appraise.mutateAsync({
           imageBase64: image.base64,
           mimeType: image.mimeType,
-          wantListingCopy: true,
+          wantListingCopy: ws?.features.includes("AI_LISTING_COPY") ?? false,
         });
         setAppraisal({ status: "done", data });
         applyAppraisal(data);

@@ -59,7 +59,7 @@ const sale = (
   itemId: string,
   gross: number,
   soldAt: `${number}-${number}-${number}`,
-  platform: "VINTED" | "EBAY" = "VINTED",
+  platform: "VINTED" | "EBAY" | "VESTIAIRE" = "VINTED",
 ) =>
   unwrap(
     Sale.record(
@@ -126,9 +126,9 @@ describe("PurchaseSource", () => {
 
 describe("Sale", () => {
   it("calcule net, marge et ROI avec les frais de la plateforme", () => {
-    const s = sale("s1", "1", 75, "2026-09-06", "EBAY");
+    const s = sale("s1", "1", 75, "2026-09-06", "VESTIAIRE");
     const e = s.economics;
-    expect(e.fees.minor).toBe(Math.round(7500 * 0.129) + 30);
+    expect(e.fees.minor).toBe(1500); // 17 % + 3 %, forfait 15 € sous 75 €
     expect(e.net.minor).toBe(7500 - e.fees.minor - 495);
     expect(e.margin.minor).toBe(e.net.minor - 500);
     expect(s.pullEvents().map((x) => x.type)).toEqual(["ItemSold"]);

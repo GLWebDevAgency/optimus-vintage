@@ -1,5 +1,5 @@
 import { type DomainError, err, type ItemId, ok, type Result } from "@chine/domain";
-import { NotFound, ValidationFailed } from "../../errors.js";
+import { Conflict, NotFound } from "../../errors.js";
 import type { AppDependencies } from "../../ports/index.js";
 import { loadOwnedWorkspace, type WorkspaceScoped } from "../../shared/access.js";
 import { transact } from "../../shared/transaction.js";
@@ -23,13 +23,14 @@ export class DeleteItem implements UseCase<DeleteItemCommand, DeleteItemOutput> 
       if (!ws.ok) return ws;
       const item = await repos.items.byId(ws.value.id, cmd.itemId);
       if (!item) return err(new NotFound("Item", cmd.itemId));
+      // Toute vente (même annulée ou remboursée) fait partie de l'historique comptable :
+      // la pièce se sort du stock (LOST/DONATED), elle ne se supprime pas.
       const sales = await repos.sales.byItem(ws.value.id, item.id);
-      const blocking = sales.filter((s) => s.countsAsRevenue);
-      if (blocking.length > 0) {
+      if (sales.length > 0) {
         return err(
-          new ValidationFailed("Une vente référence cette pièce", {
+          new Conflict("Une vente référence cette pièce : sortez-la du stock plutôt", {
             reason: "HAS_SALES",
-            saleIds: blocking.map((s) => s.id),
+            saleIds: sales.map((s) => s.id),
           }),
         );
       }

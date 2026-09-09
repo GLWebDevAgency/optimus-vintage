@@ -59,6 +59,7 @@ export interface SourceFilter {
 export interface PurchaseSourceRepository {
   byId(workspaceId: WorkspaceId, id: SourceId): Promise<PurchaseSource | undefined>;
   list(workspaceId: WorkspaceId, filter?: SourceFilter): Promise<readonly PurchaseSource[]>;
+  /** Sources soumises au quota mensuel (LOT, PALLET, PICKING) créées depuis `since` ; les achats à l'unité sont exclus. */
   countCreatedSince(workspaceId: WorkspaceId, since: Date): Promise<number>;
   save(source: PurchaseSource): Promise<void>;
   delete(workspaceId: WorkspaceId, id: SourceId): Promise<void>;
@@ -168,6 +169,8 @@ export interface TransactionalRepositories {
 /** Abonnement courant d'un espace (renseigné par Stripe ou par défaut FREE). */
 export interface BillingGateway {
   currentPlan(workspaceId: WorkspaceId): Promise<Plan>;
+  /** Un abonnement en cours (essai, actif, impayé en délai de grâce) : on passe par le portail. */
+  hasActiveSubscription(workspaceId: WorkspaceId): Promise<boolean>;
   createCheckoutUrl(
     workspaceId: WorkspaceId,
     plan: Exclude<Plan, "FREE">,
@@ -175,6 +178,8 @@ export interface BillingGateway {
     returnUrl: string,
   ): Promise<string | undefined>;
   createPortalUrl(workspaceId: WorkspaceId, returnUrl: string): Promise<string | undefined>;
+  /** Suppression de compte : résilie l'abonnement immédiatement et efface le client. */
+  releaseWorkspace(workspaceId: WorkspaceId): Promise<void>;
 }
 
 /** Tout ce dont un cas d'usage peut avoir besoin, injecté par le composition root. */

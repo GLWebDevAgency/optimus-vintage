@@ -15,18 +15,27 @@ import { createTestDependencies } from "../src/testing/index.js";
 import { expectErr, setup } from "./helpers.js";
 
 describe("AppraiseImage", () => {
-  it("est verrouillée sur le plan FREE (FeatureLocked → PREMIUM)", async () => {
+  it("existe dès le plan FREE (10 par mois) ; le texte d'annonce est verrouillé (→ PREMIUM)", async () => {
     const s = await setup({ plan: "FREE" });
-    const e = expectErr(
+    const free = unwrap(
       await new AppraiseImage(s.deps).execute({
         ...s.scope,
         imageBase64: "AAAA",
         mimeType: "image/jpeg",
       }),
+    );
+    expect(free.usage).toMatchObject({ used: 1, limit: 10, remaining: 9 });
+    const e = expectErr(
+      await new AppraiseImage(s.deps).execute({
+        ...s.scope,
+        imageBase64: "AAAA",
+        mimeType: "image/jpeg",
+        wantListingCopy: true,
+      }),
       FeatureLocked,
     );
-    expect(e.details).toMatchObject({ feature: "AI_APPRAISAL", minimumPlan: "PREMIUM" });
-    expect(s.deps.appraiser.requests).toHaveLength(0);
+    expect(e.details).toMatchObject({ feature: "AI_LISTING_COPY", minimumPlan: "PREMIUM" });
+    expect(s.deps.appraiser.requests).toHaveLength(1);
   });
 
   it("renvoie et persiste l'expertise (Lacoste 60/75/85), avec le texte d'annonce sur demande", async () => {
@@ -48,7 +57,7 @@ describe("AppraiseImage", () => {
     ]).toEqual([6000, 7500, 8500]);
     expect(r.appraisal.price.retailNew?.minor).toBe(25000);
     expect(r.appraisal.listingCopy).toBeNull();
-    expect(r.usage).toMatchObject({ used: 1, limit: 150, remaining: 149 });
+    expect(r.usage).toMatchObject({ used: 1, limit: 200, remaining: 199 });
     expect(
       await s.deps.appraisals.byId(s.scope.workspaceId, asAppraisalId(r.appraisal.id)),
     ).toBeDefined();
@@ -71,7 +80,7 @@ describe("AppraiseImage", () => {
   it("applique le quota mensuel d'expertises", async () => {
     const s = await setup({ plan: "PREMIUM" });
     const uc = new AppraiseImage(s.deps);
-    for (let i = 0; i < 150; i++)
+    for (let i = 0; i < 200; i++)
       unwrap(await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }));
     const e = expectErr(
       await uc.execute({ ...s.scope, imageBase64: "A", mimeType: "image/jpeg" }),
@@ -79,8 +88,8 @@ describe("AppraiseImage", () => {
     );
     expect(e.details).toMatchObject({
       resource: "aiAppraisalsPerMonth",
-      used: 150,
-      limit: 150,
+      used: 200,
+      limit: 200,
       upgradeTo: "PRO",
     });
   });

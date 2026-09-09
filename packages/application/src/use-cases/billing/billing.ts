@@ -1,4 +1,5 @@
-import { DomainError, err, ok, type Plan, type Result } from "@chine/domain";
+import { DomainError, err, ok, PLAN_AVAILABILITY, type Plan, type Result } from "@chine/domain";
+import { ValidationFailed } from "../../errors.js";
 import type { AppDependencies } from "../../ports/index.js";
 import { loadOwnedWorkspace, type WorkspaceScoped } from "../../shared/access.js";
 import type { UseCase } from "../use-case.js";
@@ -19,12 +20,22 @@ export interface BillingUrlOutput {
   readonly url: string;
 }
 
-/** Démarre un paiement Stripe vers un plan payant. */
+/**
+ * Démarre un paiement Stripe vers un plan payant. Un espace déjà abonné (essai, actif, impayé en
+ * grâce) est envoyé vers le portail : changer de formule s'y fait avec proratisation, jamais par un
+ * second Checkout (double facturation).
+ */
 export class StartCheckout implements UseCase<StartCheckoutCommand, BillingUrlOutput> {
   constructor(private readonly deps: Pick<AppDependencies, "workspaces" | "billing">) {}
   async execute(cmd: StartCheckoutCommand): Promise<Result<BillingUrlOutput, DomainError>> {
     const ws = await loadOwnedWorkspace(this.deps.workspaces, cmd);
     if (!ws.ok) return ws;
+    if (PLAN_AVAILABILITY[cmd.plan] !== "sale")
+      return err(new ValidationFailed("Ce plan n'est pas encore disponible", { plan: cmd.plan }));
+    if (await this.deps.billing.hasActiveSubscription(ws.value.id)) {
+      const portal = await this.deps.billing.createPortalUrl(ws.value.id, cmd.returnUrl);
+      return portal ? ok({ url: portal }) : err(new BillingUnavailable());
+    }
     const url = await this.deps.billing.createCheckoutUrl(
       ws.value.id,
       cmd.plan,

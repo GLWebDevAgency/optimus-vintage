@@ -21,6 +21,7 @@ import {
 } from "@chine/domain";
 import {
   bigint,
+  boolean,
   date,
   doublePrecision,
   index,
@@ -83,11 +84,57 @@ export const workspaces = pgTable(
     dormantThresholdDays: integer("dormant_threshold_days").notNull().default(30),
     stripeCustomerId: text("stripe_customer_id"),
     stripeSubscriptionId: text("stripe_subscription_id"),
+    /** Statut Stripe brut (trialing, active, past_due, canceled…) ; null sans abonnement. */
+    subscriptionStatus: text("subscription_status"),
+    subscriptionInterval: text("subscription_interval"),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true, mode: "date" }),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    trialEndsAt: timestamp("trial_ends_at", { withTimezone: true, mode: "date" }),
+    /** Un seul essai gratuit par espace. */
+    trialUsedAt: timestamp("trial_used_at", { withTimezone: true, mode: "date" }),
+    /** Horodatage Stripe (`event.created`) du dernier événement appliqué : ignore les retards. */
+    billingSyncedAt: timestamp("billing_synced_at", { withTimezone: true, mode: "date" }),
     ...timestamps,
   },
   (t) => [
-    index("workspaces_owner_idx").on(t.ownerUserId),
+    // Produit mono-espace : un propriétaire = un espace (empêche la course à la première connexion).
+    uniqueIndex("workspaces_owner_idx").on(t.ownerUserId),
     uniqueIndex("workspaces_stripe_customer_idx").on(t.stripeCustomerId),
+  ],
+);
+
+// ── Événements Stripe traités (idempotence des webhooks) ────────────────────
+export const stripeEvents = pgTable(
+  "stripe_events",
+  {
+    id: text("id").primaryKey(),
+    type: text("type").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull(),
+    processedAt: timestamp("processed_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("stripe_events_processed_idx").on(t.processedAt)],
+);
+
+// ── Clés d'idempotence des mutations (rejeu de la file hors ligne) ─────────
+export const idempotencyKeys = pgTable(
+  "idempotency_keys",
+  {
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    method: text("method").notNull(),
+    path: text("path").notNull(),
+    /** Réponse mémorisée ; null tant que la requête d'origine est en cours. */
+    status: integer("status"),
+    body: jsonb("body").$type<unknown>(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.workspaceId, t.key] }),
+    index("idempotency_keys_created_idx").on(t.createdAt),
   ],
 );
 
@@ -302,6 +349,8 @@ export const rateLimits = pgTable(
 
 // ── Types de lignes ────────────────────────────────────────────────────────
 export type RateLimitRow = typeof rateLimits.$inferSelect;
+export type StripeEventRow = typeof stripeEvents.$inferSelect;
+export type IdempotencyKeyRow = typeof idempotencyKeys.$inferSelect;
 export type WorkspaceRow = typeof workspaces.$inferSelect;
 export type NewWorkspaceRow = typeof workspaces.$inferInsert;
 export type WorkspaceMemberRow = typeof workspaceMembers.$inferSelect;

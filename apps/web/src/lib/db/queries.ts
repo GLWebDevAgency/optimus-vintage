@@ -30,6 +30,50 @@ export async function readWorkspacePreferences(
   };
 }
 
+export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled" | "none";
+export interface WorkspaceBilling {
+  readonly status: SubscriptionStatus;
+  readonly interval: "monthly" | "yearly" | null;
+  readonly currentPeriodEnd: Date | null;
+  readonly cancelAtPeriodEnd: boolean;
+  readonly trialEndsAt: Date | null;
+  readonly hasCustomer: boolean;
+}
+
+const normaliseStatus = (raw: string | null, hasSubscription: boolean): SubscriptionStatus => {
+  if (raw === "trialing" || raw === "active" || raw === "past_due") return raw;
+  if (raw === "canceled" || raw === "unpaid" || raw === "incomplete_expired") return "canceled";
+  return hasSubscription ? "active" : "none";
+};
+
+/** État d'abonnement tenu à jour par les webhooks Stripe (colonnes hors agrégat). */
+export async function readWorkspaceBilling(
+  db: Db,
+  workspaceId: WorkspaceId,
+): Promise<WorkspaceBilling> {
+  const row = await db.query.workspaces.findFirst({
+    columns: {
+      stripeCustomerId: true,
+      stripeSubscriptionId: true,
+      subscriptionStatus: true,
+      subscriptionInterval: true,
+      currentPeriodEnd: true,
+      cancelAtPeriodEnd: true,
+      trialEndsAt: true,
+    },
+    where: eq(workspaces.id, workspaceId),
+  });
+  const interval = row?.subscriptionInterval;
+  return {
+    status: normaliseStatus(row?.subscriptionStatus ?? null, Boolean(row?.stripeSubscriptionId)),
+    interval: interval === "monthly" || interval === "yearly" ? interval : null,
+    currentPeriodEnd: row?.currentPeriodEnd ?? null,
+    cancelAtPeriodEnd: row?.cancelAtPeriodEnd ?? false,
+    trialEndsAt: row?.trialEndsAt ?? null,
+    hasCustomer: Boolean(row?.stripeCustomerId),
+  };
+}
+
 export async function saveWorkspacePreferences(
   db: Db,
   workspaceId: WorkspaceId,

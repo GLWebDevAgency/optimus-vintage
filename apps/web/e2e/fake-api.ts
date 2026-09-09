@@ -29,12 +29,12 @@ type PlatformKey =
   | "OTHER";
 const FEES: Record<PlatformKey, Fee> = {
   VINTED: { percent: 0, fixedMinor: 0 },
-  VESTIAIRE: { percent: 15, fixedMinor: 0, minMinor: 1500 },
+  VESTIAIRE: { percent: 20, fixedMinor: 0, minMinor: 1500 },
   LEBONCOIN: { percent: 0, fixedMinor: 0 },
-  DEPOP: { percent: 0, fixedMinor: 0 },
-  EBAY: { percent: 12.9, fixedMinor: 30 },
-  ETSY: { percent: 6.5, fixedMinor: 20 },
-  WHATNOT: { percent: 8, fixedMinor: 0 },
+  DEPOP: { percent: 13.3, fixedMinor: 45 },
+  EBAY: { percent: 0, fixedMinor: 0 },
+  ETSY: { percent: 10.9, fixedMinor: 47 },
+  WHATNOT: { percent: 10.9, fixedMinor: 30 },
   INSTAGRAM: { percent: 0, fixedMinor: 0 },
   IN_PERSON: { percent: 0, fixedMinor: 0 },
   OTHER: { percent: 0, fixedMinor: 0 },
@@ -715,7 +715,7 @@ export function fakeAppraisal(s: FakeState) {
       hashtags: ["#lacoste", "#vintage"],
     },
     latencyMs: 1200,
-    quota: { used: s.appraisals.length + 1, limit: 150 },
+    quota: { used: s.appraisals.length + 1, limit: s.workspace.plan === "FREE" ? 10 : 200 },
   };
 }
 
@@ -728,14 +728,17 @@ export function overview(s: FakeState) {
     workspace: { ...s.workspace },
     user: { ...s.user, role: "OWNER" },
     quotas: {
-      items: { used: items, limit: premium ? null : 60 },
-      sourcesPerMonth: { used: s.sources.length, limit: premium ? null : 5 },
-      aiAppraisalsPerMonth: { used: s.appraisals.length, limit: premium ? 150 : 8 },
+      items: { used: items, limit: premium ? 500 : 50 },
+      sourcesPerMonth: {
+        used: s.sources.filter((x) => x.kind !== "UNIT").length,
+        limit: premium ? null : 3,
+      },
+      aiAppraisalsPerMonth: { used: s.appraisals.length, limit: premium ? 200 : 10 },
       members: { used: 1, limit: 1 },
     },
     features: premium
       ? ["AI_APPRAISAL", "AI_LISTING_COPY", "ADVANCED_ANALYTICS", "PDF_REPORTS", "CSV_EXPORT"]
-      : ["CSV_EXPORT"],
+      : ["AI_APPRAISAL", "CSV_EXPORT"],
     feeOverrides: s.feeOverrides,
     feeSchedules: { ...FEES, ...s.feeOverrides },
     billing: {
@@ -763,11 +766,17 @@ export async function installFakeApi(page: Page, state: FakeState): Promise<Fake
   const s = state;
   const json = (route: Route, data: unknown, status = 200) =>
     route.fulfill({ status, contentType: "application/json", body: JSON.stringify({ data }) });
-  const error = (route: Route, status: number, code: string, message: string) =>
+  const error = (
+    route: Route,
+    status: number,
+    code: string,
+    message: string,
+    details?: Record<string, unknown>,
+  ) =>
     route.fulfill({
       status,
       contentType: "application/json",
-      body: JSON.stringify({ error: { code, message } }),
+      body: JSON.stringify({ error: { code, message, ...(details ? { details } : {}) } }),
     });
 
   await page.route("**/__fake/**", (route) => {
@@ -1119,8 +1128,15 @@ export async function installFakeApi(page: Page, state: FakeState): Promise<Fake
 
     /* Expertise IA */
     if (path === "/appraisals" && method === "POST") {
-      if (s.workspace.plan === "FREE")
-        return error(route, 402, "FEATURE_LOCKED", "Expertise IA réservée au plan Premium");
+      // Plan gratuit : 10 expertises par mois, sans texte d'annonce.
+      const limit = s.workspace.plan === "FREE" ? 10 : 200;
+      if (s.appraisals.length >= limit)
+        return error(route, 402, "QUOTA_EXCEEDED", "Quota mensuel d'expertises atteint", {
+          resource: "aiAppraisalsPerMonth",
+          used: s.appraisals.length,
+          limit,
+          upgradeTo: s.workspace.plan === "FREE" ? "PREMIUM" : "PRO",
+        });
       const a = fakeAppraisal(s);
       s.appraisals.push(a);
       await new Promise((r) => setTimeout(r, 900));

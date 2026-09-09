@@ -81,10 +81,12 @@ export class DrizzleWorkspaceRepository implements WorkspaceRepository {
 
   async save(ws: Workspace): Promise<void> {
     const p = ws.toProps();
-    const values = workspaceToRow(ws);
+    const { plan, ...values } = workspaceToRow(ws);
+    // `plan` est écrit à la création seulement : ensuite la colonne appartient aux webhooks Stripe,
+    // qui ne doivent jamais être écrasés par un agrégat chargé avant leur passage.
     await this.db
       .insert(workspaces)
-      .values({ id: p.id as string, createdAt: p.createdAt, ...values })
+      .values({ id: p.id as string, createdAt: p.createdAt, plan, ...values })
       .onConflictDoUpdate({ target: workspaces.id, set: { ...values, updatedAt: new Date() } });
     // Le propriétaire est toujours membre OWNER (idempotent).
     await this.db

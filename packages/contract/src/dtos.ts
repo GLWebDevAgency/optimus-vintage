@@ -354,9 +354,12 @@ export const WorkspaceOverviewDto = z.object({
   feeSchedules: z.partialRecord(PlatformDto, FeeScheduleDto).optional(),
   billing: z.object({
     plan: PlanDto,
+    /** Statut Stripe : essai, actif, impayé (délai de grâce), terminé. */
+    status: z.enum(["trialing", "active", "past_due", "canceled", "none"]).optional(),
     interval: z.enum(["monthly", "yearly"]).optional(),
     renewsAt: IsoDateTimeDto.optional(),
     cancelAtPeriodEnd: z.boolean().optional(),
+    trialEndsAt: IsoDateTimeDto.optional(),
     portalAvailable: z.boolean(),
   }),
   workspaces: z.array(z.object({ id: IdDto, name: z.string(), role: MemberRoleDto })).default([]),

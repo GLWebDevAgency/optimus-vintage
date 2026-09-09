@@ -42,7 +42,7 @@ export function Pricing() {
       </Reveal>
       <div className="plans mt-7">
         {PLANS.map((p, i) => {
-          const price = yearly ? p.yearly / 12 : p.monthly;
+          const price = (yearly ? p.yearlyPerMonthMinor : p.monthlyMinor) / 100;
           return (
             <Reveal
               key={p.id}
@@ -59,10 +59,10 @@ export function Pricing() {
                 <small>€ / mois</small>
               </div>
               <div className="per">
-                {p.monthly === 0
+                {p.monthlyMinor === 0
                   ? "pour toujours"
                   : yearly
-                    ? `${formatAmount(p.yearly, 0)} € facturés par an`
+                    ? `${formatAmount(p.yearlyMinor / 100, 0)} € facturés par an`
                     : "sans engagement"}
               </div>
               <p className="text-ink-2 text-[14px]">{p.tagline}</p>

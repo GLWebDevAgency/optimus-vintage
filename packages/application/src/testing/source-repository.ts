@@ -37,8 +37,9 @@ export class InMemorySourceRepository
     return paginate(rows, filter.limit, filter.offset).map((p) => PurchaseSource.rehydrate(p));
   }
   async countCreatedSince(workspaceId: WorkspaceId, since: Date): Promise<number> {
-    return this.#ofWorkspace(workspaceId).filter((s) => s.createdAt.getTime() >= since.getTime())
-      .length;
+    return this.#ofWorkspace(workspaceId).filter(
+      (s) => s.kind !== "UNIT" && s.createdAt.getTime() >= since.getTime(),
+    ).length;
   }
   async save(source: PurchaseSource): Promise<void> {
     this.rows.set(source.id, source.toProps());

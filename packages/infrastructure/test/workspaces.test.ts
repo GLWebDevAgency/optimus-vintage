@@ -37,7 +37,10 @@ describe("DrizzleWorkspaceRepository", () => {
     expect(await t.repos.skuSequence.next(ws.id)).toBe(2);
     await t.repos.workspaces.save(ws.with({ name: "Renommé", plan: "PRO" }));
     expect(await t.repos.skuSequence.next(ws.id)).toBe(3);
-    expect((await t.repos.workspaces.byId(ws.id))?.plan).toBe("PRO");
+    const saved = await t.repos.workspaces.byId(ws.id);
+    expect(saved?.name).toBe("Renommé");
+    // Le plan appartient à la facturation : l'agrégat ne l'écrase jamais après la création.
+    expect(saved?.plan).toBe("FREE");
   });
 
   it("stocke les grilles de frais surchargées", async () => {

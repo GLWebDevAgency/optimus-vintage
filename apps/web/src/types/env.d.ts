@@ -29,6 +29,8 @@ declare namespace NodeJS {
     STRIPE_PRICE_PRO_YEARLY?: string;
     STRIPE_PRICE_BUSINESS_MONTHLY?: string;
     STRIPE_PRICE_BUSINESS_YEARLY?: string;
+    STRIPE_AUTOMATIC_TAX?: string;
+    STRIPE_TRIAL_DAYS?: string;
     PORT?: string;
     CI?: string;
     E2E_DEV?: string;

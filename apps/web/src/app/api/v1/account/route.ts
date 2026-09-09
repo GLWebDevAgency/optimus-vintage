@@ -1,4 +1,6 @@
 import { routes } from "@chine/contract";
+import { asWorkspaceId } from "@chine/domain";
+import { fail, serviceUnavailable } from "@/lib/api/respond";
 import { parseBody, sendDto } from "@/lib/api/route";
 import { withAuth } from "@/lib/api/with-auth";
 import { forgetWorkspace } from "@/lib/api/workspace";
@@ -16,6 +18,17 @@ export const DELETE = withAuth(
   async (req, ctx) => {
     const { deps, userId } = ctx;
     await parseBody(req, routes.deleteAccount.body);
+
+    // 0. Facturation d'abord : un compte effacé ne doit jamais rester facturé. Si Stripe ne répond
+    //    pas, on n'efface rien (503) plutôt que de laisser un abonnement orphelin.
+    for (const workspaceId of await deps.lifecycle.ownedWorkspaceIds(userId)) {
+      try {
+        await deps.billing.releaseWorkspace(asWorkspaceId(workspaceId));
+      } catch (e) {
+        ctx.log.error("résiliation Stripe impossible, suppression annulée", describeError(e));
+        return fail(serviceUnavailable("Impossible de résilier l'abonnement pour le moment."));
+      }
+    }
 
     // 1. Déconnexion d'abord : on récupère les en-têtes qui effacent le cookie de session.
     const setCookies: string[] = [];

@@ -102,7 +102,12 @@ describe("facturation avec Stripe configuré", () => {
       "GET",
       "/api/v1/me",
     );
-    expect(me.data.billing).toEqual({ plan: "PREMIUM", portalAvailable: true });
+    expect(me.data.billing).toMatchObject({
+      plan: "PREMIUM",
+      portalAvailable: true,
+      status: "active",
+      cancelAtPeriodEnd: false,
+    });
   });
 
   it("refuse une URL de retour hors du site (400)", async () => {

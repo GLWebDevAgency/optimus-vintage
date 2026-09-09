@@ -161,14 +161,14 @@ test.describe("états vides · calico", () => {
     await settle(page, 800);
     await shot(page, "empty-sources");
 
-    // Plan FREE : l'IA est verrouillée, la capture reste possible.
+    // Plan FREE : l'expertise IA existe (10 par mois), la capture reste possible.
     await page.goto("/app/chiner");
     await page
       .getByTestId("photo-input")
       .setInputFiles({ name: "veste.png", mimeType: "image/png", buffer: await testPng() });
-    await expect(page.getByTestId("ai-upsell")).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByTestId("ai-card")).toBeVisible({ timeout: 45_000 });
     await settle(page, 800);
-    await shot(page, "chiner-ai-locked");
+    await shot(page, "chiner-ai-free");
     await page.getByTestId("capture-submit").click();
     await expect(page.getByTestId("capture-success")).toBeVisible({ timeout: 45_000 });
     await page.getByTestId("capture-view").click();

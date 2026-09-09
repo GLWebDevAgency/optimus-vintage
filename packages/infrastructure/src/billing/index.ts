@@ -5,6 +5,7 @@ import { type PriceMap, StripeBillingGateway } from "./StripeBillingGateway.js";
 
 export { NoopBillingGateway } from "./NoopBillingGateway.js";
 export {
+  ACTIVE_STATUSES,
   type BillingInterval,
   encodeStripeForm,
   type PaidPlan,
@@ -12,6 +13,7 @@ export {
   StripeBillingGateway,
   type StripeBillingGatewayOptions,
   StripeError,
+  type WebhookOutcome,
   WebhookSignatureError,
 } from "./StripeBillingGateway.js";
 export {
@@ -40,9 +42,12 @@ export function stripePricesFromEnv(env: Env): PriceMap {
 export function createBillingGateway(db: DbExecutor, env: Env = process.env): BillingGateway {
   const secretKey = read(env, "STRIPE_SECRET_KEY");
   if (!secretKey) return new NoopBillingGateway(db);
+  const trial = read(env, "STRIPE_TRIAL_DAYS");
   return new StripeBillingGateway(db, {
     secretKey,
     webhookSecret: read(env, "STRIPE_WEBHOOK_SECRET"),
     prices: stripePricesFromEnv(env),
+    automaticTax: read(env, "STRIPE_AUTOMATIC_TAX") === "true",
+    trialDays: trial !== undefined ? Math.max(0, Number(trial) || 0) : undefined,
   });
 }

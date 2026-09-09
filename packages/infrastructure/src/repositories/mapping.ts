@@ -28,9 +28,18 @@ export const orNull = <T>(v: T | undefined): T | null => (v === undefined ? null
 export const likePattern = (search: string): string =>
   `%${search.trim().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 
-/** Borne la pagination : limite 1..500, décalage ≥ 0. */
+/** Plafond des lectures « tout » (rapports, performance des sources) : au-delà, agréger en SQL. */
+export const ALL_ROWS_CAP = 100_000;
+
+/**
+ * Borne la pagination : limite 1..500 pour une page d'écran, décalage ≥ 0.
+ * `limit = Infinity` demande explicitement toutes les lignes (rapports) : plafond de sécurité seul.
+ */
 export const page = (limit: number | undefined, offset: number | undefined) => ({
-  limit: Math.min(500, Math.max(1, Math.trunc(limit ?? 100))),
+  limit:
+    limit === Number.POSITIVE_INFINITY
+      ? ALL_ROWS_CAP
+      : Math.min(500, Math.max(1, Math.trunc(limit ?? 100))),
   offset: Math.max(0, Math.trunc(offset ?? 0)),
 });
 

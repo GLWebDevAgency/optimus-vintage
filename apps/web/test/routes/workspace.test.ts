@@ -32,10 +32,15 @@ describe("espace de travail : /me, /workspace/settings", () => {
     expect(me.workspace.plan).toBe("FREE");
     expect(me.workspace.dormantThresholdDays).toBe(30);
     expect(me.user).toMatchObject({ id: app.user.id, email: app.user.email, role: "OWNER" });
-    expect(me.quotas.items).toEqual({ used: 0, limit: 60 });
-    expect(me.quotas.aiAppraisalsPerMonth.limit).toBe(8);
+    expect(me.quotas.items).toEqual({ used: 0, limit: 50 });
+    expect(me.quotas.aiAppraisalsPerMonth.limit).toBe(10);
     expect(me.features).toContain("CSV_EXPORT");
-    expect(me.billing).toEqual({ plan: "FREE", portalAvailable: false });
+    expect(me.billing).toEqual({
+      plan: "FREE",
+      portalAvailable: false,
+      status: "none",
+      cancelAtPeriodEnd: false,
+    });
     expect(me.feeSchedules?.VINTED?.percent).toBe(0);
   });
 

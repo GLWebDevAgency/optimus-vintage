@@ -27,6 +27,9 @@ export interface GetDashboardQuery extends WorkspaceScoped {
   readonly dormantThresholdDays?: number;
 }
 
+/** Sentinelle « pas de pagination » (les dépôts la traduisent en absence de LIMIT). */
+const ALL_ROWS = Number.POSITIVE_INFINITY;
+
 export class GetDashboard implements Query<GetDashboardQuery, DashboardDto> {
   constructor(
     private readonly deps: Pick<
@@ -44,7 +47,8 @@ export class GetDashboard implements Query<GetDashboardQuery, DashboardDto> {
     const to = q.to ?? toIsoDate(endOfMonth(now));
     const prev = previousPeriod(from, to);
 
-    const sales = await this.deps.sales.list(id, { from: prev.from, to });
+    // Rapport de période : toutes les ventes de l'intervalle, jamais une page tronquée.
+    const sales = await this.deps.sales.list(id, { from: prev.from, to, limit: ALL_ROWS });
     const current = computePeriodReport(sales, from, to, currency);
     const previous = computePeriodReport(sales, prev.from, prev.to, currency);
 
@@ -57,7 +61,7 @@ export class GetDashboard implements Query<GetDashboardQuery, DashboardDto> {
       status: sellable,
       dormantSince: addDays(now, -(q.dormantThresholdDays ?? 30)),
     });
-    const stock = await this.deps.items.list(id, { status: sellable });
+    const stock = await this.deps.items.list(id, { status: sellable, limit: ALL_ROWS });
     const stockValueAtCost = stock.reduce(
       (acc, i) => acc.add(i.acquisitionCost),
       Money.zero(currency),

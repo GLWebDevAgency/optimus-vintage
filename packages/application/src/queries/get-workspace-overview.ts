@@ -65,7 +65,6 @@ export class GetWorkspaceOverview
         maxItems: finiteOrNull(limits.maxItems),
         maxSourcesPerMonth: finiteOrNull(limits.maxSourcesPerMonth),
         aiAppraisalsPerMonth: finiteOrNull(limits.aiAppraisalsPerMonth),
-        historyMonths: finiteOrNull(limits.historyMonths),
         members: limits.members,
       },
       usage: {

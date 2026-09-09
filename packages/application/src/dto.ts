@@ -267,7 +267,6 @@ export interface WorkspaceOverviewDto {
     readonly maxItems: number | null;
     readonly maxSourcesPerMonth: number | null;
     readonly aiAppraisalsPerMonth: number | null;
-    readonly historyMonths: number | null;
     readonly members: number;
   };
   readonly usage: Readonly<Record<QuotaResource, QuotaUsageDto>>;

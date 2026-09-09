@@ -293,7 +293,14 @@ export function mapOverview(
   o: App.WorkspaceOverviewDto,
   user: OverviewUser,
   prefs: WorkspacePreferences,
-  billing: { readonly portalAvailable: boolean },
+  billing: {
+    readonly portalAvailable: boolean;
+    readonly status?: C.WorkspaceOverviewDto["billing"]["status"];
+    readonly interval?: "monthly" | "yearly" | null;
+    readonly renewsAt?: Date | null;
+    readonly cancelAtPeriodEnd?: boolean;
+    readonly trialEndsAt?: Date | null;
+  },
 ): C.WorkspaceOverviewDto {
   const plan: Plan = o.plan;
   return {
@@ -314,7 +321,17 @@ export function mapOverview(
     features: [...o.features],
     feeOverrides: { ...o.feeOverrides },
     feeSchedules: { ...o.feeSchedules },
-    billing: { plan, portalAvailable: billing.portalAvailable },
+    billing: {
+      plan,
+      portalAvailable: billing.portalAvailable,
+      ...(billing.status ? { status: billing.status } : {}),
+      ...(billing.interval ? { interval: billing.interval } : {}),
+      ...(billing.renewsAt ? { renewsAt: billing.renewsAt.toISOString() } : {}),
+      ...(billing.cancelAtPeriodEnd !== undefined
+        ? { cancelAtPeriodEnd: billing.cancelAtPeriodEnd }
+        : {}),
+      ...(billing.trialEndsAt ? { trialEndsAt: billing.trialEndsAt.toISOString() } : {}),
+    },
     workspaces: [{ id: o.workspace.id, name: o.workspace.name, role: "OWNER" }],
   };
 }

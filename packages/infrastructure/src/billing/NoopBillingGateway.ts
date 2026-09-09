@@ -16,6 +16,14 @@ export class NoopBillingGateway implements BillingGateway {
     return row?.plan ?? "FREE";
   }
 
+  async hasActiveSubscription(): Promise<boolean> {
+    return false;
+  }
+
+  async releaseWorkspace(): Promise<void> {
+    // Rien à résilier sans Stripe.
+  }
+
   async createCheckoutUrl(): Promise<string | undefined> {
     return undefined;
   }
