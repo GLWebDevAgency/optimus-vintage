@@ -62,7 +62,9 @@ export const metadata: Metadata = {
     title: "Chiné — l'app des chineurs",
     description:
       "La chine avant le tableur : stock, sources, marge, expert IA. Hors ligne, dans la poche.",
-    images: [{ url: "/icons/og.png", width: 1200, height: 630, alt: "Chiné" }],
+    images: [
+      { url: "/icons/og.png", width: 2400, height: 1260, alt: "Chiné — l'app des chineurs" },
+    ],
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },

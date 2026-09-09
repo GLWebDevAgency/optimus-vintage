@@ -23,7 +23,9 @@ export default function ConfidentialitePage() {
         <li>Compte : adresse e-mail, nom, mot de passe (haché), date de création.</li>
         <li>Contenu : pièces, sources, ventes, photos et notes que tu enregistres.</li>
         <li>
-          Technique : journaux serveur (adresse IP tronquée, navigateur), nécessaires à la sécurité.
+          Technique : journaux serveur (identifiant de requête, code de réponse, durée) et compteurs
+          de limitation de débit par adresse IP, purgés automatiquement sous 24 heures. Aucune
+          adresse IP n'est conservée dans les journaux applicatifs.
         </li>
         <li>
           Facturation : gérée par notre prestataire de paiement ; nous ne stockons aucun numéro de
@@ -43,19 +45,27 @@ export default function ConfidentialitePage() {
       </p>
       <h2>4. Conservation</h2>
       <p>
-        Tes données sont conservées tant que ton compte existe. Tu peux les exporter (CSV) et
-        supprimer ton compte à tout moment depuis les réglages ; la suppression est effective sous
-        30 jours.
+        Tes données sont conservées tant que ton compte existe. Tu peux les exporter (CSV pour le
+        tableur, JSON complet) et supprimer ton compte à tout moment depuis les réglages : la
+        suppression des données, des photos, des sessions et de l'abonnement est immédiate. Les
+        photos peuvent subsister quelques jours dans les caches des réseaux de diffusion.
       </p>
       <h2>5. Hébergement et sécurité</h2>
       <p>
-        Les données sont hébergées dans l'Union européenne, chiffrées en transit et au repos.
-        L'accès est limité aux personnes qui en ont besoin pour opérer le service.
+        La base de données est hébergée par Railway et les photos par Cloudflare (R2), sur des
+        régions situées dans l'Union européenne ; ces prestataires sont établis aux États-Unis et
+        interviennent comme sous-traitants, avec les clauses contractuelles types de la Commission
+        européenne. Les e-mails transactionnels sont envoyés par Resend, les paiements traités par
+        Stripe (aucun numéro de carte ne transite par nos serveurs), et les erreurs techniques
+        remontées à Sentry sans donnée personnelle. Tout est chiffré en transit ; l'accès est limité
+        aux personnes qui opèrent le service.
       </p>
-      <h2>6. Tes droits</h2>
+      <h2>6. Responsable du traitement et tes droits</h2>
       <p>
-        Accès, rectification, effacement, portabilité, opposition : écris-nous à privacy@chine.app.
-        Tu peux aussi saisir la CNIL.
+        Le responsable du traitement est l'éditeur indiqué dans les{" "}
+        <a href="/legal/mentions-legales">mentions légales</a>. Accès, rectification, effacement,
+        portabilité, limitation, opposition : écris à bonjour@chine.app. Réponse sous un mois. Tu
+        peux aussi saisir la CNIL (cnil.fr).
       </p>
       <h2>7. Cookies</h2>
       <p>

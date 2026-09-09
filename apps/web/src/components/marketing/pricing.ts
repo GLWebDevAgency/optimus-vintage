@@ -46,8 +46,10 @@ export interface PlanCard {
 
 const limit = (plan: Plan) => PLAN_LIMITS[plan];
 const price = (plan: Plan) => PLAN_PRICES_EUR[plan];
-const n = (v: number, singular: string, plural = `${singular}s`) =>
-  v === INF ? `${plural} illimitées` : `${v} ${v > 1 ? plural : singular}`;
+const fr = new Intl.NumberFormat("fr-FR");
+/** « 3 lots », « 1 000 expertises IA », « expertises IA illimitées ». */
+const n = (v: number, singular: string, plural: string, unlimited = `${plural} illimitées`) =>
+  v === INF ? unlimited : `${fr.format(v)} ${v > 1 ? plural : singular}`;
 
 export const TRIAL_DAYS = PLAN_TRIAL_DAYS;
 
@@ -68,10 +70,13 @@ export const PLANS: readonly PlanCard[] = [
         lead: true,
       },
       {
-        label: `${n(limit("FREE").maxSourcesPerMonth, "lot ou palette")} par mois, chine à l'unité illimitée`,
+        label: `${n(limit("FREE").maxSourcesPerMonth, "lot ou palette", "lots ou palettes")} par mois, chine à l'unité illimitée`,
         on: true,
       },
-      { label: `${n(limit("FREE").aiAppraisalsPerMonth, "expertise IA")} par mois`, on: true },
+      {
+        label: `${n(limit("FREE").aiAppraisalsPerMonth, "expertise IA", "expertises IA")} par mois`,
+        on: true,
+      },
       { label: "Sources, marge réelle et prix plancher", on: true },
       { label: "Hors ligne, dans la poche", on: true },
       { label: "Export CSV à tout moment", on: true },
@@ -90,9 +95,12 @@ export const PLANS: readonly PlanCard[] = [
     cta: `Essayer ${PLAN_TRIAL_DAYS} jours gratuits`,
     payback: "Remboursé par une seule pièce vendue 10 € de plus que prévu.",
     features: [
-      { label: `${limit("PREMIUM").maxItems} pièces en stock`, on: true, lead: true },
+      { label: `${fr.format(limit("PREMIUM").maxItems)} pièces en stock`, on: true, lead: true },
       { label: "Lots et palettes illimités", on: true },
-      { label: `${n(limit("PREMIUM").aiAppraisalsPerMonth, "expertise IA")} par mois`, on: true },
+      {
+        label: `${n(limit("PREMIUM").aiAppraisalsPerMonth, "expertise IA", "expertises IA")} par mois`,
+        on: true,
+      },
       { label: "Textes d'annonce par IA (Vinted, Vestiaire, eBay, Leboncoin)", on: true },
       { label: "Analytique : taux d'écoulement, délai de vente, meilleures sources", on: true },
       { label: "Rapport mensuel imprimable (PDF)", on: true },
@@ -112,7 +120,10 @@ export const PLANS: readonly PlanCard[] = [
     features: [
       { label: "Pièces en stock illimitées", on: true, lead: true },
       { label: `Tout ${PLAN_NAMES.PREMIUM}`, on: true },
-      { label: `${n(limit("PRO").aiAppraisalsPerMonth, "expertise IA")} par mois`, on: true },
+      {
+        label: `${n(limit("PRO").aiAppraisalsPerMonth, "expertise IA", "expertises IA")} par mois`,
+        on: true,
+      },
       { label: "Export comptable : journal des ventes, chiffre d'affaires à déclarer", on: true },
       { label: "Étiquettes QR imprimables, scan pour ouvrir la pièce", on: true },
       { label: "Support prioritaire", on: true },
