@@ -1,0 +1,28 @@
+# Fichiers exclus de l'archive envoyée à Railway par `railway up`.
+# Railway indexe l'arborescence AVANT d'appliquer .dockerignore : tout lien symbolique cassé
+# présent ici fait échouer l'indexation. `legacy/` en contient (outillage d'agents), d'où
+# l'exclusion explicite. Garder ce fichier aligné sur .dockerignore.
+legacy
+docs
+node_modules
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/coverage
+**/test-results
+**/playwright-report
+# Les captures de référence des e2e pèsent ~26 Mo et ne servent ni au build ni à l'exécution :
+# les e2e tournent depuis le dépôt en CI, jamais depuis l'image.
+**/e2e/__screenshots__
+**/.data*
+**/.expo
+.git
+.agents
+.claude
+.codex
+.gemini
+*.log
+**/.env
+**/.env.*
+!**/.env.example

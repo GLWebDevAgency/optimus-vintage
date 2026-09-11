@@ -23,8 +23,10 @@ COPY packages/contract/package.json packages/contract/
 COPY packages/i18n/package.json packages/i18n/
 COPY packages/ui/package.json packages/ui/
 # L'app native (Expo) n'est pas installée dans l'image : filtre sur l'app web et ses dépendances.
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --filter "@chine/web..."
+# Pas de `--mount=type=cache` : Railway impose un préfixe de clé de cache propriétaire dans l'id
+# et refuse le Dockerfile sinon (« is missing the cacheKey prefix from its id »). Le cache de
+# couches Docker suffit : cette étape n'est rejouée que si un manifeste change.
+RUN pnpm install --frozen-lockfile --filter "@chine/web..."
 
 # ── Build : packages compilés puis Next.js (webpack + service worker) ─────────
 FROM deps AS build
@@ -38,16 +40,20 @@ ARG SENTRY_DSN
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
 ARG APP_COMMIT
+# Jeton Sentry des source maps. Il est déclaré en ARG et non monté en secret de build :
+# Railway ne fournit pas `--mount=type=secret` et refuse le Dockerfile qui l'utilise
+# (« other mount types are not supported »). Le compromis est acceptable parce que ce stage
+# `build` est intermédiaire : seul le stage `runner` est publié, et il ne reprend ni cet ARG
+# ni cet ENV. Ne jamais déclarer ce jeton dans le stage final.
+ARG SENTRY_AUTH_TOKEN
 ENV NODE_ENV=production \
     NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
     NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
     NEXT_PUBLIC_SENTRY_ENVIRONMENT=$NEXT_PUBLIC_SENTRY_ENVIRONMENT \
     SENTRY_DSN=$SENTRY_DSN SENTRY_ORG=$SENTRY_ORG SENTRY_PROJECT=$SENTRY_PROJECT \
+    SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN \
     APP_COMMIT=$APP_COMMIT
-# Le jeton Sentry (source maps) est monté en secret : jamais copié dans une couche.
-RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
-    export SENTRY_AUTH_TOKEN="$(cat /run/secrets/SENTRY_AUTH_TOKEN 2>/dev/null || true)" \
-    && pnpm turbo run build --filter=@chine/web
+RUN pnpm turbo run build --filter=@chine/web
 
 # ── Image finale : serveur autonome, utilisateur non root ────────────────────
 FROM node:${NODE_VERSION}-bookworm-slim AS runner

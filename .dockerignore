@@ -14,3 +14,5 @@ docs
 **/.env
 **/.env.*
 !**/.env.example
+# Captures de référence des e2e (~26 Mo) : inutiles au build.
+**/e2e/__screenshots__
