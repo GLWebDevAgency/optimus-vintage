@@ -29,11 +29,11 @@ Aucun prix n'est créé pour la formule Atelier : elle est en liste d'attente et
 
 ### Cloudflare R2
 
-Buckets `chine-photos-staging` et `chine-photos` créés (région ENAM). Ni identifiants S3, ni règle CORS, ni domaine public : voir la section 3.
+Buckets `chine-photos-staging` et `chine-photos` créés (région ENAM). Le bucket de recette est exposé publiquement et porte sa règle CORS ; seules les clés S3 manquent, voir la section 3.
 
 ### GitHub
 
-Secrets `RAILWAY_TOKEN_STAGING` et `RAILWAY_TOKEN_PRODUCTION` (jetons de projet, un par environnement) et variable `PRODUCTION_URL` enregistrés. Environnement `production` créé, mais **sans relecteur obligatoire** : voir la section 2.
+Dépôt **public** (intégration continue gratuite et illimitée). Secrets `RAILWAY_TOKEN_STAGING` et `RAILWAY_TOKEN_PRODUCTION` (jetons de projet, un par environnement), variables `STAGING_URL` et `PRODUCTION_URL`. Environnement `production` protégé par un relecteur obligatoire et une politique de branche. Pipeline vérifié de bout en bout.
 
 ### Déploiement staging
 
@@ -102,18 +102,17 @@ activation, aucun encaissement réel n'est possible. La recette continue en mode
 
 ### Pour ouvrir la production
 
-4. Régulariser la facturation GitHub (point 1 de la section 2) pour que le pipeline fonctionne.
-5. Activer le compte Stripe, puis créer les produits et prix en mode production avec `tax_behavior=inclusive`, et un webhook vers le domaine de production.
-6. Acheter et brancher `chine.app` : domaine personnalisé sur le service Railway de production, puis reporter l'origine dans `NEXT_PUBLIC_APP_URL` et `BETTER_AUTH_URL`.
-7. Compléter les variables de production depuis `deploy/railway/production.env.example`, sans oublier `${{Postgres-j16W.DATABASE_URL}}`, un `BETTER_AUTH_SECRET` généré (`openssl rand -base64 48`) et `RAILWAY_DOCKERFILE_PATH`.
-8. Ajouter un volume `/data` au service web de production et lui générer un domaine.
-9. Activer les sauvegardes quotidiennes du Postgres de production et tester une restauration.
+4. Activer le compte Stripe, puis créer les produits et prix en mode production avec `tax_behavior=inclusive`, et un webhook vers le domaine de production.
+5. Acheter et brancher `chine.app` : domaine personnalisé sur le service Railway de production, puis reporter l'origine dans `NEXT_PUBLIC_APP_URL` et `BETTER_AUTH_URL`.
+6. Compléter les variables de production depuis `deploy/railway/production.env.example`, sans oublier `${{Postgres-j16W.DATABASE_URL}}`, un `BETTER_AUTH_SECRET` généré (`openssl rand -base64 48`) et `RAILWAY_DOCKERFILE_PATH`.
+7. Ajouter un volume `/data` au service web de production et lui générer un domaine.
+8. Activer les sauvegardes quotidiennes du Postgres de production et tester une restauration.
 
 ### Hygiène de sécurité
 
-10. **Révoquer le mot de passe Postgres de l'ancien projet `Optimus-vintage`** : il figurait en clair dans l'historique du dépôt. Le projet existe toujours sur Railway avec ses services `optimus-api` et `Postgres`.
-11. Remplacer la clé Stripe de test du CLI (expire le 24 novembre 2026) par une clé du tableau de bord.
-12. Activer la double authentification sur GitHub, Railway, Stripe, Cloudflare, Resend et Anthropic ; poser un plafond de dépense sur la console Anthropic.
+9. ~~Révoquer le mot de passe Postgres de l'ancien projet~~ — **fait** : le projet a été supprimé et l'historique réécrit.
+10. Remplacer la clé Stripe de test du CLI (expire le 24 novembre 2026) par une clé du tableau de bord.
+11. Activer la double authentification sur GitHub, Railway, Stripe, Cloudflare, Resend et Anthropic ; poser un plafond de dépense sur la console Anthropic.
 
 ## 4. Dette connue, à traiter avant d'ouvrir aux vrais clients
 
