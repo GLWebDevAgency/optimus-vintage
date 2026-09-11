@@ -84,6 +84,7 @@ export const saleIdSchema = z.object({
 
 export const saleQuerySchema = z.object({
   lotId: z.coerce.number().int().positive().optional(),
+  itemId: z.coerce.number().int().positive().optional(),
 });
 
 // ============ TYPE EXPORTS ============

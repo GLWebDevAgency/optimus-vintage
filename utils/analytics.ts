@@ -42,6 +42,16 @@ export type AnalyticsEvent =
   | "onboarding_started"
   | "onboarding_completed"
   | "onboarding_skipped"
+  | "onboarding_step_viewed"
+  // Gamification
+  | "achievement_unlocked"
+  | "streak_updated"
+  // Wrapped
+  | "wrapped_viewed"
+  | "wrapped_shared"
+  // Review
+  | "review_prompted"
+  | "review_completed"
   // Errors
   | "error_occurred"
   | "api_error"

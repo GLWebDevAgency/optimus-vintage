@@ -225,6 +225,10 @@ export const SalesRepository = {
     return api.get<Sale[]>(`/sales?lotId=${lotId}`);
   },
 
+  async getByItemId(itemId: number): Promise<Sale[]> {
+    return api.get<Sale[]>(`/sales?itemId=${itemId}`);
+  },
+
   async getById(id: number): Promise<Sale | undefined> {
     try {
       return await api.get<Sale>(`/sales/${id}`);

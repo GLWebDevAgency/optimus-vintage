@@ -12,6 +12,11 @@ import appConfig from "@/app.json";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { FeatureGate } from "@/components/ui/feature-gate";
 import {
+    CurvedItem,
+    ScrollEdgeFade,
+    useCurvedScroll,
+} from "@/components/ui/CurvedScroll";
+import {
     PremiumCard,
     PremiumHeader,
     VantaScreen,
@@ -20,7 +25,9 @@ import {
 } from "@/components/ui/PremiumUI";
 import { Radius, Spacing } from "@/constants/Theme";
 import { THEME_MODE_OPTIONS, useSettingsStore } from "@/store/settings";
+import { router } from "expo-router";
 import { useSubscriptionStore } from "@/store/subscription";
+import { useUnlockedCount } from "@/store/gamification";
 import { useAccessibility } from "@/utils/accessibility";
 import { useTrackScreen } from "@/utils/analytics";
 import { exportDataToCSV } from "@/utils/data/export";
@@ -32,7 +39,6 @@ import {
     Alert,
     Platform,
     Pressable,
-    ScrollView,
     StyleSheet,
     Switch,
     Text,
@@ -615,6 +621,7 @@ export default function SettingsScreen() {
   const hapticsEnabled = useSettingsStore((s) => s.hapticsEnabled);
   const setHapticsEnabled = useSettingsStore((s) => s.setHapticsEnabled);
 
+  const { unlocked, total } = useUnlockedCount();
   const [exporting, setExporting] = useState(false);
 
   const currentLang = useMemo(
@@ -709,6 +716,10 @@ export default function SettingsScreen() {
       system: t("settings.themes.system"),
       light: t("settings.themes.light"),
       dark: t("settings.themes.dark"),
+      "midnight-rose": t("settings.themes.midnightRose"),
+      "obsidian-noir": t("settings.themes.obsidianNoir"),
+      aurora: t("settings.themes.aurora"),
+      copper: t("settings.themes.copper"),
     };
     const getThemeLabel = (key: string) => themeLabels[key] || key;
     if (Platform.OS === "ios") {
@@ -770,17 +781,21 @@ export default function SettingsScreen() {
   }, [resetOnboarding, t]);
 
   const themeIcon: AppIconName =
-    themeMode === "dark"
-      ? "dark-mode"
-      : themeMode === "light"
-        ? "light-mode"
-        : "smartphone";
+    themeMode === "light"
+      ? "light-mode"
+      : themeMode === "system"
+        ? "smartphone"
+        : "dark-mode";
 
   const version = String(appConfig?.expo?.version ?? "1.0.0");
 
+  const { scrollY, scrollHandler } = useCurvedScroll();
+
   return (
     <VantaScreen>
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -791,25 +806,27 @@ export default function SettingsScreen() {
           },
         ]}
       >
-        <View style={styles.header}>
-          <PremiumHeader
-            title={t("settings.title")}
-            subtitle={t("settings.subtitle")}
-            style={{ paddingHorizontal: 0 }}
-          />
-        </View>
+        <CurvedItem scrollY={scrollY}>
+          <View style={styles.header}>
+            <PremiumHeader
+              title={t("settings.title")}
+              subtitle={t("settings.subtitle")}
+              style={{ paddingHorizontal: 0 }}
+            />
+          </View>
+        </CurvedItem>
 
         <View>
-          <Animated.View entering={getEnter(isReduceMotionEnabled, 80)}>
+          <CurvedItem scrollY={scrollY} entering={getEnter(isReduceMotionEnabled, 80)}>
             <IdentityNode
               theme={theme}
               appName="Optimus Vintage"
               version={`VER: ${version}`}
             />
-          </Animated.View>
+          </CurvedItem>
 
           {/* Subscription / Customer Center */}
-          <Animated.View entering={getEnter(isReduceMotionEnabled, 110)}>
+          <CurvedItem scrollY={scrollY} entering={getEnter(isReduceMotionEnabled, 110)}>
             <SectionHeader
               title={t("settings.subscription").toUpperCase()}
               theme={theme}
@@ -844,9 +861,9 @@ export default function SettingsScreen() {
               isReduceMotionEnabled={isReduceMotionEnabled}
               accessibilityLabel={t("settings.upgrade")}
             />
-          </Animated.View>
+          </CurvedItem>
 
-          <Animated.View entering={getEnter(isReduceMotionEnabled, 140)}>
+          <CurvedItem scrollY={scrollY} entering={getEnter(isReduceMotionEnabled, 140)}>
             <SectionHeader
               title={t("settings.appearance").toUpperCase()}
               theme={theme}
@@ -886,9 +903,9 @@ export default function SettingsScreen() {
               accessibilityLabel={`${t("settings.language")}: ${currentLang.nativeName}`}
               accessibilityHint={t("common.edit")}
             />
-          </Animated.View>
+          </CurvedItem>
 
-          <Animated.View entering={getEnter(isReduceMotionEnabled, 200)}>
+          <CurvedItem scrollY={scrollY} entering={getEnter(isReduceMotionEnabled, 200)}>
             <SectionHeader
               title={t("settings.preferences").toUpperCase()}
               theme={theme}
@@ -949,9 +966,28 @@ export default function SettingsScreen() {
               isReduceMotionEnabled={isReduceMotionEnabled}
               accessibilityLabel={t("settings.haptics")}
             />
-          </Animated.View>
 
-          <Animated.View entering={getEnter(isReduceMotionEnabled, 260)}>
+            <VantaRow
+              icon="emoji-events"
+              label={t("gamification.achievements").toUpperCase()}
+              sublabel={t("gamification.achievementsSubtitle")}
+              value={
+                <Text style={[styles.valueAccent, { color: theme.primary }]}>
+                  {unlocked}/{total}
+                </Text>
+              }
+              onPress={() => router.push("/achievements")}
+              theme={theme}
+              isReduceMotionEnabled={isReduceMotionEnabled}
+              accessibilityLabel={t("gamification.achievements")}
+              accessibilityHint={t("gamification.unlockedCount", {
+                unlocked: String(unlocked),
+                total: String(total),
+              })}
+            />
+          </CurvedItem>
+
+          <CurvedItem scrollY={scrollY} entering={getEnter(isReduceMotionEnabled, 260)}>
             <SectionHeader
               title={t("settings.dataManagement").toUpperCase()}
               theme={theme}
@@ -981,9 +1017,11 @@ export default function SettingsScreen() {
               isReduceMotionEnabled={isReduceMotionEnabled}
               accessibilityLabel={t("settings.resetOnboarding")}
             />
-          </Animated.View>
+          </CurvedItem>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
+
+      <ScrollEdgeFade color={theme.background} position="bottom" scrollY={scrollY} />
     </VantaScreen>
   );
 }

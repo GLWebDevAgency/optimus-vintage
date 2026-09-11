@@ -26,6 +26,9 @@ import { useSubscriptionStore } from "@/store/subscription";
 import { analytics } from "@/utils/analytics";
 import "@/utils/i18n"; // Initialize i18n
 
+import { AchievementUnlockModal } from "@/components/gamification/AchievementUnlockModal";
+import { useGamificationStore } from "@/store/gamification";
+
 export {
     // Catch any errors thrown by the Layout component.
     ErrorBoundary
@@ -37,6 +40,7 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
       retry: 2,
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -113,6 +117,8 @@ function RootLayoutNav() {
       await fetchMe();
       // Initialize RevenueCat (after auth so user ID can be set)
       await initSubscriptions();
+      // Update daily streak for gamification
+      useGamificationStore.getState().updateStreak();
       if (isMounted) {
         setIsReady(true);
       }
@@ -149,6 +155,7 @@ function RootLayoutNav() {
     >
       {/* Status bar: light text on dark mode, dark text on light mode */}
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <AchievementUnlockModal />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
@@ -172,6 +179,21 @@ function RootLayoutNav() {
             headerShown: false,
             sheetGrabberVisible: true,
             sheetAllowedDetents: [0.85, 1.0],
+          }}
+        />
+        <Stack.Screen
+          name="wrapped"
+          options={{
+            headerShown: false,
+            presentation: "fullScreenModal",
+            animation: "slide_from_bottom",
+          }}
+        />
+        <Stack.Screen
+          name="achievements"
+          options={{
+            headerShown: false,
+            presentation: "modal",
           }}
         />
         <Stack.Screen

@@ -126,6 +126,12 @@ const ICON_MAP = {
   delete: { symbol: "trash.fill", feather: "trash-2" },
   public: { symbol: "globe", feather: "globe" },
   replay: { symbol: "arrow.counterclockwise", feather: "rotate-ccw" },
+  // Gamification & sharing icons
+  "local-fire-department": { symbol: "flame.fill", feather: "zap" },
+  "photo-camera": { symbol: "camera.fill", feather: "camera" },
+  "bar-chart": { symbol: "chart.bar.fill", feather: "bar-chart-2" },
+  "thumb-up": { symbol: "hand.thumbsup.fill", feather: "thumbs-up" },
+  share: { symbol: "square.and.arrow.up", feather: "share" },
 } as const;
 
 export type AppIconName = keyof typeof ICON_MAP;

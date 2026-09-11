@@ -28,7 +28,7 @@ export const Palette = {
   // ─── AETHER (Dark Mode Bases) ──────────────────────────────────────────────
   // "The interface floats in an infinite void"
   vanta: {
-    black: "#07a75d61", // Absolute Zero - The Void
+    black: "#071E12", // Deep Emerald Void
     obsidian: "#0A0A0A", // Polished Obsidian
     titanium: "#111111", // Brushed Black Titanium
     carbon: "#1C1C1C", // Carbon Glass Surface
@@ -318,6 +318,7 @@ export const Theme = {
     text: Palette.neutral.anthracite,
     textSecondary: Palette.neutral[600],
     textMuted: Palette.neutral[400],
+    textGhost: "rgba(28, 25, 23, 0.2)",
     textInverse: Palette.neutral.white,
     textOnAccent: Palette.neutral[900],
     textGold: Palette.metal.champagne,
@@ -370,6 +371,14 @@ export const Theme = {
     shadowGlow: `0 0 24px ${Palette.metal.champagne}30`,
     shadowCardFloat:
       "0 12px 40px rgba(28, 25, 23, 0.08), 0 4px 12px rgba(28, 25, 23, 0.04)",
+
+    // ─── VantaScreen Gradient & Orbs ────────────────────────────────────────
+    gradient: { angle: "135deg", start: Palette.ivory.cream, mid: Palette.ivory.base, end: Palette.ivory.sand },
+    orbs: {
+      topRight: "rgba(201, 169, 97, 0.08)",
+      bottomLeft: "rgba(201, 169, 97, 0.05)",
+      centerRight: "rgba(201, 169, 97, 0.04)",
+    },
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -396,8 +405,9 @@ export const Theme = {
 
     // ─── Text ────────────────────────────────────────────────────────────────
     text: Palette.neutral.white,
-    textSecondary: Palette.neutral[400],
-    textMuted: Palette.neutral[600],
+    textSecondary: "rgba(255, 255, 255, 0.6)",
+    textMuted: "rgba(255, 255, 255, 0.4)",
+    textGhost: "rgba(255, 255, 255, 0.2)",
     textInverse: Palette.vanta.black,
     textOnAccent: Palette.vanta.black,
     textGold: Palette.metal.gold,
@@ -449,6 +459,330 @@ export const Theme = {
     shadowInner: "inset 0 1px 0 rgba(255, 255, 255, 0.05)",
     shadowGlow: `0 0 32px ${Palette.metal.gold}40`,
     shadowCardFloat: `0 0 1px ${Palette.metal.gold}30, 0 8px 32px rgba(0, 0, 0, 0.6)`,
+
+    // ─── VantaScreen Gradient & Orbs ────────────────────────────────────────
+    gradient: { angle: "160deg", start: Palette.vanta.black, mid: "#0C2519", end: Palette.vanta.black },
+    orbs: {
+      topRight: "rgba(16, 185, 129, 0.07)",
+      bottomLeft: "rgba(52, 211, 153, 0.05)",
+      centerRight: "rgba(244, 192, 37, 0.03)",
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🌹 MIDNIGHT ROSE (Dark)
+  // "Deep Navy Void with Rose Gold Emanations — Dior / Apple Rose Gold"
+  // ═══════════════════════════════════════════════════════════════════════════
+  midnightRose: {
+    dark: true,
+
+    background: "#0A0F1A",
+    backgroundSubtle: "#111827",
+    backgroundElevated: "#151D30",
+    backgroundGradientStart: "#0A0F1A",
+    backgroundGradientEnd: "#111827",
+
+    surface: "#111827",
+    surfaceHighlight: "#1A2033",
+    surfaceGlass: "rgba(17, 24, 39, 0.75)",
+    surfaceGlassStrong: "rgba(17, 24, 39, 0.9)",
+    surfaceCard: "#1A2033",
+    surfaceSlab: "#1E2540",
+
+    text: "#F8FAFC",
+    textSecondary: "rgba(248, 250, 252, 0.6)",
+    textMuted: "rgba(248, 250, 252, 0.4)",
+    textGhost: "rgba(248, 250, 252, 0.2)",
+    textInverse: "#0A0F1A",
+    textOnAccent: "#0A0F1A",
+    textGold: "#E8A0BF",
+
+    primary: "#E8A0BF",
+    primaryHover: "#F0B8D0",
+    primarySubtle: "rgba(232, 160, 191, 0.15)",
+    primaryMuted: "rgba(232, 160, 191, 0.08)",
+    primaryGlow: "rgba(232, 160, 191, 0.5)",
+    primaryLight: "#F0B8D0",
+
+    secondary: "#A78BFA",
+    secondarySubtle: "rgba(167, 139, 250, 0.15)",
+
+    success: Palette.semantic.success,
+    successSubtle: "rgba(74, 222, 128, 0.15)",
+    successMuted: "rgba(74, 222, 128, 0.08)",
+    successGlow: "rgba(74, 222, 128, 0.5)",
+
+    danger: Palette.semantic.danger,
+    dangerSubtle: "rgba(244, 63, 94, 0.15)",
+    dangerMuted: "rgba(244, 63, 94, 0.08)",
+    dangerGlow: "rgba(244, 63, 94, 0.5)",
+
+    warning: Palette.semantic.warning,
+    warningSubtle: "rgba(250, 204, 21, 0.15)",
+    warningMuted: "rgba(250, 204, 21, 0.08)",
+
+    info: Palette.semantic.info,
+    infoSubtle: "rgba(56, 189, 248, 0.15)",
+    infoMuted: "rgba(56, 189, 248, 0.08)",
+
+    border: "#1E2540",
+    borderFocus: "#E8A0BF",
+    borderGlass: "rgba(248, 250, 252, 0.06)",
+    borderCard: "#252D48",
+    borderGold: "rgba(232, 160, 191, 0.3)",
+
+    shadowXs: "0 0 0 1px rgba(232, 160, 191, 0.03)",
+    shadowSm: "0 2px 8px rgba(0, 0, 0, 0.5)",
+    shadowMd: "0 8px 24px rgba(0, 0, 0, 0.6)",
+    shadowLg: "0 16px 48px rgba(0, 0, 0, 0.8)",
+    shadowXl: "0 24px 64px rgba(0, 0, 0, 0.9)",
+    shadowInner: "inset 0 1px 0 rgba(248, 250, 252, 0.04)",
+    shadowGlow: "0 0 32px rgba(232, 160, 191, 0.25)",
+    shadowCardFloat: "0 0 1px rgba(232, 160, 191, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5)",
+
+    gradient: { angle: "160deg", start: "#0A0F1A", mid: "#151D30", end: "#0A0F1A" },
+    orbs: {
+      topRight: "rgba(232, 160, 191, 0.06)",
+      bottomLeft: "rgba(167, 139, 250, 0.04)",
+      centerRight: "rgba(232, 160, 191, 0.03)",
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ⬛ OBSIDIAN NOIR (Dark)
+  // "OLED Pure Black with Platinum Light — Rolex / Audemars Piguet"
+  // ═══════════════════════════════════════════════════════════════════════════
+  obsidianNoir: {
+    dark: true,
+
+    background: "#000000",
+    backgroundSubtle: "#050505",
+    backgroundElevated: "#0A0A0A",
+    backgroundGradientStart: "#000000",
+    backgroundGradientEnd: "#050505",
+
+    surface: "#0A0A0A",
+    surfaceHighlight: "#111111",
+    surfaceGlass: "rgba(10, 10, 10, 0.75)",
+    surfaceGlassStrong: "rgba(10, 10, 10, 0.9)",
+    surfaceCard: "#111111",
+    surfaceSlab: "#161616",
+
+    text: "#FFFFFF",
+    textSecondary: "rgba(255, 255, 255, 0.55)",
+    textMuted: "rgba(255, 255, 255, 0.35)",
+    textGhost: "rgba(255, 255, 255, 0.15)",
+    textInverse: "#000000",
+    textOnAccent: "#000000",
+    textGold: "#D4D4D8",
+
+    primary: "#D4D4D8",
+    primaryHover: "#E4E4E7",
+    primarySubtle: "rgba(212, 212, 216, 0.12)",
+    primaryMuted: "rgba(212, 212, 216, 0.06)",
+    primaryGlow: "rgba(212, 212, 216, 0.3)",
+    primaryLight: "#E4E4E7",
+
+    secondary: "#A1A1AA",
+    secondarySubtle: "rgba(161, 161, 170, 0.12)",
+
+    success: Palette.semantic.success,
+    successSubtle: "rgba(74, 222, 128, 0.15)",
+    successMuted: "rgba(74, 222, 128, 0.08)",
+    successGlow: "rgba(74, 222, 128, 0.5)",
+
+    danger: Palette.semantic.danger,
+    dangerSubtle: "rgba(244, 63, 94, 0.15)",
+    dangerMuted: "rgba(244, 63, 94, 0.08)",
+    dangerGlow: "rgba(244, 63, 94, 0.5)",
+
+    warning: Palette.semantic.warning,
+    warningSubtle: "rgba(250, 204, 21, 0.15)",
+    warningMuted: "rgba(250, 204, 21, 0.08)",
+
+    info: Palette.semantic.info,
+    infoSubtle: "rgba(56, 189, 248, 0.15)",
+    infoMuted: "rgba(56, 189, 248, 0.08)",
+
+    border: "#1A1A1A",
+    borderFocus: "#D4D4D8",
+    borderGlass: "rgba(255, 255, 255, 0.05)",
+    borderCard: "#1E1E1E",
+    borderGold: "rgba(212, 212, 216, 0.2)",
+
+    shadowXs: "0 0 0 1px rgba(255, 255, 255, 0.02)",
+    shadowSm: "0 2px 8px rgba(0, 0, 0, 0.8)",
+    shadowMd: "0 8px 24px rgba(0, 0, 0, 0.85)",
+    shadowLg: "0 16px 48px rgba(0, 0, 0, 0.9)",
+    shadowXl: "0 24px 64px rgba(0, 0, 0, 0.95)",
+    shadowInner: "inset 0 1px 0 rgba(255, 255, 255, 0.03)",
+    shadowGlow: "0 0 24px rgba(212, 212, 216, 0.12)",
+    shadowCardFloat: "0 0 1px rgba(255, 255, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.7)",
+
+    gradient: { angle: "135deg", start: "#000000", mid: "#060606", end: "#000000" },
+    orbs: {
+      topRight: "rgba(212, 212, 216, 0.04)",
+      bottomLeft: "rgba(161, 161, 170, 0.03)",
+      centerRight: "rgba(255, 255, 255, 0.02)",
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🌌 AURORA BOREAL (Dark)
+  // "Deep Indigo Cosmos with Cyan Aurora — Tesla / SpaceX"
+  // ═══════════════════════════════════════════════════════════════════════════
+  aurora: {
+    dark: true,
+
+    background: "#0B0D1E",
+    backgroundSubtle: "#12152B",
+    backgroundElevated: "#181C38",
+    backgroundGradientStart: "#0B0D1E",
+    backgroundGradientEnd: "#12152B",
+
+    surface: "#12152B",
+    surfaceHighlight: "#1A1D38",
+    surfaceGlass: "rgba(18, 21, 43, 0.75)",
+    surfaceGlassStrong: "rgba(18, 21, 43, 0.9)",
+    surfaceCard: "#1A1D38",
+    surfaceSlab: "#202545",
+
+    text: "#E2E8F0",
+    textSecondary: "rgba(226, 232, 240, 0.6)",
+    textMuted: "rgba(226, 232, 240, 0.4)",
+    textGhost: "rgba(226, 232, 240, 0.2)",
+    textInverse: "#0B0D1E",
+    textOnAccent: "#0B0D1E",
+    textGold: "#22D3EE",
+
+    primary: "#22D3EE",
+    primaryHover: "#67E8F9",
+    primarySubtle: "rgba(34, 211, 238, 0.15)",
+    primaryMuted: "rgba(34, 211, 238, 0.08)",
+    primaryGlow: "rgba(34, 211, 238, 0.5)",
+    primaryLight: "#67E8F9",
+
+    secondary: "#8B5CF6",
+    secondarySubtle: "rgba(139, 92, 246, 0.15)",
+
+    success: Palette.semantic.success,
+    successSubtle: "rgba(74, 222, 128, 0.15)",
+    successMuted: "rgba(74, 222, 128, 0.08)",
+    successGlow: "rgba(74, 222, 128, 0.5)",
+
+    danger: Palette.semantic.danger,
+    dangerSubtle: "rgba(244, 63, 94, 0.15)",
+    dangerMuted: "rgba(244, 63, 94, 0.08)",
+    dangerGlow: "rgba(244, 63, 94, 0.5)",
+
+    warning: Palette.semantic.warning,
+    warningSubtle: "rgba(250, 204, 21, 0.15)",
+    warningMuted: "rgba(250, 204, 21, 0.08)",
+
+    info: "#22D3EE",
+    infoSubtle: "rgba(34, 211, 238, 0.15)",
+    infoMuted: "rgba(34, 211, 238, 0.08)",
+
+    border: "#1E2145",
+    borderFocus: "#22D3EE",
+    borderGlass: "rgba(226, 232, 240, 0.06)",
+    borderCard: "#262A50",
+    borderGold: "rgba(34, 211, 238, 0.3)",
+
+    shadowXs: "0 0 0 1px rgba(34, 211, 238, 0.03)",
+    shadowSm: "0 2px 8px rgba(0, 0, 0, 0.5)",
+    shadowMd: "0 8px 24px rgba(0, 0, 0, 0.6)",
+    shadowLg: "0 16px 48px rgba(0, 0, 0, 0.8)",
+    shadowXl: "0 24px 64px rgba(0, 0, 0, 0.9)",
+    shadowInner: "inset 0 1px 0 rgba(226, 232, 240, 0.04)",
+    shadowGlow: "0 0 32px rgba(34, 211, 238, 0.25)",
+    shadowCardFloat: "0 0 1px rgba(34, 211, 238, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5)",
+
+    gradient: { angle: "160deg", start: "#0B0D1E", mid: "#141833", end: "#0B0D1E" },
+    orbs: {
+      topRight: "rgba(34, 211, 238, 0.06)",
+      bottomLeft: "rgba(139, 92, 246, 0.05)",
+      centerRight: "rgba(20, 184, 166, 0.03)",
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🔶 COPPER & LEATHER (Dark)
+  // "Warm Artisan Void with Copper Emanations — Hermès / Whiskey"
+  // ═══════════════════════════════════════════════════════════════════════════
+  copper: {
+    dark: true,
+
+    background: "#100A06",
+    backgroundSubtle: "#1A1310",
+    backgroundElevated: "#1E1714",
+    backgroundGradientStart: "#100A06",
+    backgroundGradientEnd: "#1A1310",
+
+    surface: "#1A1310",
+    surfaceHighlight: "#231C16",
+    surfaceGlass: "rgba(26, 19, 16, 0.75)",
+    surfaceGlassStrong: "rgba(26, 19, 16, 0.9)",
+    surfaceCard: "#231C16",
+    surfaceSlab: "#2A211A",
+
+    text: "#FAF5F0",
+    textSecondary: "rgba(250, 245, 240, 0.6)",
+    textMuted: "rgba(250, 245, 240, 0.4)",
+    textGhost: "rgba(250, 245, 240, 0.2)",
+    textInverse: "#100A06",
+    textOnAccent: "#100A06",
+    textGold: "#D4A574",
+
+    primary: "#D4A574",
+    primaryHover: "#E0BA8E",
+    primarySubtle: "rgba(212, 165, 116, 0.15)",
+    primaryMuted: "rgba(212, 165, 116, 0.08)",
+    primaryGlow: "rgba(212, 165, 116, 0.5)",
+    primaryLight: "#E0BA8E",
+
+    secondary: "#B08D57",
+    secondarySubtle: "rgba(176, 141, 87, 0.15)",
+
+    success: Palette.semantic.success,
+    successSubtle: "rgba(74, 222, 128, 0.15)",
+    successMuted: "rgba(74, 222, 128, 0.08)",
+    successGlow: "rgba(74, 222, 128, 0.5)",
+
+    danger: Palette.semantic.danger,
+    dangerSubtle: "rgba(244, 63, 94, 0.15)",
+    dangerMuted: "rgba(244, 63, 94, 0.08)",
+    dangerGlow: "rgba(244, 63, 94, 0.5)",
+
+    warning: Palette.semantic.warning,
+    warningSubtle: "rgba(250, 204, 21, 0.15)",
+    warningMuted: "rgba(250, 204, 21, 0.08)",
+
+    info: Palette.semantic.info,
+    infoSubtle: "rgba(56, 189, 248, 0.15)",
+    infoMuted: "rgba(56, 189, 248, 0.08)",
+
+    border: "#2A211A",
+    borderFocus: "#D4A574",
+    borderGlass: "rgba(250, 245, 240, 0.06)",
+    borderCard: "#332920",
+    borderGold: "rgba(212, 165, 116, 0.3)",
+
+    shadowXs: "0 0 0 1px rgba(212, 165, 116, 0.03)",
+    shadowSm: "0 2px 8px rgba(0, 0, 0, 0.5)",
+    shadowMd: "0 8px 24px rgba(0, 0, 0, 0.6)",
+    shadowLg: "0 16px 48px rgba(0, 0, 0, 0.8)",
+    shadowXl: "0 24px 64px rgba(0, 0, 0, 0.9)",
+    shadowInner: "inset 0 1px 0 rgba(250, 245, 240, 0.04)",
+    shadowGlow: "0 0 32px rgba(212, 165, 116, 0.25)",
+    shadowCardFloat: "0 0 1px rgba(212, 165, 116, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5)",
+
+    gradient: { angle: "160deg", start: "#100A06", mid: "#1A1410", end: "#100A06" },
+    orbs: {
+      topRight: "rgba(212, 165, 116, 0.06)",
+      bottomLeft: "rgba(245, 158, 11, 0.04)",
+      centerRight: "rgba(212, 165, 116, 0.03)",
+    },
   },
 };
 
@@ -681,29 +1015,26 @@ const navFonts = {
   heavy: { fontFamily: fonts.sans.heavy, fontWeight: "800" as const },
 };
 
+function buildNavTheme(t: (typeof Theme)[keyof typeof Theme]) {
+  return {
+    dark: t.dark,
+    colors: {
+      primary: t.primary,
+      background: t.background,
+      card: t.surface,
+      text: t.text,
+      border: t.border,
+      notification: t.danger,
+    },
+    fonts: navFonts,
+  };
+}
+
 export const NavigationTheme = {
-  light: {
-    dark: false,
-    colors: {
-      primary: Theme.light.primary,
-      background: Theme.light.background,
-      card: Theme.light.surface,
-      text: Theme.light.text,
-      border: Theme.light.border,
-      notification: Theme.light.danger,
-    },
-    fonts: navFonts,
-  },
-  dark: {
-    dark: true,
-    colors: {
-      primary: Theme.dark.primary,
-      background: Theme.dark.background,
-      card: Theme.dark.surface,
-      text: Theme.dark.text,
-      border: Theme.dark.border,
-      notification: Theme.dark.danger,
-    },
-    fonts: navFonts,
-  },
+  light: buildNavTheme(Theme.light),
+  dark: buildNavTheme(Theme.dark),
+  midnightRose: buildNavTheme(Theme.midnightRose),
+  obsidianNoir: buildNavTheme(Theme.obsidianNoir),
+  aurora: buildNavTheme(Theme.aurora),
+  copper: buildNavTheme(Theme.copper),
 };

@@ -97,6 +97,23 @@
       "connected": "CONNECTÉ",
       "lots": "lots",
       "items": "articles"
+    },
+    "charts": {
+      "title": "Analyses",
+      "revenueTrend": "Tendance des Revenus",
+      "platformDistribution": "Répartition par Plateforme",
+      "monthlyPerformance": "Performance Mensuelle",
+      "noData": "Aucune donnée pour cette période",
+      "revenue": "Revenus",
+      "profit": "Profit",
+      "premiumOnly": "Passez à Premium pour débloquer les graphiques",
+      "salesCount": "{{count}} ventes",
+      "avgPerSale": "Moy. par vente"
+    },
+    "wrappedCard": {
+      "title": "Votre Resell Wrapped",
+      "subtitle": "Découvrez votre rapport de {{month}}",
+      "cta": "Découvrir"
     }
   },
   "lots": {
@@ -159,6 +176,9 @@
     "roiGood": "Bien",
     "roiLow": "Faible",
     "roiLoss": "Perte",
+    "floorPriceDesc": "Vendez les {{count}} articles restants au-dessus de {{price}} pour maintenir la rentabilité.",
+    "moreItems": "+ {{count}} autres articles",
+    "estimatedProfit": "Profit est.",
     "validation": {
       "fillRequired": "Veuillez remplir tous les champs requis.",
       "selectProvider": "Veuillez sélectionner un fournisseur",
@@ -307,6 +327,10 @@
     "itemReturnedToStock": "L'article a été remis en stock.",
     "cancelError": "Impossible d'annuler la vente.",
     "alreadyCancelled": "Cette vente est déjà annulée ou remboursée.",
+    "missingFields": "Le prix ou l'article est manquant.",
+    "saleRecorded": "Vente enregistrée !",
+    "saleRecordedDesc": "Profit net : {{amount}}",
+    "createError": "Impossible d'enregistrer la vente.",
     "lotItem": "Lot #{{lotId}} • Article #{{itemId}}"
   },
   "settings": {
@@ -337,9 +361,13 @@
     "haptics": "Retour haptique",
     "hapticsDescription": "Vibrations lors des interactions",
     "themes": {
-      "light": "Clair",
-      "dark": "Sombre",
-      "system": "Système"
+      "light": "Ivory",
+      "dark": "Aether",
+      "system": "Système",
+      "midnightRose": "Midnight Rose",
+      "obsidianNoir": "Obsidian Noir",
+      "aurora": "Aurora",
+      "copper": "Copper"
     },
     "notifications": "Notifications",
     "importData": "Importer des données",
@@ -375,7 +403,34 @@
     "feature1": "Suivi des profits en temps réel",
     "feature2": "Gestion intelligente des lots",
     "feature3": "Stockage hors-ligne",
-    "dataOnDevice": "Vos données restent sur votre appareil"
+    "dataOnDevice": "Vos données restent sur votre appareil",
+    "skip": "Passer",
+    "getStarted": "C'est parti",
+    "screen1": {
+      "title": "Votre Empire Vintage",
+      "subtitle": "Réinventé",
+      "description": "La plateforme premium qui transforme vos trouvailles en profit"
+    },
+    "screen2": {
+      "title": "Scanner IA",
+      "subtitle": "Identifiez en un instant",
+      "description": "Scannez n'importe quel article et obtenez une analyse complète",
+      "feature1": "Identification de marque instantanée",
+      "feature2": "Estimation de prix marché",
+      "feature3": "Recommandation achat/vente"
+    },
+    "screen3": {
+      "title": "Tableau de Bord Pro",
+      "subtitle": "Vos données, magnifiées",
+      "description": "Suivez vos performances avec des graphiques élégants et des insights en temps réel",
+      "feature1": "KPI en temps réel",
+      "feature2": "Graphiques de performance",
+      "feature3": "Rapport mensuel Wrapped"
+    },
+    "screen4": {
+      "title": "Configuration Rapide",
+      "subtitle": "Prêt en 30 secondes"
+    }
   },
   "errors": {
     "generic": "Une erreur s'est produite",
@@ -568,5 +623,132 @@
     "restoreSuccess": "Achats restaurés avec succès",
     "restoreNone": "Aucun achat à restaurer",
     "planUpgraded": "Plan mis à jour"
+  },
+  "wrapped": {
+    "title": "Resell Wrapped",
+    "monthTitle": "{{month}} en résumé",
+    "slide1": {
+      "title": "Votre Mois en Chiffres",
+      "revenue": "Chiffre d'affaires",
+      "itemsSold": "Articles vendus",
+      "bestDay": "Meilleur jour"
+    },
+    "slide2": {
+      "title": "Top Performer",
+      "subtitle": "Votre meilleure vente du mois",
+      "soldOn": "Vendu sur {{platform}}"
+    },
+    "slide3": {
+      "title": "Champion des Plateformes",
+      "subtitle": "Où vous vendez le mieux",
+      "sales": "{{count}} ventes",
+      "revenue": "{{amount}} de CA"
+    },
+    "slide4": {
+      "title": "Croissance ROI",
+      "vsLastMonth": "vs. mois précédent",
+      "up": "+{{percent}}%",
+      "down": "{{percent}}%",
+      "firstMonth": "Premier mois suivi"
+    },
+    "slide5": {
+      "title": "Partagez votre Succès",
+      "subtitle": "Montrez vos résultats au monde",
+      "shareButton": "Partager ma performance"
+    },
+    "noData": "Pas encore de données pour ce mois",
+    "shareText": "Mon Resell Wrapped {{month}} — {{revenue}} de CA, {{items}} articles vendus !"
+  },
+  "gamification": {
+    "achievements": "Succès",
+    "achievementsSubtitle": "Progressez et débloquez des récompenses",
+    "unlocked": "Débloqué",
+    "locked": "Verrouillé",
+    "unlockedCount": "{{unlocked}} / {{total}} débloqués",
+    "newUnlock": "Nouveau succès !",
+    "streak": {
+      "title": "Série Quotidienne",
+      "days": "{{count}} jours",
+      "day": "{{count}} jour",
+      "best": "Record : {{count}} jours",
+      "keepItUp": "Continuez comme ça !",
+      "streakLost": "Série perdue"
+    },
+    "tier": {
+      "title": "Rang Revendeur",
+      "level1": "Débutant",
+      "level2": "Étoile Montante",
+      "level3": "Expert",
+      "level4": "Maître",
+      "level5": "Légende",
+      "progress": "{{current}} / {{next}} ventes",
+      "maxReached": "Rang maximum atteint !"
+    },
+    "badges": {
+      "first_lot": {
+        "title": "Premier Pas",
+        "description": "Créez votre premier lot"
+      },
+      "first_sale": {
+        "title": "Première Vente",
+        "description": "Réalisez votre première vente"
+      },
+      "sale_10": {
+        "title": "En Route",
+        "description": "Atteignez 10 ventes"
+      },
+      "sale_100": {
+        "title": "Centurion",
+        "description": "Atteignez 100 ventes"
+      },
+      "sale_1000": {
+        "title": "Millionnaire",
+        "description": "Atteignez 1 000 ventes"
+      },
+      "roi_50": {
+        "title": "Bon Retour",
+        "description": "Obtenez un ROI de 50%"
+      },
+      "roi_100": {
+        "title": "Double Mise",
+        "description": "Obtenez un ROI de 100%"
+      },
+      "platform_master": {
+        "title": "Multi-Plateforme",
+        "description": "Vendez sur 3 plateformes différentes"
+      },
+      "streak_7": {
+        "title": "Semaine de Feu",
+        "description": "Maintenez une série de 7 jours"
+      },
+      "streak_30": {
+        "title": "Mois Parfait",
+        "description": "Maintenez une série de 30 jours"
+      },
+      "big_sale": {
+        "title": "Gros Coup",
+        "description": "Réalisez une vente de plus de 100€"
+      },
+      "lot_cleared": {
+        "title": "Lot Liquidé",
+        "description": "Vendez tous les articles d'un lot"
+      }
+    },
+    "unlockTitle": "Succès Débloqué !",
+    "unlockDismiss": "Continuer"
+  },
+  "sharing": {
+    "shareCard": "Partager mes résultats",
+    "shareProfit": "J'ai réalisé {{amount}} de profit sur Optimus Vintage !",
+    "shareWrapped": "Découvrez ma performance de revente du mois !",
+    "shareAchievement": "Je viens de débloquer « {{name}} » sur Optimus Vintage !",
+    "shareFailed": "Impossible de partager",
+    "copied": "Copié dans le presse-papier"
+  },
+  "review": {
+    "enjoyingApp": "Vous aimez Optimus Vintage ?",
+    "rateUs": "Notez-nous sur le store",
+    "maybeLater": "Plus tard",
+    "thankYou": "Merci pour votre avis !"
   }
 }

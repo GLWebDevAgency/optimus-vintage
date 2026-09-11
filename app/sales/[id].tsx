@@ -6,6 +6,7 @@
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
+import { useCurvedScroll, CurvedItem, ScrollEdgeFade } from "@/components/ui/CurvedScroll";
 import {
     useVantaTheme,
     VantaScreen
@@ -21,7 +22,6 @@ import {
     ActivityIndicator,
     Alert,
     Pressable,
-    ScrollView,
     Text,
     View,
 } from "react-native";
@@ -54,6 +54,7 @@ export default function SaleDetailScreen() {
   const currency = useSettingsStore((s) => s.currency);
   const currencySymbol = { EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" }[currency] || "€";
   const locale = useSettingsStore((s) => s.locale);
+  const { scrollY, scrollHandler } = useCurvedScroll();
 
   const saleId = id ? parseInt(id, 10) : null;
 
@@ -124,13 +125,12 @@ export default function SaleDetailScreen() {
   // Loading state
   if (saleQuery.isLoading) {
     return (
-      <View
+      <VantaScreen
         style={{
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
           padding: 24,
-          backgroundColor: colors.background,
         }}
       >
         <ActivityIndicator size="large" color={colors.gold} />
@@ -144,20 +144,19 @@ export default function SaleDetailScreen() {
         >
           {t("common.loading")}
         </Text>
-      </View>
+      </VantaScreen>
     );
   }
 
   // Error state
   if (!saleQuery.data) {
     return (
-      <View
+      <VantaScreen
         style={{
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
           padding: 24,
-          backgroundColor: colors.background,
         }}
       >
         <View
@@ -203,7 +202,7 @@ export default function SaleDetailScreen() {
             {t("common.back")}
           </Text>
         </Pressable>
-      </View>
+      </VantaScreen>
     );
   }
 
@@ -237,7 +236,9 @@ export default function SaleDetailScreen() {
       />
       <StatusBar style={theme.dark ? "light" : "dark"} />
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         contentContainerStyle={{
           padding: 24,
           paddingBottom: insets.bottom + 120,
@@ -714,7 +715,8 @@ export default function SaleDetailScreen() {
             </View>
           </View>
         </Animated.View>
-      </ScrollView>
+      </Animated.ScrollView>
+      <ScrollEdgeFade color={colors.background} position="bottom" scrollY={scrollY} />
 
       {/* Cancel CTA - only show for completed sales */}
       {isCompleted && (

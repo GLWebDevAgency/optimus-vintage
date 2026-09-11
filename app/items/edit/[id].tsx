@@ -5,8 +5,13 @@
 
 import { AnimatedSkeleton } from "@/components/ui/AnimatedComponents";
 import { AppIcon } from "@/components/ui/AppIcon";
+import {
+  CurvedItem,
+  ScrollEdgeFade,
+  useCurvedScroll,
+} from "@/components/ui/CurvedScroll";
 import { ItemPhotoPicker } from "@/components/ui/ItemPhotoPicker";
-import { useColorScheme } from "@/components/useColorScheme";
+import { useVantaTheme } from "@/components/ui/PremiumUI";
 import { ItemsRepository, NewItem } from "@/db/repositories";
 import { ReanimatedSpring } from "@/utils/animations-reanimated";
 import { useSettingsStore } from "@/store/settings";
@@ -37,54 +42,26 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ═══════════════════════════════════════════════════════════════════
-// 🎨 VANTA-AETHER DESIGN TOKENS
-// ═══════════════════════════════════════════════════════════════════
-const VANTA = {
-  black: "#000000",
-  obsidian: "#0a0a0a",
-  obsidianLight: "#1a1a1a",
-  titanium: "#111111",
-  carbon: "#1c1c1c",
-  gold: "#f4c025",
-  goldGlow: "rgba(244, 192, 37, 0.6)",
-  goldSubtle: "rgba(244, 192, 37, 0.15)",
-  success: "#22c55e",
-  successSubtle: "rgba(34, 197, 94, 0.15)",
-  danger: "#ef4444",
-  dangerSubtle: "rgba(239, 68, 68, 0.15)",
-  warning: "#f59e0b",
-  warningSubtle: "rgba(245, 158, 11, 0.15)",
-  textPrimary: "#ffffff",
-  textSecondary: "rgba(255, 255, 255, 0.6)",
-  textMuted: "rgba(255, 255, 255, 0.4)",
-  light: {
-    background: "#fafafa",
-    surface: "#ffffff",
-    gold: "#d4a017",
-    text: "#1a1a1a",
-    textSecondary: "rgba(0, 0, 0, 0.6)",
-    textMuted: "rgba(0, 0, 0, 0.4)",
-    border: "rgba(0, 0, 0, 0.08)",
-  },
-};
-
-function getColors(isDark: boolean) {
+// ═══ Theme-aware color helper (delegates to Vanta theme system) ═══
+function useColors() {
+  const theme = useVantaTheme();
   return {
-    background: isDark ? VANTA.black : VANTA.light.background,
-    surface: isDark ? VANTA.obsidianLight : VANTA.light.surface,
-    surfaceCard: isDark ? VANTA.titanium : VANTA.light.surface,
-    gold: isDark ? VANTA.gold : VANTA.light.gold,
-    text: isDark ? VANTA.textPrimary : VANTA.light.text,
-    textSecondary: isDark ? VANTA.textSecondary : VANTA.light.textSecondary,
-    textMuted: isDark ? VANTA.textMuted : VANTA.light.textMuted,
-    border: isDark ? "rgba(255, 255, 255, 0.08)" : VANTA.light.border,
-    success: VANTA.success,
-    successSubtle: VANTA.successSubtle,
-    danger: VANTA.danger,
-    dangerSubtle: VANTA.dangerSubtle,
-    warning: VANTA.warning,
-    warningSubtle: VANTA.warningSubtle,
+    isDark: theme.dark,
+    background: theme.background,
+    surface: theme.surfaceHighlight,
+    surfaceCard: theme.surfaceCard,
+    gold: theme.primary,
+    goldSubtle: theme.primarySubtle,
+    text: theme.text,
+    textSecondary: theme.textSecondary,
+    textMuted: theme.textMuted,
+    border: theme.borderGlass,
+    success: theme.success,
+    successSubtle: theme.successSubtle,
+    danger: theme.danger,
+    dangerSubtle: theme.dangerSubtle,
+    warning: theme.warning,
+    warningSubtle: theme.warningSubtle,
   };
 }
 
@@ -131,7 +108,7 @@ function AnimatedChip({
   label: string;
   isSelected: boolean;
   onPress: () => void;
-  colors: ReturnType<typeof getColors>;
+  colors: ReturnType<typeof useColors>;
   small?: boolean;
 }) {
   const scale = useSharedValue(1);
@@ -197,7 +174,7 @@ function AnimatedStatusButton({
   colorType: "success" | "primary" | "warning";
   isSelected: boolean;
   onPress: () => void;
-  colors: ReturnType<typeof getColors>;
+  colors: ReturnType<typeof useColors>;
   t?: (key: string) => string;
 }) {
   const scale = useSharedValue(1);
@@ -269,11 +246,10 @@ function AnimatedStatusButton({
 export default function EditItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-  const colors = getColors(isDark);
+  const colors = useColors();
   const queryClient = useQueryClient();
   const { t } = useLocale();
+  const { scrollY, scrollHandler } = useCurvedScroll();
   const currency = useSettingsStore((s) => s.currency);
   const currencySymbol =
     (
@@ -595,241 +571,262 @@ export default function EditItemScreen() {
           ),
         }}
       />
-      <StatusBar style={isDark ? "light" : "dark"} />
+      <StatusBar style={colors.isDark ? "light" : "dark"} />
 
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={[
           styles.content,
           { paddingBottom: insets.bottom + 120 },
         ]}
         contentInsetAdjustmentBehavior="automatic"
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
         {/* Item Info Header */}
-        <Animated.View
-          entering={FadeInDown.delay(50).duration(400)}
-          style={styles.itemHeader}
-        >
-          <View
-            style={[styles.itemIcon, { backgroundColor: VANTA.goldSubtle }]}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(50).duration(400)}
+            style={styles.itemHeader}
           >
-            <AppIcon name="checkroom" size={28} color={colors.gold} />
-          </View>
-          <View style={styles.itemInfo}>
-            <Text
-              style={{
-                fontFamily: "Manrope_400Regular",
-                fontSize: 14,
-                color: colors.textMuted,
-              }}
+            <View
+              style={[styles.itemIcon, { backgroundColor: VANTA.goldSubtle }]}
             >
-              Lot #{item.lotId}
-            </Text>
-            <Text
-              style={{
-                fontFamily: "Manrope_700Bold",
-                fontSize: 18,
-                color: colors.text,
-              }}
-            >
-              Item #{item.id}
-            </Text>
-          </View>
-        </Animated.View>
+              <AppIcon name="checkroom" size={28} color={colors.gold} />
+            </View>
+            <View style={styles.itemInfo}>
+              <Text
+                style={{
+                  fontFamily: "Manrope_400Regular",
+                  fontSize: 14,
+                  color: colors.textMuted,
+                }}
+              >
+                Lot #{item.lotId}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: "Manrope_700Bold",
+                  fontSize: 18,
+                  color: colors.text,
+                }}
+              >
+                Item #{item.id}
+              </Text>
+            </View>
+          </Animated.View>
+        </CurvedItem>
 
         {/* Photos */}
-        <Animated.View
-          entering={FadeInDown.delay(75).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("items.photos")}
-          </Text>
-          <ItemPhotoPicker
-            photos={photos}
-            onPhotosChange={setPhotos}
-            maxPhotos={5}
-          />
-        </Animated.View>
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(75).duration(400)}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("items.photos")}
+            </Text>
+            <ItemPhotoPicker
+              photos={photos}
+              onPhotosChange={setPhotos}
+              maxPhotos={5}
+            />
+          </Animated.View>
+        </CurvedItem>
 
         {/* Brand */}
-        <Animated.View
-          entering={FadeInDown.delay(100).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("items.brand")}
-          </Text>
-          <TextInput
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: colors.surface,
-                color: colors.text,
-                borderColor: colors.border,
-              },
-            ]}
-            value={brand}
-            onChangeText={setBrand}
-            placeholder={t("items.placeholders.brand")}
-            placeholderTextColor={colors.textMuted}
-          />
-        </Animated.View>
-
-        {/* Type */}
-        <Animated.View
-          entering={FadeInDown.delay(150).duration(400)}
-          layout={LinearTransition.springify()}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("items.type")}
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipContainer}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(100).duration(400)}
+            style={styles.section}
           >
-            {ITEM_TYPES.map((itemType) => (
-              <AnimatedChip
-                key={itemType}
-                label={t(ITEM_TYPE_LABELS[itemType])}
-                isSelected={type === itemType}
-                onPress={() => setType(itemType)}
-                colors={colors}
-              />
-            ))}
-          </ScrollView>
-        </Animated.View>
-
-        {/* Color */}
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("items.color")}
-          </Text>
-          <TextInput
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: colors.surface,
-                color: colors.text,
-                borderColor: colors.border,
-              },
-            ]}
-            value={color}
-            onChangeText={setColor}
-            placeholder={t("items.placeholders.color")}
-            placeholderTextColor={colors.textMuted}
-          />
-        </Animated.View>
-
-        {/* Size */}
-        <Animated.View
-          entering={FadeInDown.delay(250).duration(400)}
-          layout={LinearTransition.springify()}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("items.size")}
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipContainer}
-          >
-            {SIZES.map((s) => (
-              <AnimatedChip
-                key={s}
-                label={SIZE_LABELS[s] ? t(SIZE_LABELS[s]) : s}
-                isSelected={size === s}
-                onPress={() => setSize(s)}
-                colors={colors}
-              />
-            ))}
-          </ScrollView>
-        </Animated.View>
-
-        {/* Condition */}
-        <Animated.View
-          entering={FadeInDown.delay(300).duration(400)}
-          layout={LinearTransition.springify()}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("items.condition")}
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipContainer}
-          >
-            {CONDITIONS.map((c) => (
-              <AnimatedChip
-                key={c}
-                label={t(`items.conditions.${c}`)}
-                isSelected={condition === c}
-                onPress={() => setCondition(c)}
-                colors={colors}
-              />
-            ))}
-          </ScrollView>
-        </Animated.View>
-
-        {/* Unit Cost */}
-        <Animated.View
-          entering={FadeInDown.delay(350).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("items.unitCost")}
-          </Text>
-          <View
-            style={[
-              styles.currencyInput,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.currencySymbol, { color: colors.gold }]}>
-              {currencySymbol}
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("items.brand")}
             </Text>
             <TextInput
-              style={[styles.currencyValue, { color: colors.text }]}
-              value={unitCost}
-              onChangeText={setUnitCost}
-              keyboardType="decimal-pad"
-              placeholder="0.00"
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.surface,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
+              value={brand}
+              onChangeText={setBrand}
+              placeholder={t("items.placeholders.brand")}
               placeholderTextColor={colors.textMuted}
             />
-          </View>
-        </Animated.View>
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Type */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(150).duration(400)}
+            layout={LinearTransition.springify()}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("items.type")}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipContainer}
+            >
+              {ITEM_TYPES.map((itemType) => (
+                <AnimatedChip
+                  key={itemType}
+                  label={t(ITEM_TYPE_LABELS[itemType])}
+                  isSelected={type === itemType}
+                  onPress={() => setType(itemType)}
+                  colors={colors}
+                />
+              ))}
+            </ScrollView>
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Color */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(200).duration(400)}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("items.color")}
+            </Text>
+            <TextInput
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.surface,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
+              value={color}
+              onChangeText={setColor}
+              placeholder={t("items.placeholders.color")}
+              placeholderTextColor={colors.textMuted}
+            />
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Size */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(250).duration(400)}
+            layout={LinearTransition.springify()}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("items.size")}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipContainer}
+            >
+              {SIZES.map((s) => (
+                <AnimatedChip
+                  key={s}
+                  label={SIZE_LABELS[s] ? t(SIZE_LABELS[s]) : s}
+                  isSelected={size === s}
+                  onPress={() => setSize(s)}
+                  colors={colors}
+                />
+              ))}
+            </ScrollView>
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Condition */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(300).duration(400)}
+            layout={LinearTransition.springify()}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("items.condition")}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipContainer}
+            >
+              {CONDITIONS.map((c) => (
+                <AnimatedChip
+                  key={c}
+                  label={t(`items.conditions.${c}`)}
+                  isSelected={condition === c}
+                  onPress={() => setCondition(c)}
+                  colors={colors}
+                />
+              ))}
+            </ScrollView>
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Unit Cost */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(350).duration(400)}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("items.unitCost")}
+            </Text>
+            <View
+              style={[
+                styles.currencyInput,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.currencySymbol, { color: colors.gold }]}>
+                {currencySymbol}
+              </Text>
+              <TextInput
+                style={[styles.currencyValue, { color: colors.text }]}
+                value={unitCost}
+                onChangeText={setUnitCost}
+                keyboardType="decimal-pad"
+                placeholder="0.00"
+                placeholderTextColor={colors.textMuted}
+              />
+            </View>
+          </Animated.View>
+        </CurvedItem>
 
         {/* Status */}
-        <Animated.View
-          entering={FadeInDown.delay(400).duration(400)}
-          layout={LinearTransition.springify()}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("items.statusLabel")}
-          </Text>
-          <View style={styles.statusContainer}>
-            {STATUS_OPTIONS.map((s) => (
-              <AnimatedStatusButton
-                key={s.id}
-                id={s.id}
-                label={t(s.labelKey)}
-                colorType={s.color}
-                isSelected={status === s.id}
-                onPress={() => setStatus(s.id)}
-                colors={colors}
-              />
-            ))}
-          </View>
-        </Animated.View>
-      </ScrollView>
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(400).duration(400)}
+            layout={LinearTransition.springify()}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("items.statusLabel")}
+            </Text>
+            <View style={styles.statusContainer}>
+              {STATUS_OPTIONS.map((s) => (
+                <AnimatedStatusButton
+                  key={s.id}
+                  id={s.id}
+                  label={t(s.labelKey)}
+                  colorType={s.color}
+                  isSelected={status === s.id}
+                  onPress={() => setStatus(s.id)}
+                  colors={colors}
+                />
+              ))}
+            </View>
+          </Animated.View>
+        </CurvedItem>
+      </Animated.ScrollView>
+      <ScrollEdgeFade color={colors.background} position="bottom" scrollY={scrollY} />
 
       {/* Sticky CTA */}
       <View

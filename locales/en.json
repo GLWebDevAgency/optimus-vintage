@@ -97,6 +97,23 @@
       "connected": "CONNECTED",
       "lots": "lots",
       "items": "items"
+    },
+    "charts": {
+      "title": "Analytics",
+      "revenueTrend": "Revenue Trend",
+      "platformDistribution": "Platform Distribution",
+      "monthlyPerformance": "Monthly Performance",
+      "noData": "No data for this period",
+      "revenue": "Revenue",
+      "profit": "Profit",
+      "premiumOnly": "Upgrade to Premium to unlock charts",
+      "salesCount": "{{count}} sales",
+      "avgPerSale": "Avg per sale"
+    },
+    "wrappedCard": {
+      "title": "Your Resell Wrapped",
+      "subtitle": "Discover your {{month}} report",
+      "cta": "View"
     }
   },
   "lots": {
@@ -159,6 +176,9 @@
     "roiGood": "Good",
     "roiLow": "Low",
     "roiLoss": "Loss",
+    "floorPriceDesc": "Sell the {{count}} remaining items above {{price}} to maintain profitability.",
+    "moreItems": "+ {{count}} more items",
+    "estimatedProfit": "Est. profit",
     "validation": {
       "fillRequired": "Please fill in all required fields.",
       "selectProvider": "Please select a provider",
@@ -307,6 +327,10 @@
     "itemReturnedToStock": "The item has been returned to stock.",
     "cancelError": "Could not cancel the sale.",
     "alreadyCancelled": "This sale is already cancelled or refunded.",
+    "missingFields": "Price or item is missing.",
+    "saleRecorded": "Sale recorded!",
+    "saleRecordedDesc": "Net profit: {{amount}}",
+    "createError": "Could not record the sale.",
     "lotItem": "Lot #{{lotId}} • Item #{{itemId}}"
   },
   "settings": {
@@ -337,9 +361,13 @@
     "haptics": "Haptic feedback",
     "hapticsDescription": "Vibrations on interactions",
     "themes": {
-      "light": "Light",
-      "dark": "Dark",
-      "system": "System"
+      "light": "Ivory",
+      "dark": "Aether",
+      "system": "System",
+      "midnightRose": "Midnight Rose",
+      "obsidianNoir": "Obsidian Noir",
+      "aurora": "Aurora",
+      "copper": "Copper"
     },
     "notifications": "Notifications",
     "importData": "Import Data",
@@ -375,7 +403,34 @@
     "feature1": "Real-time profit tracking",
     "feature2": "Smart lot management",
     "feature3": "Offline-first storage",
-    "dataOnDevice": "Your data stays on your device"
+    "dataOnDevice": "Your data stays on your device",
+    "skip": "Skip",
+    "getStarted": "Let's Go",
+    "screen1": {
+      "title": "Your Vintage Empire",
+      "subtitle": "Reimagined",
+      "description": "The premium platform that turns your finds into profit"
+    },
+    "screen2": {
+      "title": "AI Scanner",
+      "subtitle": "Identify in an instant",
+      "description": "Scan any item and get a complete analysis",
+      "feature1": "Instant brand identification",
+      "feature2": "Market price estimation",
+      "feature3": "Buy/sell recommendation"
+    },
+    "screen3": {
+      "title": "Pro Dashboard",
+      "subtitle": "Your data, magnified",
+      "description": "Track your performance with elegant charts and real-time insights",
+      "feature1": "Real-time KPIs",
+      "feature2": "Performance charts",
+      "feature3": "Monthly Wrapped report"
+    },
+    "screen4": {
+      "title": "Quick Setup",
+      "subtitle": "Ready in 30 seconds"
+    }
   },
   "errors": {
     "generic": "Something went wrong",
@@ -564,5 +619,132 @@
     "restoreSuccess": "Purchases restored successfully",
     "restoreNone": "No purchases to restore",
     "planUpgraded": "Plan upgraded"
+  },
+  "wrapped": {
+    "title": "Resell Wrapped",
+    "monthTitle": "{{month}} in review",
+    "slide1": {
+      "title": "Your Month in Numbers",
+      "revenue": "Revenue",
+      "itemsSold": "Items Sold",
+      "bestDay": "Best Day"
+    },
+    "slide2": {
+      "title": "Top Performer",
+      "subtitle": "Your best sale of the month",
+      "soldOn": "Sold on {{platform}}"
+    },
+    "slide3": {
+      "title": "Platform Champion",
+      "subtitle": "Where you sell best",
+      "sales": "{{count}} sales",
+      "revenue": "{{amount}} revenue"
+    },
+    "slide4": {
+      "title": "ROI Growth",
+      "vsLastMonth": "vs. last month",
+      "up": "+{{percent}}%",
+      "down": "{{percent}}%",
+      "firstMonth": "First month tracked"
+    },
+    "slide5": {
+      "title": "Share Your Success",
+      "subtitle": "Show the world what you've accomplished",
+      "shareButton": "Share my performance"
+    },
+    "noData": "No data for this month yet",
+    "shareText": "My Resell Wrapped {{month}} — {{revenue}} revenue, {{items}} items sold!"
+  },
+  "gamification": {
+    "achievements": "Achievements",
+    "achievementsSubtitle": "Level up and unlock rewards",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "unlockedCount": "{{unlocked}} / {{total}} unlocked",
+    "newUnlock": "New achievement!",
+    "streak": {
+      "title": "Daily Streak",
+      "days": "{{count}} days",
+      "day": "{{count}} day",
+      "best": "Best: {{count}} days",
+      "keepItUp": "Keep it up!",
+      "streakLost": "Streak lost"
+    },
+    "tier": {
+      "title": "Reseller Tier",
+      "level1": "Beginner",
+      "level2": "Rising Star",
+      "level3": "Expert",
+      "level4": "Master",
+      "level5": "Legend",
+      "progress": "{{current}} / {{next}} sales",
+      "maxReached": "Max tier reached!"
+    },
+    "badges": {
+      "first_lot": {
+        "title": "First Steps",
+        "description": "Create your first lot"
+      },
+      "first_sale": {
+        "title": "First Sale",
+        "description": "Make your first sale"
+      },
+      "sale_10": {
+        "title": "On the Roll",
+        "description": "Reach 10 sales"
+      },
+      "sale_100": {
+        "title": "Centurion",
+        "description": "Reach 100 sales"
+      },
+      "sale_1000": {
+        "title": "Millionaire",
+        "description": "Reach 1,000 sales"
+      },
+      "roi_50": {
+        "title": "Nice Return",
+        "description": "Achieve a 50% ROI"
+      },
+      "roi_100": {
+        "title": "Double Down",
+        "description": "Achieve a 100% ROI"
+      },
+      "platform_master": {
+        "title": "Multi-Platform",
+        "description": "Sell on 3 different platforms"
+      },
+      "streak_7": {
+        "title": "Week of Fire",
+        "description": "Maintain a 7-day streak"
+      },
+      "streak_30": {
+        "title": "Perfect Month",
+        "description": "Maintain a 30-day streak"
+      },
+      "big_sale": {
+        "title": "Big Deal",
+        "description": "Make a sale over 100€"
+      },
+      "lot_cleared": {
+        "title": "Lot Cleared",
+        "description": "Sell every item in a lot"
+      }
+    },
+    "unlockTitle": "Achievement Unlocked!",
+    "unlockDismiss": "Continue"
+  },
+  "sharing": {
+    "shareCard": "Share my results",
+    "shareProfit": "I made {{amount}} profit on Optimus Vintage!",
+    "shareWrapped": "Check out my monthly reselling performance!",
+    "shareAchievement": "I just unlocked \"{{name}}\" on Optimus Vintage!",
+    "shareFailed": "Could not share",
+    "copied": "Copied to clipboard"
+  },
+  "review": {
+    "enjoyingApp": "Enjoying Optimus Vintage?",
+    "rateUs": "Rate us on the store",
+    "maybeLater": "Maybe later",
+    "thankYou": "Thanks for your feedback!"
   }
 }

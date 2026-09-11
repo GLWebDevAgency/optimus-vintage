@@ -7,6 +7,10 @@
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import {
+  useCurvedListItem,
+  ScrollEdgeFade,
+} from "@/components/ui/CurvedScroll";
+import {
   PremiumCard,
   PremiumHeader,
   PremiumStatCard,
@@ -29,7 +33,7 @@ import {
 } from "@/utils/i18n";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   Pressable,
@@ -40,6 +44,7 @@ import {
 } from "react-native";
 import Animated, {
   FadeInDown,
+  type SharedValue,
   SlideInRight,
   useAnimatedStyle,
   useSharedValue,
@@ -219,6 +224,27 @@ const periodStyles = StyleSheet.create({
   },
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🌀 CURVED SALE ROW - iOS-style curved scroll wrapper
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ITEM_HEIGHT_ESTIMATE = 80;
+
+interface CurvedSaleRowProps {
+  children: React.ReactNode;
+  index: number;
+  scrollY: SharedValue<number>;
+}
+
+const CurvedSaleRow = React.memo(function CurvedSaleRow({
+  children,
+  index,
+  scrollY,
+}: CurvedSaleRowProps) {
+  const curveStyle = useCurvedListItem(scrollY, index, ITEM_HEIGHT_ESTIMATE);
+  return <Animated.View style={curveStyle}>{children}</Animated.View>;
+});
+
 export default function SalesScreen() {
   const insets = useSafeAreaInsets();
   const theme = useVantaTheme();
@@ -303,12 +329,6 @@ export default function SalesScreen() {
         previousPeriodComparison: comparison,
       };
     }, [sales, allSales, selectedPeriod]);
-
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-    }, [refetch]),
-  );
 
   const handlePeriodChange = useCallback((period: PeriodFilter) => {
     Haptic.selection();

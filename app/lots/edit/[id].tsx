@@ -4,7 +4,12 @@
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { useColorScheme } from "@/components/useColorScheme";
+import {
+  CurvedItem,
+  ScrollEdgeFade,
+  useCurvedScroll,
+} from "@/components/ui/CurvedScroll";
+import { useVantaTheme } from "@/components/ui/PremiumUI";
 import { LotsRepository, NewLot } from "@/db/repositories";
 import { useSettingsStore } from "@/store/settings";
 import { useLocale } from "@/utils/i18n";
@@ -26,52 +31,26 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ═══ VANTA-AETHER DESIGN TOKENS ═══
-const VANTA = {
-  black: "#000000",
-  obsidian: "#0a0a0a",
-  obsidianLight: "#1a1a1a",
-  titanium: "#111111",
-  carbon: "#1c1c1c",
-  gold: "#f4c025",
-  goldGlow: "rgba(244, 192, 37, 0.6)",
-  goldSubtle: "rgba(244, 192, 37, 0.15)",
-  success: "#22c55e",
-  successSubtle: "rgba(34, 197, 94, 0.15)",
-  danger: "#ef4444",
-  dangerSubtle: "rgba(239, 68, 68, 0.15)",
-  warning: "#f59e0b",
-  warningSubtle: "rgba(245, 158, 11, 0.15)",
-  textPrimary: "#ffffff",
-  textSecondary: "rgba(255, 255, 255, 0.6)",
-  textMuted: "rgba(255, 255, 255, 0.4)",
-  light: {
-    background: "#fafafa",
-    surface: "#ffffff",
-    gold: "#d4a017",
-    text: "#1a1a1a",
-    textSecondary: "rgba(0, 0, 0, 0.6)",
-    textMuted: "rgba(0, 0, 0, 0.4)",
-    border: "rgba(0, 0, 0, 0.08)",
-  },
-};
-
-function getColors(isDark: boolean) {
+// ═══ Theme-aware color helper (delegates to Vanta theme system) ═══
+function useColors() {
+  const theme = useVantaTheme();
   return {
-    background: isDark ? VANTA.black : VANTA.light.background,
-    surface: isDark ? VANTA.obsidianLight : VANTA.light.surface,
-    surfaceCard: isDark ? VANTA.titanium : VANTA.light.surface,
-    gold: isDark ? VANTA.gold : VANTA.light.gold,
-    text: isDark ? VANTA.textPrimary : VANTA.light.text,
-    textSecondary: isDark ? VANTA.textSecondary : VANTA.light.textSecondary,
-    textMuted: isDark ? VANTA.textMuted : VANTA.light.textMuted,
-    border: isDark ? "rgba(255, 255, 255, 0.08)" : VANTA.light.border,
-    success: VANTA.success,
-    successSubtle: VANTA.successSubtle,
-    danger: VANTA.danger,
-    dangerSubtle: VANTA.dangerSubtle,
-    warning: VANTA.warning,
-    warningSubtle: VANTA.warningSubtle,
+    isDark: theme.dark,
+    goldSubtle: theme.primarySubtle,
+    background: theme.background,
+    surface: theme.surfaceHighlight,
+    surfaceCard: theme.surfaceCard,
+    gold: theme.primary,
+    text: theme.text,
+    textSecondary: theme.textSecondary,
+    textMuted: theme.textMuted,
+    border: theme.borderGlass,
+    success: theme.success,
+    successSubtle: theme.successSubtle,
+    danger: theme.danger,
+    dangerSubtle: theme.dangerSubtle,
+    warning: theme.warning,
+    warningSubtle: theme.warningSubtle,
   };
 }
 
@@ -91,11 +70,10 @@ const LOT_TYPES = [
 export default function EditLotScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-  const colors = getColors(isDark);
+  const colors = useColors();
   const queryClient = useQueryClient();
   const { t, locale } = useLocale();
+  const { scrollY, scrollHandler } = useCurvedScroll();
   const currency = useSettingsStore((s) => s.currency);
   const currencySymbol =
     (
@@ -309,7 +287,7 @@ export default function EditLotScreen() {
             paddingVertical: 12,
             paddingHorizontal: 24,
             borderRadius: 12,
-            backgroundColor: VANTA.goldSubtle,
+            backgroundColor: colors.goldSubtle,
           }}
         >
           <Text
@@ -353,339 +331,354 @@ export default function EditLotScreen() {
           ),
         }}
       />
-      <StatusBar style={isDark ? "light" : "dark"} />
+      <StatusBar style={colors.isDark ? "light" : "dark"} />
 
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={[
           styles.content,
           { paddingBottom: insets.bottom + 120 },
         ]}
         contentInsetAdjustmentBehavior="automatic"
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
         {/* Name (optional) */}
-        <Animated.View
-          entering={FadeInDown.delay(50).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("lots.lotName")} ({t("common.optional")})
-          </Text>
-          <TextInput
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: colors.surface,
-                color: colors.text,
-                borderColor: colors.border,
-              },
-            ]}
-            value={name}
-            onChangeText={setName}
-            placeholder="e.g., Summer Collection"
-            placeholderTextColor={colors.textMuted}
-          />
-        </Animated.View>
-
-        {/* Provider */}
-        <Animated.View
-          entering={FadeInDown.delay(100).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("lots.provider")}
-          </Text>
-          <View style={styles.typeSelector}>
-            {PROVIDERS.map((p) => (
-              <Pressable
-                key={p.id}
-                style={[
-                  styles.typeButton,
-                  {
-                    backgroundColor:
-                      provider === p.id ? colors.gold : colors.surface,
-                    borderColor:
-                      provider === p.id ? colors.gold : colors.border,
-                  },
-                ]}
-                onPress={() => setProvider(p.id)}
-              >
-                <AppIcon
-                  name={p.icon as any}
-                  size={18}
-                  color={provider === p.id ? "#FFF" : colors.textMuted}
-                />
-                <Text
-                  style={[
-                    styles.typeLabel,
-                    {
-                      color: provider === p.id ? "#FFF" : colors.textMuted,
-                    },
-                  ]}
-                >
-                  {p.labelKey ? t(p.labelKey) : p.id}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </Animated.View>
-
-        {/* Buy Date */}
-        <Animated.View
-          entering={FadeInDown.delay(150).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("lots.buyDate")}
-          </Text>
-          <Pressable
-            style={[
-              styles.dateButton,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            onPress={() => setShowDateSelector(!showDateSelector)}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(50).duration(400)}
+            style={styles.section}
           >
-            <Text style={[styles.dateText, { color: colors.text }]}>
-              {formatDate(buyDate)}
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("lots.lotName")} ({t("common.optional")})
             </Text>
-            <AppIcon
-              name={
-                showDateSelector ? "keyboard-arrow-up" : "keyboard-arrow-down"
-              }
-              size={24}
-              color={colors.gold}
-            />
-          </Pressable>
-
-          {showDateSelector && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.dateScroller}
-              contentContainerStyle={styles.dateScrollerContent}
-            >
-              {generateDateOptions().map((date, index) => {
-                const isSelected =
-                  date.toDateString() === buyDate.toDateString();
-                const isToday =
-                  date.toDateString() === new Date().toDateString();
-                return (
-                  <Pressable
-                    key={index}
-                    style={[
-                      styles.dateChip,
-                      {
-                        backgroundColor: isSelected
-                          ? colors.gold
-                          : colors.surface,
-                        borderColor: isSelected
-                          ? colors.gold
-                          : isToday
-                            ? colors.success
-                            : colors.border,
-                      },
-                    ]}
-                    onPress={() => {
-                      setBuyDate(date);
-                      setShowDateSelector(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dateChipDay,
-                        {
-                          color: isSelected ? "#FFF" : colors.textMuted,
-                        },
-                      ]}
-                    >
-                      {date.toLocaleDateString(locale, { weekday: "short" })}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.dateChipDate,
-                        { color: isSelected ? "#FFF" : colors.text },
-                      ]}
-                    >
-                      {date.getDate()}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.dateChipMonth,
-                        {
-                          color: isSelected ? "#FFF" : colors.textMuted,
-                        },
-                      ]}
-                    >
-                      {date.toLocaleDateString(locale, { month: "short" })}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
-        </Animated.View>
-
-        {/* Lot Type */}
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("lots.type")}
-          </Text>
-          <View style={styles.typeSelector}>
-            {LOT_TYPES.map((lt) => (
-              <Pressable
-                key={lt.id}
-                style={[
-                  styles.typeButton,
-                  styles.typeButtonWide,
-                  {
-                    backgroundColor:
-                      lotType === lt.id ? colors.gold : colors.surface,
-                    borderColor:
-                      lotType === lt.id ? colors.gold : colors.border,
-                  },
-                ]}
-                onPress={() => setLotType(lt.id)}
-              >
-                <Text
-                  style={[
-                    styles.typeLabel,
-                    {
-                      color: lotType === lt.id ? "#FFF" : colors.textMuted,
-                    },
-                  ]}
-                >
-                  {t(lt.labelKey)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </Animated.View>
-
-        {/* Financials */}
-        <Animated.View
-          entering={FadeInDown.delay(250).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("lots.finances")}
-          </Text>
-          <View style={styles.financialGrid}>
-            <View style={styles.financialInput}>
-              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                {t("lots.totalCost")}
-              </Text>
-              <View
-                style={[
-                  styles.currencyInput,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.currencySymbol, { color: colors.gold }]}>
-                  {currencySymbol}
-                </Text>
-                <TextInput
-                  style={[styles.currencyValue, { color: colors.text }]}
-                  value={totalCost}
-                  onChangeText={setTotalCost}
-                  keyboardType="decimal-pad"
-                  placeholder="0.00"
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
-            </View>
-            <View style={styles.financialInput}>
-              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                {t("lots.shipping")}
-              </Text>
-              <View
-                style={[
-                  styles.currencyInput,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <Text
-                  style={[styles.currencySymbol, { color: colors.textMuted }]}
-                >
-                  {currencySymbol}
-                </Text>
-                <TextInput
-                  style={[styles.currencyValue, { color: colors.text }]}
-                  value={shippingCost}
-                  onChangeText={setShippingCost}
-                  keyboardType="decimal-pad"
-                  placeholder="0.00"
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Quantity */}
-        <Animated.View
-          entering={FadeInDown.delay(300).duration(400)}
-          style={styles.section}
-        >
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t("lots.initialQuantity")}
-          </Text>
-          <View style={styles.quantityRow}>
-            <Pressable
-              style={[
-                styles.quantityButton,
-                { backgroundColor: VANTA.goldSubtle },
-              ]}
-              onPress={() => setQuantity(Math.max(0, quantity - 1))}
-            >
-              <AppIcon name="remove" size={24} color={colors.gold} />
-            </Pressable>
             <TextInput
               style={[
-                styles.quantityInput,
+                styles.textInput,
                 {
                   backgroundColor: colors.surface,
                   color: colors.text,
                   borderColor: colors.border,
                 },
               ]}
-              value={quantity.toString()}
-              onChangeText={(t) => setQuantity(parseInt(t) || 0)}
-              keyboardType="number-pad"
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g., Summer Collection"
+              placeholderTextColor={colors.textMuted}
             />
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Provider */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(100).duration(400)}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("lots.provider")}
+            </Text>
+            <View style={styles.typeSelector}>
+              {PROVIDERS.map((p) => (
+                <Pressable
+                  key={p.id}
+                  style={[
+                    styles.typeButton,
+                    {
+                      backgroundColor:
+                        provider === p.id ? colors.gold : colors.surface,
+                      borderColor:
+                        provider === p.id ? colors.gold : colors.border,
+                    },
+                  ]}
+                  onPress={() => setProvider(p.id)}
+                >
+                  <AppIcon
+                    name={p.icon as any}
+                    size={18}
+                    color={provider === p.id ? "#FFF" : colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.typeLabel,
+                      {
+                        color: provider === p.id ? "#FFF" : colors.textMuted,
+                      },
+                    ]}
+                  >
+                    {p.labelKey ? t(p.labelKey) : p.id}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Buy Date */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(150).duration(400)}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("lots.buyDate")}
+            </Text>
             <Pressable
               style={[
-                styles.quantityButton,
-                { backgroundColor: VANTA.goldSubtle },
+                styles.dateButton,
+                { backgroundColor: colors.surface, borderColor: colors.border },
               ]}
-              onPress={() => setQuantity(quantity + 1)}
+              onPress={() => setShowDateSelector(!showDateSelector)}
             >
-              <AppIcon name="add" size={24} color={colors.gold} />
-            </Pressable>
-          </View>
-          {quantity > 0 && totalAmount > 0 && (
-            <View
-              style={[
-                styles.unitCostBadge,
-                { backgroundColor: colors.successSubtle },
-              ]}
-            >
-              <Text style={[styles.unitCostText, { color: colors.success }]}>
-                {t("lots.unitCost")}: {currencySymbol}
-                {unitCost}
+              <Text style={[styles.dateText, { color: colors.text }]}>
+                {formatDate(buyDate)}
               </Text>
+              <AppIcon
+                name={
+                  showDateSelector ? "keyboard-arrow-up" : "keyboard-arrow-down"
+                }
+                size={24}
+                color={colors.gold}
+              />
+            </Pressable>
+
+            {showDateSelector && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.dateScroller}
+                contentContainerStyle={styles.dateScrollerContent}
+              >
+                {generateDateOptions().map((date, index) => {
+                  const isSelected =
+                    date.toDateString() === buyDate.toDateString();
+                  const isToday =
+                    date.toDateString() === new Date().toDateString();
+                  return (
+                    <Pressable
+                      key={index}
+                      style={[
+                        styles.dateChip,
+                        {
+                          backgroundColor: isSelected
+                            ? colors.gold
+                            : colors.surface,
+                          borderColor: isSelected
+                            ? colors.gold
+                            : isToday
+                              ? colors.success
+                              : colors.border,
+                        },
+                      ]}
+                      onPress={() => {
+                        setBuyDate(date);
+                        setShowDateSelector(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.dateChipDay,
+                          {
+                            color: isSelected ? "#FFF" : colors.textMuted,
+                          },
+                        ]}
+                      >
+                        {date.toLocaleDateString(locale, { weekday: "short" })}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.dateChipDate,
+                          { color: isSelected ? "#FFF" : colors.text },
+                        ]}
+                      >
+                        {date.getDate()}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.dateChipMonth,
+                          {
+                            color: isSelected ? "#FFF" : colors.textMuted,
+                          },
+                        ]}
+                      >
+                        {date.toLocaleDateString(locale, { month: "short" })}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Lot Type */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(200).duration(400)}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("lots.type")}
+            </Text>
+            <View style={styles.typeSelector}>
+              {LOT_TYPES.map((lt) => (
+                <Pressable
+                  key={lt.id}
+                  style={[
+                    styles.typeButton,
+                    styles.typeButtonWide,
+                    {
+                      backgroundColor:
+                        lotType === lt.id ? colors.gold : colors.surface,
+                      borderColor:
+                        lotType === lt.id ? colors.gold : colors.border,
+                    },
+                  ]}
+                  onPress={() => setLotType(lt.id)}
+                >
+                  <Text
+                    style={[
+                      styles.typeLabel,
+                      {
+                        color: lotType === lt.id ? "#FFF" : colors.textMuted,
+                      },
+                    ]}
+                  >
+                    {t(lt.labelKey)}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-          )}
-        </Animated.View>
-      </ScrollView>
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Financials */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(250).duration(400)}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("lots.finances")}
+            </Text>
+            <View style={styles.financialGrid}>
+              <View style={styles.financialInput}>
+                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                  {t("lots.totalCost")}
+                </Text>
+                <View
+                  style={[
+                    styles.currencyInput,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.currencySymbol, { color: colors.gold }]}>
+                    {currencySymbol}
+                  </Text>
+                  <TextInput
+                    style={[styles.currencyValue, { color: colors.text }]}
+                    value={totalCost}
+                    onChangeText={setTotalCost}
+                    keyboardType="decimal-pad"
+                    placeholder="0.00"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+              </View>
+              <View style={styles.financialInput}>
+                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                  {t("lots.shipping")}
+                </Text>
+                <View
+                  style={[
+                    styles.currencyInput,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.currencySymbol, { color: colors.textMuted }]}
+                  >
+                    {currencySymbol}
+                  </Text>
+                  <TextInput
+                    style={[styles.currencyValue, { color: colors.text }]}
+                    value={shippingCost}
+                    onChangeText={setShippingCost}
+                    keyboardType="decimal-pad"
+                    placeholder="0.00"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+        </CurvedItem>
+
+        {/* Quantity */}
+        <CurvedItem scrollY={scrollY}>
+          <Animated.View
+            entering={FadeInDown.delay(300).duration(400)}
+            style={styles.section}
+          >
+            <Text style={[styles.label, { color: colors.textMuted }]}>
+              {t("lots.initialQuantity")}
+            </Text>
+            <View style={styles.quantityRow}>
+              <Pressable
+                style={[
+                  styles.quantityButton,
+                  { backgroundColor: colors.goldSubtle },
+                ]}
+                onPress={() => setQuantity(Math.max(0, quantity - 1))}
+              >
+                <AppIcon name="remove" size={24} color={colors.gold} />
+              </Pressable>
+              <TextInput
+                style={[
+                  styles.quantityInput,
+                  {
+                    backgroundColor: colors.surface,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={quantity.toString()}
+                onChangeText={(t) => setQuantity(parseInt(t) || 0)}
+                keyboardType="number-pad"
+              />
+              <Pressable
+                style={[
+                  styles.quantityButton,
+                  { backgroundColor: colors.goldSubtle },
+                ]}
+                onPress={() => setQuantity(quantity + 1)}
+              >
+                <AppIcon name="add" size={24} color={colors.gold} />
+              </Pressable>
+            </View>
+            {quantity > 0 && totalAmount > 0 && (
+              <View
+                style={[
+                  styles.unitCostBadge,
+                  { backgroundColor: colors.successSubtle },
+                ]}
+              >
+                <Text style={[styles.unitCostText, { color: colors.success }]}>
+                  {t("lots.unitCost")}: {currencySymbol}
+                  {unitCost}
+                </Text>
+              </View>
+            )}
+          </Animated.View>
+        </CurvedItem>
+      </Animated.ScrollView>
+      <ScrollEdgeFade color={colors.background} position="bottom" scrollY={scrollY} />
 
       {/* Sticky CTA */}
       <View

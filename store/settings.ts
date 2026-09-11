@@ -16,7 +16,14 @@ export type SupportedLocale = "fr" | "en" | "de";
 // �🎨 THEME MODE - Aether (Dark) / Ivory (Light) / System
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type ThemeMode = "system" | "light" | "dark";
+export type ThemeMode =
+  | "system"
+  | "light"
+  | "dark"
+  | "midnight-rose"
+  | "obsidian-noir"
+  | "aurora"
+  | "copper";
 
 export interface ThemeModeOption {
   key: ThemeMode;
@@ -42,7 +49,31 @@ export const THEME_MODE_OPTIONS: ThemeModeOption[] = [
     key: "dark",
     label: "Aether",
     icon: "dark-mode",
-    description: "Mode sombre premium",
+    description: "Émeraude sombre premium",
+  },
+  {
+    key: "midnight-rose",
+    label: "Midnight Rose",
+    icon: "dark-mode",
+    description: "Bleu nuit & Rose Gold",
+  },
+  {
+    key: "obsidian-noir",
+    label: "Obsidian Noir",
+    icon: "dark-mode",
+    description: "OLED noir pur & Platine",
+  },
+  {
+    key: "aurora",
+    label: "Aurora",
+    icon: "dark-mode",
+    description: "Indigo & Cyan iridescent",
+  },
+  {
+    key: "copper",
+    label: "Copper",
+    icon: "dark-mode",
+    description: "Cuir sombre & Cuivre",
   },
 ];
 
@@ -109,5 +140,7 @@ export function useEffectiveColorScheme(): "light" | "dark" {
   if (themeMode === "system") {
     return systemColorScheme ?? "light";
   }
-  return themeMode;
+  if (themeMode === "light") return "light";
+  // All custom dark themes → "dark" for system components
+  return "dark";
 }

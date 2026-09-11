@@ -1,4 +1,4 @@
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 // LOTS
 export const lots = sqliteTable("lots", {
@@ -43,13 +43,16 @@ export const items = sqliteTable("items", {
 
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
   updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
-});
+}, (table) => ({
+  lotIdIdx: index("idx_items_lot_id").on(table.lotId),
+  statusIdx: index("idx_items_status").on(table.status),
+}));
 
 // SALES (Ventes)
 export const sales = sqliteTable("sales", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   itemId: integer("item_id").references(() => items.id), // Nullable if "Quick Sale" linked only to Lot (optimization for MVP)?
-  // Wait, user spec says: "id, itemId (ou vente “rapide” rattachée à un lot si item pas créé)"
+  // Wait, user spec says: "id, itemId (ou vente "rapide" rattachée à un lot si item pas créé)"
   // So we probably need a lotId here too if itemId is null
   lotId: integer("lot_id")
     .references(() => lots.id)
@@ -69,4 +72,8 @@ export const sales = sqliteTable("sales", {
 
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
   updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
-});
+}, (table) => ({
+  lotIdIdx: index("idx_sales_lot_id").on(table.lotId),
+  itemIdIdx: index("idx_sales_item_id").on(table.itemId),
+  statusIdx: index("idx_sales_status").on(table.status),
+}));

@@ -6,6 +6,10 @@
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
+import {
+  useCurvedListItem,
+  ScrollEdgeFade,
+} from "@/components/ui/CurvedScroll";
 import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
@@ -23,7 +27,7 @@ import { useLocale } from "@/utils/i18n";
 import { useSettingsStore } from "@/store/settings";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import React, {
   useCallback,
   useEffect,
@@ -45,6 +49,7 @@ import {
 import Animated, {
   FadeIn,
   FadeOut,
+  type SharedValue,
   SlideInRight,
   useAnimatedStyle,
   useSharedValue,
@@ -411,6 +416,35 @@ const LotCard = React.memo(function LotCard({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 🌀 CURVED LOT ROW - iOS-style curved scroll wrapper
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ITEM_HEIGHT_ESTIMATE = 200;
+const HEADER_OFFSET = 500;
+
+interface CurvedLotRowProps {
+  item: LotSummary;
+  index: number;
+  scrollY: SharedValue<number>;
+  shouldAnimate: boolean;
+}
+
+const CurvedLotRow = React.memo(function CurvedLotRow({
+  item,
+  index,
+  scrollY,
+  shouldAnimate,
+}: CurvedLotRowProps) {
+  const curveStyle = useCurvedListItem(scrollY, index, ITEM_HEIGHT_ESTIMATE, "standard", HEADER_OFFSET);
+
+  return (
+    <Animated.View style={[{ paddingHorizontal: Spacing.xl }, curveStyle]}>
+      <LotCard lot={item} index={index} shouldAnimate={shouldAnimate} />
+    </Animated.View>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 📊 VANTA KPI SECTION - Monolith Style
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -746,17 +780,14 @@ export default function LotsScreen() {
   const refreshing = lotsQuery.isFetching && !loading;
   const lots = lotsQuery.data ?? [];
 
+  // Scroll tracking for curved items
+  const scrollY = useSharedValue(0);
+
   // UI state
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-    }, [refetch]),
-  );
 
   useEffect(() => {
     if (!loading) {
@@ -885,15 +916,14 @@ export default function LotsScreen() {
 
   const renderItem = useCallback(
     ({ item, index }: { item: LotSummary; index: number }) => (
-      <LotCard
-        lot={item}
+      <CurvedLotRow
+        item={item}
         index={index}
-        shouldAnimate={
-          !isReduceMotionEnabled && !hasAnimated && index < MAX_ANIMATED_ITEMS
-        }
+        scrollY={scrollY}
+        shouldAnimate={!isReduceMotionEnabled && !hasAnimated && index < MAX_ANIMATED_ITEMS}
       />
     ),
-    [hasAnimated, isReduceMotionEnabled],
+    [hasAnimated, isReduceMotionEnabled, scrollY],
   );
 
   const renderEmpty = useCallback(() => {
@@ -1011,171 +1041,160 @@ export default function LotsScreen() {
     [],
   );
 
-  // ListHeaderComponent to include Stats in scroll
-  const renderHeader = useCallback(() => {
-    if (lots.length === 0) return null;
-    return <StatsBar stats={stats} />;
-  }, [lots.length, stats]);
+  // ListHeaderComponent — header, search, sort, stats all inside scroll
+  const renderListHeader = useCallback(() => (
+    <View>
+      {/* ═══ HEADER ═══ */}
+      <View style={styles.headerContent}>
+        <View>
+          <Text
+            style={{
+              fontSize: 28,
+              fontFamily: "Manrope_800ExtraBold",
+              color: colors.text,
+              letterSpacing: -0.5,
+            }}
+          >
+            {t("lots.title")}
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              fontFamily: "Manrope_400Regular",
+              color: colors.textSecondary,
+              marginTop: 4,
+            }}
+          >
+            {processedLots.length} lot{processedLots.length !== 1 ? "s" : ""}{" "}
+            • {stats.totalItems} pièces
+          </Text>
+        </View>
+        <Pressable
+          style={[styles.addButton, { backgroundColor: colors.gold }]}
+          onPress={() => {
+            Haptic.impactMedium();
+            router.push("/lots/new");
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t("lots.newLot")}
+        >
+          <AppIcon name="add" size={24} color={theme.textOnAccent} />
+        </Pressable>
+      </View>
+
+      {/* ═══ SEARCH + SORT ═══ */}
+      <View style={styles.searchSection}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={handleSearch}
+          onClear={handleClearSearch}
+        />
+        <Pressable
+          style={[
+            styles.sortButton,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+          onPress={() => {
+            Haptic.selection();
+            setShowSortMenu(!showSortMenu);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.sort")}
+        >
+          <AppIcon
+            name={
+              (SORT_OPTIONS.find((o) => o.key === sortBy)?.icon as any) ||
+              "sort"
+            }
+            size={18}
+            color={colors.gold}
+          />
+        </Pressable>
+      </View>
+
+      {/* Sort Menu Dropdown */}
+      {showSortMenu && (
+        <Animated.View
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(100)}
+          style={[
+            styles.sortMenu,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          {SORT_OPTIONS.map((option) => (
+            <Pressable
+              key={option.key}
+              style={[
+                styles.sortOption,
+                sortBy === option.key && {
+                  backgroundColor: colors.goldSubtle,
+                },
+              ]}
+              onPress={() => handleSortChange(option.key)}
+              accessibilityRole="button"
+              accessibilityLabel={t(option.labelKey)}
+              accessibilityState={{ selected: sortBy === option.key }}
+            >
+              <AppIcon
+                name={option.icon as any}
+                size={16}
+                color={
+                  sortBy === option.key ? colors.gold : colors.textSecondary
+                }
+              />
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: "Manrope_500Medium",
+                  color: sortBy === option.key ? colors.gold : colors.text,
+                }}
+              >
+                {t(option.labelKey)}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      )}
+
+      {/* ═══ STATS ═══ */}
+      {lots.length > 0 && <StatsBar stats={stats} />}
+    </View>
+  ), [lots.length, stats, colors, searchQuery, handleSearch, handleClearSearch, showSortMenu, sortBy, handleSortChange, processedLots.length, t, theme.textOnAccent]);
 
   return (
     <VantaScreen style={styles.container}>
-      {/* Vanta Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: insets.top,
-            backgroundColor: colors.background,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
-        <View style={styles.headerContent}>
-          <View>
-            <Text
-              style={{
-                fontSize: 28,
-                fontFamily: "Manrope_800ExtraBold",
-                color: colors.text,
-                letterSpacing: -0.5,
-              }}
-            >
-              {t("lots.title")}
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                fontFamily: "Manrope_400Regular",
-                color: colors.textSecondary,
-                marginTop: 4,
-              }}
-            >
-              {processedLots.length} lot{processedLots.length !== 1 ? "s" : ""}{" "}
-              • {stats.totalItems} pièces
-            </Text>
-          </View>
-          <Pressable
-            style={[styles.addButton, { backgroundColor: colors.gold }]}
-            onPress={() => {
-              Haptic.impactMedium();
-              router.push("/lots/new");
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={t("lots.newLot")}
-          >
-            <AppIcon name="add" size={24} color={theme.textOnAccent} />
-          </Pressable>
+      {loading && !refreshing ? (
+        <View style={[styles.loaderContainer, { paddingTop: insets.top + Spacing.xl }]}>
+          <SkeletonList count={5} />
         </View>
-      </View>
-
-      <View style={{ flex: 1, paddingTop: 16 }}>
-        {/* Search Bar */}
-        <View style={styles.searchSection}>
-          <SearchBar
-            value={searchQuery}
-            onChangeText={handleSearch}
-            onClear={handleClearSearch}
-          />
-
-          {/* Sort Button */}
-          <Pressable
-            style={[
-              styles.sortButton,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            onPress={() => {
-              Haptic.selection();
-              setShowSortMenu(!showSortMenu);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={t("common.sort")}
-          >
-            <AppIcon
-              name={
-                (SORT_OPTIONS.find((o) => o.key === sortBy)?.icon as any) ||
-                "sort"
-              }
-              size={18}
-              color={colors.gold}
+      ) : (
+        <FlashList
+          ref={flashListRef}
+          data={processedLots}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          estimatedItemSize={200}
+          ListHeaderComponent={renderListHeader}
+          ListEmptyComponent={renderEmpty}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.gold}
+              colors={[colors.gold]}
             />
-          </Pressable>
-        </View>
-
-        {/* Sort Menu Dropdown */}
-        {showSortMenu && (
-          <Animated.View
-            entering={FadeIn.duration(150)}
-            exiting={FadeOut.duration(100)}
-            style={[
-              styles.sortMenu,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            {SORT_OPTIONS.map((option) => (
-              <Pressable
-                key={option.key}
-                style={[
-                  styles.sortOption,
-                  sortBy === option.key && {
-                    backgroundColor: colors.goldSubtle,
-                  },
-                ]}
-                onPress={() => handleSortChange(option.key)}
-                accessibilityRole="button"
-                accessibilityLabel={t(option.labelKey)}
-                accessibilityState={{ selected: sortBy === option.key }}
-              >
-                <AppIcon
-                  name={option.icon as any}
-                  size={16}
-                  color={
-                    sortBy === option.key ? colors.gold : colors.textSecondary
-                  }
-                />
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontFamily: "Manrope_500Medium",
-                    color: sortBy === option.key ? colors.gold : colors.text,
-                  }}
-                >
-                  {t(option.labelKey)}
-                </Text>
-              </Pressable>
-            ))}
-          </Animated.View>
-        )}
-
-        {/* Stats Bar */}
-        {lots.length > 0 && <StatsBar stats={stats} />}
-
-        {/* Lots List - FlashList for performance */}
-        {loading && !refreshing ? (
-          <View style={styles.loaderContainer}>
-            <SkeletonList count={5} />
-          </View>
-        ) : (
-          <FlashList
-            ref={flashListRef}
-            data={processedLots}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            estimatedItemSize={200}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor={colors.gold}
-                colors={[colors.gold]}
-              />
-            }
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={renderEmpty}
-            showsVerticalScrollIndicator={false}
-          />
-        )}
-      </View>
+          }
+          contentContainerStyle={{
+            paddingTop: insets.top + Spacing.md,
+            paddingBottom: 120,
+          }}
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={(e) => { scrollY.value = e.nativeEvent.contentOffset.y; }}
+        />
+      )}
+      <ScrollEdgeFade color={theme.background} position="bottom" scrollY={scrollY} />
     </VantaScreen>
   );
 }

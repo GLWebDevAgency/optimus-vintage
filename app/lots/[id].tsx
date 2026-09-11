@@ -11,12 +11,13 @@ import {
 } from "@/components/ui/AnimatedComponents";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { Card } from "@/components/ui/Components";
+import { useCurvedScroll, CurvedItem, ScrollEdgeFade } from "@/components/ui/CurvedScroll";
 import {
     type VantaTheme,
     useVantaTheme,
     VantaScreen,
 } from "@/components/ui/PremiumUI";
-import { Palette, Radius, Spacing } from "@/constants/Theme";
+import { Radius, Spacing } from "@/constants/Theme";
 import {
     Item,
     ItemsRepository,
@@ -24,7 +25,6 @@ import {
     Sale,
     SalesRepository,
 } from "@/db/repositories";
-import { ReanimatedSpring } from "@/utils/animations-reanimated";
 import {
     computeLotSummary,
     computeProtection,
@@ -38,13 +38,11 @@ import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { MotiView } from "moti";
-import { MotiPressable } from "moti/interactions";
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
     FadeIn,
     FadeInDown,
-    interpolateColor,
     LinearTransition,
     SlideInRight,
     useAnimatedStyle,
@@ -55,8 +53,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type LotColors = {
   background: string;
+  backgroundSubtle: string;
   surface: string;
   surfaceCard: string;
+  surfaceHighlight: string;
+  surfaceGlassStrong: string;
   gold: string;
   goldSubtle: string;
   textOnGold: string;
@@ -75,8 +76,11 @@ type LotColors = {
 function getLotColors(theme: VantaTheme): LotColors {
   return {
     background: theme.background,
+    backgroundSubtle: theme.backgroundSubtle,
     surface: theme.surface,
     surfaceCard: theme.surfaceCard,
+    surfaceHighlight: theme.surfaceHighlight,
+    surfaceGlassStrong: theme.surfaceGlassStrong,
     gold: theme.primary,
     goldSubtle: theme.primarySubtle,
     textOnGold: theme.textOnAccent,
@@ -148,7 +152,7 @@ function AnimatedSegmentControl({
       style={[
         styles.segmentedControl,
         {
-          backgroundColor: isDark ? colors.surface : Palette.ivory.sand,
+          backgroundColor: isDark ? colors.surface : colors.surfaceHighlight,
           borderWidth: 1,
           borderColor: isDark ? "rgba(255,255,255,0.03)" : `${colors.gold}20`,
         },
@@ -171,7 +175,7 @@ function AnimatedSegmentControl({
           style={{
             flex: 1,
             borderRadius: 10,
-            backgroundColor: isDark ? colors.surfaceCard : Palette.ivory.pearl,
+            backgroundColor: isDark ? colors.surfaceCard : colors.surfaceGlassStrong,
             borderWidth: 1,
             borderColor: colors.gold,
           }}
@@ -207,9 +211,7 @@ function AnimatedSegmentControl({
                   letterSpacing: 1,
                   color: isActive
                     ? colors.gold
-                    : isDark
-                      ? colors.textSecondary
-                      : Palette.neutral[500],
+                    : colors.textSecondary,
                 }}
               >
                 {seg.label}
@@ -222,66 +224,6 @@ function AnimatedSegmentControl({
   );
 }
 
-// Legacy AnimatedSegmentButton kept for compatibility but no longer used
-function AnimatedSegmentButton({
-  label,
-  isActive,
-  onPress,
-  colors,
-  index,
-}: {
-  label: string;
-  isActive: boolean;
-  onPress: () => void;
-  colors: LotColors;
-  index: number;
-}) {
-  const scale = useSharedValue(1);
-  const progress = useSharedValue(isActive ? 1 : 0);
-
-  useEffect(() => {
-    progress.value = withSpring(isActive ? 1 : 0, ReanimatedSpring.responsive);
-  }, [isActive]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    backgroundColor: interpolateColor(
-      progress.value,
-      [0, 1],
-      ["transparent", colors.surface],
-    ),
-  }));
-
-  const textStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(
-      progress.value,
-      [0, 1],
-      [colors.textSecondary, colors.gold],
-    ),
-  }));
-
-  return (
-    <MotiPressable
-      onPress={() => {
-        Haptic.selection();
-        onPress();
-      }}
-      onPressIn={() => {
-        scale.value = withSpring(0.95, ReanimatedSpring.responsive);
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, ReanimatedSpring.bouncy);
-      }}
-      style={{ flex: 1 }}
-    >
-      <Animated.View style={[styles.segmentButton, animatedStyle]}>
-        <Animated.Text style={[styles.segmentText, textStyle]}>
-          {label}
-        </Animated.Text>
-      </Animated.View>
-    </MotiPressable>
-  );
-}
 
 export default function LotDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -377,7 +319,7 @@ export default function LotDetailScreen() {
     if (roi >= 50)
       return { label: t("lots.roiExcellent"), color: colors.success };
     if (roi >= 25)
-      return { label: t("lots.roiVeryGood"), color: Palette.forest[500] };
+      return { label: t("lots.roiVeryGood"), color: colors.success };
     if (roi >= 0) return { label: t("lots.roiGood"), color: colors.gold };
     if (roi >= -25) return { label: t("lots.roiLow"), color: colors.warning };
     return { label: t("lots.roiLoss"), color: colors.danger };
@@ -481,6 +423,8 @@ export default function LotDetailScreen() {
     );
   }
 
+  const { scrollY, scrollHandler } = useCurvedScroll();
+
   const roiInfo = getROILabel(summary.roiPercent);
   const recoveryPercent =
     summary.totalInvestment > 0
@@ -524,7 +468,7 @@ export default function LotDetailScreen() {
         </Pressable>
       </BlurView>
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
@@ -532,6 +476,8 @@ export default function LotDetailScreen() {
         ]}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
         {/* Stats Grid */}
         <Animated.View
@@ -543,7 +489,7 @@ export default function LotDetailScreen() {
             <Text
               style={[
                 styles.statLabel,
-                { color: isDark ? colors.textSecondary : Palette.neutral[600] },
+                { color: colors.textSecondary },
               ]}
             >
               {t("lots.totalInvested")}
@@ -558,7 +504,7 @@ export default function LotDetailScreen() {
             <Text
               style={[
                 styles.statLabel,
-                { color: isDark ? colors.textSecondary : Palette.neutral[600] },
+                { color: colors.textSecondary },
               ]}
             >
               {t("lots.totalRecovered")}
@@ -575,7 +521,7 @@ export default function LotDetailScreen() {
                 style={[
                   styles.statLabel,
                   {
-                    color: isDark ? colors.textSecondary : Palette.neutral[600],
+                    color: colors.textSecondary,
                   },
                 ]}
               >
@@ -615,7 +561,7 @@ export default function LotDetailScreen() {
                 style={[
                   styles.recoveryProfit,
                   {
-                    color: isDark ? colors.textSecondary : Palette.neutral[600],
+                    color: colors.textSecondary,
                   },
                 ]}
               >
@@ -644,7 +590,7 @@ export default function LotDetailScreen() {
                 style={[
                   styles.progressLabel,
                   {
-                    color: isDark ? colors.textSecondary : Palette.neutral[500],
+                    color: colors.textMuted,
                   },
                 ]}
               >
@@ -657,9 +603,7 @@ export default function LotDetailScreen() {
                     color:
                       recoveryPercent >= 100
                         ? colors.gold
-                        : isDark
-                          ? colors.textSecondary
-                          : Palette.neutral[600],
+                        : colors.textSecondary,
                     fontWeight: "600",
                   },
                 ]}
@@ -672,7 +616,7 @@ export default function LotDetailScreen() {
                 style={[
                   styles.progressLabel,
                   {
-                    color: isDark ? colors.textSecondary : Palette.neutral[500],
+                    color: colors.textMuted,
                   },
                 ]}
               >
@@ -691,7 +635,7 @@ export default function LotDetailScreen() {
                 {
                   backgroundColor: isDark
                     ? colors.surface
-                    : Palette.ivory.cream,
+                    : colors.backgroundSubtle,
                   borderRadius: Radius.xl,
                   borderWidth: 1,
                   borderColor: colors.gold,
@@ -723,22 +667,15 @@ export default function LotDetailScreen() {
                     style={[
                       styles.protectionDesc,
                       {
-                        color: isDark
-                          ? colors.textSecondary
-                          : Palette.neutral[600],
+                        color: colors.textSecondary,
                         lineHeight: 22,
                       },
                     ]}
                   >
-                    Vendez les{" "}
-                    <Text style={{ fontWeight: "700", color: colors.text }}>
-                      {summary.remainingQuantity} articles restants
-                    </Text>{" "}
-                    au-dessus de{" "}
-                    <Text style={{ fontWeight: "700", color: colors.gold }}>
-                      {formatCurrency(protection.floorPriceBreakEven)}
-                    </Text>{" "}
-                    pour maintenir la rentabilité.
+                    {t("lots.floorPriceDesc", {
+                      count: summary.remainingQuantity,
+                      price: formatCurrency(protection.floorPriceBreakEven),
+                    })}
                   </Text>
                 </View>
               </View>
@@ -800,7 +737,7 @@ export default function LotDetailScreen() {
                 {
                   backgroundColor: isDark
                     ? colors.surface
-                    : Palette.ivory.cream,
+                    : colors.backgroundSubtle,
                   borderRadius: Radius.xl,
                   borderWidth: 1,
                   borderColor: colors.border,
@@ -824,7 +761,7 @@ export default function LotDetailScreen() {
                 style={[
                   styles.emptyText,
                   {
-                    color: isDark ? colors.textSecondary : Palette.neutral[600],
+                    color: colors.textSecondary,
                     fontSize: 15,
                   },
                 ]}
@@ -865,7 +802,7 @@ export default function LotDetailScreen() {
                         name="checkroom"
                         size={24}
                         color={
-                          isDark ? colors.textSecondary : Palette.neutral[500]
+                          colors.textMuted
                         }
                       />
                     </View>
@@ -879,9 +816,7 @@ export default function LotDetailScreen() {
                               ? colors.success
                               : item.status === "ONLINE"
                                 ? colors.warning
-                                : isDark
-                                  ? colors.textSecondary
-                                  : Palette.neutral[500],
+                                : colors.textMuted,
                         },
                       ]}
                     >
@@ -909,9 +844,7 @@ export default function LotDetailScreen() {
                         style={[
                           styles.itemSubtitle,
                           {
-                            color: isDark
-                              ? colors.textSecondary
-                              : Palette.neutral[600],
+                            color: colors.textSecondary,
                           },
                         ]}
                       >
@@ -929,13 +862,11 @@ export default function LotDetailScreen() {
                           style={[
                             styles.profitLabel,
                             {
-                              color: isDark
-                                ? colors.textSecondary
-                                : Palette.neutral[600],
+                              color: colors.textSecondary,
                             },
                           ]}
                         >
-                          {item.sale ? "BÉNÉFICE NET" : "BÉNÉFICE EST."}
+                          {item.sale ? t("lots.netProfit").toUpperCase() : t("lots.estimatedProfit").toUpperCase()}
                         </Text>
                         <Text
                           style={[
@@ -958,9 +889,7 @@ export default function LotDetailScreen() {
                           style={[
                             styles.salePrice,
                             {
-                              color: isDark
-                                ? colors.textSecondary
-                                : Palette.neutral[500],
+                              color: colors.textMuted,
                             },
                           ]}
                         >
@@ -980,14 +909,14 @@ export default function LotDetailScreen() {
             <Text
               style={[
                 styles.moreItems,
-                { color: isDark ? colors.textSecondary : Palette.neutral[600] },
+                { color: colors.textSecondary },
               ]}
             >
-              + {filteredItems.length - 10} autres articles
+              {t("lots.moreItems", { count: filteredItems.length - 10 })}
             </Text>
           )}
         </Animated.View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Floating Action Button */}
       <View

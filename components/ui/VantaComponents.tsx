@@ -16,12 +16,14 @@
  */
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
+import { CurvedHorizontalItem, useCurvedHorizontalScroll } from "@/components/ui/CurvedScroll";
 import { useVantaTheme } from "@/components/ui/PremiumUI";
 import { Palette, Radius, Spacing } from "@/constants/Theme";
 import { useLocale } from "@/utils/i18n";
 import * as Haptics from "expo-haptics";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+    ActivityIndicator,
     Pressable,
     StyleSheet,
     Text,
@@ -848,6 +850,9 @@ interface NetflixCarouselProps {
   style?: ViewStyle;
 }
 
+const CAROUSEL_ITEM_WIDTH = 156; // 140 card + 16 margin
+const CAROUSEL_PAGE_SIZE = 10; // Items loaded per page
+
 export function NetflixCarousel({
   lotName,
   lotId,
@@ -860,85 +865,116 @@ export function NetflixCarousel({
 }: NetflixCarouselProps) {
   const theme = useVantaTheme();
   const { t } = useLocale();
+  const { scrollX, scrollHandler } = useCurvedHorizontalScroll();
 
-  const renderCarouselItem = ({ item }: { item: CarouselItem }) => {
+  // Progressive pagination — show items in batches
+  const [visibleCount, setVisibleCount] = useState(CAROUSEL_PAGE_SIZE);
+  const visibleItems = useMemo(
+    () => items.slice(0, visibleCount),
+    [items, visibleCount],
+  );
+  const hasMore = visibleCount < items.length;
+
+  const handleEndReached = useCallback(() => {
+    if (hasMore) {
+      setVisibleCount((prev) => Math.min(prev + CAROUSEL_PAGE_SIZE, items.length));
+    }
+  }, [hasMore, items.length]);
+
+  const renderFooter = useCallback(() => {
+    if (!hasMore) return null;
+    return (
+      <View style={{ width: 60, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="small" color={Palette.metal.gold} />
+      </View>
+    );
+  }, [hasMore]);
+
+  const renderCarouselItem = useCallback(({ item, index }: { item: CarouselItem; index: number }) => {
     const cost =
       typeof item.unitCost === "string"
         ? parseFloat(item.unitCost)
         : item.unitCost;
 
     return (
-      <Pressable
-        style={[
-          styles.carouselItem,
-          {
-            backgroundColor: theme.surface,
-            borderColor: theme.borderGlass,
-          },
-        ]}
-        onPress={() => onItemPress(item)}
-        accessibilityRole="button"
-        accessibilityLabel={`${item.brand || t("vanta.article")} ${item.type || ""}, ${cost.toFixed(2)} ${t("accessibility.euros")}`}
+      <CurvedHorizontalItem
+        scrollX={scrollX}
+        index={index}
+        itemWidth={CAROUSEL_ITEM_WIDTH}
+        preset="standard"
       >
-        {/* Image / Placeholder */}
-        <View
-          style={[styles.carouselItemImage, { backgroundColor: theme.surface }]}
+        <Pressable
+          style={[
+            styles.carouselItem,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.borderGlass,
+            },
+          ]}
+          onPress={() => onItemPress(item)}
+          accessibilityRole="button"
+          accessibilityLabel={`${item.brand || t("vanta.article")} ${item.type || ""}, ${cost.toFixed(2)} ${t("accessibility.euros")}`}
         >
-          <AppIcon name="checkroom" size={40} color={theme.textMuted} />
-          {/* Gradient Overlay */}
+          {/* Image / Placeholder */}
           <View
-            style={[
-              styles.carouselItemGradient,
-              {
-                experimental_backgroundImage: `linear-gradient(to bottom, transparent 0%, ${theme.background} 100%)`,
-              },
-            ]}
-          />
-        </View>
-
-        {/* Content */}
-        <View style={styles.carouselItemContent}>
-          <Text
-            style={[styles.carouselItemBrand, { color: theme.text }]}
-            numberOfLines={1}
+            style={[styles.carouselItemImage, { backgroundColor: theme.surface }]}
           >
-            {item.brand || t("vanta.brand")}
-          </Text>
-          <Text
-            style={[styles.carouselItemType, { color: theme.textMuted }]}
-            numberOfLines={1}
-          >
-            {item.type || t("vanta.article")} ·{" "}
-            {item.size || t("vanta.oneSize")}
-          </Text>
-
-          <View style={styles.carouselItemFooter}>
-            <Text
-              style={[styles.carouselItemPrice, { color: Palette.metal.gold }]}
-            >
-              €{cost.toFixed(0)}
-            </Text>
-            <Pressable
+            <AppIcon name="checkroom" size={40} color={theme.textMuted} />
+            {/* Gradient Overlay */}
+            <View
               style={[
-                styles.carouselSellBtn,
-                { backgroundColor: Palette.metal.goldSubtle },
+                styles.carouselItemGradient,
+                {
+                  experimental_backgroundImage: `linear-gradient(to bottom, transparent 0%, ${theme.background} 100%)`,
+                },
               ]}
-              onPress={(e) => {
-                e.stopPropagation?.();
-                if (isIOS)
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onSellPress(item);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t("vanta.sell")}
-            >
-              <AppIcon name="sell" size={14} color={Palette.metal.gold} />
-            </Pressable>
+            />
           </View>
-        </View>
-      </Pressable>
+
+          {/* Content */}
+          <View style={styles.carouselItemContent}>
+            <Text
+              style={[styles.carouselItemBrand, { color: theme.text }]}
+              numberOfLines={1}
+            >
+              {item.brand || t("vanta.brand")}
+            </Text>
+            <Text
+              style={[styles.carouselItemType, { color: theme.textMuted }]}
+              numberOfLines={1}
+            >
+              {item.type || t("vanta.article")} ·{" "}
+              {item.size || t("vanta.oneSize")}
+            </Text>
+
+            <View style={styles.carouselItemFooter}>
+              <Text
+                style={[styles.carouselItemPrice, { color: Palette.metal.gold }]}
+              >
+                €{cost.toFixed(0)}
+              </Text>
+              <Pressable
+                style={[
+                  styles.carouselSellBtn,
+                  { backgroundColor: Palette.metal.goldSubtle },
+                ]}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  if (isIOS)
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onSellPress(item);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t("vanta.sell")}
+              >
+                <AppIcon name="sell" size={14} color={Palette.metal.gold} />
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      </CurvedHorizontalItem>
     );
-  };
+  }, [scrollX, theme, t, onItemPress, onSellPress]);
 
   return (
     <Animated.View
@@ -979,16 +1015,21 @@ export function NetflixCarousel({
         </Pressable>
       </View>
 
-      {/* Horizontal Scroll */}
+      {/* Horizontal Scroll — with iOS curved depth + progressive pagination */}
       <Animated.FlatList
         horizontal
-        data={items}
+        data={visibleItems}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderCarouselItem}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.carouselList}
         decelerationRate="fast"
-        snapToInterval={156} // 140 width + 16 margin
+        snapToInterval={CAROUSEL_ITEM_WIDTH}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
       />
     </Animated.View>
   );

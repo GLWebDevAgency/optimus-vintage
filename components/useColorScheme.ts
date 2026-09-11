@@ -14,10 +14,11 @@ export function useColorScheme(): "light" | "dark" {
   const systemColorScheme = useSystemColorScheme();
   const themeMode = useSettingsStore((state) => state.themeMode);
 
-  // If user selected a specific mode, use it
+  // If user selected light, return light
   if (themeMode === "light") return "light";
-  if (themeMode === "dark") return "dark";
+  // All custom dark themes (dark, midnight-rose, obsidian-noir, aurora, copper) → "dark"
+  if (themeMode !== "system") return "dark";
 
-  // Otherwise, follow system preference (default to light if null)
+  // System mode: follow device preference
   return systemColorScheme ?? "light";
 }

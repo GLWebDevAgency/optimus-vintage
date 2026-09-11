@@ -6,6 +6,11 @@
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
+import {
+  useCurvedListItem,
+  ScrollEdgeFade,
+  CurvedItem,
+} from "@/components/ui/CurvedScroll";
 import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { SkeletonList } from "@/components/ui/Skeleton";
@@ -26,7 +31,7 @@ import { useSettingsStore } from "@/store/settings";
 import { useLocale } from "@/utils/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import type { TFunction } from "i18next";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -34,7 +39,6 @@ import {
   LayoutAnimation,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -45,6 +49,7 @@ import Animated, {
   FadeIn,
   FadeInDown,
   FadeOut,
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -84,7 +89,6 @@ interface LotCarouselData {
 
 // ============ CONSTANTS ============
 
-const ITEMS_PER_CAROUSEL = 10; // Items shown per lot carousel
 const ANIMATION_STAGGER = 30; // ms between each item animation
 const MAX_ANIMATED_ITEMS = 10; // Only animate first N items for performance
 
@@ -841,6 +845,30 @@ function SearchBar({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 🌀 CURVED SCROLL WRAPPER - iOS-Style Depth Effect per Section
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const CAROUSEL_ESTIMATED_HEIGHT = 220;
+
+function CurvedStockSection({
+  children,
+  index,
+  scrollY,
+}: {
+  children: React.ReactNode;
+  index: number;
+  scrollY: SharedValue<number>;
+}) {
+  const curveStyle = useCurvedListItem(
+    scrollY,
+    index,
+    CAROUSEL_ESTIMATED_HEIGHT,
+    "subtle",
+  );
+  return <Animated.View style={curveStyle}>{children}</Animated.View>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 📦 MAIN SCREEN - VANTA STOCK
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -854,6 +882,9 @@ export default function StockScreen() {
 
   // Screen tracking
   useTrackScreen("stock");
+
+  // Curved scroll tracking
+  const scrollY = useSharedValue(0);
 
   // Vanta theme colors — memoized to stabilize useCallback deps
   const colors = useMemo(
@@ -910,13 +941,6 @@ export default function StockScreen() {
 
   // ============ DATA LOADING ============
 
-  useFocusEffect(
-    useCallback(() => {
-      refetchItems();
-      refetchLots();
-    }, [refetchItems, refetchLots]),
-  );
-
   useEffect(() => {
     if (!loading) {
       const timer = setTimeout(() => setHasAnimated(true), 500);
@@ -932,7 +956,7 @@ export default function StockScreen() {
     const lotMap = new Map<number, Item[]>();
 
     // First filter by search query
-    let filteredItems = [...allItems];
+    let filteredItems = allItems;
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filteredItems = filteredItems.filter(
@@ -977,10 +1001,14 @@ export default function StockScreen() {
     };
 
     // Group by lotId
-    filteredItems.forEach((item) => {
-      const existing = lotMap.get(item.lotId) || [];
-      lotMap.set(item.lotId, [...existing, item]);
-    });
+    for (const item of filteredItems) {
+      let arr = lotMap.get(item.lotId);
+      if (!arr) {
+        arr = [];
+        lotMap.set(item.lotId, arr);
+      }
+      arr.push(item);
+    }
 
     // Create carousel data for each lot
     const carousels: LotCarouselData[] = [];
@@ -989,7 +1017,7 @@ export default function StockScreen() {
       if (items.length > 0 && !hiddenLotIds.has(lot.id)) {
         carousels.push({
           lot,
-          items: sortItems(items).slice(0, ITEMS_PER_CAROUSEL),
+          items: sortItems(items),
         });
       }
     });
@@ -1208,84 +1236,14 @@ export default function StockScreen() {
 
   return (
     <VantaScreen>
-      {/* Floating Header - Vanta Style */}
-      <View
-        style={[
-          styles.header,
-          { paddingTop: insets.top, backgroundColor: colors.surface },
-        ]}
-      >
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor: colors.surface,
-              borderBottomWidth: 1,
-              borderBottomColor: colors.border,
-            },
-          ]}
-        />
-        <View style={styles.headerContent}>
-          <View>
-            <Text
-              style={{
-                fontFamily: "Manrope_700Bold",
-                fontSize: 28,
-                color: colors.text,
-              }}
-            >
-              {t("navigation.stock")}
-            </Text>
-            <Text
-              style={{
-                fontFamily: "Manrope_400Regular",
-                fontSize: 14,
-                color: colors.textSecondary,
-              }}
-            >
-              {allItems.length} {t("items.title")} · {visibleLotCount} lots
-            </Text>
-          </View>
-          <View style={styles.headerActions}>
-            {/* Lot Visibility Controller Button */}
-            <Pressable
-              style={[
-                styles.headerBtn,
-                {
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor:
-                    hiddenLotIds.size > 0 ? Palette.metal.gold : colors.border,
-                },
-              ]}
-              onPress={() => {
-                Haptic.selection();
-                setShowVisibilityController(true);
-              }}
-              accessibilityLabel={t("accessibility.manageLotVisibility", {
-                visible: visibleLotCount,
-                total: lots.length,
-              })}
-              accessibilityRole="button"
-            >
-              <AppIcon
-                name={hiddenLotIds.size > 0 ? "visibility-off" : "visibility"}
-                size={20}
-                color={
-                  hiddenLotIds.size > 0
-                    ? Palette.metal.gold
-                    : colors.textSecondary
-                }
-              />
-            </Pressable>
-          </View>
-        </View>
-      </View>
-
-      <ScrollView
-        style={{ flex: 1, paddingTop: insets.top + 90 }}
-        contentContainerStyle={{ paddingBottom: 120 }}
+      <Animated.ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: insets.top + Spacing.md, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={(e: any) => {
+          scrollY.value = e.nativeEvent.contentOffset.y;
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -1295,38 +1253,72 @@ export default function StockScreen() {
           />
         }
       >
-        {/* Search Bar */}
-        <View style={styles.searchSection}>
-          <SearchBar
-            value={searchQuery}
-            onChangeText={handleSearch}
-            onClear={handleClearSearch}
-            placeholder={t("common.search")}
-          />
+        {/* ═══ HEADER ═══ */}
+        <CurvedItem scrollY={scrollY}>
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={{ fontFamily: "Manrope_700Bold", fontSize: 28, color: colors.text }}>
+                {t("navigation.stock")}
+              </Text>
+              <Text style={{ fontFamily: "Manrope_400Regular", fontSize: 14, color: colors.textSecondary }}>
+                {allItems.length} {t("items.title")} · {visibleLotCount} lots
+              </Text>
+            </View>
+            <View style={styles.headerActions}>
+              <Pressable
+                style={[styles.headerBtn, {
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: hiddenLotIds.size > 0 ? Palette.metal.gold : colors.border,
+                }]}
+                onPress={() => { Haptic.selection(); setShowVisibilityController(true); }}
+                accessibilityLabel={t("accessibility.manageLotVisibility", { visible: visibleLotCount, total: lots.length })}
+                accessibilityRole="button"
+              >
+                <AppIcon
+                  name={hiddenLotIds.size > 0 ? "visibility-off" : "visibility"}
+                  size={20}
+                  color={hiddenLotIds.size > 0 ? Palette.metal.gold : colors.textSecondary}
+                />
+              </Pressable>
+            </View>
+          </View>
+        </CurvedItem>
 
-          {/* Sort Button */}
-          <Pressable
-            style={[
-              styles.sortButton,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            onPress={() => {
-              Haptic.selection();
-              setShowSortMenu(!showSortMenu);
-            }}
-            accessibilityLabel={t("accessibility.sortItems")}
-            accessibilityRole="button"
-          >
-            <AppIcon
-              name={
-                (sortOptions.find((o) => o.key === sortBy)?.icon as any) ||
-                "sort"
-              }
-              size={18}
-              color={colors.gold}
+        {/* ═══ SEARCH ═══ */}
+        <CurvedItem scrollY={scrollY}>
+          <View style={styles.searchSection}>
+            <SearchBar
+              value={searchQuery}
+              onChangeText={handleSearch}
+              onClear={handleClearSearch}
+              placeholder={t("common.search")}
             />
-          </Pressable>
-        </View>
+
+            {/* Sort Button */}
+            <Pressable
+              style={[
+                styles.sortButton,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+              onPress={() => {
+                Haptic.selection();
+                setShowSortMenu(!showSortMenu);
+              }}
+              accessibilityLabel={t("accessibility.sortItems")}
+              accessibilityRole="button"
+            >
+              <AppIcon
+                name={
+                  (sortOptions.find((o) => o.key === sortBy)?.icon as any) ||
+                  "sort"
+                }
+                size={18}
+                color={colors.gold}
+              />
+            </Pressable>
+          </View>
+        </CurvedItem>
 
         {/* Sort Menu Dropdown */}
         {showSortMenu && (
@@ -1370,9 +1362,11 @@ export default function StockScreen() {
           </Animated.View>
         )}
 
-        {/* Stats Bar */}
+        {/* ═══ STATS ═══ */}
         {allItems.length > 0 && (
-          <StatsBar stats={stats} t={t} currencySymbol={currencySymbol} />
+          <CurvedItem scrollY={scrollY}>
+            <StatsBar stats={stats} t={t} currencySymbol={currencySymbol} />
+          </CurvedItem>
         )}
 
         {/* Loading State */}
@@ -1383,30 +1377,42 @@ export default function StockScreen() {
         ) : lotCarousels.length === 0 ? (
           renderEmpty()
         ) : (
-          /* Netflix-style Carousels by Lot */
-          lotCarousels.map((carouselData) => (
-            <NetflixCarousel
+          /* Netflix-style Carousels by Lot — with iOS curved scroll */
+          lotCarousels.map((carouselData, index) => (
+            <CurvedStockSection
               key={carouselData.lot.id}
-              lotId={carouselData.lot.id}
-              lotName={carouselData.lot.name || `Lot #${carouselData.lot.id}`}
-              items={carouselData.items.map((item) => ({
-                id: item.id,
-                brand: item.brand,
-                type: item.type,
-                unitCost: item.unitCost,
-                color: item.color,
-                size: item.size,
-                photoUri: getItemFirstPhoto(item),
-                lotId: item.lotId,
-              }))}
-              itemCount={itemCountByLot.get(carouselData.lot.id) ?? 0}
-              onItemPress={handleItemPress}
-              onSellPress={handleSell}
-              onSeeAllPress={() => handleSeeAllPress(carouselData.lot.id)}
-            />
+              index={index}
+              scrollY={scrollY}
+            >
+              <NetflixCarousel
+                lotId={carouselData.lot.id}
+                lotName={carouselData.lot.name || `Lot #${carouselData.lot.id}`}
+                items={carouselData.items.map((item) => ({
+                  id: item.id,
+                  brand: item.brand,
+                  type: item.type,
+                  unitCost: item.unitCost,
+                  color: item.color,
+                  size: item.size,
+                  photoUri: getItemFirstPhoto(item),
+                  lotId: item.lotId,
+                }))}
+                itemCount={itemCountByLot.get(carouselData.lot.id) ?? 0}
+                onItemPress={handleItemPress}
+                onSellPress={handleSell}
+                onSeeAllPress={() => handleSeeAllPress(carouselData.lot.id)}
+              />
+            </CurvedStockSection>
           ))
         )}
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Bottom edge fade for curved scroll */}
+      <ScrollEdgeFade
+        color={theme.background}
+        position="bottom"
+        scrollY={scrollY}
+      />
 
       {/* Lot Visibility Controller Sheet */}
       <LotVisibilityController

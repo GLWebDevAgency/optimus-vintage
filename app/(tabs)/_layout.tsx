@@ -14,8 +14,9 @@
  */
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Palette, Radius } from "@/constants/Theme";
+import { useVantaTheme } from "@/components/ui/PremiumUI";
+import { SPRING_GRAVITY, SPRING_SNAPPY } from "@/constants/Animation";
+import { Radius } from "@/constants/Theme";
 import { useLocale } from "@/utils/i18n";
 import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
@@ -36,39 +37,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const isIOS = process.env.EXPO_OS === "ios";
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎯 VANTA PHYSICS CONFIGURATION
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Gravity-based spring (heavy, luxurious feel)
-const SPRING_GRAVITY = {
-  damping: 22,
-  stiffness: 180,
-  mass: 1.2,
-  overshootClamping: false,
-};
-
-// Quick response spring
-const SPRING_SNAPPY = {
-  damping: 25,
-  stiffness: 350,
-  mass: 0.6,
-};
-
 const TAB_COUNT = 5;
 const TAB_BAR_MARGIN = 20;
 const TAB_BAR_HEIGHT = 72;
 const ACTIVE_ICON_SIZE = 24;
 const INACTIVE_ICON_SIZE = 22;
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎨 VANTA THEME HOOK
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function useIsDarkMode(): boolean {
-  const colorScheme = useColorScheme() ?? "light";
-  return colorScheme === "dark";
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ✨ GOLD INDICATOR - Floating pill with photon emanation
@@ -85,7 +58,7 @@ function GoldIndicator({
   tabWidth,
   containerPadding,
 }: GoldIndicatorProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
 
   const indicatorStyle = useAnimatedStyle(() => {
     const indicatorWidth = tabWidth - 12;
@@ -102,7 +75,14 @@ function GoldIndicator({
       <View
         style={[
           styles.indicatorPill,
-          isDark ? styles.indicatorPillDark : styles.indicatorPillLight,
+          {
+            backgroundColor: theme.dark ? theme.surfaceSlab : theme.surfaceHighlight,
+            boxShadow: theme.dark
+              ? `0 0 12px ${theme.primary}30, inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 8px rgba(0,0,0,0.4)`
+              : `0 4px 16px ${theme.primaryGlow}, 0 2px 8px rgba(28,25,23,0.08), inset 0 1px 0 rgba(255,255,255,1)`,
+            borderWidth: 1,
+            borderColor: theme.dark ? `${theme.primary}30` : `${theme.primary}20`,
+          },
         ]}
       />
     </Animated.View>
@@ -122,7 +102,7 @@ interface VantaGlyphProps {
 }
 
 function VantaGlyph({ name, label, focused, index, onPress }: VantaGlyphProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
 
   // Animation values
   const scale = useSharedValue(1);
@@ -131,9 +111,9 @@ function VantaGlyph({ name, label, focused, index, onPress }: VantaGlyphProps) {
   const glowIntensity = useSharedValue(0);
   const pressScale = useSharedValue(1);
 
-  // Colors based on mode
-  const activeColor = isDark ? Palette.metal.gold : Palette.metal.champagne;
-  const inactiveColor = isDark ? Palette.neutral[500] : Palette.neutral[400];
+  // Colors from theme
+  const activeColor = theme.primary;
+  const inactiveColor = theme.textMuted;
 
   // Focus state animations
   useEffect(() => {
@@ -241,7 +221,7 @@ interface VantaDockProps {
 
 function VantaDock({ state, descriptors, navigation }: VantaDockProps) {
   const insets = useSafeAreaInsets();
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const activeIndex = useSharedValue(state.index);
   const { t } = useLocale();
   const { width: screenWidth } = useWindowDimensions();
@@ -287,14 +267,21 @@ function VantaDock({ state, descriptors, navigation }: VantaDockProps) {
       <View
         style={[
           styles.dockContainer,
-          isDark ? styles.dockContainerDark : styles.dockContainerLight,
+          {
+            backgroundColor: theme.dark ? theme.surfaceCard : theme.surfaceGlass,
+            borderWidth: 1,
+            borderColor: theme.dark ? theme.border : theme.border,
+            boxShadow: theme.dark
+              ? `0 0 1px ${theme.primary}20, 0 8px 32px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)`
+              : `0 8px 32px rgba(28,25,23,0.12), 0 2px 8px rgba(28,25,23,0.06), inset 0 1px 0 rgba(255,255,255,0.9)`,
+          },
         ]}
       >
         {/* Track Background */}
         <View
           style={[
             styles.trackBackground,
-            isDark ? styles.trackBackgroundDark : styles.trackBackgroundLight,
+            { backgroundColor: theme.dark ? theme.surfaceCard : "transparent" },
           ]}
         />
 
@@ -388,42 +375,10 @@ const styles = StyleSheet.create({
     padding: 6,
   },
 
-  // AETHER (Dark) - Brushed Black Titanium
-  dockContainerDark: {
-    backgroundColor: Palette.vanta.titanium,
-    borderWidth: 1,
-    borderColor: Palette.vanta.graphite,
-    boxShadow: `
-      0 0 1px ${Palette.metal.gold}20,
-      0 8px 32px rgba(0, 0, 0, 0.8),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05)
-    `,
-  },
-
-  // IVORY (Light) - Mother of Pearl Glass
-  dockContainerLight: {
-    backgroundColor: "rgba(253, 252, 249, 0.85)",
-    borderWidth: 1,
-    borderColor: Palette.ivory.linen,
-    boxShadow: `
-      0 8px 32px rgba(28, 25, 23, 0.12),
-      0 2px 8px rgba(28, 25, 23, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9)
-    `,
-  },
-
   // ─── Track Background ──────────────────────────────────────────────────────
   trackBackground: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: Radius["3xl"],
-  },
-
-  trackBackgroundDark: {
-    backgroundColor: Palette.vanta.titanium,
-  },
-
-  trackBackgroundLight: {
-    backgroundColor: "transparent",
   },
 
   // ─── Gold Indicator ────────────────────────────────────────────────────────
@@ -439,30 +394,6 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: Radius.xl,
     borderCurve: "continuous",
-  },
-
-  // AETHER - Obsidian pill with gold edge
-  indicatorPillDark: {
-    backgroundColor: Palette.vanta.carbon,
-    boxShadow: `
-      0 0 12px ${Palette.metal.gold}30,
-      inset 0 1px 0 rgba(255, 255, 255, 0.05),
-      0 2px 8px rgba(0, 0, 0, 0.4)
-    `,
-    borderWidth: 1,
-    borderColor: `${Palette.metal.gold}30`,
-  },
-
-  // IVORY - White pill with champagne glow
-  indicatorPillLight: {
-    backgroundColor: Palette.ivory.pearl,
-    boxShadow: `
-      0 4px 16px rgba(201, 169, 97, 0.2),
-      0 2px 8px rgba(28, 25, 23, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 1)
-    `,
-    borderWidth: 1,
-    borderColor: `${Palette.metal.champagne}20`,
   },
 
   // ─── Glyphs Row ────────────────────────────────────────────────────────────

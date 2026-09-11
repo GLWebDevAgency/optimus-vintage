@@ -22,6 +22,7 @@
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Palette, Radius, Spacing, Theme, Typography } from "@/constants/Theme";
+import { useSettingsStore, type ThemeMode } from "@/store/settings";
 import { useAccessibility } from "@/utils/accessibility";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
@@ -56,9 +57,24 @@ const isIOS = process.env.EXPO_OS === "ios";
 
 export type VantaTheme = typeof Theme.light;
 
+const THEME_MAP: Record<ThemeMode, VantaTheme> = {
+  system: Theme.light, // placeholder, resolved dynamically
+  light: Theme.light,
+  dark: Theme.dark,
+  "midnight-rose": Theme.midnightRose,
+  "obsidian-noir": Theme.obsidianNoir,
+  aurora: Theme.aurora,
+  copper: Theme.copper,
+};
+
 export function usePremiumTheme(): VantaTheme {
   const colorScheme = useColorScheme() ?? "light";
-  return colorScheme === "dark" ? Theme.dark : Theme.light;
+  const themeMode = useSettingsStore((s) => s.themeMode);
+
+  if (themeMode === "system") {
+    return colorScheme === "dark" ? Theme.dark : Theme.light;
+  }
+  return THEME_MAP[themeMode] ?? Theme.dark;
 }
 
 export function useVantaTheme(): VantaTheme {
@@ -66,8 +82,8 @@ export function useVantaTheme(): VantaTheme {
 }
 
 export function useIsDarkMode(): boolean {
-  const colorScheme = useColorScheme() ?? "light";
-  return colorScheme === "dark";
+  const theme = usePremiumTheme();
+  return theme.dark;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -81,7 +97,6 @@ interface VantaScreenProps {
 
 export function PremiumScreen({ children, style }: VantaScreenProps) {
   const theme = usePremiumTheme();
-  const isDark = useIsDarkMode();
 
   return (
     <View
@@ -91,32 +106,18 @@ export function PremiumScreen({ children, style }: VantaScreenProps) {
         style,
       ]}
     >
-      {/* Vanta Background Layer */}
+      {/* Vanta Background Layer — gradient + ambient orbs from theme */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {isDark ? (
-          // AETHER: Absolute void with subtle gradient
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                experimental_backgroundImage: `linear-gradient(135deg, ${Palette.vanta.black} 0%, ${Palette.vanta.obsidian} 50%, ${Palette.vanta.black} 100%)`,
-              },
-            ]}
-          />
-        ) : (
-          // IVORY: Organic gradient (paper/silk feel)
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                experimental_backgroundImage: `linear-gradient(135deg, ${Palette.ivory.cream} 0%, ${Palette.ivory.base} 50%, ${Palette.ivory.sand} 100%)`,
-              },
-            ]}
-          />
-        )}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              experimental_backgroundImage: `linear-gradient(${theme.gradient.angle}, ${theme.gradient.start} 0%, ${theme.gradient.mid} 45%, ${theme.gradient.end} 100%)`,
+            },
+          ]}
+        />
 
-        {/* Ambient Depth Orbs — subtle nebula glow for spatial feel */}
-        {/* Top-right warm orb */}
+        {/* Ambient Depth Orbs — theme-specific nebula glow */}
         <View
           style={{
             position: "absolute",
@@ -125,12 +126,9 @@ export function PremiumScreen({ children, style }: VantaScreenProps) {
             width: 280,
             height: 280,
             borderRadius: 140,
-            backgroundColor: isDark
-              ? "rgba(244, 192, 37, 0.03)"
-              : "rgba(201, 169, 97, 0.08)",
+            backgroundColor: theme.orbs.topRight,
           }}
         />
-        {/* Bottom-left cool orb */}
         <View
           style={{
             position: "absolute",
@@ -139,12 +137,9 @@ export function PremiumScreen({ children, style }: VantaScreenProps) {
             width: 320,
             height: 320,
             borderRadius: 160,
-            backgroundColor: isDark
-              ? "rgba(232, 232, 232, 0.02)"
-              : "rgba(201, 169, 97, 0.05)",
+            backgroundColor: theme.orbs.bottomLeft,
           }}
         />
-        {/* Center-right accent orb */}
         <View
           style={{
             position: "absolute",
@@ -153,9 +148,7 @@ export function PremiumScreen({ children, style }: VantaScreenProps) {
             width: 200,
             height: 200,
             borderRadius: 100,
-            backgroundColor: isDark
-              ? "rgba(244, 192, 37, 0.02)"
-              : "rgba(201, 169, 97, 0.04)",
+            backgroundColor: theme.orbs.centerRight,
           }}
         />
       </View>

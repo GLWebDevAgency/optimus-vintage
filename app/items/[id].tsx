@@ -6,6 +6,7 @@
  */
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
+import { useCurvedScroll, CurvedItem, ScrollEdgeFade } from "@/components/ui/CurvedScroll";
 import { useVantaTheme, VantaScreen } from "@/components/ui/PremiumUI";
 import {
   ItemsRepository,
@@ -22,7 +23,6 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Pressable,
-  ScrollView,
   Text,
   useWindowDimensions,
   View,
@@ -364,6 +364,7 @@ export default function ItemDetailScreen() {
   const currencySymbol = useCurrencySymbol();
   const locale = useSettingsStore((s) => s.locale);
   const queryClient = useQueryClient();
+  const { scrollY, scrollHandler } = useCurvedScroll();
 
   const itemId = id ? parseInt(id, 10) : null;
 
@@ -382,17 +383,16 @@ export default function ItemDetailScreen() {
   });
 
   // Find if this item has been sold
-  const salesQuery = useQuery({
-    queryKey: ["sales"],
-    queryFn: () => SalesRepository.getAll(),
+  const itemSalesQuery = useQuery({
+    queryKey: ["item-sales", itemId],
+    enabled: !!itemId,
+    queryFn: () => SalesRepository.getByItemId(itemId as number),
   });
 
   const itemSale = useMemo(() => {
-    if (!salesQuery.data || !itemId) return null;
-    return salesQuery.data.find(
-      (s) => s.itemId === itemId && s.status === "COMPLETED",
-    );
-  }, [salesQuery.data, itemId]);
+    if (!itemSalesQuery.data) return null;
+    return itemSalesQuery.data.find((s) => s.status === "COMPLETED") ?? null;
+  }, [itemSalesQuery.data]);
 
   // ─── Delete Mutation ───────────────────────────────────────────────────────
 
@@ -667,7 +667,9 @@ export default function ItemDetailScreen() {
       />
       <StatusBar style="light" />
 
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
         bounces
@@ -1041,7 +1043,7 @@ export default function ItemDetailScreen() {
             </Animated.View>
           )}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* ═══ BOTTOM ACTIONS BAR ═════════════════════════════════════════════ */}
       <View

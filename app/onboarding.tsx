@@ -1,364 +1,252 @@
 /**
- * 🌿 ONBOARDING SCREEN - Vanta-Aether Edition
+ * 🌿 IMMERSIVE ONBOARDING — 4-Screen Storytelling Journey
+ *
+ * Screen 1: Welcome — Logo reveal + tagline
+ * Screen 2: AI Scanner — Scanning animation + feature bullets
+ * Screen 3: Dashboard Preview — Mini KPIs + chart tease
+ * Screen 4: Quick Setup — Currency + margin (existing logic)
+ *
+ * Horizontal FlatList pager with animated pagination dots,
+ * skip button (top-right), Next/Get Started button (bottom).
  */
 
-import { AppIcon } from "@/components/ui/AppIcon";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Radius, Spacing } from "@/constants/Theme";
+import { DashboardSlide } from "@/components/onboarding/DashboardSlide";
+import { ScannerSlide } from "@/components/onboarding/ScannerSlide";
+import { SetupSlide } from "@/components/onboarding/SetupSlide";
+import { WelcomeSlide } from "@/components/onboarding/WelcomeSlide";
+import { PaginationDots } from "@/components/ui/PaginationDots";
+import {
+  PremiumButton,
+  useIsDarkMode,
+  useVantaTheme,
+  VantaScreen,
+} from "@/components/ui/PremiumUI";
+import { Spacing, Typography } from "@/constants/Theme";
 import { useSettingsStore } from "@/store/settings";
-import { Haptic } from "@/utils/haptics";
+import { useAccessibility } from "@/utils/accessibility";
+import analytics from "@/utils/analytics";
 import { useLocale } from "@/utils/i18n";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
-  KeyboardAvoidingView,
+  FlatList,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
+  type ViewToken,
+  useWindowDimensions,
 } from "react-native";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const VANTA = {
-  black: "#000000",
-  obsidian: "#0a0a0a",
-  obsidianLight: "#1a1a1a",
-  titanium: "#111111",
-  carbon: "#1c1c1c",
-  gold: "#f4c025",
-  goldGlow: "rgba(244, 192, 37, 0.6)",
-  goldSubtle: "rgba(244, 192, 37, 0.15)",
-  success: "#22c55e",
-  successSubtle: "rgba(34, 197, 94, 0.15)",
-  danger: "#ef4444",
-  dangerSubtle: "rgba(239, 68, 68, 0.15)",
-  warning: "#f59e0b",
-  warningSubtle: "rgba(245, 158, 11, 0.15)",
-  textPrimary: "#ffffff",
-  textSecondary: "rgba(255, 255, 255, 0.6)",
-  textMuted: "rgba(255, 255, 255, 0.4)",
-  light: {
-    background: "#fafafa",
-    surface: "#ffffff",
-    gold: "#d4a017",
-    text: "#1a1a1a",
-    textSecondary: "rgba(0, 0, 0, 0.6)",
-    textMuted: "rgba(0, 0, 0, 0.4)",
-    border: "rgba(0, 0, 0, 0.08)",
-  },
-};
-
-function getColors(isDark: boolean) {
-  return {
-    background: isDark ? VANTA.black : VANTA.light.background,
-    surface: isDark ? VANTA.obsidianLight : VANTA.light.surface,
-    surfaceCard: isDark ? VANTA.titanium : VANTA.light.surface,
-    gold: isDark ? VANTA.gold : VANTA.light.gold,
-    text: isDark ? VANTA.textPrimary : VANTA.light.text,
-    textSecondary: isDark ? VANTA.textSecondary : VANTA.light.textSecondary,
-    textMuted: isDark ? VANTA.textMuted : VANTA.light.textMuted,
-    border: isDark ? "rgba(255, 255, 255, 0.08)" : VANTA.light.border,
-    success: VANTA.success,
-    successSubtle: VANTA.successSubtle,
-    danger: VANTA.danger,
-    dangerSubtle: VANTA.dangerSubtle,
-    warning: VANTA.warning,
-    warningSubtle: VANTA.warningSubtle,
-  };
-}
+const TOTAL_SLIDES = 4;
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-  const colors = getColors(isDark);
+  const theme = useVantaTheme();
+  const isDark = useIsDarkMode();
+  const { width } = useWindowDimensions();
+  const { t } = useLocale();
+  const { isReduceMotionEnabled } = useAccessibility();
+
   const { setCurrency, setTargetMargin, completeOnboarding } =
     useSettingsStore();
-  const [currencyInput, setCurrencyInput] = React.useState("EUR");
-  const [marginInput, setMarginInput] = React.useState("10");
-  const { t } = useLocale();
 
-  const handleFinish = () => {
-    Haptic.success();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currencyInput, setCurrencyInput] = useState("EUR");
+  const [marginInput, setMarginInput] = useState("10");
+
+  const flatListRef = useRef<FlatList>(null);
+  const scrollX = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollX.value = event.contentOffset.x;
+    },
+  });
+
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length > 0 && viewableItems[0].index != null) {
+        const newIndex = viewableItems[0].index;
+        setCurrentIndex(newIndex);
+        analytics.track("onboarding_step_viewed", {
+          screen_name: `onboarding_step_${newIndex + 1}`,
+        });
+      }
+    },
+    [],
+  );
+
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
+
+  const goToNext = useCallback(() => {
+    if (currentIndex < TOTAL_SLIDES - 1) {
+      flatListRef.current?.scrollToIndex({
+        index: currentIndex + 1,
+        animated: !isReduceMotionEnabled,
+      });
+    } else {
+      handleFinish();
+    }
+  }, [currentIndex, isReduceMotionEnabled]);
+
+  const handleSkip = useCallback(() => {
+    analytics.track("onboarding_skipped");
+    flatListRef.current?.scrollToIndex({
+      index: TOTAL_SLIDES - 1,
+      animated: !isReduceMotionEnabled,
+    });
+  }, [isReduceMotionEnabled]);
+
+  const handleFinish = useCallback(() => {
     setCurrency(currencyInput);
     setTargetMargin(Number(marginInput) || 0);
     completeOnboarding();
+    analytics.track("onboarding_completed");
     router.replace("/(tabs)");
-  };
+  }, [currencyInput, marginInput]);
+
+  const isLastSlide = currentIndex === TOTAL_SLIDES - 1;
+
+  const renderSlide = useCallback(
+    ({ index }: { item: number; index: number }) => {
+      switch (index) {
+        case 0:
+          return (
+            <WelcomeSlide
+              isActive={currentIndex === 0}
+              reduceMotion={isReduceMotionEnabled}
+            />
+          );
+        case 1:
+          return (
+            <ScannerSlide
+              isActive={currentIndex === 1}
+              reduceMotion={isReduceMotionEnabled}
+            />
+          );
+        case 2:
+          return (
+            <DashboardSlide
+              isActive={currentIndex === 2}
+              reduceMotion={isReduceMotionEnabled}
+            />
+          );
+        case 3:
+          return (
+            <SetupSlide
+              isActive={currentIndex === 3}
+              reduceMotion={isReduceMotionEnabled}
+              currencyInput={currencyInput}
+              setCurrencyInput={setCurrencyInput}
+              marginInput={marginInput}
+              setMarginInput={setMarginInput}
+            />
+          );
+        default:
+          return null;
+      }
+    },
+    [currentIndex, isReduceMotionEnabled, currencyInput, marginInput],
+  );
 
   return (
-    <KeyboardAvoidingView
-      behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <View
-        style={[
-          styles.gradient,
-          {
-            backgroundColor: VANTA.goldSubtle,
-          },
-        ]}
-      />
-
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingTop: insets.top + Spacing["3xl"],
-            paddingBottom: insets.bottom + Spacing.xl,
-          },
-        ]}
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Hero Section */}
-        <Animated.View
-          entering={FadeInUp.delay(100).duration(600)}
-          style={styles.hero}
-        >
-          <View
-            style={[styles.iconCircle, { backgroundColor: VANTA.goldSubtle }]}
+    <VantaScreen>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        {/* Skip Button — top-right */}
+        {!isLastSlide && (
+          <Animated.View
+            entering={
+              isReduceMotionEnabled
+                ? undefined
+                : FadeIn.delay(800).duration(400)
+            }
+            style={[styles.skipButton, { top: insets.top + Spacing.md }]}
           >
-            <Text style={styles.emoji}>✨</Text>
-          </View>
-          <Text
-            style={{
-              fontFamily: "Manrope_500Medium",
-              fontSize: 13,
-              color: colors.textMuted,
-              textTransform: "uppercase",
-              letterSpacing: 2,
-            }}
-          >
-            {t("onboarding.welcome")}
-          </Text>
-          <Text
-            style={{
-              fontFamily: "Manrope_700Bold",
-              fontSize: 32,
-              color: colors.text,
-              marginTop: Spacing.xs,
-            }}
-          >
-            {t("onboarding.appName")}
-          </Text>
-          <Text
-            style={{
-              fontFamily: "Manrope_400Regular",
-              fontSize: 16,
-              color: colors.textMuted,
-              textAlign: "center",
-              marginTop: Spacing.md,
-            }}
-          >
-            {t("onboarding.tagline")}
-            {"\n"}
-            {t("onboarding.description")}
-          </Text>
-        </Animated.View>
-
-        {/* Setup Card */}
-        <Animated.View entering={FadeInDown.delay(300).duration(500)}>
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.surface,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <View style={styles.cardHeader}>
-              <View
+            <Pressable onPress={handleSkip} hitSlop={12}>
+              <Text
                 style={[
-                  styles.stepBadge,
-                  { backgroundColor: VANTA.goldSubtle },
+                  Typography.body.sm,
+                  { color: theme.textMuted },
                 ]}
               >
-                <AppIcon name="tune" size={16} color={colors.gold} />
-              </View>
-              <Text
-                style={{
-                  fontFamily: "Manrope_600SemiBold",
-                  fontSize: 18,
-                  color: colors.text,
-                }}
-              >
-                {t("onboarding.quickSetup")}
+                {t("onboarding.skip")}
               </Text>
-            </View>
+            </Pressable>
+          </Animated.View>
+        )}
 
-            <View style={styles.inputGroup}>
-              <Text
-                style={{
-                  fontFamily: "Manrope_500Medium",
-                  fontSize: 11,
-                  color: colors.textMuted,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
-                }}
-              >
-                {t("onboarding.currency").toUpperCase()}
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={currencyInput}
-                onChangeText={setCurrencyInput}
-                placeholder="EUR"
-                placeholderTextColor={colors.textMuted}
-                maxLength={3}
-              />
-            </View>
+        {/* Slides */}
+        <Animated.FlatList
+          ref={flatListRef}
+          data={[0, 1, 2, 3]}
+          renderItem={renderSlide}
+          keyExtractor={(item) => String(item)}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          bounces={false}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          getItemLayout={(_, index) => ({
+            length: width,
+            offset: width * index,
+            index,
+          })}
+          style={styles.flatList}
+        />
 
-            <View style={styles.inputGroup}>
-              <Text
-                style={{
-                  fontFamily: "Manrope_500Medium",
-                  fontSize: 11,
-                  color: colors.textMuted,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
-                }}
-              >
-                {t("onboarding.targetMargin").toUpperCase()}
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={marginInput}
-                onChangeText={setMarginInput}
-                placeholder="10"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Features Preview */}
+        {/* Bottom Controls */}
         <Animated.View
-          entering={FadeInDown.delay(450).duration(500)}
-          style={styles.features}
+          entering={
+            isReduceMotionEnabled
+              ? undefined
+              : FadeInDown.delay(600).duration(500).springify()
+          }
+          style={[
+            styles.bottomControls,
+            { paddingBottom: insets.bottom + Spacing.xl },
+          ]}
         >
-          <View style={styles.featureRow}>
-            <View
-              style={[
-                styles.featureIcon,
-                { backgroundColor: VANTA.successSubtle },
-              ]}
+          {/* Pagination Dots */}
+          <PaginationDots
+            count={TOTAL_SLIDES}
+            scrollX={scrollX}
+            pageWidth={width}
+          />
+
+          {/* CTA Button */}
+          <View style={styles.ctaContainer}>
+            <PremiumButton
+              variant="primary"
+              size="lg"
+              fullWidth
+              icon={isLastSlide ? "check-circle" : "arrow-forward"}
+              iconPosition="right"
+              onPress={goToNext}
             >
-              <AppIcon name="trending-up" size={18} color={VANTA.success} />
-            </View>
-            <Text
-              style={{
-                fontFamily: "Manrope_400Regular",
-                fontSize: 14,
-                color: colors.textMuted,
-              }}
-            >
-              {t("onboarding.feature1")}
-            </Text>
-          </View>
-          <View style={styles.featureRow}>
-            <View
-              style={[
-                styles.featureIcon,
-                { backgroundColor: VANTA.goldSubtle },
-              ]}
-            >
-              <AppIcon name="inventory-2" size={18} color={VANTA.gold} />
-            </View>
-            <Text
-              style={{
-                fontFamily: "Manrope_400Regular",
-                fontSize: 14,
-                color: colors.textMuted,
-              }}
-            >
-              {t("onboarding.feature2")}
-            </Text>
-          </View>
-          <View style={styles.featureRow}>
-            <View
-              style={[
-                styles.featureIcon,
-                { backgroundColor: VANTA.warningSubtle },
-              ]}
-            >
-              <AppIcon name="offline-bolt" size={18} color={VANTA.warning} />
-            </View>
-            <Text
-              style={{
-                fontFamily: "Manrope_400Regular",
-                fontSize: 14,
-                color: colors.textMuted,
-              }}
-            >
-              {t("onboarding.feature3")}
-            </Text>
+              {isLastSlide
+                ? t("onboarding.getStarted")
+                : t("common.next")}
+            </PremiumButton>
           </View>
         </Animated.View>
 
-        {/* CTA Button */}
-        <Animated.View
-          entering={FadeInDown.delay(600).duration(500)}
-          style={styles.footer}
-        >
-          <Pressable
-            onPress={handleFinish}
-            style={({ pressed }) => [
-              styles.button,
-              {
-                backgroundColor: pressed ? VANTA.light.gold : VANTA.gold,
-                opacity: pressed ? 0.9 : 1,
-              },
-            ]}
-          >
-            <Text
-              style={{
-                fontFamily: "Manrope_600SemiBold",
-                fontSize: 16,
-                color: VANTA.black,
-                marginRight: Spacing.sm,
-              }}
-            >
-              {t("onboarding.start")}
-            </Text>
-            <AppIcon name="arrow-forward" size={20} color={VANTA.black} />
-          </Pressable>
-          <Text
-            style={{
-              fontFamily: "Manrope_400Regular",
-              fontSize: 12,
-              color: colors.textMuted,
-              marginTop: Spacing.lg,
-            }}
-          >
-            Your data stays on your device
-          </Text>
-        </Animated.View>
-      </ScrollView>
-      <StatusBar style={isDark ? "light" : "dark"} />
-    </KeyboardAvoidingView>
+        <StatusBar style={isDark ? "light" : "dark"} />
+      </View>
+    </VantaScreen>
   );
 }
 
@@ -366,88 +254,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  gradient: {
-    ...StyleSheet.absoluteFillObject,
-    height: "50%",
+  skipButton: {
+    position: "absolute",
+    right: Spacing.xl,
+    zIndex: 10,
   },
-  content: {
+  flatList: {
+    flex: 1,
+  },
+  bottomControls: {
     paddingHorizontal: Spacing.xl,
-    flexGrow: 1,
+    gap: Spacing.xl,
   },
-  hero: {
-    alignItems: "center",
-    marginBottom: Spacing["3xl"],
-  },
-  iconCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: Radius["2xl"],
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.lg,
-    borderCurve: "continuous",
-  },
-  emoji: {
-    fontSize: 40,
-  },
-  card: {
-    padding: Spacing["2xl"],
-    marginBottom: Spacing.xl,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  stepBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    borderCurve: "continuous",
-  },
-  inputGroup: {
-    marginBottom: Spacing.lg,
-  },
-  input: {
-    borderWidth: 1.5,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    fontSize: 17,
-    fontFamily: "Manrope_600SemiBold",
-    marginTop: Spacing.sm,
-    borderCurve: "continuous",
-  },
-  features: {
-    marginBottom: Spacing["2xl"],
-    gap: Spacing.md,
-  },
-  featureRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  featureIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  footer: {
-    alignItems: "center",
-    marginTop: "auto",
-  },
-  button: {
+  ctaContainer: {
     width: "100%",
-    borderRadius: Radius.xl,
-    borderCurve: "continuous",
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

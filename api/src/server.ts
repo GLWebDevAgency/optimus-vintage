@@ -400,10 +400,16 @@ app.get(
   requireAuth,
   validateQuery(saleQuerySchema),
   asyncHandler(async (req, res) => {
-    const { lotId } = (res.locals.query || req.query) as { lotId?: number };
+    const { lotId, itemId } = (res.locals.query || req.query) as { lotId?: number; itemId?: number };
 
     let result;
-    if (lotId) {
+    if (itemId) {
+      result = await db
+        .select()
+        .from(sales)
+        .where(eq(sales.itemId, itemId))
+        .orderBy(desc(sales.saleDate));
+    } else if (lotId) {
       result = await db
         .select()
         .from(sales)

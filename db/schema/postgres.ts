@@ -1,6 +1,7 @@
 import {
     date,
     decimal,
+    index,
     integer,
     pgTable,
     serial,
@@ -51,7 +52,10 @@ export const items = pgTable("items", {
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  lotIdIdx: index("idx_items_lot_id").on(table.lotId),
+  statusIdx: index("idx_items_status").on(table.status),
+}));
 
 // SALES (Ventes)
 export const sales = pgTable("sales", {
@@ -75,7 +79,11 @@ export const sales = pgTable("sales", {
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  lotIdIdx: index("idx_sales_lot_id").on(table.lotId),
+  itemIdIdx: index("idx_sales_item_id").on(table.itemId),
+  statusIdx: index("idx_sales_status").on(table.status),
+}));
 
 // Types exports
 export type Lot = typeof lots.$inferSelect;

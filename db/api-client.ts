@@ -18,7 +18,7 @@ const API_CONFIG = {
   timeout: 30000, // 30 seconds
   retryAttempts: 5, // More retries for rate limiting
   retryDelay: 1000, // Initial delay in ms
-  minRequestInterval: 200, // Min 200ms between requests to avoid rate limits
+  minRequestInterval: 50, // Min 50ms between requests to avoid rate limits
 };
 
 // ============ REQUEST THROTTLING ============

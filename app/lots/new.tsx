@@ -3,6 +3,13 @@
  */
 
 import { AppIcon } from "@/components/ui/AppIcon";
+import {
+  useCurvedScroll,
+  CurvedItem,
+  ScrollEdgeFade,
+  useCurvedHorizontalScroll,
+  CurvedHorizontalItem,
+} from "@/components/ui/CurvedScroll";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { Radius, Spacing } from "@/constants/Theme";
 import { ItemsRepository, LotsRepository } from "@/db/repositories";
@@ -71,6 +78,11 @@ export default function AddLotScreen() {
         CAD: "CA$",
       } as Record<string, string>
     )[currency] || "€";
+
+  // Curved scroll
+  const { scrollY, scrollHandler } = useCurvedScroll();
+  const { scrollX, scrollHandler: horizontalScrollHandler } =
+    useCurvedHorizontalScroll();
 
   // Form state
   const [provider, setProvider] = useState("");
@@ -253,7 +265,9 @@ export default function AddLotScreen() {
           </Text>
         </View>
 
-        <ScrollView
+        <Animated.ScrollView
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
           contentContainerStyle={[
             styles.content,
             { paddingBottom: insets.bottom + 120 },
@@ -262,6 +276,7 @@ export default function AddLotScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Section: Informations de base */}
+          <CurvedItem scrollY={scrollY}>
           <Animated.View entering={FadeInDown.delay(100).duration(400)}>
             <View style={styles.sectionHeader}>
               <View
@@ -450,7 +465,7 @@ export default function AddLotScreen() {
                   <Text
                     style={[
                       styles.typeLabel,
-                      { color: lotType === type.id ? "#FFF" : colors.text },
+                      { color: lotType === type.id ? theme.textOnAccent : colors.text },
                     ]}
                   >
                     {t(type.labelKey)}
@@ -459,11 +474,13 @@ export default function AddLotScreen() {
               ))}
             </View>
           </Animated.View>
+          </CurvedItem>
 
           {/* Divider */}
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           {/* Section: Finances */}
+          <CurvedItem scrollY={scrollY}>
           <Animated.View entering={FadeInDown.delay(200).duration(400)}>
             <View style={styles.sectionHeader}>
               <View
@@ -601,11 +618,13 @@ export default function AddLotScreen() {
               </Text>
             </View>
           </Animated.View>
+          </CurvedItem>
 
           {/* Divider */}
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           {/* Section: Configuration des articles */}
+          <CurvedItem scrollY={scrollY}>
           <Animated.View entering={FadeInDown.delay(300).duration(400)}>
             <View style={styles.sectionHeader}>
               <View
@@ -717,7 +736,10 @@ export default function AddLotScreen() {
               </View>
             </Pressable>
           </Animated.View>
-        </ScrollView>
+          </CurvedItem>
+        </Animated.ScrollView>
+
+        <ScrollEdgeFade color={colors.background} position="bottom" scrollY={scrollY} />
 
         {/* Footer */}
         <View
@@ -725,6 +747,7 @@ export default function AddLotScreen() {
             styles.footer,
             {
               backgroundColor: colors.background,
+              borderTopColor: colors.border,
               paddingBottom: insets.bottom + Spacing.md,
             },
           ]}

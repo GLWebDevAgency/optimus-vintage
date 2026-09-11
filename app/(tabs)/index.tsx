@@ -12,9 +12,16 @@
  * v6.0 - The "Vanta-Aether" Era
  */
 
+import { VantaBarChart } from "@/components/charts/VantaBarChart";
+import { VantaLineChart } from "@/components/charts/VantaLineChart";
+import { VantaPieChart } from "@/components/charts/VantaPieChart";
+import { StreakCounter } from "@/components/gamification/StreakCounter";
+import { TierBadge } from "@/components/gamification/TierBadge";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
+import { CurvedItem, ScrollEdgeFade } from "@/components/ui/CurvedScroll";
 import { ObsidianBlock } from "@/components/ui/ObsidianBlock";
-import { VantaScreen, useIsDarkMode } from "@/components/ui/PremiumUI";
+import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
+import { SPRING_GRAVITY, SPRING_SNAP } from "@/constants/Animation";
 import { QuotaIndicator } from "@/components/ui/quota-indicator";
 import { SkeletonDashboard } from "@/components/ui/Skeleton";
 import { TrialBanner } from "@/components/ui/trial-banner";
@@ -23,8 +30,19 @@ import { LotsRepository, SalesRepository } from "@/db/repositories";
 import { useAuthStore } from "@/store/auth";
 import { useSettingsStore } from "@/store/settings";
 import { useAccessibility } from "@/utils/accessibility";
-import { useTrackScreen } from "@/utils/analytics";
+import { analytics, useTrackScreen } from "@/utils/analytics";
+import {
+  groupSalesByDate,
+  groupSalesByMonth,
+  groupSalesByPlatform,
+} from "@/utils/data/chart-data";
+import { useGamificationStore } from "@/store/gamification";
 import { computeLotSummary } from "@/utils/engine/calculations";
+import {
+  recordMilestone,
+  requestReview,
+  shouldPromptReview,
+} from "@/utils/review";
 import { Haptic } from "@/utils/haptics";
 import {
     formatCurrencyCompact,
@@ -60,48 +78,6 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎨 VANTA-AETHER DESIGN TOKENS
-// "Digital Architecture evolving in infinite spatial void"
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const VANTA = {
-  // Absolute Zero - The Void
-  black: "#000000",
-  obsidian: "#0a0a0a",
-  obsidianLight: "#1a1a1a",
-  titanium: "#111111",
-  carbon: "#1c1c1c",
-
-  // Pure Gold - Photon Emanations
-  gold: "#f4c025",
-  goldGlow: "rgba(244, 192, 37, 0.6)",
-  goldSubtle: "rgba(244, 192, 37, 0.15)",
-  goldMicro: "rgba(244, 192, 37, 0.08)",
-
-  // Mercury - Secondary Accent
-  mercury: "#e8e8e8",
-  mercuryGlow: "rgba(232, 232, 232, 0.4)",
-
-  // Text
-  textPrimary: "#ffffff",
-  textSecondary: "rgba(255, 255, 255, 0.6)",
-  textMuted: "rgba(255, 255, 255, 0.4)",
-  textGhost: "rgba(255, 255, 255, 0.2)",
-} as const;
-
-// Gravity-based spring physics
-const SPRING_GRAVITY = {
-  damping: 22,
-  stiffness: 180,
-  mass: 1.2,
-};
-
-const SPRING_SNAP = {
-  damping: 16,
-  stiffness: 400,
-  mass: 0.6,
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📦 TYPES & CONSTANTS
@@ -161,7 +137,7 @@ function formatPercent(value: number): string {
 
 // ─── Status Pulse - Gold photon emanation indicator ─────────────────────────
 function StatusPulse() {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const { isReduceMotionEnabled } = useAccessibility();
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.6);
@@ -185,7 +161,7 @@ function StatusPulse() {
     opacity: pulseOpacity.value,
   }));
 
-  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
+  const goldColor = theme.primary;
 
   return (
     <View
@@ -232,7 +208,7 @@ interface GravityDiskProps {
 }
 
 function GravityDisk({ percentage, value, label, sublabel }: GravityDiskProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const { isReduceMotionEnabled } = useAccessibility();
 
   // Floating animation
@@ -255,9 +231,9 @@ function GravityDisk({ percentage, value, label, sublabel }: GravityDiskProps) {
   const circumference = 2 * Math.PI * 110; // radius = 110
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
-  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
-  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
+  const goldColor = theme.primary;
+  const textColor = theme.text;
+  const mutedColor = theme.textMuted;
 
   return (
     <View
@@ -286,9 +262,7 @@ function GravityDisk({ percentage, value, label, sublabel }: GravityDiskProps) {
             width: 256,
             height: 256,
             // Floating shadow beneath the disk
-            boxShadow: isDark
-              ? "0 20px 60px rgba(244, 192, 37, 0.08), 0 8px 24px rgba(0, 0, 0, 0.4)"
-              : "0 16px 48px rgba(201, 169, 97, 0.12), 0 6px 20px rgba(0, 0, 0, 0.06)",
+            boxShadow: theme.shadowCardFloat,
             borderRadius: 128,
           },
           floatStyle,
@@ -305,12 +279,8 @@ function GravityDisk({ percentage, value, label, sublabel }: GravityDiskProps) {
             borderRadius: 128,
             borderCurve: "continuous",
             borderWidth: 1,
-            borderColor: isDark
-              ? "rgba(255, 255, 255, 0.05)"
-              : Palette.ivory.linen,
-            boxShadow: isDark
-              ? `0 0 40px ${VANTA.goldGlow}, 0 0 80px rgba(244, 192, 37, 0.1)`
-              : `0 0 40px ${Palette.metal.champagneGlow}`,
+            borderColor: theme.borderGlass,
+            boxShadow: theme.shadowGlow,
           }}
         />
 
@@ -325,7 +295,7 @@ function GravityDisk({ percentage, value, label, sublabel }: GravityDiskProps) {
             cx={128}
             cy={128}
             r={110}
-            stroke={isDark ? VANTA.obsidianLight : Palette.ivory.linen}
+            stroke={theme.borderGlass}
             strokeWidth={2}
             fill="none"
           />
@@ -399,7 +369,7 @@ function VantaPeriodSelector({
   selectedKey,
   onChange,
 }: VantaPeriodSelectorProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const selectedIndex = options.findIndex((o) => o.key === selectedKey);
   const segmentWidth = 100 / options.length;
 
@@ -417,7 +387,7 @@ function VantaPeriodSelector({
     width: `${segmentWidth}%` as unknown as number,
   }));
 
-  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
+  const goldColor = theme.primary;
 
   return (
     <View style={{ paddingHorizontal: Spacing.lg, marginVertical: Spacing.md }}>
@@ -427,11 +397,9 @@ function VantaPeriodSelector({
           height: 44,
           borderRadius: 14,
           borderCurve: "continuous",
-          backgroundColor: isDark ? VANTA.obsidian : Palette.ivory.sand,
+          backgroundColor: theme.surface,
           borderWidth: 1,
-          borderColor: isDark
-            ? "rgba(255,255,255,0.03)"
-            : `${Palette.metal.champagne}20`,
+          borderColor: theme.borderGlass,
           padding: 4,
           position: "relative",
         }}
@@ -453,9 +421,7 @@ function VantaPeriodSelector({
               flex: 1,
               borderRadius: 10,
               borderCurve: "continuous",
-              backgroundColor: isDark
-                ? VANTA.obsidianLight
-                : Palette.ivory.pearl,
+              backgroundColor: theme.surfaceHighlight,
               borderWidth: 1,
               borderColor: goldColor,
             }}
@@ -492,9 +458,7 @@ function VantaPeriodSelector({
                     letterSpacing: 1,
                     color: isSelected
                       ? goldColor
-                      : isDark
-                        ? VANTA.textMuted
-                        : Palette.neutral[400],
+                      : theme.textMuted,
                   }}
                 >
                   {option.shortLabel}
@@ -522,7 +486,7 @@ function VantaSlabButton({
   size = 20,
   accessibilityLabel,
 }: VantaSlabButtonProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const scale = useSharedValue(1);
 
   const handlePressIn = useCallback(() => {
@@ -536,8 +500,6 @@ function VantaSlabButton({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
-
-  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
 
   return (
     <Pressable
@@ -559,16 +521,14 @@ function VantaSlabButton({
             borderCurve: "continuous",
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: isDark ? VANTA.obsidian : Palette.ivory.pearl,
+            backgroundColor: theme.surface,
             borderWidth: 1,
-            borderColor: isDark
-              ? "rgba(255,255,255,0.08)"
-              : `${Palette.metal.champagne}20`,
+            borderColor: theme.borderGlass,
           },
           animatedStyle,
         ]}
       >
-        <AppIcon name={icon} size={size} color={goldColor} />
+        <AppIcon name={icon} size={size} color={theme.primary} />
       </Animated.View>
     </Pressable>
   );
@@ -596,7 +556,7 @@ function MonolithCard({
   children,
   onPress,
 }: MonolithCardProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const scale = useSharedValue(1);
 
   const handlePressIn = useCallback(() => {
@@ -611,14 +571,14 @@ function MonolithCard({
     transform: [{ scale: scale.value }],
   }));
 
-  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
-  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
-  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
+  const goldColor = theme.primary;
+  const textColor = theme.text;
+  const mutedColor = theme.textMuted;
 
   const badgeColors = {
     gold: {
       text: goldColor,
-      bg: isDark ? VANTA.goldMicro : `${Palette.metal.champagne}15`,
+      bg: theme.primaryMuted,
     },
     success: {
       text: Palette.semantic.success,
@@ -650,7 +610,7 @@ function MonolithCard({
           <AppIcon
             name={icon}
             size={18}
-            color={isDark ? VANTA.textGhost : Palette.neutral[400]}
+            color={theme.textGhost}
           />
           {badge && (
             <View
@@ -757,7 +717,7 @@ function VantaSingularity({
   roi,
   onDetailPress,
 }: VantaSingularityProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const { t, locale } = useLocale();
   const currency = useSettingsStore((s) => s.currency) as
     | "EUR"
@@ -780,9 +740,9 @@ function VantaSingularity({
   // Calculate percentage for the ring (ROI capped at 100%)
   const roiPercentage = Math.min(Math.max(roi, 0), 100);
 
-  const goldColor = isDark ? VANTA.gold : Palette.metal.champagne;
-  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
-  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
+  const goldColor = theme.primary;
+  const textColor = theme.text;
+  const mutedColor = theme.textMuted;
 
   // Strip currency symbols for display value
   const stripSymbol = (s: string) =>
@@ -876,9 +836,7 @@ function VantaSingularity({
             <View
               style={{
                 height: 1,
-                backgroundColor: isDark
-                  ? `${VANTA.gold}40`
-                  : `${Palette.metal.champagne}40`,
+                backgroundColor: `${theme.primary}40`,
               }}
             />
             <View
@@ -888,18 +846,18 @@ function VantaSingularity({
                 style={{
                   fontSize: 7,
                   fontFamily: "SpaceMono",
-                  color: VANTA.textGhost,
+                  color: theme.textGhost,
                   letterSpacing: 2,
                 }}
               >
                 {Math.floor(investment).toString(16).toUpperCase().slice(0, 4)}
               </Text>
-              <Text style={{ fontSize: 7, color: VANTA.textGhost }}>∷</Text>
+              <Text style={{ fontSize: 7, color: theme.textGhost }}>∷</Text>
               <Text
                 style={{
                   fontSize: 7,
                   fontFamily: "SpaceMono",
-                  color: VANTA.textGhost,
+                  color: theme.textGhost,
                   letterSpacing: 2,
                 }}
               >
@@ -909,9 +867,7 @@ function VantaSingularity({
             <View
               style={{
                 height: 1,
-                backgroundColor: isDark
-                  ? `${VANTA.gold}20`
-                  : `${Palette.metal.champagne}20`,
+                backgroundColor: `${theme.primary}20`,
               }}
             />
           </View>
@@ -939,7 +895,7 @@ function VantaMetricOrb({
   accentGlow,
   onPress,
 }: VantaMetricOrbProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const { t } = useLocale();
   const scale = useSharedValue(1);
 
@@ -955,8 +911,8 @@ function VantaMetricOrb({
     transform: [{ scale: scale.value }],
   }));
 
-  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
-  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
+  const textColor = theme.text;
+  const mutedColor = theme.textMuted;
 
   return (
     <Pressable
@@ -1055,7 +1011,7 @@ function VantaActionSlab({
   accentGlow,
   onPress,
 }: VantaActionSlabProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const scale = useSharedValue(1);
 
   const handlePressIn = useCallback(() => {
@@ -1070,7 +1026,7 @@ function VantaActionSlab({
     transform: [{ scale: scale.value }],
   }));
 
-  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
+  const textColor = theme.text;
 
   return (
     <Pressable
@@ -1103,7 +1059,7 @@ function VantaActionSlab({
               justifyContent: "center",
               alignItems: "center",
               marginBottom: Spacing.sm,
-              backgroundColor: isDark ? `${accentColor}20` : `${accentColor}12`,
+              backgroundColor: `${accentColor}${theme.dark ? "20" : "12"}`,
               borderCurve: "continuous",
               zIndex: 1,
             }}
@@ -1147,7 +1103,7 @@ function VantaTopLotCard({
   soldCount,
   onPress,
 }: VantaTopLotProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const { t, locale } = useLocale();
   const currency = useSettingsStore((s) => s.currency) as
     | "EUR"
@@ -1175,34 +1131,34 @@ function VantaTopLotCard({
     switch (r) {
       case 1:
         return {
-          bg: VANTA.gold,
-          glow: VANTA.goldGlow,
-          text: VANTA.black,
+          bg: theme.primary,
+          glow: theme.primaryGlow,
+          text: theme.textOnAccent,
         };
       case 2:
         return {
           bg: "#a0a0a0", // Silver
           glow: "rgba(160, 160, 160, 0.4)",
-          text: VANTA.black,
+          text: theme.textOnAccent,
         };
       case 3:
         return {
           bg: "#cd7f32", // Bronze
           glow: "rgba(205, 127, 50, 0.4)",
-          text: VANTA.black,
+          text: theme.textOnAccent,
         };
       default:
         return {
-          bg: VANTA.obsidian,
+          bg: theme.surface,
           glow: "transparent",
-          text: VANTA.textSecondary,
+          text: theme.textSecondary,
         };
     }
   };
   const rankStyle = getRankStyle(rank);
 
-  const textColor = isDark ? VANTA.textPrimary : Palette.neutral.anthracite;
-  const mutedColor = isDark ? VANTA.textMuted : Palette.neutral[400];
+  const textColor = theme.text;
+  const mutedColor = theme.textMuted;
 
   return (
     <Pressable
@@ -1341,7 +1297,7 @@ interface VantaSectionHeaderProps {
 }
 
 function VantaSectionHeader({ tier, title }: VantaSectionHeaderProps) {
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   return (
     <View accessibilityRole="header" accessibilityLabel={title}>
       <Text
@@ -1350,7 +1306,7 @@ function VantaSectionHeader({ tier, title }: VantaSectionHeaderProps) {
           fontWeight: "500",
           letterSpacing: 3,
           textTransform: "uppercase",
-          color: isDark ? VANTA.textGhost : Palette.neutral[400],
+          color: theme.textGhost,
           marginBottom: 8,
         }}
       >
@@ -1361,7 +1317,7 @@ function VantaSectionHeader({ tier, title }: VantaSectionHeaderProps) {
           fontSize: 20,
           fontWeight: "600",
           letterSpacing: -0.5,
-          color: isDark ? VANTA.textPrimary : Palette.neutral.anthracite,
+          color: theme.text,
         }}
       >
         {title}
@@ -1371,7 +1327,7 @@ function VantaSectionHeader({ tier, title }: VantaSectionHeaderProps) {
         style={{
           width: 40,
           height: 2,
-          backgroundColor: isDark ? VANTA.gold : Palette.metal.champagne,
+          backgroundColor: theme.primary,
           marginTop: 10,
           borderRadius: 1,
         }}
@@ -1386,7 +1342,7 @@ function VantaSectionHeader({ tier, title }: VantaSectionHeaderProps) {
 
 export default function VantaDashboard() {
   const insets = useSafeAreaInsets();
-  const isDark = useIsDarkMode();
+  const theme = useVantaTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>("30d");
   const { t, locale } = useLocale();
   const currency = useSettingsStore((s) => s.currency) as
@@ -1545,6 +1501,59 @@ export default function VantaDashboard() {
     };
   }, [lots, sales, allSales]);
 
+  // ─── Chart Data ─────────────────────────────────────────────────────
+  const { hasFeature } = usePlanAccess();
+  const showCharts = hasFeature("analytics");
+
+  const chartLineData = useMemo(() => {
+    if (!showCharts) return [];
+    const option = PERIOD_OPTIONS.find((p) => p.key === selectedPeriod);
+    return groupSalesByDate(allSales, option?.days ?? null);
+  }, [allSales, selectedPeriod, showCharts]);
+
+  const chartBarData = useMemo(() => {
+    if (!showCharts) return [];
+    return groupSalesByMonth(allSales, 6);
+  }, [allSales, showCharts]);
+
+  const chartPlatformData = useMemo(() => {
+    if (!showCharts) return [];
+    return groupSalesByPlatform(sales);
+  }, [sales, showCharts]);
+
+  // ─── Gamification ──────────────────────────────────────────────────
+  const checkAchievements = useGamificationStore((s) => s.checkAchievements);
+  const setTotalSalesCount = useGamificationStore((s) => s.setTotalSalesCount);
+
+  useEffect(() => {
+    if (lotsQuery.isLoading || salesQuery.isLoading) return;
+
+    setTotalSalesCount(allSales.length);
+
+    // Compute achievement check data
+    const platforms = [...new Set(allSales.map((s) => s.platform).filter(Boolean))];
+    const maxSaleAmount = allSales.reduce(
+      (max, s) => Math.max(max, parseFloat(String(s.priceNet)) || 0),
+      0,
+    );
+
+    // Check for cleared lots (all items sold)
+    const hasClearedLot = lots.some((lot) => {
+      if (!lot.initialQuantity || lot.initialQuantity === 0) return false;
+      const lotSaleCount = allSales.filter((s) => s.lotId === lot.id).length;
+      return lotSaleCount >= lot.initialQuantity;
+    });
+
+    checkAchievements({
+      totalLots: lots.length,
+      totalSales: allSales.length,
+      platforms: platforms as string[],
+      maxRoi: stats.roi,
+      maxSaleAmount,
+      hasClearedLot,
+    });
+  }, [lots, allSales, lotsQuery.isLoading, salesQuery.isLoading]);
+
   // ─── Handlers ────────────────────────────────────────────────────────
   const refetchLots = lotsQuery.refetch;
   const refetchSales = salesQuery.refetch;
@@ -1559,21 +1568,28 @@ export default function VantaDashboard() {
     setSelectedPeriod(period);
   }, []);
 
-  // ─── Accent Colors based on mode ─────────────────────────────────────
-  const accentGold = isDark ? Palette.metal.gold : Palette.metal.champagne;
-  const accentGoldGlow = isDark
-    ? Palette.metal.goldGlow
-    : Palette.metal.champagneGlow;
+  // ─── Accent Colors from theme ───────────────────────────────────────
+  const accentGold = theme.primary;
+  const accentGoldGlow = theme.primaryGlow;
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // 🎨 RENDER
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  // Haptic feedback when pull-to-refresh completes
+  // Haptic feedback when pull-to-refresh completes + review prompt
   const wasRefreshing = useRef(false);
   useEffect(() => {
     if (wasRefreshing.current && !refreshing) {
       Haptic.success();
+      // Check for in-app review prompt after successful refresh
+      (async () => {
+        const salesCount = allSales.length;
+        if (await shouldPromptReview(salesCount)) {
+          analytics.track("review_prompted");
+          await requestReview();
+          await recordMilestone(salesCount);
+        }
+      })();
     }
     wasRefreshing.current = refreshing;
   }, [refreshing]);
@@ -1618,54 +1634,58 @@ export default function VantaDashboard() {
         showsVerticalScrollIndicator={false}
       >
         {/* ═══ VANTA STATUS BAR ═══ */}
-        <Animated.View
+        <CurvedItem
+          scrollY={scrollOffset}
           entering={
             isReduceMotionEnabled ? undefined : FadeInDown.duration(400)
           }
-          style={[
-            {
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingHorizontal: Spacing.lg,
-              paddingBottom: Spacing.sm,
-            },
-            statusBarAnimatedStyle,
-          ]}
         >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <AppIcon
-              name="grid-view"
-              size={14}
-              color={isDark ? VANTA.gold : Palette.metal.champagne}
-            />
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: "600",
-                letterSpacing: 3,
-                textTransform: "uppercase",
-                color: isDark ? VANTA.textGhost : Palette.neutral[400],
-              }}
-            >
-              OPTIMUS VINTAGE — {planDisplayName.toUpperCase()}
-            </Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <StatusPulse />
-            <Text
-              style={{
-                fontSize: 9,
-                fontWeight: "500",
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                color: isDark ? VANTA.textGhost : Palette.neutral[400],
-              }}
-            >
-              {t("dashboard.status.connected")}
-            </Text>
-          </View>
-        </Animated.View>
+          <Animated.View
+            style={[
+              {
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingHorizontal: Spacing.lg,
+                paddingBottom: Spacing.sm,
+              },
+              statusBarAnimatedStyle,
+            ]}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <AppIcon
+                name="grid-view"
+                size={14}
+                color={theme.primary}
+              />
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: "600",
+                  letterSpacing: 3,
+                  textTransform: "uppercase",
+                  color: theme.textGhost,
+                }}
+              >
+                OPTIMUS VINTAGE — {planDisplayName.toUpperCase()}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <StatusPulse />
+              <Text
+                style={{
+                  fontSize: 9,
+                  fontWeight: "500",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  color: theme.textGhost,
+                }}
+              >
+                {t("dashboard.status.connected")}
+              </Text>
+            </View>
+          </Animated.View>
+        </CurvedItem>
 
         {/* ═══ HEADER ═══ */}
         <Animated.View
@@ -1700,7 +1720,7 @@ export default function VantaDashboard() {
                 borderRadius: 16,
                 justifyContent: "center",
                 alignItems: "center",
-                backgroundColor: isDark ? VANTA.gold : Palette.metal.champagne,
+                backgroundColor: theme.primary,
                 borderCurve: "continuous",
               }}
             >
@@ -1708,7 +1728,7 @@ export default function VantaDashboard() {
                 style={{
                   fontSize: 18,
                   fontWeight: "800",
-                  color: VANTA.black,
+                  color: theme.textOnAccent,
                 }}
               >
                 OV
@@ -1720,9 +1740,7 @@ export default function VantaDashboard() {
                   fontSize: 22,
                   fontWeight: "700",
                   letterSpacing: -0.5,
-                  color: isDark
-                    ? VANTA.textPrimary
-                    : Palette.neutral.anthracite,
+                  color: theme.text,
                 }}
               >
                 {t("dashboard.welcome", "Bienvenue")}
@@ -1748,15 +1766,20 @@ export default function VantaDashboard() {
               </View>
             </View>
           </View>
-          <VantaSlabButton
-            icon="settings"
-            onPress={() => router.push("/(tabs)/settings")}
-            accessibilityLabel={t("accessibility.settingsButton")}
-          />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm }}>
+            <StreakCounter />
+            <TierBadge />
+            <VantaSlabButton
+              icon="settings"
+              onPress={() => router.push("/(tabs)/settings")}
+              accessibilityLabel={t("accessibility.settingsButton")}
+            />
+          </View>
         </Animated.View>
 
         {/* ═══ PERIOD SELECTOR ═══ */}
-        <Animated.View
+        <CurvedItem
+          scrollY={scrollOffset}
           entering={
             isReduceMotionEnabled
               ? undefined
@@ -1768,10 +1791,11 @@ export default function VantaDashboard() {
             selectedKey={selectedPeriod}
             onChange={handlePeriodChange}
           />
-        </Animated.View>
+        </CurvedItem>
 
         {/* ═══ HERO SINGULARITY ═══ */}
-        <Animated.View
+        <CurvedItem
+          scrollY={scrollOffset}
           entering={
             isReduceMotionEnabled
               ? undefined
@@ -1785,17 +1809,15 @@ export default function VantaDashboard() {
             roi={stats.roi}
             onDetailPress={() => router.push("/(tabs)/sales")}
           />
-        </Animated.View>
+        </CurvedItem>
 
         {/* ═══ METRIC ORBS (3 columns) ═══ */}
-        <Animated.View
+        <CurvedItem
+          scrollY={scrollOffset}
           entering={
             isReduceMotionEnabled
               ? undefined
               : FadeInUp.delay(150).duration(500)
-          }
-          layout={
-            isReduceMotionEnabled ? undefined : LinearTransition.springify()
           }
           style={{
             flexDirection: "row",
@@ -1827,7 +1849,7 @@ export default function VantaDashboard() {
             accentGlow={`${Palette.semantic.success}50`}
             onPress={() => router.push("/(tabs)/lots")}
           />
-        </Animated.View>
+        </CurvedItem>
 
         {/* ═══ QUICK ACTIONS ═══ */}
         <Animated.View
@@ -1860,8 +1882,8 @@ export default function VantaDashboard() {
             <VantaActionSlab
               icon="sell"
               label={t("dashboard.quickActions.sell")}
-              accentColor={isDark ? VANTA.gold : Palette.metal.champagne}
-              accentGlow={isDark ? VANTA.goldGlow : Palette.metal.champagneGlow}
+              accentColor={theme.primary}
+              accentGlow={theme.primaryGlow}
               onPress={() => router.push("/sales/new")}
             />
             <VantaActionSlab
@@ -1910,7 +1932,7 @@ export default function VantaDashboard() {
                     fontSize: 10,
                     fontWeight: "600",
                     letterSpacing: 1,
-                    color: isDark ? VANTA.gold : Palette.metal.champagne,
+                    color: theme.primary,
                     textDecorationLine: "underline",
                   }}
                 >
@@ -1971,22 +1993,20 @@ export default function VantaDashboard() {
                   borderCurve: "continuous",
                   justifyContent: "center",
                   alignItems: "center",
-                  backgroundColor: isDark
-                    ? VANTA.goldMicro
-                    : `${Palette.metal.champagne}12`,
+                  backgroundColor: theme.primaryMuted,
                 }}
               >
                 <AppIcon
                   name="emoji-events"
                   size={28}
-                  color={isDark ? VANTA.gold : Palette.metal.champagne}
+                  color={theme.primary}
                 />
               </View>
               <Text
                 style={{
                   fontSize: 15,
                   fontWeight: "600",
-                  color: isDark ? VANTA.textSecondary : Palette.neutral[500],
+                  color: theme.textSecondary,
                   textAlign: "center",
                 }}
               >
@@ -1995,7 +2015,7 @@ export default function VantaDashboard() {
               <Text
                 style={{
                   fontSize: 12,
-                  color: isDark ? VANTA.textMuted : Palette.neutral[400],
+                  color: theme.textMuted,
                   textAlign: "center",
                   lineHeight: 18,
                 }}
@@ -2005,6 +2025,51 @@ export default function VantaDashboard() {
             </ObsidianBlock>
           )}
         </Animated.View>
+
+        {/* ── WRAPPED CARD — Entry Point ────────────────────────── */}
+        {showCharts && (
+          <Animated.View
+            entering={
+              isReduceMotionEnabled
+                ? undefined
+                : FadeInUp.delay(300).duration(500)
+            }
+            style={{ paddingHorizontal: Spacing.lg, marginTop: Spacing.lg }}
+          >
+            <Pressable onPress={() => router.push("/wrapped")}>
+              <ObsidianBlock variant="premium" style={{ padding: Spacing.lg, flexDirection: "row", alignItems: "center", gap: Spacing.md }}>
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.primaryMuted, alignItems: "center", justifyContent: "center" }}>
+                  <AppIcon name="auto-awesome" size={22} color={theme.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: "700", color: theme.text }}>
+                    {t("dashboard.wrappedCard.title")}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
+                    {t("dashboard.wrappedCard.subtitle", { month: new Date().toLocaleString("default", { month: "long" }) })}
+                  </Text>
+                </View>
+                <AppIcon name="chevron-right" size={18} color={theme.textMuted} />
+              </ObsidianBlock>
+            </Pressable>
+          </Animated.View>
+        )}
+
+        {/* ── TIER 4 // ANALYTICS CHARTS ─────────────────────────── */}
+        {showCharts && (
+          <Animated.View
+            entering={
+              isReduceMotionEnabled
+                ? undefined
+                : FadeInUp.delay(350).duration(500)
+            }
+            style={{ paddingHorizontal: Spacing.lg, gap: Spacing.lg, paddingBottom: Spacing["2xl"] }}
+          >
+            <VantaLineChart data={chartLineData} />
+            <VantaBarChart data={chartBarData} />
+            <VantaPieChart data={chartPlatformData} />
+          </Animated.View>
+        )}
       </Animated.ScrollView>
     </VantaScreen>
   );

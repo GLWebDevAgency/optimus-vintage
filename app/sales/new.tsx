@@ -8,6 +8,11 @@ import {
 } from "@/components/ui/AnimatedComponents";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { Card } from "@/components/ui/Components";
+import {
+    CurvedItem,
+    ScrollEdgeFade,
+    useCurvedScroll,
+} from "@/components/ui/CurvedScroll";
 import { VantaScreen, useVantaTheme } from "@/components/ui/PremiumUI";
 import { Radius, Spacing } from "@/constants/Theme";
 import { Item, ItemsRepository, SalesRepository } from "@/db/repositories";
@@ -51,6 +56,7 @@ export default function NewSaleScreen() {
     warning: theme.warning,
     warningSubtle: theme.warningSubtle,
   };
+  const { scrollY, scrollHandler } = useCurvedScroll();
   const { t } = useLocale();
   const currency = useSettingsStore((s) => s.currency);
   const currencySymbol = ({ EUR: "€", USD: "$", GBP: "£", CHF: "CHF", JPY: "¥", CAD: "CA$" } as Record<string, string>)[currency] || "€";
@@ -122,7 +128,7 @@ export default function NewSaleScreen() {
 
   const handleSave = async () => {
     if (!price || !item) {
-      Alert.alert("Missing", "Price or item is missing.");
+      Alert.alert(t("common.error"), t("sales.missingFields"));
       return;
     }
 
@@ -135,11 +141,11 @@ export default function NewSaleScreen() {
       });
 
       Alert.alert(
-        "Congrats! 💸",
-        `Sale recorded. Net profit: ${currencySymbol}${result.net.toFixed(2)}`,
+        t("sales.saleRecorded"),
+        t("sales.saleRecordedDesc", { amount: `${currencySymbol}${result.net.toFixed(2)}` }),
         [
           {
-            text: "Awesome",
+            text: t("common.confirm"),
             onPress: () => {
               // Dismiss modal stack first, then navigate to sales tab
               router.dismissAll();
@@ -150,7 +156,7 @@ export default function NewSaleScreen() {
       );
     } catch (e) {
       console.error(e);
-      Alert.alert("Error", "Could not record the sale.");
+      Alert.alert(t("common.error"), t("sales.createError"));
     }
   };
 
@@ -354,189 +360,203 @@ export default function NewSaleScreen() {
         }}
       />
 
-      <View style={[styles.content, { paddingBottom: insets.bottom + 100 }]}>
-        {/* Item Header */}
-        <Animated.View entering={FadeInUp.delay(100).duration(400)}>
-          <Card variant="elevated" style={styles.itemHeader}>
-            <View
-              style={[styles.itemIcon, { backgroundColor: colors.goldSubtle }]}
-            >
-              <AppIcon name="checkroom" size={24} color={colors.gold} />
-            </View>
-            <View style={styles.itemInfo}>
-              <Text
-                style={{
-                  fontFamily: "Manrope_700Bold",
-                  fontSize: 16,
-                  color: colors.text,
-                }}
-              >
-                {item
-                  ? `${item.type || "Item"} ${item.brand || ""}`
-                  : "Loading..."}
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "Manrope_400Regular",
-                  fontSize: 12,
-                  color: colors.textMuted,
-                }}
-              >
-                Lot #{item?.lotId} • ID: {item?.id} • Cost: {currencySymbol}
-                {item ? parseFloat(String(item.unitCost)).toFixed(2) : "0.00"}
-              </Text>
-            </View>
-          </Card>
-        </Animated.View>
-
-        {/* Sale Form */}
-        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <Card variant="elevated" style={styles.formCard}>
-            <Text
-              style={{
-                fontFamily: "Manrope_700Bold",
-                fontSize: 16,
-                color: colors.text,
-                marginBottom: Spacing.lg,
-              }}
-            >
-              {t("sales.saleDetails")}
-            </Text>
-
-            <Text
-              style={{
-                fontFamily: "Manrope_400Regular",
-                fontSize: 14,
-                color: colors.textMuted,
-                marginBottom: Spacing.xs,
-              }}
-            >
-              {t("sales.priceGross")} ({currencySymbol}) *
-            </Text>
-            <TextInput
-              value={price}
-              onChangeText={setPrice}
-              placeholder="0.00"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="numeric"
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.surfaceCard,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-            />
-
-            <View style={styles.row}>
-              <View style={styles.halfInput}>
-                <Text
-                  style={{
-                    fontFamily: "Manrope_400Regular",
-                    fontSize: 14,
-                    color: colors.textMuted,
-                    marginBottom: Spacing.xs,
-                  }}
+      <View style={{ flex: 1 }}>
+        <ScrollEdgeFade color={colors.background} position="top" scrollY={scrollY} />
+        <Animated.ScrollView
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
+        >
+          {/* Item Header */}
+          <CurvedItem scrollY={scrollY} preset="subtle">
+            <Animated.View entering={FadeInUp.delay(100).duration(400)}>
+              <Card variant="elevated" style={styles.itemHeader}>
+                <View
+                  style={[styles.itemIcon, { backgroundColor: colors.goldSubtle }]}
                 >
-                  {t("sales.platformFees")}
-                </Text>
-                <TextInput
-                  value={platformFees}
-                  onChangeText={setPlatformFees}
-                  placeholder="0.00"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="numeric"
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.surfaceCard,
+                  <AppIcon name="checkroom" size={24} color={colors.gold} />
+                </View>
+                <View style={styles.itemInfo}>
+                  <Text
+                    style={{
+                      fontFamily: "Manrope_700Bold",
+                      fontSize: 16,
                       color: colors.text,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={styles.halfInput}>
-                <Text
-                  style={{
-                    fontFamily: "Manrope_400Regular",
-                    fontSize: 14,
-                    color: colors.textMuted,
-                    marginBottom: Spacing.xs,
-                  }}
-                >
-                  {t("sales.shippingFees")}
-                </Text>
-                <TextInput
-                  value={shippingFees}
-                  onChangeText={setShippingFees}
-                  placeholder="0.00"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="numeric"
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.surfaceCard,
-                      color: colors.text,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
+                    }}
+                  >
+                    {item
+                      ? `${item.type || t("items.defaultType")} ${item.brand || ""}`
+                      : t("common.loading")}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Manrope_400Regular",
+                      fontSize: 12,
+                      color: colors.textMuted,
+                    }}
+                  >
+                    Lot #{item?.lotId} • ID: {item?.id} • Cost: {currencySymbol}
+                    {item ? parseFloat(String(item.unitCost)).toFixed(2) : "0.00"}
+                  </Text>
+                </View>
+              </Card>
+            </Animated.View>
+          </CurvedItem>
 
-            {/* Net Calculation */}
-            <View
-              style={[styles.calcCard, { backgroundColor: colors.surfaceCard }]}
-            >
-              <View style={styles.calcRow}>
-                <Text
-                  style={{
-                    fontFamily: "Manrope_400Regular",
-                    fontSize: 14,
-                    color: colors.textMuted,
-                  }}
-                >
-                  {t("sales.priceNet")}
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "Manrope_600SemiBold",
-                    fontSize: 18,
-                    color: colors.text,
-                  }}
-                >
-                  {currencySymbol}{netAmount}
-                </Text>
-              </View>
-              <View
-                style={[styles.calcDivider, { backgroundColor: colors.border }]}
-              />
-              <View style={styles.calcRow}>
-                <Text
-                  style={{
-                    fontFamily: "Manrope_400Regular",
-                    fontSize: 14,
-                    color: colors.textMuted,
-                  }}
-                >
-                  {t("sales.profit")}
-                </Text>
+          {/* Sale Form */}
+          <CurvedItem scrollY={scrollY} preset="subtle">
+            <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+              <Card variant="elevated" style={styles.formCard}>
                 <Text
                   style={{
                     fontFamily: "Manrope_700Bold",
-                    fontSize: 22,
-                    color:
-                      parseFloat(profit) >= 0 ? colors.success : colors.danger,
+                    fontSize: 16,
+                    color: colors.text,
+                    marginBottom: Spacing.lg,
                   }}
                 >
-                  {parseFloat(profit) >= 0 ? "+" : ""}{currencySymbol}{profit}
+                  {t("sales.saleDetails")}
                 </Text>
-              </View>
-            </View>
-          </Card>
-        </Animated.View>
+
+                <Text
+                  style={{
+                    fontFamily: "Manrope_400Regular",
+                    fontSize: 14,
+                    color: colors.textMuted,
+                    marginBottom: Spacing.xs,
+                  }}
+                >
+                  {t("sales.priceGross")} ({currencySymbol}) *
+                </Text>
+                <TextInput
+                  value={price}
+                  onChangeText={setPrice}
+                  placeholder="0.00"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="numeric"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.surfaceCard,
+                      color: colors.text,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                />
+
+                <View style={styles.row}>
+                  <View style={styles.halfInput}>
+                    <Text
+                      style={{
+                        fontFamily: "Manrope_400Regular",
+                        fontSize: 14,
+                        color: colors.textMuted,
+                        marginBottom: Spacing.xs,
+                      }}
+                    >
+                      {t("sales.platformFees")}
+                    </Text>
+                    <TextInput
+                      value={platformFees}
+                      onChangeText={setPlatformFees}
+                      placeholder="0.00"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="numeric"
+                      style={[
+                        styles.input,
+                        {
+                          backgroundColor: colors.surfaceCard,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <View style={styles.halfInput}>
+                    <Text
+                      style={{
+                        fontFamily: "Manrope_400Regular",
+                        fontSize: 14,
+                        color: colors.textMuted,
+                        marginBottom: Spacing.xs,
+                      }}
+                    >
+                      {t("sales.shippingFees")}
+                    </Text>
+                    <TextInput
+                      value={shippingFees}
+                      onChangeText={setShippingFees}
+                      placeholder="0.00"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="numeric"
+                      style={[
+                        styles.input,
+                        {
+                          backgroundColor: colors.surfaceCard,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+
+                {/* Net Calculation */}
+                <View
+                  style={[styles.calcCard, { backgroundColor: colors.surfaceCard }]}
+                >
+                  <View style={styles.calcRow}>
+                    <Text
+                      style={{
+                        fontFamily: "Manrope_400Regular",
+                        fontSize: 14,
+                        color: colors.textMuted,
+                      }}
+                    >
+                      {t("sales.priceNet")}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Manrope_600SemiBold",
+                        fontSize: 18,
+                        color: colors.text,
+                      }}
+                    >
+                      {currencySymbol}{netAmount}
+                    </Text>
+                  </View>
+                  <View
+                    style={[styles.calcDivider, { backgroundColor: colors.border }]}
+                  />
+                  <View style={styles.calcRow}>
+                    <Text
+                      style={{
+                        fontFamily: "Manrope_400Regular",
+                        fontSize: 14,
+                        color: colors.textMuted,
+                      }}
+                    >
+                      {t("sales.profit")}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Manrope_700Bold",
+                        fontSize: 22,
+                        color:
+                          parseFloat(profit) >= 0 ? colors.success : colors.danger,
+                      }}
+                    >
+                      {parseFloat(profit) >= 0 ? "+" : ""}{currencySymbol}{profit}
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            </Animated.View>
+          </CurvedItem>
+        </Animated.ScrollView>
+        <ScrollEdgeFade color={colors.background} position="bottom" />
       </View>
 
       {/* Sticky CTA */}
@@ -618,7 +638,7 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     padding: Spacing.xl,
   },
   itemHeader: {
