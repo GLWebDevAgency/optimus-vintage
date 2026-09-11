@@ -5,15 +5,17 @@
 ```
 feature/* ──PR──▶ main ──PR──▶ staging ──PR──▶ production
                   │              │                │
-                  CI             déploie          déploie (approbation manuelle)
+                  CI             déploie          déploie (approbation manuelle*)
                                  staging.chine.app   chine.app
 ```
+
+\* Sous réserve du plan GitHub : voir « Approbation manuelle en production » plus bas.
 
 | Branche | Rôle | Déclenche |
 |---|---|---|
 | `main` | Intégration continue. Toujours verte. | `CI` : lint, typecheck, tests, build, e2e |
 | `staging` | Recette. Miroir de la production avec des clés de test (Stripe test, bucket R2 dédié, IA réelle). | `Deploy · staging` : vérification puis `railway up` sur l'environnement Railway `staging` |
-| `production` | Ce que voient les clients. | `Deploy · production` : vérification, e2e, **approbation manuelle** (environnement GitHub `production`), `railway up`, étiquette `vAAAA.MM.JJ-sha` |
+| `production` | Ce que voient les clients. | `Deploy · production` : vérification, e2e, **approbation manuelle** (environnement GitHub `production`, indisponible avec le plan actuel — voir plus bas), `railway up`, étiquette `vAAAA.MM.JJ-sha` |
 
 Promotion : ouvrir une PR `main → staging`, puis `staging → production` (fast-forward, pas de cherry-pick). Un correctif urgent part de `production` (`hotfix/*`), est fusionné dans `production` puis rétro-porté dans `main`.
 
@@ -28,15 +30,51 @@ cp deploy/railway/production.env.example deploy/railway/production.env
 ./deploy/railway/bootstrap.sh
 ```
 
-Le script crée le projet, les deux environnements, un Postgres par environnement, le service `web`, et pousse les variables. Trois réglages restent manuels dans le tableau de bord : la source GitHub (branche `staging` / `production`) si tu préfères le déclencheur Railway aux GitHub Actions, les domaines publics, et les jetons de projet.
+Le script crée le projet, les deux environnements, un Postgres par environnement, le service `web`, et pousse les variables. Il ne touche ni à Cloudflare R2 (bucket, règle CORS : voir `LANCEMENT.md`) ni aux réglages du tableau de bord. Trois réglages restent manuels : la source GitHub (branche `staging` / `production`) si tu préfères le déclencheur Railway aux GitHub Actions, les domaines publics, et les jetons de projet.
+
+### `RAILWAY_DOCKERFILE_PATH` — variable de service obligatoire
+
+`railway.json` déclare bien `builder: DOCKERFILE` et `dockerfilePath: apps/web/Dockerfile`, mais **Railway ignore ce fichier lors d'un `railway up` sur un service créé vide** — celui que produit `railway add --service web` dans `bootstrap.sh`. Il lance alors son constructeur automatique *railpack*, ne trouve rien à démarrer à la racine du monorepo et s'arrête sur `No start command detected`.
+
+La variable de service ci-dessous est ce qui force réellement la construction par Dockerfile. Elle est **obligatoire**, sur chaque environnement, avant le premier déploiement :
+
+```bash
+railway variables --service web --environment staging    --set "RAILWAY_DOCKERFILE_PATH=apps/web/Dockerfile"
+railway variables --service web --environment production --set "RAILWAY_DOCKERFILE_PATH=apps/web/Dockerfile"
+```
+
+Elle figure aussi dans `deploy/railway/staging.env.example` et `production.env.example` (ligne 25), donc `bootstrap.sh` la pousse si les fichiers `.env` en sont dérivés — la commande ci-dessus sert à la poser sur un environnement déjà créé.
+
+### `.railwayignore` — ce qui part dans l'archive
+
+`railway up` téléverse une archive du dépôt, puis construit à distance. Il **indexe l'arborescence avant d'appliquer `.dockerignore`** : un seul lien symbolique cassé, n'importe où dans l'arbre, fait échouer l'indexation avec un message peu parlant du type `IO error for operation on <chemin> : No such file or directory`. Le dépôt en contient (outillage d'agents archivé sous `legacy/optimus-vintage/.gemini/skills/`, `.opencode/skills/`, `.agent/skills/`), d'où le `.railwayignore` à la racine qui exclut `legacy/` et les dossiers d'outillage. Ne pas le supprimer.
+
+Les deux fichiers agissent à des moments différents et ne sont pas interchangeables :
+
+| Fichier | Lu par | Effet |
+|---|---|---|
+| `.railwayignore` | la CLI Railway, à l'indexation, **avant l'envoi** | décide ce qui part dans l'archive ; un chemin exclu ici n'existe pas du tout côté Railway |
+| `.dockerignore` | le démon Docker, **au build** | décide ce qui entre dans le contexte de build, donc dans le `COPY . .` du Dockerfile |
+
+Ce qui est exclu de l'archive est de fait absent du contexte de build : garder les deux listes alignées, `.railwayignore` étant le sur-ensemble.
 
 ### Variables inlinées au build et commit servi
 
-Next.js inline les variables `NEXT_PUBLIC_*` et la configuration Sentry au moment du build : elles sont déclarées en `ARG` dans `apps/web/Dockerfile` (Railway ne transmet une variable au build Docker que si elle est déclarée). Le jeton Sentry des source maps est monté en secret de build (`SENTRY_AUTH_TOKEN`), jamais copié dans une couche. Le workflow pousse `APP_COMMIT` (SHA Git) avant `railway up` ; `/api/ready` et `/api/health` l'exposent et le déploiement n'est accepté que lorsque l'URL publique sert ce commit.
+Next.js inline les variables `NEXT_PUBLIC_*` et la configuration Sentry au moment du build : elles sont déclarées en `ARG` dans `apps/web/Dockerfile` (Railway ne transmet une variable au build Docker que si elle est déclarée). Le jeton Sentry des source maps (`SENTRY_AUTH_TOKEN`) est déclaré en `ARG`, comme les autres, et **non monté en secret de build** : `--mount=type=secret` n'est pas fourni par Railway, qui refuse le Dockerfile qui l'utilise (« other mount types are not supported »). Ce n'est donc pas un secret au sens Docker — il vit dans une couche du stage intermédiaire `build`, jamais publié (seul `runner` l'est, et il ne reprend ni cet `ARG` ni cet `ENV`) ; ne jamais le déclarer dans le stage final. Même contrainte pour `--mount=type=cache`, que Railway refuse aussi (« is missing the cacheKey prefix from its id »). `SENTRY_AUTH_TOKEN` n'est pas dans `deploy/railway/*.env.example` : sans cette variable de service, le build n'échoue pas mais les source maps ne sont pas téléversées et les traces de production restent minifiées. Le workflow pousse `APP_COMMIT` (SHA Git) avant `railway up` ; `/api/ready` et `/api/health` l'exposent et le déploiement n'est accepté que lorsque l'URL publique sert ce commit.
 
 ### Migrations
 
-`CHINE_AUTO_MIGRATE=true` : le serveur applique les migrations Drizzle au démarrage, avant de répondre au health check. Un déploiement dont la migration échoue reste en échec et l'ancienne version continue de servir. Pour les migrations lourdes, les jouer à la main avant le déploiement : `DATABASE_URL=... pnpm db:migrate`.
+`CHINE_AUTO_MIGRATE=true` : les migrations Drizzle sont appliquées par la racine de composition (`packages/infrastructure/src/composition.ts:60`), et **pas au démarrage du processus**. Rien n'est ouvert à l'import (`apps/web/src/lib/container.ts` : « la première requête déclenche la construction ») : la composition — donc la migration — est déclenchée par la **première requête reçue**, en pratique la première sonde `/api/ready`.
+
+Conséquence : toute la migration doit tenir dans le `healthcheckTimeout` de `railway.json` (**180 s**). Au-delà, Railway marque le déploiement en échec, mais n'interrompt rien de ce qui tourne : le conteneur poursuit sa migration jusqu'à son arrêt. L'état de la base au moment du verdict est donc indéterminé — au mieux le lot est annulé (Drizzle enveloppe les migrations en attente dans une transaction unique, `drizzle-orm/pg-core` → `dialect.migrate`), au pire il est validé juste après le verdict et laisse un schéma en avance sur le code que l'ancienne version continue de servir. Dans les deux cas, le déploiement est rouge sans que la cause apparaisse dans le health check.
+
+Un déploiement dont la migration échoue franchement reste en échec (`/api/ready` répond 503) et l'ancienne version continue de servir.
+
+Règle : **jouer les migrations lourdes à la main, avant le déploiement** (index sur grosse table, réécriture de colonne, backfill), sur la base cible, puis déployer le code :
+
+```bash
+DATABASE_URL=… pnpm db:migrate
+```
 
 ### Secrets GitHub à créer
 
@@ -46,7 +84,17 @@ Next.js inline les variables `NEXT_PUBLIC_*` et la configuration Sentry au momen
 | `RAILWAY_TOKEN_PRODUCTION` | Secrets | Jeton de projet Railway, environnement production |
 | `STAGING_URL`, `PRODUCTION_URL` | Variables | URLs publiques (défaut `https://staging.chine.app`, `https://chine.app`) |
 | `RAILWAY_SERVICE` | Variables | Nom du service (défaut `web`) |
-| Environnement `production` | Settings → Environments | Cocher « Required reviewers » |
+| Environnement `production` | Settings → Environments | « Required reviewers » **si le plan le permet** — voir ci-dessous |
+
+### Approbation manuelle en production — limite de plan
+
+Les protections d'environnement GitHub (« Required reviewers », délai d'attente, branches autorisées) ne sont **pas disponibles sur un dépôt privé avec le plan de facturation actuel** : l'API répond `Please ensure the billing plan supports the required reviewers protection rule`. Le job `deploy` de `.github/workflows/deploy-production.yml` déclare bien `environment: production`, mais sans relecteur enregistré cet environnement **ne met rien en pause** : un `push` sur la branche `production` déploie directement.
+
+Trois replis concrets :
+
+1. **Passer le dépôt en public** — les environnements protégés sont gratuits sur les dépôts publics. À écarter ici tant que le code reste privé.
+2. **Souscrire un plan payant** (GitHub Team ou Enterprise) — seule option qui rend l'approbation réellement bloquante sur un dépôt privé.
+3. **N'autoriser la production que manuellement** — retirer le déclencheur `push: branches: [production]` de `deploy-production.yml` et ne garder que `workflow_dispatch` (déjà présent). Le déploiement ne part alors que sur une action humaine explicite depuis l'onglet Actions : pas d'approbation à deux personnes, mais plus de mise en production par simple fusion.
 
 ## Fournisseurs d'IA
 
@@ -85,6 +133,7 @@ Règles :
 | `CHINE_JOBS` | true | true | true (relais outbox, purges ; `false` pour désactiver) |
 | `APP_COMMIT` | vide | poussé par le workflow | poussé par le workflow |
 | `BIND_HOST` | — | auto (`::` si IPv6, sinon `0.0.0.0`) | auto |
+| `RAILWAY_DOCKERFILE_PATH` | — | `apps/web/Dockerfile` (obligatoire) | `apps/web/Dockerfile` (obligatoire) |
 
 ## Tâches de fond
 

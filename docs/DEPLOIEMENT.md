@@ -4,8 +4,8 @@ Chiné se déploie comme **une image Docker** (Next.js en sortie « standalone �
 
 | Brique | Service | Pourquoi |
 |---|---|---|
-| App web + API | **Railway** (service `web`, `apps/web/Dockerfile`) | Une image, un health check `/api/ready`, staging et production dans un même projet |
-| Base de données | **Railway Postgres** | `DATABASE_URL` avec `sslmode=require` ; migrations Drizzle au démarrage (`CHINE_AUTO_MIGRATE=true`) |
+| App web + API | **Railway** (service `web`, `apps/web/Dockerfile`, variable `RAILWAY_DOCKERFILE_PATH`) | Une image, un health check `/api/ready`, staging et production dans un même projet |
+| Base de données | **Railway Postgres** | `DATABASE_URL` avec `sslmode=require` ; migrations Drizzle à la première requête (`CHINE_AUTO_MIGRATE=true`) |
 | Photos | **Cloudflare R2** | S3 compatible, egress gratuit, upload direct depuis le navigateur |
 | Facturation | **Stripe** | Checkout (essai sans carte), Customer Portal, webhooks signés et idempotents, Stripe Tax optionnel |
 | E-mails | **Resend** | Vérification d'adresse, mot de passe oublié — obligatoire en production |
@@ -15,9 +15,10 @@ Chiné se déploie comme **une image Docker** (Next.js en sortie « standalone �
 ## En bref
 
 1. `./deploy/railway/bootstrap.sh` crée le projet, les environnements `staging` et `production`, un Postgres chacun et le service `web`, puis pousse les variables des fichiers `deploy/railway/*.env`.
-2. Les branches `staging` et `production` déclenchent les workflows `Deploy · staging` et `Deploy · production` (vérification, e2e, approbation manuelle en production, `railway up`, contrôle du commit servi, étiquette de version).
-3. Variables inlinées au build (`NEXT_PUBLIC_*`, Sentry) : déclarées en `ARG` dans le Dockerfile, Railway les transmet au build. `APP_COMMIT` est poussé par le workflow avant chaque déploiement pour que `/api/ready` identifie la version servie.
-4. L'image démarre par `apps/web/scripts/start.mjs`, qui écoute en double pile (`::`, requis par le réseau privé et les sondes Railway) quand l'hôte a IPv6 et retombe sur `0.0.0.0` sinon ; `BIND_HOST` force une adresse.
+2. **`RAILWAY_DOCKERFILE_PATH=apps/web/Dockerfile` est obligatoire** sur le service de chaque environnement : sur un service créé vide, `railway up` ignore `railway.json` et retombe sur son constructeur automatique *railpack*, qui échoue (`No start command detected`). Le `.railwayignore` de la racine exclut `legacy/` et l'outillage de l'archive envoyée — `railway up` indexe l'arborescence avant tout `.dockerignore`, et un lien symbolique cassé y fait échouer l'envoi.
+3. Les branches `staging` et `production` déclenchent les workflows `Deploy · staging` et `Deploy · production` (vérification, e2e, `railway up`, contrôle du commit servi, étiquette de version). L'approbation manuelle en production suppose un plan GitHub qui autorise les relecteurs obligatoires sur dépôt privé — ce n'est pas le cas du plan actuel, voir `ENVIRONNEMENTS.md`.
+4. Variables inlinées au build (`NEXT_PUBLIC_*`, Sentry) : déclarées en `ARG` dans le Dockerfile, Railway les transmet au build. `SENTRY_AUTH_TOKEN` est un `ARG` du stage intermédiaire et non un secret de build : Railway ne prend en charge ni `--mount=type=secret` ni `--mount=type=cache`. `APP_COMMIT` est poussé par le workflow avant chaque déploiement pour que `/api/ready` identifie la version servie.
+5. L'image démarre par `apps/web/scripts/start.mjs`, qui écoute en double pile (`::`, requis par le réseau privé et les sondes Railway) quand l'hôte a IPv6 et retombe sur `0.0.0.0` sinon ; `BIND_HOST` force une adresse.
 
 ## Développement local
 

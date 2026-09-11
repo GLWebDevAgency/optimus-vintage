@@ -76,14 +76,26 @@ Si ta version ne connaît pas `--teleport`, la session web (claude.ai/code) prop
 2. **Railway** : `./deploy/railway/bootstrap.sh` (projet, environnements `staging` et `production`, un Postgres chacun, service `web`), variables poussées depuis `deploy/railway/*.env`, jetons de projet dans GitHub :
 
    ```bash
+   railway variables --service web --environment staging    --set "RAILWAY_DOCKERFILE_PATH=apps/web/Dockerfile"
+   railway variables --service web --environment production --set "RAILWAY_DOCKERFILE_PATH=apps/web/Dockerfile"
    gh secret set RAILWAY_TOKEN_STAGING
    gh secret set RAILWAY_TOKEN_PRODUCTION
    gh variable set PRODUCTION_URL --body https://chine.app
    ```
 
-3. **Cloudflare R2** : bucket `chine-photos`, règle CORS, domaine public, clés d'accès dans Railway.
+   `RAILWAY_DOCKERFILE_PATH` est **obligatoire** : sans elle, `railway up` ignore `railway.json` sur un service fraîchement créé, bascule sur le constructeur *railpack* et échoue sur `No start command detected`. Le `.railwayignore` de la racine (déjà commité) exclut `legacy/` de l'archive envoyée : ne pas le supprimer, l'indexation de `railway up` casse sur les liens symboliques morts qu'il contient. Détails dans [`ENVIRONNEMENTS.md`](./ENVIRONNEMENTS.md).
+
+3. **Cloudflare R2** — `bootstrap.sh` ne fait **rien** côté R2 (ni bucket, ni CORS, ni domaine : il ne pousse que des variables Railway). La vraie procédure :
+
+   ```bash
+   wrangler r2 bucket create chine-photos-staging
+   wrangler r2 bucket create chine-photos
+   ```
+
+   Puis, pour chaque bucket, dans le tableau de bord Cloudflare (R2 → le bucket → Settings) : **règle CORS** autorisant la méthode `PUT` et l'en-tête `Content-Type` depuis l'origine de l'app — le navigateur téléverse directement sur une URL signée (`packages/infrastructure/src/storage/R2PhotoStorage.ts:54`) — puis l'**accès public / domaine personnalisé** qui servira `R2_PUBLIC_BASE_URL`. Enfin, créer un jeton d'API R2 et renseigner `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` dans `deploy/railway/staging.env` et `production.env` **avant** de (re)lancer `./deploy/railway/bootstrap.sh <env>`.
+
 4. **Déploiement staging** (branche `staging`), test réel : inscription, capture, expertise IA, vente, checkout Stripe en mode test, export CSV, hors ligne.
-5. **Production** : environnement GitHub `production` avec relecteur obligatoire (toi), passage des prix Stripe en mode live, domaine, HSTS, sauvegardes Postgres, puis merge sur `production`.
+5. **Production** : garde manuelle avant déploiement, passage des prix Stripe en mode live, domaine, HSTS, sauvegardes Postgres, puis merge sur `production`. Attention : l'environnement GitHub `production` avec relecteur obligatoire n'est **pas disponible sur un dépôt privé avec le plan actuel** (l'API répond `Please ensure the billing plan supports the required reviewers protection rule`). Replis : passer le dépôt en public, souscrire GitHub Team, ou ne garder que `workflow_dispatch` sur `Deploy · production` pour que la mise en production reste un geste humain explicite (voir [`ENVIRONNEMENTS.md`](./ENVIRONNEMENTS.md)).
 6. **Hygiène** : révocation de l'ancien mot de passe Postgres du dépôt historique (à faire dans le tableau de bord Railway de l'ancien projet), rotation des secrets.
 
 ## 6. Mission à coller dans la session
@@ -92,8 +104,8 @@ Si ta version ne connaît pas `--teleport`, la session web (claude.ai/code) prop
 Reprends le projet Chiné là où on s'est arrêté (branche claude/optimus-vintage-analysis-xqegi8, commit 49c2ce5 ou plus récent).
 Les CLI gh, railway, stripe et wrangler sont connectées sur ce terminal. Objectif : mettre l'app en ligne et démarrer l'activité.
 1. Crée les produits, prix (mensuel et annuel, en centimes, selon packages/domain/src/billing/plans.ts), le webhook et le portail client sur Stripe, d'abord en mode test, et renseigne les variables STRIPE_* de staging.
-2. Bootstrappe Railway avec deploy/railway/bootstrap.sh, crée le bucket R2 et sa règle CORS, pousse toutes les variables (docs/ENVIRONNEMENTS.md), enregistre les secrets GitHub, puis déploie staging et vérifie /api/ready, /api/health et un parcours complet avec de vraies clés.
-3. Prépare la production : environnement GitHub avec relecteur obligatoire, prix Stripe en mode live, domaine chine.app, sauvegardes Postgres, puis déploie.
+2. Bootstrappe Railway avec deploy/railway/bootstrap.sh, puis pose RAILWAY_DOCKERFILE_PATH=apps/web/Dockerfile sur le service web des deux environnements (obligatoire, sinon railway up échoue sur « No start command detected »). Crée à part le bucket R2, sa règle CORS et son domaine public (bootstrap.sh ne touche pas à R2), pousse toutes les variables (docs/ENVIRONNEMENTS.md), enregistre les secrets GitHub, puis déploie staging et vérifie /api/ready, /api/health et un parcours complet avec de vraies clés.
+3. Prépare la production : garde manuelle sur le déploiement (relecteur obligatoire si le plan GitHub l'autorise, sinon workflow_dispatch seul), prix Stripe en mode live, domaine chine.app, sauvegardes Postgres, puis déploie.
 4. Dis-moi précisément à chaque étape ce que tu ne peux pas faire toi-même (DNS, KYC Stripe, domaine Resend) et quoi cliquer.
 Ne colle jamais une clé dans le dépôt ni dans la conversation ; utilise .env et les CLI.
 ```
