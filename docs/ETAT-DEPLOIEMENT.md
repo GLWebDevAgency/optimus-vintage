@@ -1,4 +1,4 @@
-# État du déploiement — 11 septembre 2026
+# État du déploiement — 11 septembre 2026 (mis à jour en fin de journée)
 
 Relevé factuel de ce qui est en place, de ce qui bloque et de ce qui reste à faire. Mis à jour à chaque session de déploiement.
 
@@ -59,11 +59,26 @@ Chaîne de facturation testée de bout en bout : abonnement créé → webhook r
 
 Changer `STORAGE_DRIVER` fait perdre l'accès aux photos déjà enregistrées : seule la clé de l'objet est stockée, l'URL est recalculée à chaque lecture. Sans conséquence en recette, à décider avant la production.
 
-## 2. Bloquants qui ne dépendent pas du code
+## 2. Blocages levés dans la journée
 
-1. **GitHub Actions est désactivé pour raison de facturation.** Tout déploiement poussé sur `staging` ou `production` échoue immédiatement : « The job was not started because recent account payments have failed or your spending limit needs to be increased. » Le pipeline est correct, mais il ne s'exécutera pas tant que la facturation GitHub n'est pas régularisée. En attendant, le déploiement se fait à la main : `railway up --ci --environment staging --service web`.
-2. **Le compte Stripe n'est pas activé.** `charges_enabled: false`, `payouts_enabled: false`, dossier non soumis. Aucun encaissement réel n'est possible et les prix en mode production ne peuvent pas être créés. Il faut compléter l'activation (identité, adresse, IBAN) dans le tableau de bord.
-3. **Les relecteurs obligatoires d'environnement ne sont pas disponibles.** L'API GitHub répond : « Please ensure the billing plan supports the required reviewers protection rule. » Sur un dépôt privé, cette protection demande un plan payant. Trois options : rendre le dépôt public, souscrire un plan, ou n'autoriser la production que par déclenchement manuel.
+1. **Intégration continue rétablie.** Le dépôt est passé en public, ce qui rend GitHub Actions
+   gratuit et illimité. Le pipeline complet est vert : vérification (lint, typecheck, tests,
+   build) puis déploiement Railway et contrôle du commit servi. La variable `STAGING_URL` a été
+   définie, car la vérification interrogeait `staging.chine.app`, domaine qui n'existe pas encore.
+2. **Approbation manuelle en production activée.** Elle était refusée par le plan de facturation
+   sur un dépôt privé. L'environnement `production` porte désormais un relecteur obligatoire et
+   une politique de branche.
+3. **Secret historique neutralisé.** L'ancien projet Railway « Optimus-vintage » a été supprimé
+   (service et base) : le mot de passe qui figurait dans le dépôt n'ouvre plus rien, ce qui a été
+   vérifié par une tentative de connexion. L'historique a ensuite été réécrit avec `git filter-repo`
+   pour remplacer cette valeur dans les 92 commits, puis republié de force sur toutes les branches.
+   Une sauvegarde complète du dépôt avant réécriture a été conservée hors du projet.
+4. **Téléversement de photos réparé.** Il échouait en `EACCES` : Railway monte les volumes en root
+   alors que l'image tourne sous un utilisateur non privilégié. Corrigé par `RAILWAY_RUN_UID=0`,
+   à retirer dès le passage au stockage R2.
+
+Reste à traiter : le compte Stripe n'est toujours pas activé (`charges_enabled: false`). Sans
+activation, aucun encaissement réel n'est possible. La recette continue en mode bac à sable.
 
 ## 3. À faire, dans l'ordre
 
@@ -71,14 +86,19 @@ Changer `STORAGE_DRIVER` fait perdre l'accès aux photos déjà enregistrées : 
 
 1. **Clé d'IA** : créer une clé sur la console Anthropic, la poser en variable Railway, puis basculer `APPRAISER_DRIVER` sur `anthropic` (ou `anthropic,gemini` avec une clé Gemini de secours).
 2. **Resend** : vérifier un domaine d'envoi, créer une clé, la poser, puis retirer `CHINE_ALLOW_NO_MAILER`.
-3. **R2** : dans le tableau de bord Cloudflare, créer un jeton d'API R2 (lecture et écriture sur les deux buckets), relever l'identifiant de compte, exposer les buckets publiquement (domaine personnalisé ou `r2.dev`), puis poser la règle CORS suivante et basculer `STORAGE_DRIVER` sur `r2` :
+3. **R2 : tout est prêt sauf les identifiants.** Le bucket de recette est créé, exposé
+   publiquement sur `https://pub-f969ac1e95ea46b283609b041606e0e4.r2.dev`, et sa règle CORS est
+   posée (PUT depuis l'origine de la recette, en-tête `Content-Type`, une heure de cache).
+   L'identifiant de compte Cloudflare est `691d06dac6c6375862a1feed0517bd12`.
 
-```json
-[{ "AllowedOrigins": ["https://web-staging-01ce.up.railway.app"],
-   "AllowedMethods": ["PUT"],
-   "AllowedHeaders": ["Content-Type"],
-   "MaxAgeSeconds": 3600 }]
-```
+   Il ne manque que la paire de clés S3, que ni wrangler ni l'API accessible ne peuvent créer :
+   Cloudflare → R2 → « Manage API tokens » → créer un jeton « Object Read & Write » sur les deux
+   buckets. Reporter ensuite `R2_ACCESS_KEY_ID` et `R2_SECRET_ACCESS_KEY`, passer
+   `STORAGE_DRIVER` à `r2`, poser `R2_PUBLIC_BASE_URL`, et retirer `RAILWAY_RUN_UID`.
+
+   Attention : la règle CORS attendue par l'API R2 n'a pas la forme documentée jusqu'ici. Le bon
+   format est un objet `{"rules": [{"allowed": {"origins": [...], "methods": [...],
+   "headers": [...]}, "maxAgeSeconds": 3600}]}`, et non le format S3 `AllowedOrigins`.
 
 ### Pour ouvrir la production
 
