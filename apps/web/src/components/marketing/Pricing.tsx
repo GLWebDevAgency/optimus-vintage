@@ -6,7 +6,7 @@ import { useState } from "react";
 import { IconCheck } from "@/components/ui/Icons";
 import { Reveal } from "@/components/ui/Reveal";
 import { formatAmount } from "@/lib/format";
-import { PLANS, TRIAL_DAYS } from "./pricing";
+import { PLANS, TRIAL_DAYS } from "./pricing-data";
 
 /**
  * Tarifs : le nombre de pièces en première ligne de chaque carte, un prix mensuel lisible,

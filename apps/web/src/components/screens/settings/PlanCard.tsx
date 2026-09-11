@@ -6,7 +6,7 @@ import { AppIcon, Button, StitchProgress, useToast } from "@chine/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PLANS as PLAN_CARDS, TRIAL_DAYS } from "@/components/marketing/pricing";
+import { PLANS as PLAN_CARDS, TRIAL_DAYS } from "@/components/marketing/pricing-data";
 import { keys, useOpenBillingPortal, useStartCheckout } from "@/hooks/api";
 import { useFormat, useT } from "@/hooks/i18n";
 import { useErrorMessage } from "../common/ErrorState";

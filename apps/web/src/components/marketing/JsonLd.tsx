@@ -1,5 +1,5 @@
 import { PLAN_NAMES, PLAN_PRICES_EUR, PURCHASABLE_PLANS } from "@chine/domain";
-import { FAQ } from "./pricing";
+import { FAQ } from "./pricing-data";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 

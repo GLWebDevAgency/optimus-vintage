@@ -1,5 +1,5 @@
 import { Reveal } from "@/components/ui/Reveal";
-import { FAQ } from "./pricing";
+import { FAQ } from "./pricing-data";
 
 export function Faq({ standalone = false }: { standalone?: boolean }) {
   return (
