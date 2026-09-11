@@ -348,8 +348,29 @@ export type DeleteAccountCommand = z.input<typeof DeleteAccountCommand>;
 
 /* ───────────── Facturation ───────────── */
 
+/**
+ * Plans réellement commercialisés : miroir de `PURCHASABLE_PLANS` du domaine, c'est-à-dire les
+ * plans dont `PLAN_AVAILABILITY` vaut `"sale"` (Atelier / `BUSINESS` reste sur liste d'attente).
+ *
+ * Couplage assumé : comme les autres énumérations du contrat (cf. `enums.ts`), la valeur est
+ * recopiée plutôt qu'importée, car `@chine/contract` ne dépend pas de `@chine/domain` — il est
+ * consommé par le web ET par l'app Expo, sans build du domaine. Le garde-fou est
+ * `test/purchasable-plans.test.ts` : il relit `packages/domain/src/billing/plans.ts` et échoue si
+ * les deux listes divergent. Ouvrir la vente d'Atelier ne demande donc qu'un changement dans le
+ * domaine, le test rouge rappelant de le refléter ici.
+ */
+export const PURCHASABLE_PLANS = ["PREMIUM", "PRO"] as const;
+
+/**
+ * Plan visé par un paiement. Le contrat ne promet que ce qui est achetable : un plan en liste
+ * d'attente est refusé dès la frontière (et interdit à la compilation côté client) au lieu d'être
+ * accepté ici puis rejeté par le cas d'usage `StartCheckout`.
+ */
+export const PurchasablePlanDto = z.enum(PURCHASABLE_PLANS);
+export type PurchasablePlan = z.infer<typeof PurchasablePlanDto>;
+
 export const StartCheckoutCommand = z.object({
-  plan: z.enum(["PREMIUM", "PRO", "BUSINESS"]),
+  plan: PurchasablePlanDto,
   interval: z.enum(["monthly", "yearly"]),
   returnUrl: z.url(),
 });

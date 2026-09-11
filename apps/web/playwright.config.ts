@@ -48,6 +48,9 @@ export default defineConfig({
       NEXT_PUBLIC_APP_URL: baseURL,
       // Build de production sans service d'e-mail : dérogation explicite (jamais en vraie prod).
       CHINE_ALLOW_NO_MAILER: "true",
+      // Idem pour la base : les e2e tournent sur PGlite, sans Postgres. La dérogation est
+      // indispensable depuis que DATABASE_URL est obligatoire en production.
+      CHINE_ALLOW_EMBEDDED_DB: "true",
       CHINE_JOBS: "false",
     },
   },

@@ -12,6 +12,8 @@ jobs:
       BETTER_AUTH_URL: http://127.0.0.1:3100
       NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
       CHINE_ALLOW_NO_MAILER: "true"
+      # Les e2e tournent sur PGlite : dérogation à DATABASE_URL, obligatoire en production.
+      CHINE_ALLOW_EMBEDDED_DB: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v6

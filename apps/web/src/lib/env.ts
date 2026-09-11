@@ -3,9 +3,13 @@ import { z } from "zod";
 /**
  * Variables d'environnement de l'app web, validées une seule fois par processus.
  *
- * - En production, `BETTER_AUTH_SECRET` (≥ 32 caractères) et une origine publique sont
- *   obligatoires : le processus refuse de servir une requête tant que ce n'est pas corrigé.
- * - En développement et en test, un secret de repli est utilisé (journalisé une fois).
+ * - En production, `BETTER_AUTH_SECRET` (≥ 32 caractères), une origine publique et
+ *   `DATABASE_URL` sont obligatoires : le processus refuse de servir une requête tant que
+ *   ce n'est pas corrigé.
+ * - En développement et en test, un secret de repli est utilisé (journalisé une fois) et la
+ *   base embarquée PGlite fait office de base de données.
+ * - La cohérence du stockage de photos (`STORAGE_DRIVER=r2` ⇒ les cinq variables `R2_*`) est
+ *   vérifiée dans tous les environnements, avant que le conteneur n'échoue au démarrage.
  *
  * Aucune valeur n'est journalisée : seuls les noms de variables en défaut apparaissent.
  */
@@ -17,6 +21,20 @@ const optionalString = z.preprocess(
   (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
   z.string().optional(),
 );
+const optionalEnum = <const T extends readonly [string, ...string[]]>(values: T) =>
+  z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.enum(values).optional(),
+  );
+
+/** Les cinq variables exigées par le pilote de stockage R2, dans l'ordre de la documentation. */
+const R2_VARIABLES = [
+  "R2_ACCOUNT_ID",
+  "R2_ACCESS_KEY_ID",
+  "R2_SECRET_ACCESS_KEY",
+  "R2_BUCKET",
+  "R2_PUBLIC_BASE_URL",
+] as const;
 
 const EnvSchema = z
   .object({
@@ -28,15 +46,39 @@ const EnvSchema = z
     CHINE_DATA_DIR: optionalString,
     RESEND_API_KEY: optionalString,
     MAIL_FROM: optionalString,
+    /** `auto` (défaut) choisit R2 dès qu'il est complètement configuré, sinon le disque local. */
+    STORAGE_DRIVER: optionalEnum(["auto", "r2", "local"]),
     R2_ACCOUNT_ID: optionalString,
+    R2_ACCESS_KEY_ID: optionalString,
+    R2_SECRET_ACCESS_KEY: optionalString,
+    R2_BUCKET: optionalString,
     R2_PUBLIC_BASE_URL: optionalUrl,
     STRIPE_SECRET_KEY: optionalString,
     STRIPE_WEBHOOK_SECRET: optionalString,
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "silent"]).optional(),
     /** `true` pour tolérer une production sans e-mails (recette) : mot de passe oublié indisponible. */
     CHINE_ALLOW_NO_MAILER: optionalString,
+    /**
+     * `true` pour tolérer une production sans `DATABASE_URL` : la base embarquée PGlite est alors
+     * écrite dans `CHINE_DATA_DIR`. Réservé aux builds de production jetables (e2e, démo locale) ;
+     * sur un hébergeur au disque éphémère, toutes les données sont perdues au redéploiement.
+     */
+    CHINE_ALLOW_EMBEDDED_DB: optionalString,
   })
   .superRefine((env, ctx) => {
+    // Cohérence du stockage : valable dans tous les environnements, car `createPhotoStorage`
+    // échoue au démarrage du conteneur avec un message générique qui ne nomme rien.
+    if (env.STORAGE_DRIVER === "r2") {
+      for (const nom of R2_VARIABLES) {
+        if (!env[nom]) {
+          ctx.addIssue({
+            code: "custom",
+            path: [nom],
+            message: "obligatoire quand STORAGE_DRIVER=r2",
+          });
+        }
+      }
+    }
     if (env.NODE_ENV !== "production") return;
     if (!env.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET.length < 32) {
       ctx.addIssue({
@@ -50,6 +92,14 @@ const EnvSchema = z
         code: "custom",
         path: ["BETTER_AUTH_URL"],
         message: "BETTER_AUTH_URL ou NEXT_PUBLIC_APP_URL est obligatoire en production",
+      });
+    }
+    if (!env.DATABASE_URL && env.CHINE_ALLOW_EMBEDDED_DB !== "true") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["DATABASE_URL"],
+        message:
+          "obligatoire en production : sans elle la base embarquée PGlite est écrite sur un disque éphémère et perdue au redéploiement ; CHINE_ALLOW_EMBEDDED_DB=true pour passer outre",
       });
     }
     if (env.DATABASE_URL && !/^postgres(ql)?:\/\//.test(env.DATABASE_URL)) {
