@@ -28,9 +28,30 @@ push_variables() {
   fi
   echo "→ variables de l'environnement $env_name depuis $(basename "$file")"
   local args=()
+  local key value
   while IFS= read -r line; do
-    [[ -z "$line" || "$line" =~ ^# ]] && continue
-    args+=("--set" "$line")
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" != *=* ]] && continue
+    key="${line%%=*}"
+    value="${line#*=}"
+    # Une valeur entre guillemets s'arrête au guillemet fermant : les guillemets ne doivent
+    # jamais être poussés dans la valeur (un MAIL_FROM entre guillemets casserait l'en-tête From).
+    if [[ "$value" =~ ^\"(.*)\"[[:space:]]*(#.*)?$ ]]; then
+      value="${BASH_REMATCH[1]}"
+    elif [[ "$value" =~ ^\'(.*)\'[[:space:]]*(#.*)?$ ]]; then
+      value="${BASH_REMATCH[1]}"
+    else
+      # Commentaire de fin de ligne : seulement précédé d'un espace, pour ne pas couper
+      # une valeur qui contient légitimement un « # » (mot de passe, jeton).
+      value="${value%%  #*}"
+      value="${value%% #*}"
+    fi
+    # Trim des espaces de tête et de queue.
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    key="${key#"${key%%[![:space:]]*}"}"
+    key="${key%"${key##*[![:space:]]}"}"
+    args+=("--set" "$key=$value")
   done < "$file"
   railway variables --environment "$env_name" --service "$SERVICE_NAME" "${args[@]}"
 }
