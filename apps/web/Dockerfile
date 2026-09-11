@@ -7,7 +7,8 @@
 ARG NODE_VERSION=24
 FROM node:${NODE_VERSION}-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=1 NEXT_TELEMETRY_DISABLED=1 TURBO_TELEMETRY_DISABLED=1
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+# Les corepack < 0.34.7 (livrés avec Node ≤ 24.10) ne savent pas lancer pnpm ≥ 11 : version explicite.
+RUN npm install -g corepack@0.36.0 && corepack enable && corepack prepare pnpm@12.3.4 --activate
 WORKDIR /app
 
 # ── Dépendances : uniquement les manifestes pour profiter du cache Docker ──────

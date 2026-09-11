@@ -2,8 +2,12 @@ packages:
   - "apps/*"
   - "packages/*"
   - "tooling/*"
-onlyBuiltDependencies:
-  - "@biomejs/biome"
-  - "esbuild"
-  - "sharp"
-  - "@electric-sql/pglite"
+# pnpm ≥ 11 : `allowBuilds` remplace `onlyBuiltDependencies` (ignoré en silence depuis pnpm 11).
+# Un paquet absent de cette liste ne peut pas exécuter ses scripts de build (erreur en CI).
+allowBuilds:
+  "@biomejs/biome": true
+  "@electric-sql/pglite": true
+  esbuild: true
+  sharp: true
+  # Comportement pnpm 10 conservé : le binaire sentry-cli vient du paquet optionnel par plateforme, pas du postinstall.
+  "@sentry/cli": false

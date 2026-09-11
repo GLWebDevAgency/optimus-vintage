@@ -31,6 +31,7 @@ legacy/optimus-vintage/            Ancienne app Expo + API Express (archivée, n
 ## Démarrer
 
 ```bash
+# pnpm 12 via corepack : corepack ≥ 0.34.7 requis (`npm install -g corepack@latest` si `corepack --version` est plus ancien)
 corepack enable && pnpm install
 cp .env.example .env            # tout fonctionne sans clé : PGlite, IA de démo, photos locales
 pnpm dev                        # http://localhost:3000

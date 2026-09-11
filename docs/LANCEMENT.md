@@ -5,8 +5,9 @@ Ce guide part d'un poste vierge (macOS ou Linux) et va jusqu'au déploiement. Le
 ## 1. Outils
 
 ```bash
-# Node 22 + pnpm (via corepack)
-node -v                      # doit afficher v22.x ; sinon https://nodejs.org ou `nvm install 22`
+# Node 24 (cf. .nvmrc) + pnpm 12 (via corepack)
+node -v                      # doit afficher v24.x ; sinon https://nodejs.org ou `nvm install 24`
+corepack --version           # doit être ≥ 0.34.7 ; sinon `npm install -g corepack@latest` (les anciens corepack ne lancent pas pnpm ≥ 11)
 corepack enable
 
 # Claude Code
