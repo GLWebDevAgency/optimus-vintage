@@ -70,6 +70,12 @@ COPY --from=build --chown=node:node /app/apps/web/.next/static ./apps/web/.next/
 COPY --from=build --chown=node:node /app/apps/web/public ./apps/web/public
 COPY --from=build --chown=node:node /app/packages/infrastructure/drizzle ./packages/infrastructure/drizzle
 COPY --from=build --chown=node:node /app/apps/web/scripts/start.mjs ./apps/web/scripts/start.mjs
+# Point de montage du volume de données (photos en mode local, base PGlite). Il doit exister et
+# appartenir à « node » AVANT le passage d'utilisateur : un volume monté sur un répertoire
+# root:root laisse le processus non privilégié en échec d'écriture (EACCES au premier
+# téléversement), constaté en conditions réelles. Sans volume monté, ce répertoire reste un
+# dossier ordinaire de l'image et le comportement est identique.
+RUN mkdir -p /data && chown -R node:node /data
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
